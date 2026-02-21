@@ -1,5 +1,7 @@
 package ksh.tryptobackend.trading.domain.model;
 
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
@@ -160,6 +162,24 @@ public class Order {
                 .createdAt(createdAt)
                 .filledAt(filledAt)
                 .build();
+    }
+
+    public void cancel() {
+        if (this.status == OrderStatus.CANCELLED) {
+            return;
+        }
+        if (!isCancellable()) {
+            throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
+        }
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public boolean isCancellable() {
+        return this.status == OrderStatus.PENDING;
+    }
+
+    public boolean isAlreadyCancelled() {
+        return this.status == OrderStatus.CANCELLED;
     }
 
     public BigDecimal getFilledAmount() {
