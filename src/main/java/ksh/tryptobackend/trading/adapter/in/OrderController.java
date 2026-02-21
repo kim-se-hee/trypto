@@ -3,7 +3,6 @@ package ksh.tryptobackend.trading.adapter.in;
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.dto.response.CursorPageResponseDto;
-import ksh.tryptobackend.trading.adapter.in.dto.command.CancelOrderCommand;
 import ksh.tryptobackend.trading.adapter.in.dto.request.FindOrderHistoryRequest;
 import ksh.tryptobackend.trading.adapter.in.dto.request.GetOrderAvailabilityRequest;
 import ksh.tryptobackend.trading.adapter.in.dto.request.PlaceOrderRequest;
@@ -15,6 +14,9 @@ import ksh.tryptobackend.trading.application.port.in.CancelOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.FindOrderHistoryUseCase;
 import ksh.tryptobackend.trading.application.port.in.GetOrderAvailabilityUseCase;
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
+import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderCommand;
+import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
+import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryResult;
 import ksh.tryptobackend.trading.domain.model.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,13 +48,17 @@ public class OrderController {
 
     @GetMapping("/available")
     public ApiResponseDto<OrderAvailabilityResponse> getAvailability(@Valid @ModelAttribute GetOrderAvailabilityRequest request) {
-        OrderAvailabilityResponse response = getOrderAvailabilityUseCase.getAvailability(request.toQuery());
-        return ApiResponseDto.success("조회 성공", response);
+        OrderAvailabilityResult result = getOrderAvailabilityUseCase.getAvailability(request.toQuery());
+        return ApiResponseDto.success("조회 성공", OrderAvailabilityResponse.from(result));
     }
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(@Valid @ModelAttribute FindOrderHistoryRequest request) {
-        CursorPageResponseDto<OrderHistoryResponse> response = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
+        CursorPageResponseDto<OrderHistoryResult> result = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
+        CursorPageResponseDto<OrderHistoryResponse> response = CursorPageResponseDto.of(
+                result.content().stream().map(OrderHistoryResponse::from).toList(),
+                result.nextCursor(),
+                result.hasNext());
         return ApiResponseDto.success("조회 성공", response);
     }
 

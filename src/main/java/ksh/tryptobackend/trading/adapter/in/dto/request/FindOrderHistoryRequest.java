@@ -3,7 +3,7 @@ package ksh.tryptobackend.trading.adapter.in.dto.request;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import ksh.tryptobackend.trading.adapter.in.dto.query.FindOrderHistoryQuery;
+import ksh.tryptobackend.trading.application.port.in.dto.query.FindOrderHistoryQuery;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;
 

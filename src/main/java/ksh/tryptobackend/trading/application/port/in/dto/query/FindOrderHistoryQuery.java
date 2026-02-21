@@ -1,4 +1,4 @@
-package ksh.tryptobackend.trading.adapter.in.dto.query;
+package ksh.tryptobackend.trading.application.port.in.dto.query;
 
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;

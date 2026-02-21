@@ -1,6 +1,6 @@
 package ksh.tryptobackend.trading.adapter.in.dto.response;
 
-import ksh.tryptobackend.trading.domain.model.Order;
+import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryResult;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
@@ -21,19 +21,19 @@ public record OrderHistoryResponse(
         LocalDateTime filledAt
 ) {
 
-    public static OrderHistoryResponse from(Order order) {
+    public static OrderHistoryResponse from(OrderHistoryResult result) {
         return new OrderHistoryResponse(
-                order.getId(),
-                order.getExchangeCoinId(),
-                order.getSide(),
-                order.getOrderType(),
-                order.getFilledPrice(),
-                order.getPrice(),
-                order.getQuantity(),
-                order.getOrderAmount(),
-                order.getFee() != null ? order.getFee().getAmount() : null,
-                order.getCreatedAt(),
-                order.getFilledAt()
+                result.orderId(),
+                result.exchangeCoinId(),
+                result.side(),
+                result.orderType(),
+                result.filledPrice(),
+                result.price(),
+                result.quantity(),
+                result.orderAmount(),
+                result.fee(),
+                result.createdAt(),
+                result.filledAt()
         );
     }
 }

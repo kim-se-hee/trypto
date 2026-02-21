@@ -2,7 +2,7 @@ package ksh.tryptobackend.trading.adapter.in.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import ksh.tryptobackend.trading.adapter.in.dto.command.PlaceOrderCommand;
+import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Side;
 

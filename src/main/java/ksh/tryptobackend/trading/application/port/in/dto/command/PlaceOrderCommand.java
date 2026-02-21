@@ -1,4 +1,4 @@
-package ksh.tryptobackend.trading.adapter.in.dto.command;
+package ksh.tryptobackend.trading.application.port.in.dto.command;
 
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Side;

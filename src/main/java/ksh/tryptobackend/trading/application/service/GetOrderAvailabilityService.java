@@ -2,9 +2,9 @@ package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.trading.adapter.in.dto.query.GetOrderAvailabilityQuery;
-import ksh.tryptobackend.trading.adapter.in.dto.response.OrderAvailabilityResponse;
 import ksh.tryptobackend.trading.application.port.in.GetOrderAvailabilityUseCase;
+import ksh.tryptobackend.trading.application.port.in.dto.query.GetOrderAvailabilityQuery;
+import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
 import ksh.tryptobackend.trading.application.port.out.ExchangePort;
@@ -29,7 +29,7 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
 
     @Override
     @Transactional(readOnly = true)
-    public OrderAvailabilityResponse getAvailability(GetOrderAvailabilityQuery query) {
+    public OrderAvailabilityResult getAvailability(GetOrderAvailabilityQuery query) {
         ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(query.exchangeCoinId())
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
@@ -45,6 +45,6 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
 
         BigDecimal currentPrice = livePricePort.getCurrentPrice(query.exchangeCoinId());
 
-        return new OrderAvailabilityResponse(available, currentPrice);
+        return new OrderAvailabilityResult(available, currentPrice);
     }
 }

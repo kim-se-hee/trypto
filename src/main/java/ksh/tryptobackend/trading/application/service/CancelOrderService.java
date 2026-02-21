@@ -2,7 +2,7 @@ package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.trading.adapter.in.dto.command.CancelOrderCommand;
+import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderCommand;
 import ksh.tryptobackend.trading.application.port.in.CancelOrderUseCase;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
