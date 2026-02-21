@@ -98,6 +98,48 @@ public class Order {
                 .build();
     }
 
+    public static Order createLimitBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
+                                            BigDecimal orderAmount, BigDecimal limitPrice, BigDecimal feeRate,
+                                            LocalDateTime now) {
+        BigDecimal quantity = calculateQuantity(orderAmount, limitPrice);
+        BigDecimal filledAmount = quantity.multiply(limitPrice);
+        Fee fee = Fee.calculate(filledAmount, feeRate);
+
+        return Order.builder()
+                .idempotencyKey(idempotencyKey)
+                .walletId(walletId)
+                .exchangeCoinId(exchangeCoinId)
+                .side(Side.BUY)
+                .orderType(OrderType.LIMIT)
+                .orderAmount(filledAmount)
+                .quantity(quantity)
+                .price(limitPrice)
+                .fee(fee)
+                .status(OrderStatus.PENDING)
+                .createdAt(now)
+                .build();
+    }
+
+    public static Order createLimitSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
+                                             BigDecimal sellQuantity, BigDecimal limitPrice, BigDecimal feeRate,
+                                             LocalDateTime now) {
+        Fee fee = Fee.calculate(sellQuantity.multiply(limitPrice), feeRate);
+
+        return Order.builder()
+                .idempotencyKey(idempotencyKey)
+                .walletId(walletId)
+                .exchangeCoinId(exchangeCoinId)
+                .side(Side.SELL)
+                .orderType(OrderType.LIMIT)
+                .orderAmount(sellQuantity)
+                .quantity(sellQuantity)
+                .price(limitPrice)
+                .fee(fee)
+                .status(OrderStatus.PENDING)
+                .createdAt(now)
+                .build();
+    }
+
     public static Order reconstitute(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
                                      Side side, OrderType orderType, BigDecimal orderAmount, BigDecimal quantity,
                                      BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
