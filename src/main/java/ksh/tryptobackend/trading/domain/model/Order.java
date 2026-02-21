@@ -53,6 +53,17 @@ public class Order {
         this.filledAt = filledAt;
     }
 
+    public BigDecimal getFilledAmount() {
+        if (side == Side.BUY) {
+            return quantity.multiply(filledPrice != null ? filledPrice : price);
+        }
+        return quantity.multiply(filledPrice != null ? filledPrice : price);
+    }
+
+    public BigDecimal getTotalCostForBuy() {
+        return getFilledAmount().add(fee.getAmount());
+    }
+
     public static BigDecimal calculateQuantity(BigDecimal orderAmount, BigDecimal price) {
         return orderAmount.divide(price, QUANTITY_SCALE, RoundingMode.FLOOR);
     }
