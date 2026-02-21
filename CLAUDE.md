@@ -81,6 +81,9 @@ com.project/
 trading/
 ├── adapter/
 │   ├── in/            # Controller (REST/WebSocket) — 인바운드 어댑터
+│   │   └── dto/
+│   │       ├── request/   # Request DTO
+│   │       └── response/  # Response DTO
 │   └── out/           # JpaPersistenceAdapter, ApiAdapter — 아웃바운드 어댑터
 ├── application/
 │   ├── port/
@@ -90,6 +93,16 @@ trading/
 └── domain/
     ├── model/         # Entity, Aggregate Root
     └── vo/            # Value Object
+```
+
+common 패키지는 공통 설정, 예외, DTO를 관리한다.
+
+```
+common/
+├── dto/
+│   ├── request/       # 공통 Request DTO (PageRequestDto 등)
+│   └── response/      # 공통 Response DTO (ApiResponseDto, PageResponseDto 등)
+└── exception/         # ErrorCode, CustomException, GlobalControllerAdvice
 ```
 
 ## 계층별 규약
@@ -185,7 +198,7 @@ public record PlaceOrderRequest(
 **응답 형식**
 
 ```json
-{ "status": 400, "code": "INSUFFICIENT_BALANCE", "message": "잔고가 부족합니다.", "details": {} }
+{ "status": 400, "code": "INSUFFICIENT_BALANCE", "message": "잔고가 부족합니다.", "data": {} }
 ```
 
 **에러 추가 방법**
