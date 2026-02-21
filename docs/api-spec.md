@@ -9,6 +9,10 @@
 
 모든 API는 인증된 사용자만 호출 가능하다. (인증 방식은 Identity 도메인에서 정의)
 
+### 응답 설계 원칙
+
+클라이언트가 거래소-코인 목록 조회 시 이미 보유한 정보(거래소명, 코인 심볼, 기준 통화 등)는 응답에 포함하지 않는다. `exchangeCoinId`로 클라이언트가 로컬 룩업하여 표시한다.
+
 ### `amount` 필드 규칙
 
 | side | amount 의미 | 단위 |
@@ -114,8 +118,6 @@
   "message": "주문이 체결되었습니다.",
   "data": {
     "orderId": 42,
-    "exchangeName": "업비트",
-    "coinSymbol": "BTC",
     "side": "BUY",
     "orderType": "MARKET",
     "orderAmount": 99872.54,
@@ -139,8 +141,6 @@
   "message": "주문이 등록되었습니다.",
   "data": {
     "orderId": 43,
-    "exchangeName": "빗썸",
-    "coinSymbol": "BTC",
     "side": "BUY",
     "orderType": "LIMIT",
     "orderAmount": 500000,
@@ -191,7 +191,6 @@
   "message": "조회 성공",
   "data": {
     "available": 5000000,
-    "unit": "KRW",
     "currentPrice": 100274000
   }
 }
@@ -200,7 +199,6 @@
 | 필드 | 설명 |
 |------|------|
 | available | 매수: 주문 가능 금액 (기준 통화), 매도: 주문 가능 수량 (코인) |
-| unit | available의 단위 (KRW, USDT, BTC 등) |
 | currentPrice | 현재가 (기준 통화 기준) |
 
 ---
@@ -239,11 +237,11 @@
     "content": [
       {
         "orderId": 42,
-        "coinSymbol": "AVAX",
-        "baseCurrency": "KRW",
+        "exchangeCoinId": 5,
         "side": "BUY",
         "orderType": "LIMIT",
         "filledPrice": 74600,
+        "price": 74600,
         "quantity": 5.44649808,
         "orderAmount": 406309,
         "fee": 203,
@@ -252,11 +250,11 @@
       },
       {
         "orderId": 41,
-        "coinSymbol": "AVAX",
-        "baseCurrency": "KRW",
+        "exchangeCoinId": 5,
         "side": "SELL",
         "orderType": "LIMIT",
         "filledPrice": 74000,
+        "price": 74000,
         "quantity": 8.56284413,
         "orderAmount": 633650,
         "fee": 317,
@@ -282,10 +280,10 @@
     "content": [
       {
         "orderId": 43,
-        "coinSymbol": "BTC",
-        "baseCurrency": "KRW",
+        "exchangeCoinId": 3,
         "side": "BUY",
         "orderType": "LIMIT",
+        "filledPrice": null,
         "price": 100000000,
         "quantity": 0.005,
         "orderAmount": 500000,
