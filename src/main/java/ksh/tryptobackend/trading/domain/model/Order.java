@@ -183,9 +183,6 @@ public class Order {
     }
 
     public BigDecimal getFilledAmount() {
-        if (side == Side.BUY) {
-            return quantity.multiply(filledPrice != null ? filledPrice : price);
-        }
         return quantity.multiply(filledPrice != null ? filledPrice : price);
     }
 
