@@ -88,6 +88,10 @@ trading/
 ├── application/
 │   ├── port/
 │   │   ├── in/        # UseCase 인터페이스 — 인바운드 포트
+│   │   │   └── dto/
+│   │   │       ├── command/   # Command (쓰기 요청)
+│   │   │       ├── query/     # Query (읽기 요청)
+│   │   │       └── result/    # Result (읽기 응답)
 │   │   └── out/       # Repository/External Port 인터페이스 — 아웃바운드 포트
 │   └── service/       # UseCase 구현체
 └── domain/
@@ -181,6 +185,21 @@ public record PlaceOrderRequest(
 - `adapter/in/dto/response/` 패키지에 위치한다
 - 모든 API 응답은 `ApiResponseDto<T>`로 래핑한다
 
+**Command DTO**
+- `application/port/in/dto/command/` 패키지에 위치한다
+- Controller에서 Request DTO → Command 변환하여 UseCase에 전달한다
+- 네이밍: `{행위}Command` (예: `PlaceOrderCommand`)
+
+**Query DTO**
+- `application/port/in/dto/query/` 패키지에 위치한다
+- Controller에서 Request DTO → Query 변환하여 UseCase에 전달한다
+- 네이밍: `{행위}Query` (예: `FindOrderHistoryQuery`)
+
+**Result DTO**
+- `application/port/in/dto/result/` 패키지에 위치한다
+- Query UseCase의 반환 타입으로 사용한다 (여러 Aggregate 조합 결과)
+- 네이밍: `{자원}Result` (예: `OrderHistoryResult`, `OrderAvailabilityResult`)
+
 **공통 DTO (`common/dto/`)**
 - `ApiResponseDto<T>`: status(HTTP 상태 코드), code(응답 코드), message(응답 메시지), data(응답 데이터)
 - `PageRequestDto`: page(페이지 번호, 0부터 시작), size(페이지 크기, 1~50)
@@ -247,11 +266,15 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - 메서드명: HTTP 메서드 + 자원을 표현한다 (예: `createOrder()`, `getPortfolio()`)
 - `@Valid`로 Request DTO의 형식 검증을 트리거한다
 - Request DTO를 서비스 계층에 직접 넘기지 않는다. Controller에서 Command/Query 객체로 변환하여 전달한다
+- UseCase 반환값(도메인 모델 또는 Result)을 Response DTO로 변환하는 책임은 Controller에 있다
 - 응답은 반드시 `ApiResponseDto<T>`로 래핑한다
 
 **UseCase**
 - 인터페이스명: `{비즈니스행위}UseCase` (예: `PlaceMarketBuyOrderUseCase`, `ExecuteSwapUseCase`)
 - 하나의 유스케이스에 하나의 메서드를 정의한다
+- Command UseCase (쓰기): 도메인 모델을 반환한다. Controller에서 Response DTO로 변환한다
+- Query UseCase (읽기): application 계층의 Result 객체를 반환한다. Controller에서 Response DTO로 변환한다
+- UseCase가 adapter 계층의 Request/Response DTO를 import하지 않는다
 
 **Service**
 - 클래스명: `{UseCase명}Service` (예: `PlaceMarketBuyOrderService`)
