@@ -1,0 +1,248 @@
+# ERD
+
+```mermaid
+erDiagram
+
+    USER {
+        id user_id PK "주 식별자"
+        string email UK "이메일"
+        string nickname UK "닉네임"
+        string password_hash "비밀번호 해시"
+        boolean portfolio_public "포트폴리오 공개 여부"
+        datetime created_at "가입일"
+        datetime updated_at "수정일"
+    }
+
+    INVESTMENT_ROUND {
+        id round_id PK "주 식별자"
+        id user_id FK "유저 ID"
+        number round_number "라운드 번호"
+        number initial_seed "시작 시드머니"
+        number emergency_funding_limit "1회 긴급 자금 투입 상한"
+        number emergency_charge_count "긴급 충전 잔여 횟수"
+        string status "진행중 파산 종료"
+        datetime started_at "라운드 시작일"
+        datetime ended_at "라운드 종료일"
+    }
+
+    INVESTMENT_RULE {
+        id rule_id PK "주 식별자"
+        id round_id FK "라운드 ID"
+        string rule_type "손절 익절 추격매수금지 물타기제한 과매매제한"
+        number threshold_value "기준값"
+        datetime created_at "생성일"
+    }
+
+    EMERGENCY_FUNDING {
+        id funding_id PK "주 식별자"
+        id round_id FK "라운드 ID"
+        number amount "투입 금액"
+        datetime created_at "투입 시각"
+    }
+
+    EXCHANGE {
+        id exchange_id PK "주 식별자"
+        string name "거래소명"
+        string type "CEX DEX"
+        number fee_rate "기본 수수료율"
+    }
+
+    COIN {
+        id coin_id PK "주 식별자"
+        string symbol UK "티커"
+        string name "코인 이름"
+        string chain "메인 체인"
+        string coin_type "레이어1"
+    }
+
+    EXCHANGE_COIN {
+        id exchange_coin_id PK "주 식별자"
+        id exchange_id FK "거래소 ID"
+        id coin_id FK "코인 ID"
+    }
+
+    WITHDRAWAL_FEE {
+        id withdrawal_fee_id PK "주 식별자"
+        id exchange_id FK "거래소 ID"
+        id coin_id FK "코인 ID"
+        string chain "출금 체인"
+        number fee "출금 수수료"
+    }
+
+    WALLET {
+        id wallet_id PK "주 식별자"
+        id round_id FK "라운드 ID"
+        id exchange_id FK "거래소 ID"
+        string wallet_address "지갑 주소"
+        string wallet_tag "태그 메모"
+        string chain "체인"
+        datetime created_at "생성일"
+    }
+
+    WALLET_BALANCE {
+        id balance_id PK "주 식별자"
+        id wallet_id FK "지갑 ID"
+        id coin_id FK "코인 ID"
+        number available "사용 가능 잔고"
+        number locked "잠금 잔고"
+    }
+
+    TRANSFER {
+        id transfer_id PK "주 식별자"
+        id from_wallet_id FK "출발 지갑 ID"
+        id to_wallet_id FK "도착 지갑 ID"
+        id coin_id FK "송금 코인 ID"
+        number amount "송금 수량"
+        string chain "사용 체인"
+        string to_address "입력한 도착 주소"
+        string to_tag "입력한 태그"
+        number fee "송금 수수료 (적용된 결과)"
+        string status "성공 실패 동결"
+        string failure_reason "실패 사유"
+        datetime created_at "송금 시각"
+    }
+
+    ORDERS {
+        id order_id PK "주 식별자"
+        id wallet_id FK "주문 지갑 ID"
+        id exchange_coin_id FK "거래소-코인 ID"
+        string order_type "시장가 지정가"
+        string side "매수 매도"
+        number order_amount "주문 금액"
+        number quantity "주문 수량"
+        number price "주문 가격 (지정가)"
+        number filled_price "실제 체결가"
+        number fee "수수료 (적용된 결과)"
+        string status "체결완료 미체결 실패 취소"
+        datetime created_at "주문 시각"
+        datetime filled_at "체결 시각"
+    }
+
+    RULE_VIOLATION {
+        id violation_id PK "주 식별자"
+        id order_id FK "주문 ID (nullable)"
+        id swap_id FK "스왑 ID (nullable)"
+        id rule_id FK "위반 투자 원칙 ID"
+        string violation_reason "위반 사유"
+        datetime created_at "위반 시각"
+    }
+
+    SWAP {
+        id swap_id PK "주 식별자"
+        id wallet_id FK "지갑 ID"
+        id exchange_id FK "거래소 ID (DEX)"
+        id from_coin_id FK "스왑 전 코인"
+        id to_coin_id FK "스왑 후 코인"
+        number from_amount "출발 수량"
+        number to_amount "도착 수량"
+        number max_slippage "허용 슬리피지"
+        number slippage "실제 슬리피지"
+        number gas_fee "가스비"
+        number fee "플랫폼 수수료 (적용된 결과)"
+        string status "성공 실패"
+        string failure_reason "실패 사유"
+        datetime created_at "스왑 시각"
+    }
+
+    PORTFOLIO_SNAPSHOT {
+        id snapshot_id PK "주 식별자"
+        id user_id FK "유저 ID"
+        id round_id FK "라운드 ID"
+        number total_asset_krw "총 자산 (원화)"
+        number total_profit_krw "총 수익금"
+        number total_profit_rate "총 수익률"
+        datetime snapshot_date "스냅샷 날짜"
+    }
+
+    PORTFOLIO_SNAPSHOT_DETAIL {
+        id detail_id PK "주 식별자"
+        id snapshot_id FK "스냅샷 ID"
+        id coin_id FK "코인 ID"
+        id exchange_id FK "거래소 ID"
+        number quantity "보유 수량"
+        number avg_buy_price "평균 매수가"
+        number current_price "당시 현재가"
+        number profit_rate "수익률"
+        number asset_ratio "자산 비율"
+    }
+
+    RANKING {
+        id ranking_id PK "주 식별자"
+        id user_id FK "유저 ID"
+        id round_id FK "라운드 ID"
+        string period "일간 주간 월간"
+        number rank "순위"
+        number profit_rate "수익률"
+        number trade_count "거래 횟수"
+        datetime reference_date "기준 날짜"
+        datetime created_at "집계 시각"
+    }
+
+    REGRET_REPORT {
+        id report_id PK "주 식별자"
+        id user_id FK "유저 ID"
+        id round_id FK "라운드 ID"
+        number actual_profit_rate "실제 수익률"
+        number rule_followed_profit_rate "원칙 준수 시 수익률"
+        datetime analysis_start "분석 시작일"
+        datetime analysis_end "분석 종료일"
+        datetime created_at "생성일"
+    }
+
+    RULE_SCENARIO {
+        id scenario_id PK "주 식별자"
+        id report_id FK "후회 보고서 ID"
+        id rule_id FK "관련 투자 원칙 ID"
+        number impact_gap "영향 차이"
+        string description "시나리오 설명"
+    }
+
+    VIOLATION_TRADE {
+        id violation_trade_id PK "주 식별자"
+        id report_id FK "후회 보고서 ID"
+        id order_id FK "주문 ID (nullable)"
+        id swap_id FK "스왑 ID (nullable)"
+        id rule_id FK "위반 원칙 ID"
+        number actual_amount "실제 체결 금액"
+        number suggested_amount "원칙 준수 시 금액"
+        number loss_amount "손실 금액"
+    }
+
+    %% === 관계 ===
+    USER ||--|{ INVESTMENT_ROUND : ""
+    INVESTMENT_ROUND ||--|{ WALLET : ""
+    USER ||--o{ PORTFOLIO_SNAPSHOT : ""
+    USER ||--o{ RANKING : ""
+    USER ||--o{ REGRET_REPORT : ""
+    INVESTMENT_ROUND ||--|{ INVESTMENT_RULE : ""
+    INVESTMENT_ROUND ||--o{ EMERGENCY_FUNDING : ""
+    INVESTMENT_ROUND ||--o{ PORTFOLIO_SNAPSHOT : ""
+    INVESTMENT_ROUND ||--o{ RANKING : ""
+    INVESTMENT_ROUND ||--o{ REGRET_REPORT : ""
+    EXCHANGE ||--|{ EXCHANGE_COIN : ""
+    COIN ||--|{ EXCHANGE_COIN : ""
+    EXCHANGE ||--|{ WITHDRAWAL_FEE : ""
+    COIN ||--|{ WITHDRAWAL_FEE : ""
+    EXCHANGE ||--o{ WALLET : ""
+    WALLET ||--o{ WALLET_BALANCE : ""
+    COIN ||--o{ WALLET_BALANCE : ""
+    WALLET ||--o{ TRANSFER : "from"
+    WALLET ||--o{ TRANSFER : "to"
+    COIN ||--o{ TRANSFER : ""
+    WALLET ||--o{ ORDERS : ""
+    EXCHANGE_COIN ||--o{ ORDERS : ""
+    ORDERS ||--o{ RULE_VIOLATION : ""
+    SWAP ||--o{ RULE_VIOLATION : ""
+    INVESTMENT_RULE ||--o{ RULE_VIOLATION : ""
+    WALLET ||--o{ SWAP : ""
+    EXCHANGE ||--o{ SWAP : ""
+    COIN ||--o{ SWAP : "from"
+    COIN ||--o{ SWAP : "to"
+    PORTFOLIO_SNAPSHOT ||--|{ PORTFOLIO_SNAPSHOT_DETAIL : ""
+    COIN ||--o{ PORTFOLIO_SNAPSHOT_DETAIL : ""
+    EXCHANGE ||--o{ PORTFOLIO_SNAPSHOT_DETAIL : ""
+    REGRET_REPORT ||--|{ RULE_SCENARIO : ""
+    REGRET_REPORT ||--|{ VIOLATION_TRADE : ""
+    INVESTMENT_RULE ||--o{ RULE_SCENARIO : ""
+    INVESTMENT_RULE ||--o{ VIOLATION_TRADE : ""
+```
