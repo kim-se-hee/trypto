@@ -331,6 +331,7 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - Step Definition 애노테이션은 `io.cucumber.java.en` 패키지의 `@Given`, `@When`, `@Then`을 사용한다. 한글 애노테이션(`@먼저`, `@만일`, `@그러면`, `@그리고`) 사용 금지
 - 테스트 간 격리를 위해 Cucumber `@Before`에서 데이터를 정리한다
 - 테스트 데이터 정리 시 `deleteAll()` 대신 `deleteAllInBatch()`를 사용한다. 라이프사이클 콜백 없이 단일 DELETE 쿼리로 빠르게 정리된다
+- Cucumber 스텝 클래스명은 `{도메인}StepDefinition`으로 작성한다. 줄임말(`StepDef`) 금지
 - 단위 테스트: `@DisplayName`에 한국어 설명을 작성하고 메서드명은 `methodName_condition_result` 패턴을 따른다
 
 ---
