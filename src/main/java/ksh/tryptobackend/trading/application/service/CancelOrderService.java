@@ -2,8 +2,8 @@ package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderCommand;
 import ksh.tryptobackend.trading.application.port.in.CancelOrderUseCase;
+import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderCommand;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
 import ksh.tryptobackend.trading.application.port.out.ExchangePort;
@@ -29,7 +29,7 @@ public class CancelOrderService implements CancelOrderUseCase {
     @Transactional
     public Order cancelOrder(CancelOrderCommand command) {
         Order order = orderPersistencePort.findById(command.orderId())
-                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
         if (order.isAlreadyCancelled()) {
             return order;
@@ -43,11 +43,11 @@ public class CancelOrderService implements CancelOrderUseCase {
 
     private void unlockBalance(Order order) {
         ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(order.getExchangeCoinId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
         if (order.getSide() == Side.BUY) {
             ExchangeData exchange = exchangePort.findById(exchangeCoin.exchangeId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
             walletBalancePort.unlockBalance(order.getWalletId(), exchange.baseCurrencyCoinId(), order.getTotalCostForBuy());
         } else {
             walletBalancePort.unlockBalance(order.getWalletId(), exchangeCoin.coinId(), order.getQuantity());

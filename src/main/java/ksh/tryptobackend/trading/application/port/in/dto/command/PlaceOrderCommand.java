@@ -7,12 +7,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record PlaceOrderCommand(
-        UUID idempotencyKey,
-        Long walletId,
-        Long exchangeCoinId,
-        Side side,
-        OrderType orderType,
-        BigDecimal price,
-        BigDecimal amount
+    UUID idempotencyKey,
+    Long walletId,
+    Long exchangeCoinId,
+    Side side,
+    OrderType orderType,
+    BigDecimal price,
+    BigDecimal amount
 ) {
 }

@@ -22,9 +22,9 @@ public class CommonApiClient {
 
     public <T> RestTestClient.ResponseSpec post(String path, T body) {
         lastResponse = restTestClient.post().uri(path)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                .body(body)
-                .exchange();
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .body(body)
+            .exchange();
         return lastResponse;
     }
 

@@ -1,13 +1,6 @@
 package ksh.tryptobackend.trading.adapter.out;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
@@ -100,10 +93,10 @@ public class OrderJpaEntity {
     public Order toDomain() {
         Fee domainFee = (fee != null && feeRate != null) ? Fee.of(fee, feeRate) : null;
         return Order.reconstitute(
-                id, idempotencyKey, walletId, exchangeCoinId,
-                side, orderType, orderAmount, quantity,
-                price, filledPrice, domainFee, status,
-                createdAt, filledAt
+            id, idempotencyKey, walletId, exchangeCoinId,
+            side, orderType, orderAmount, quantity,
+            price, filledPrice, domainFee, status,
+            createdAt, filledAt
         );
     }
 }

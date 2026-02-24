@@ -1,9 +1,9 @@
 package ksh.tryptobackend.trading.domain.model;
 
 import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.trading.util.QuantityCalculator;
 import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
+import ksh.tryptobackend.trading.util.QuantityCalculator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -91,9 +91,9 @@ class OrderTest {
         @DisplayName("PENDING 주문 취소 성공")
         void cancel_pendingOrder_cancelledSuccessfully() {
             Order order = Order.createLimitBuyOrder(
-                    UUID.randomUUID(), 1L, 1L,
-                    new BigDecimal("500000"), new BigDecimal("100000000"),
-                    new BigDecimal("0.0005"), LocalDateTime.now());
+                UUID.randomUUID(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                new BigDecimal("0.0005"), LocalDateTime.now());
 
             order.cancel();
 
@@ -104,21 +104,21 @@ class OrderTest {
         @DisplayName("FILLED 주문 취소 시도 — 예외 발생")
         void cancel_filledOrder_throwsException() {
             Order order = Order.createMarketBuyOrder(
-                    UUID.randomUUID(), 1L, 1L,
-                    new BigDecimal("100000"), new BigDecimal("100274000"),
-                    new BigDecimal("0.0005"), LocalDateTime.now());
+                UUID.randomUUID(), 1L, 1L,
+                new BigDecimal("100000"), new BigDecimal("100274000"),
+                new BigDecimal("0.0005"), LocalDateTime.now());
 
             assertThatThrownBy(order::cancel)
-                    .isInstanceOf(CustomException.class);
+                .isInstanceOf(CustomException.class);
         }
 
         @Test
         @DisplayName("이미 취소된 주문 재취소 — 멱등성 보장")
         void cancel_alreadyCancelled_idempotent() {
             Order order = Order.createLimitBuyOrder(
-                    UUID.randomUUID(), 1L, 1L,
-                    new BigDecimal("500000"), new BigDecimal("100000000"),
-                    new BigDecimal("0.0005"), LocalDateTime.now());
+                UUID.randomUUID(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                new BigDecimal("0.0005"), LocalDateTime.now());
 
             order.cancel();
             order.cancel();

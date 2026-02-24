@@ -40,11 +40,11 @@ public class OrderStepDefinition {
     private Long firstOrderId;
 
     public OrderStepDefinition(CommonApiClient apiClient,
-                        MockWalletBalanceAdapter walletBalanceAdapter,
-                        MockLivePriceAdapter livePriceAdapter,
-                        MockExchangeAdapter exchangeAdapter,
-                        MockExchangeCoinAdapter exchangeCoinAdapter,
-                        OrderJpaRepository orderJpaRepository) {
+                               MockWalletBalanceAdapter walletBalanceAdapter,
+                               MockLivePriceAdapter livePriceAdapter,
+                               MockExchangeAdapter exchangeAdapter,
+                               MockExchangeCoinAdapter exchangeCoinAdapter,
+                               OrderJpaRepository orderJpaRepository) {
         this.apiClient = apiClient;
         this.walletBalanceAdapter = walletBalanceAdapter;
         this.livePriceAdapter = livePriceAdapter;
@@ -140,7 +140,7 @@ public class OrderStepDefinition {
     @When("매수 주문 가능 정보를 조회한다")
     public void 매수_주문_가능_정보를_조회한다() {
         apiClient.get("/api/orders/available?walletId=" + WALLET_ID
-                + "&exchangeCoinId=" + EXCHANGE_COIN_ID + "&side=BUY");
+            + "&exchangeCoinId=" + EXCHANGE_COIN_ID + "&side=BUY");
     }
 
     @When("주문 내역을 조회한다")
@@ -156,24 +156,24 @@ public class OrderStepDefinition {
     @Then("주문 상태는 {string}이다")
     public void 주문_상태는_이다(String status) {
         apiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.status").isEqualTo(status);
+            .expectBody()
+            .jsonPath("$.data.status").isEqualTo(status);
     }
 
     @Then("체결 수량은 {int}보다 크다")
     public void 체결_수량은_보다_크다(int value) {
         apiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.quantity").value(quantity -> {
-                    assertThat(new BigDecimal(quantity.toString())).isGreaterThan(BigDecimal.ZERO);
-                });
+            .expectBody()
+            .jsonPath("$.data.quantity").value(quantity -> {
+                assertThat(new BigDecimal(quantity.toString())).isGreaterThan(BigDecimal.ZERO);
+            });
     }
 
     @Then("에러 코드는 {string}이다")
     public void 에러_코드는_이다(String code) {
         apiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.code").isEqualTo(code);
+            .expectBody()
+            .jsonPath("$.code").isEqualTo(code);
     }
 
     @Then("두 응답의 orderId가 동일하다")
@@ -184,17 +184,17 @@ public class OrderStepDefinition {
     @Then("주문 가능 금액은 {long}이다")
     public void 주문_가능_금액은_이다(long amount) {
         apiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.available").value(available -> {
-                    assertThat(new BigDecimal(available.toString()).longValue()).isEqualTo(amount);
-                });
+            .expectBody()
+            .jsonPath("$.data.available").value(available -> {
+                assertThat(new BigDecimal(available.toString()).longValue()).isEqualTo(amount);
+            });
     }
 
     @Then("주문 내역이 {int}건이다")
     public void 주문_내역이_건이다(int count) {
         apiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.content.length()").isEqualTo(count);
+            .expectBody()
+            .jsonPath("$.data.content.length()").isEqualTo(count);
     }
 
     private Map<String, Object> createOrderBody(String side, String orderType, Number amount, Long price) {
@@ -214,9 +214,9 @@ public class OrderStepDefinition {
     @SuppressWarnings("unchecked")
     private void extractOrderIdIfSuccess() {
         Map<String, Object> body = apiClient.getLastResponse()
-                .expectBody(Map.class)
-                .returnResult()
-                .getResponseBody();
+            .expectBody(Map.class)
+            .returnResult()
+            .getResponseBody();
         Map<String, Object> data = (Map<String, Object>) body.get("data");
         if (data != null && data.get("orderId") instanceof Number num) {
             lastOrderId = num.longValue();

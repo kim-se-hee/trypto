@@ -10,19 +10,19 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record PlaceOrderRequest(
-        @NotNull UUID clientOrderId,
-        @NotNull Long walletId,
-        @NotNull Long exchangeCoinId,
-        @NotNull Side side,
-        @NotNull OrderType orderType,
-        BigDecimal price,
-        @NotNull @Positive BigDecimal amount
+    @NotNull UUID clientOrderId,
+    @NotNull Long walletId,
+    @NotNull Long exchangeCoinId,
+    @NotNull Side side,
+    @NotNull OrderType orderType,
+    BigDecimal price,
+    @NotNull @Positive BigDecimal amount
 ) {
 
     public PlaceOrderCommand toCommand() {
         return new PlaceOrderCommand(
-                clientOrderId, walletId, exchangeCoinId,
-                side, orderType, price, amount
+            clientOrderId, walletId, exchangeCoinId,
+            side, orderType, price, amount
         );
     }
 }

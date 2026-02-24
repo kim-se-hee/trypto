@@ -15,21 +15,21 @@
 
 ### `amount` 필드 규칙
 
-| side | amount 의미 | 단위 |
-|------|-------------|------|
-| BUY | 주문 총액 | 기준 통화 (국내: KRW, 바이낸스: USDT) |
-| SELL | 주문 수량 | 코인 |
+| side | amount 의미 | 단위                          |
+|------|-----------|-----------------------------|
+| BUY  | 주문 총액     | 기준 통화 (국내: KRW, 바이낸스: USDT) |
+| SELL | 주문 수량     | 코인                          |
 
 ---
 
 ## API 목록
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | /api/orders | 주문 생성 |
-| GET | /api/orders/available | 주문 가능 정보 조회 |
-| GET | /api/orders | 주문 내역 조회 |
-| POST | /api/orders/{orderId}/cancel | 미체결 주문 취소 |
+| Method | Endpoint                     | 설명          |
+|--------|------------------------------|-------------|
+| POST   | /api/orders                  | 주문 생성       |
+| GET    | /api/orders/available        | 주문 가능 정보 조회 |
+| GET    | /api/orders                  | 주문 내역 조회    |
+| POST   | /api/orders/{orderId}/cancel | 미체결 주문 취소   |
 
 ---
 
@@ -43,15 +43,15 @@
 
 ### Request Body
 
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| clientOrderId | UUID | O | 멱등성 키 (클라이언트 생성) |
-| walletId | Long | O | 주문 지갑 ID |
-| exchangeCoinId | Long | O | 거래소-코인 ID |
-| side | String | O | `BUY` \| `SELL` |
-| orderType | String | O | `MARKET` \| `LIMIT` |
-| price | BigDecimal | 조건부 | 지정가 (LIMIT일 때 필수, MARKET일 때 무시) |
-| amount | BigDecimal | O | 매수: 주문 총액, 매도: 주문 수량 |
+| 필드             | 타입         | 필수  | 설명                              |
+|----------------|------------|-----|---------------------------------|
+| clientOrderId  | UUID       | O   | 멱등성 키 (클라이언트 생성)                |
+| walletId       | Long       | O   | 주문 지갑 ID                        |
+| exchangeCoinId | Long       | O   | 거래소-코인 ID                       |
+| side           | String     | O   | `BUY` \| `SELL`                 |
+| orderType      | String     | O   | `MARKET` \| `LIMIT`             |
+| price          | BigDecimal | 조건부 | 지정가 (LIMIT일 때 필수, MARKET일 때 무시) |
+| amount         | BigDecimal | O   | 매수: 주문 총액, 매도: 주문 수량            |
 
 ### Request 예시
 
@@ -157,14 +157,14 @@
 
 ### 에러 응답
 
-| code | status | 설명 |
-|------|--------|------|
-| INSUFFICIENT_BALANCE | 400 | 잔고 부족 |
-| BELOW_MIN_ORDER_AMOUNT | 400 | 최소 주문 금액 미달 |
-| ABOVE_MAX_ORDER_AMOUNT | 400 | 최대 주문 금액 초과 |
-| PRICE_REQUIRED_FOR_LIMIT | 400 | 지정가 주문 시 price 누락 |
-| WALLET_NOT_FOUND | 404 | 지갑을 찾을 수 없음 |
-| EXCHANGE_COIN_NOT_FOUND | 404 | 거래소-코인을 찾을 수 없음 |
+| code                     | status | 설명                |
+|--------------------------|--------|-------------------|
+| INSUFFICIENT_BALANCE     | 400    | 잔고 부족             |
+| BELOW_MIN_ORDER_AMOUNT   | 400    | 최소 주문 금액 미달       |
+| ABOVE_MAX_ORDER_AMOUNT   | 400    | 최대 주문 금액 초과       |
+| PRICE_REQUIRED_FOR_LIMIT | 400    | 지정가 주문 시 price 누락 |
+| WALLET_NOT_FOUND         | 404    | 지갑을 찾을 수 없음       |
+| EXCHANGE_COIN_NOT_FOUND  | 404    | 거래소-코인을 찾을 수 없음   |
 
 ---
 
@@ -176,11 +176,11 @@
 
 ### Query Parameters
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|----------|------|------|------|
-| walletId | Long | O | 지갑 ID |
-| exchangeCoinId | Long | O | 거래소-코인 ID |
-| side | String | O | `BUY` \| `SELL` |
+| 파라미터           | 타입     | 필수 | 설명              |
+|----------------|--------|----|-----------------|
+| walletId       | Long   | O  | 지갑 ID           |
+| exchangeCoinId | Long   | O  | 거래소-코인 ID       |
+| side           | String | O  | `BUY` \| `SELL` |
 
 ### Response (200 OK)
 
@@ -196,10 +196,10 @@
 }
 ```
 
-| 필드 | 설명 |
-|------|------|
-| available | 매수: 주문 가능 금액 (기준 통화), 매도: 주문 가능 수량 (코인) |
-| currentPrice | 현재가 (기준 통화 기준) |
+| 필드           | 설명                                      |
+|--------------|-----------------------------------------|
+| available    | 매수: 주문 가능 금액 (기준 통화), 매도: 주문 가능 수량 (코인) |
+| currentPrice | 현재가 (기준 통화 기준)                          |
 
 ---
 
@@ -214,14 +214,14 @@
 
 ### Query Parameters
 
-| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
-|----------|------|------|--------|------|
-| walletId | Long | O | — | 지갑 ID |
-| exchangeCoinId | Long | X | — | 거래소-코인 ID |
-| side | String | X | — | `BUY` \| `SELL` |
-| status | String | X | — | `FILLED` \| `PENDING` \| `CANCELLED` \| `FAILED` |
-| page | int | X | 0 | 페이지 번호 (0부터 시작) |
-| size | int | X | 20 | 페이지 크기 (1~50) |
+| 파라미터           | 타입     | 필수 | 기본값 | 설명                                               |
+|----------------|--------|----|-----|--------------------------------------------------|
+| walletId       | Long   | O  | —   | 지갑 ID                                            |
+| exchangeCoinId | Long   | X  | —   | 거래소-코인 ID                                        |
+| side           | String | X  | —   | `BUY` \| `SELL`                                  |
+| status         | String | X  | —   | `FILLED` \| `PENDING` \| `CANCELLED` \| `FAILED` |
+| page           | int    | X  | 0   | 페이지 번호 (0부터 시작)                                  |
+| size           | int    | X  | 20  | 페이지 크기 (1~50)                                    |
 
 ### Response — 체결 내역 (200 OK)
 
@@ -310,8 +310,8 @@ PENDING 상태의 지정가 주문만 취소 가능하다. 취소 시 점유된 
 
 ### Path Parameters
 
-| 파라미터 | 타입 | 설명 |
-|----------|------|------|
+| 파라미터    | 타입   | 설명        |
+|---------|------|-----------|
 | orderId | Long | 취소할 주문 ID |
 
 ### Response (200 OK)
@@ -330,7 +330,7 @@ PENDING 상태의 지정가 주문만 취소 가능하다. 취소 시 점유된 
 
 ### 에러 응답
 
-| code | status | 설명 |
-|------|--------|------|
-| ORDER_NOT_FOUND | 404 | 주문을 찾을 수 없음 |
-| ORDER_NOT_CANCELLABLE | 400 | 이미 체결/실패된 주문은 취소 불가 |
+| code                  | status | 설명                  |
+|-----------------------|--------|---------------------|
+| ORDER_NOT_FOUND       | 404    | 주문을 찾을 수 없음         |
+| ORDER_NOT_CANCELLABLE | 400    | 이미 체결/실패된 주문은 취소 불가 |

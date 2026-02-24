@@ -5,8 +5,8 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilit
 import java.math.BigDecimal;
 
 public record OrderAvailabilityResponse(
-        BigDecimal available,
-        BigDecimal currentPrice
+    BigDecimal available,
+    BigDecimal currentPrice
 ) {
 
     public static OrderAvailabilityResponse from(OrderAvailabilityResult result) {

@@ -20,14 +20,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryResu
 import ksh.tryptobackend.trading.domain.model.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -57,9 +50,9 @@ public class OrderController {
     public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(@Valid @ModelAttribute FindOrderHistoryRequest request) {
         CursorPageResponseDto<OrderHistoryResult> result = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
         CursorPageResponseDto<OrderHistoryResponse> response = CursorPageResponseDto.of(
-                result.content().stream().map(OrderHistoryResponse::from).toList(),
-                result.nextCursor(),
-                result.hasNext());
+            result.content().stream().map(OrderHistoryResponse::from).toList(),
+            result.nextCursor(),
+            result.hasNext());
         return ApiResponseDto.success("조회 성공", response);
     }
 

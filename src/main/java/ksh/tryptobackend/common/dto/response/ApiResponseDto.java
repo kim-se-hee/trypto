@@ -1,10 +1,10 @@
 package ksh.tryptobackend.common.dto.response;
 
 public record ApiResponseDto<T>(
-        int status,
-        String code,
-        String message,
-        T data
+    int status,
+    String code,
+    String message,
+    T data
 ) {
 
     public static <T> ApiResponseDto<T> of(int status, String code, String message, T data) {

@@ -20,13 +20,13 @@ public class HealthCheckStepDefinition {
     @Then("응답 상태코드는 {int}이다")
     public void 응답_상태코드는_이다(int statusCode) {
         commonApiClient.getLastResponse()
-                .expectStatus().isEqualTo(statusCode);
+            .expectStatus().isEqualTo(statusCode);
     }
 
     @Then("응답의 status는 {string}이다")
     public void 응답의_status는_이다(String status) {
         commonApiClient.getLastResponse()
-                .expectBody()
-                .jsonPath("$.status").isEqualTo(status);
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(status);
     }
 }

@@ -7,10 +7,10 @@ public interface ExchangePort {
     Optional<ExchangeData> findById(Long exchangeId);
 
     record ExchangeData(
-            Long exchangeId,
-            java.math.BigDecimal feeRate,
-            Long baseCurrencyCoinId,
-            String baseCurrencySymbol
+        Long exchangeId,
+        java.math.BigDecimal feeRate,
+        Long baseCurrencyCoinId,
+        String baseCurrencySymbol
     ) {
     }
 }

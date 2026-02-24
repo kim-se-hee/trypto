@@ -7,9 +7,9 @@ public interface ExchangeCoinPort {
     Optional<ExchangeCoinData> findById(Long exchangeCoinId);
 
     record ExchangeCoinData(
-            Long exchangeCoinId,
-            Long exchangeId,
-            Long coinId
+        Long exchangeCoinId,
+        Long exchangeId,
+        Long coinId
     ) {
     }
 }

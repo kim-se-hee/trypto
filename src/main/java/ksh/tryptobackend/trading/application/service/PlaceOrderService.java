@@ -2,15 +2,11 @@ package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
+import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
+import ksh.tryptobackend.trading.application.port.out.*;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
-import ksh.tryptobackend.trading.application.port.out.ExchangePort;
 import ksh.tryptobackend.trading.application.port.out.ExchangePort.ExchangeData;
-import ksh.tryptobackend.trading.application.port.out.LivePricePort;
-import ksh.tryptobackend.trading.application.port.out.OrderPersistencePort;
-import ksh.tryptobackend.trading.application.port.out.WalletBalancePort;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
@@ -38,15 +34,15 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     @Transactional
     public Order placeOrder(PlaceOrderCommand command) {
         return orderPersistencePort.findByIdempotencyKey(command.idempotencyKey())
-                .orElseGet(() -> createOrder(command));
+            .orElseGet(() -> createOrder(command));
     }
 
     private Order createOrder(PlaceOrderCommand command) {
         ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(command.exchangeCoinId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
         ExchangeData exchange = exchangePort.findById(exchangeCoin.exchangeId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         validateOrderAmount(command, exchange.baseCurrencySymbol());
         validateLimitPrice(command);
@@ -74,11 +70,11 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                                       ExchangeData exchange, BigDecimal currentPrice,
                                       BigDecimal feeRate, LocalDateTime now) {
         Order order = Order.createMarketBuyOrder(
-                command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-                command.amount(), currentPrice, feeRate, now);
+            command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
+            command.amount(), currentPrice, feeRate, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
-                command.walletId(), exchange.baseCurrencyCoinId());
+            command.walletId(), exchange.baseCurrencyCoinId());
         if (order.getTotalCostForBuy().compareTo(available) > 0) {
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }
@@ -93,19 +89,19 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                                        ExchangeData exchange, BigDecimal currentPrice,
                                        BigDecimal feeRate, LocalDateTime now) {
         BigDecimal available = walletBalancePort.getAvailableBalance(
-                command.walletId(), exchangeCoin.coinId());
+            command.walletId(), exchangeCoin.coinId());
         if (command.amount().compareTo(available) > 0) {
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         Order order = Order.createMarketSellOrder(
-                command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-                command.amount(), currentPrice, feeRate, now);
+            command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
+            command.amount(), currentPrice, feeRate, now);
 
         walletBalancePort.deductBalance(command.walletId(), exchangeCoin.coinId(), order.getQuantity());
 
         walletBalancePort.addBalance(command.walletId(), exchange.baseCurrencyCoinId(),
-                order.getFilledAmount().subtract(order.getFee().getAmount()));
+            order.getFilledAmount().subtract(order.getFee().getAmount()));
 
         return orderPersistencePort.save(order);
     }
@@ -121,11 +117,11 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private Order placeLimitBuyOrder(PlaceOrderCommand command, ExchangeData exchange,
                                      BigDecimal feeRate, LocalDateTime now) {
         Order order = Order.createLimitBuyOrder(
-                command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-                command.amount(), command.price(), feeRate, now);
+            command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
+            command.amount(), command.price(), feeRate, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
-                command.walletId(), exchange.baseCurrencyCoinId());
+            command.walletId(), exchange.baseCurrencyCoinId());
         if (order.getTotalCostForBuy().compareTo(available) > 0) {
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }
@@ -138,11 +134,11 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private Order placeLimitSellOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
                                       BigDecimal feeRate, LocalDateTime now) {
         Order order = Order.createLimitSellOrder(
-                command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-                command.amount(), command.price(), feeRate, now);
+            command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
+            command.amount(), command.price(), feeRate, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
-                command.walletId(), exchangeCoin.coinId());
+            command.walletId(), exchangeCoin.coinId());
         if (order.getQuantity().compareTo(available) > 0) {
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }

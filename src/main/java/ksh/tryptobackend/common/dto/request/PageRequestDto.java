@@ -6,8 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 public record PageRequestDto(
-        @Min(0) int page,
-        @Min(1) @Max(50) int size
+    @Min(0) int page,
+    @Min(1) @Max(50) int size
 ) {
 
     public PageRequestDto() {

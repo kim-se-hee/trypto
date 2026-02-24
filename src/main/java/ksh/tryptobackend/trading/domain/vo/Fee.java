@@ -16,7 +16,7 @@ public final class Fee {
 
     public static Fee calculate(BigDecimal filledAmount, BigDecimal feeRate) {
         BigDecimal feeAmount = filledAmount.multiply(feeRate)
-                .setScale(8, RoundingMode.FLOOR);
+            .setScale(8, RoundingMode.FLOOR);
         return new Fee(feeAmount, feeRate);
     }
 

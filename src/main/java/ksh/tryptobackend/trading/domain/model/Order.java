@@ -2,11 +2,11 @@ package ksh.tryptobackend.trading.domain.model;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.trading.util.QuantityCalculator;
 import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Side;
+import ksh.tryptobackend.trading.util.QuantityCalculator;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,11 +26,11 @@ public class Order {
     private final BigDecimal orderAmount;
     private final BigDecimal quantity;
     private final BigDecimal price;
-    private BigDecimal filledPrice;
-    private Fee fee;
+    private final BigDecimal filledPrice;
+    private final Fee fee;
     private OrderStatus status;
     private final LocalDateTime createdAt;
-    private LocalDateTime filledAt;
+    private final LocalDateTime filledAt;
 
     @Builder(access = lombok.AccessLevel.PRIVATE)
     private Order(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -61,19 +61,19 @@ public class Order {
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
         return Order.builder()
-                .idempotencyKey(idempotencyKey)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .side(Side.BUY)
-                .orderType(OrderType.MARKET)
-                .orderAmount(filledAmount)
-                .quantity(quantity)
-                .filledPrice(currentPrice)
-                .fee(fee)
-                .status(OrderStatus.FILLED)
-                .createdAt(now)
-                .filledAt(now)
-                .build();
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(Side.BUY)
+            .orderType(OrderType.MARKET)
+            .orderAmount(filledAmount)
+            .quantity(quantity)
+            .filledPrice(currentPrice)
+            .fee(fee)
+            .status(OrderStatus.FILLED)
+            .createdAt(now)
+            .filledAt(now)
+            .build();
     }
 
     public static Order createMarketSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -83,19 +83,19 @@ public class Order {
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
         return Order.builder()
-                .idempotencyKey(idempotencyKey)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .side(Side.SELL)
-                .orderType(OrderType.MARKET)
-                .orderAmount(sellQuantity)
-                .quantity(sellQuantity)
-                .filledPrice(currentPrice)
-                .fee(fee)
-                .status(OrderStatus.FILLED)
-                .createdAt(now)
-                .filledAt(now)
-                .build();
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(Side.SELL)
+            .orderType(OrderType.MARKET)
+            .orderAmount(sellQuantity)
+            .quantity(sellQuantity)
+            .filledPrice(currentPrice)
+            .fee(fee)
+            .status(OrderStatus.FILLED)
+            .createdAt(now)
+            .filledAt(now)
+            .build();
     }
 
     public static Order createLimitBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -106,18 +106,18 @@ public class Order {
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
         return Order.builder()
-                .idempotencyKey(idempotencyKey)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .side(Side.BUY)
-                .orderType(OrderType.LIMIT)
-                .orderAmount(filledAmount)
-                .quantity(quantity)
-                .price(limitPrice)
-                .fee(fee)
-                .status(OrderStatus.PENDING)
-                .createdAt(now)
-                .build();
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(Side.BUY)
+            .orderType(OrderType.LIMIT)
+            .orderAmount(filledAmount)
+            .quantity(quantity)
+            .price(limitPrice)
+            .fee(fee)
+            .status(OrderStatus.PENDING)
+            .createdAt(now)
+            .build();
     }
 
     public static Order createLimitSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -126,18 +126,18 @@ public class Order {
         Fee fee = Fee.calculate(sellQuantity.multiply(limitPrice), feeRate);
 
         return Order.builder()
-                .idempotencyKey(idempotencyKey)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .side(Side.SELL)
-                .orderType(OrderType.LIMIT)
-                .orderAmount(sellQuantity)
-                .quantity(sellQuantity)
-                .price(limitPrice)
-                .fee(fee)
-                .status(OrderStatus.PENDING)
-                .createdAt(now)
-                .build();
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(Side.SELL)
+            .orderType(OrderType.LIMIT)
+            .orderAmount(sellQuantity)
+            .quantity(sellQuantity)
+            .price(limitPrice)
+            .fee(fee)
+            .status(OrderStatus.PENDING)
+            .createdAt(now)
+            .build();
     }
 
     public static Order reconstitute(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -145,21 +145,21 @@ public class Order {
                                      BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
                                      LocalDateTime createdAt, LocalDateTime filledAt) {
         return Order.builder()
-                .id(id)
-                .idempotencyKey(idempotencyKey)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .side(side)
-                .orderType(orderType)
-                .orderAmount(orderAmount)
-                .quantity(quantity)
-                .price(price)
-                .filledPrice(filledPrice)
-                .fee(fee)
-                .status(status)
-                .createdAt(createdAt)
-                .filledAt(filledAt)
-                .build();
+            .id(id)
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(side)
+            .orderType(orderType)
+            .orderAmount(orderAmount)
+            .quantity(quantity)
+            .price(price)
+            .filledPrice(filledPrice)
+            .fee(fee)
+            .status(status)
+            .createdAt(createdAt)
+            .filledAt(filledAt)
+            .build();
     }
 
     public void cancel() {

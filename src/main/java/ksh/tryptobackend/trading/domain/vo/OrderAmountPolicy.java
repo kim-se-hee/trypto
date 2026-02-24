@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 public record OrderAmountPolicy(BigDecimal minAmount, BigDecimal maxAmount) {
 
     private static final OrderAmountPolicy KRW = new OrderAmountPolicy(
-            new BigDecimal("5000"), new BigDecimal("1000000000"));
+        new BigDecimal("5000"), new BigDecimal("1000000000"));
     private static final OrderAmountPolicy USDT = new OrderAmountPolicy(
-            new BigDecimal("5"), null);
+        new BigDecimal("5"), null);
 
     public static OrderAmountPolicy of(String baseCurrencySymbol) {
         return switch (baseCurrencySymbol) {

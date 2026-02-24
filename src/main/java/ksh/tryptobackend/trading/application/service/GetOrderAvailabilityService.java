@@ -31,10 +31,10 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
     @Transactional(readOnly = true)
     public OrderAvailabilityResult getAvailability(GetOrderAvailabilityQuery query) {
         ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(query.exchangeCoinId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
         ExchangeData exchange = exchangePort.findById(exchangeCoin.exchangeId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         BigDecimal available;
         if (query.side() == Side.BUY) {

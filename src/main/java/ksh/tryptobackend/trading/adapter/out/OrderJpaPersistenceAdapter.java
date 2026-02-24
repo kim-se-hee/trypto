@@ -30,13 +30,13 @@ public class OrderJpaPersistenceAdapter implements OrderPersistencePort {
     @Override
     public Optional<Order> findById(Long orderId) {
         return orderJpaRepository.findById(orderId)
-                .map(OrderJpaEntity::toDomain);
+            .map(OrderJpaEntity::toDomain);
     }
 
     @Override
     public Optional<Order> findByIdempotencyKey(UUID idempotencyKey) {
         return orderJpaRepository.findByIdempotencyKey(idempotencyKey)
-                .map(OrderJpaEntity::toDomain);
+            .map(OrderJpaEntity::toDomain);
     }
 
     @Override
@@ -45,20 +45,20 @@ public class OrderJpaPersistenceAdapter implements OrderPersistencePort {
         QOrderJpaEntity order = QOrderJpaEntity.orderJpaEntity;
 
         return queryFactory
-                .selectFrom(order)
-                .where(
-                        order.walletId.eq(walletId),
-                        exchangeCoinIdEq(order, exchangeCoinId),
-                        sideEq(order, side),
-                        statusEq(order, status),
-                        cursorLt(order, cursorOrderId)
-                )
-                .orderBy(order.id.desc())
-                .limit(size)
-                .fetch()
-                .stream()
-                .map(OrderJpaEntity::toDomain)
-                .toList();
+            .selectFrom(order)
+            .where(
+                order.walletId.eq(walletId),
+                exchangeCoinIdEq(order, exchangeCoinId),
+                sideEq(order, side),
+                statusEq(order, status),
+                cursorLt(order, cursorOrderId)
+            )
+            .orderBy(order.id.desc())
+            .limit(size)
+            .fetch()
+            .stream()
+            .map(OrderJpaEntity::toDomain)
+            .toList();
     }
 
     private BooleanExpression exchangeCoinIdEq(QOrderJpaEntity order, Long exchangeCoinId) {

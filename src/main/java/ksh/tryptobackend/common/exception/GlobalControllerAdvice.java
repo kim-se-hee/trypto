@@ -24,16 +24,16 @@ public class GlobalControllerAdvice {
     public ResponseEntity<ApiResponseDto<Void>> handleCustomException(CustomException e) {
         ErrorCode errorCode = e.getErrorCode();
         String message = messageSource.getMessage(
-                errorCode.getMessageKey(),
-                e.getArgs().toArray(),
-                Locale.getDefault()
+            errorCode.getMessageKey(),
+            e.getArgs().toArray(),
+            Locale.getDefault()
         );
 
         ApiResponseDto<Void> response = ApiResponseDto.of(
-                errorCode.getStatus(),
-                errorCode.name(),
-                message,
-                null
+            errorCode.getStatus(),
+            errorCode.name(),
+            message,
+            null
         );
 
         return ResponseEntity.status(errorCode.getStatus()).body(response);
@@ -41,17 +41,17 @@ public class GlobalControllerAdvice {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleValidationException(
-            MethodArgumentNotValidException e
+        MethodArgumentNotValidException e
     ) {
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .collect(Collectors.joining(", "));
 
         ApiResponseDto<Void> response = ApiResponseDto.of(
-                HttpStatus.BAD_REQUEST.value(),
-                "VALIDATION_ERROR",
-                message,
-                null
+            HttpStatus.BAD_REQUEST.value(),
+            "VALIDATION_ERROR",
+            message,
+            null
         );
 
         return ResponseEntity.badRequest().body(response);
@@ -62,16 +62,16 @@ public class GlobalControllerAdvice {
         log.error("Unhandled exception", e);
 
         String message = messageSource.getMessage(
-                ErrorCode.INTERNAL_SERVER_ERROR.getMessageKey(),
-                null,
-                Locale.getDefault()
+            ErrorCode.INTERNAL_SERVER_ERROR.getMessageKey(),
+            null,
+            Locale.getDefault()
         );
 
         ApiResponseDto<Void> response = ApiResponseDto.of(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                ErrorCode.INTERNAL_SERVER_ERROR.name(),
-                message,
-                null
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ErrorCode.INTERNAL_SERVER_ERROR.name(),
+            message,
+            null
         );
 
         return ResponseEntity.internalServerError().body(response);
