@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
+@Builder(access = lombok.AccessLevel.PRIVATE)
 public class Order {
 
     private final Long id;
@@ -32,27 +33,6 @@ public class Order {
     private final LocalDateTime createdAt;
     private LocalDateTime filledAt;
 
-    @Builder(access = lombok.AccessLevel.PRIVATE)
-    private Order(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
-                  Side side, OrderType orderType, BigDecimal orderAmount, BigDecimal quantity,
-                  BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
-                  LocalDateTime createdAt, LocalDateTime filledAt) {
-        this.id = id;
-        this.idempotencyKey = idempotencyKey;
-        this.walletId = walletId;
-        this.exchangeCoinId = exchangeCoinId;
-        this.side = side;
-        this.orderType = orderType;
-        this.orderAmount = orderAmount;
-        this.quantity = quantity;
-        this.price = price;
-        this.filledPrice = filledPrice;
-        this.fee = fee;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.filledAt = filledAt;
-    }
-
     public static Order createMarketBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
                                              BigDecimal orderAmount, BigDecimal currentPrice, BigDecimal feeRate,
                                              LocalDateTime now) {
@@ -60,20 +40,8 @@ public class Order {
         BigDecimal filledAmount = quantity.multiply(currentPrice);
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
-        return Order.builder()
-            .idempotencyKey(idempotencyKey)
-            .walletId(walletId)
-            .exchangeCoinId(exchangeCoinId)
-            .side(Side.BUY)
-            .orderType(OrderType.MARKET)
-            .orderAmount(filledAmount)
-            .quantity(quantity)
-            .filledPrice(currentPrice)
-            .fee(fee)
-            .status(OrderStatus.FILLED)
-            .createdAt(now)
-            .filledAt(now)
-            .build();
+        return createOrder(idempotencyKey, walletId, exchangeCoinId,
+            Side.BUY, OrderType.MARKET, filledAmount, quantity, null, currentPrice, fee, now);
     }
 
     public static Order createMarketSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -82,20 +50,8 @@ public class Order {
         BigDecimal filledAmount = sellQuantity.multiply(currentPrice);
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
-        return Order.builder()
-            .idempotencyKey(idempotencyKey)
-            .walletId(walletId)
-            .exchangeCoinId(exchangeCoinId)
-            .side(Side.SELL)
-            .orderType(OrderType.MARKET)
-            .orderAmount(sellQuantity)
-            .quantity(sellQuantity)
-            .filledPrice(currentPrice)
-            .fee(fee)
-            .status(OrderStatus.FILLED)
-            .createdAt(now)
-            .filledAt(now)
-            .build();
+        return createOrder(idempotencyKey, walletId, exchangeCoinId,
+            Side.SELL, OrderType.MARKET, sellQuantity, sellQuantity, null, currentPrice, fee, now);
     }
 
     public static Order createLimitBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -105,19 +61,8 @@ public class Order {
         BigDecimal filledAmount = quantity.multiply(limitPrice);
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
-        return Order.builder()
-            .idempotencyKey(idempotencyKey)
-            .walletId(walletId)
-            .exchangeCoinId(exchangeCoinId)
-            .side(Side.BUY)
-            .orderType(OrderType.LIMIT)
-            .orderAmount(filledAmount)
-            .quantity(quantity)
-            .price(limitPrice)
-            .fee(fee)
-            .status(OrderStatus.PENDING)
-            .createdAt(now)
-            .build();
+        return createOrder(idempotencyKey, walletId, exchangeCoinId,
+            Side.BUY, OrderType.LIMIT, filledAmount, quantity, limitPrice, null, fee, now);
     }
 
     public static Order createLimitSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -125,19 +70,8 @@ public class Order {
                                              LocalDateTime now) {
         Fee fee = Fee.calculate(sellQuantity.multiply(limitPrice), feeRate);
 
-        return Order.builder()
-            .idempotencyKey(idempotencyKey)
-            .walletId(walletId)
-            .exchangeCoinId(exchangeCoinId)
-            .side(Side.SELL)
-            .orderType(OrderType.LIMIT)
-            .orderAmount(sellQuantity)
-            .quantity(sellQuantity)
-            .price(limitPrice)
-            .fee(fee)
-            .status(OrderStatus.PENDING)
-            .createdAt(now)
-            .build();
+        return createOrder(idempotencyKey, walletId, exchangeCoinId,
+            Side.SELL, OrderType.LIMIT, sellQuantity, sellQuantity, limitPrice, null, fee, now);
     }
 
     public static Order reconstitute(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -161,6 +95,7 @@ public class Order {
             .filledAt(filledAt)
             .build();
     }
+
 
     public void cancel() {
         if (this.status == OrderStatus.CANCELLED) {
@@ -190,5 +125,26 @@ public class Order {
 
     public BigDecimal getTotalCostForBuy() {
         return getFilledAmount().add(fee.getAmount());
+    }
+
+    private static Order createOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
+                                     Side side, OrderType orderType, BigDecimal orderAmount,
+                                     BigDecimal quantity, BigDecimal price, BigDecimal filledPrice,
+                                     Fee fee, LocalDateTime now) {
+        return Order.builder()
+            .idempotencyKey(idempotencyKey)
+            .walletId(walletId)
+            .exchangeCoinId(exchangeCoinId)
+            .side(side)
+            .orderType(orderType)
+            .orderAmount(orderAmount)
+            .quantity(quantity)
+            .price(price)
+            .filledPrice(filledPrice)
+            .fee(fee)
+            .status(orderType == OrderType.MARKET ? OrderStatus.FILLED : OrderStatus.PENDING)
+            .createdAt(now)
+            .filledAt(orderType == OrderType.MARKET ? now : null)
+            .build();
     }
 }
