@@ -17,20 +17,20 @@ import java.util.UUID;
 @Getter
 public class Order {
 
-    private Long id;
+    private final Long id;
     private final UUID idempotencyKey;
     private final Long walletId;
     private final Long exchangeCoinId;
     private final Side side;
     private final OrderType orderType;
-    private final BigDecimal orderAmount;
+    private BigDecimal orderAmount;
     private final BigDecimal quantity;
     private final BigDecimal price;
-    private final BigDecimal filledPrice;
-    private final Fee fee;
+    private BigDecimal filledPrice;
+    private Fee fee;
     private OrderStatus status;
     private final LocalDateTime createdAt;
-    private final LocalDateTime filledAt;
+    private LocalDateTime filledAt;
 
     @Builder(access = lombok.AccessLevel.PRIVATE)
     private Order(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -170,10 +170,6 @@ public class Order {
             throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
         }
         this.status = OrderStatus.CANCELLED;
-    }
-
-    public void assignId(Long id) {
-        this.id = id;
     }
 
     public boolean isMarketOrder() {
