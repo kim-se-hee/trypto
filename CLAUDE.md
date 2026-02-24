@@ -244,6 +244,7 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - `Optional.get()` 직접 호출 금지. `orElseThrow()`로 명시적 예외를 던진다
 - 메서드는 하나의 책임만 가져야 하며 20라인을 넘어가면 분리를 고려한다
 - 클래스는 단일 책임 원칙을 지킨다. 분리 시 재사용 가능성과 변경 주기를 함께 고려한다. 여러 곳에서 호출되면 분리하고, 항상 같이 바뀌고 따로 쓸 일이 없다면 하나로 둔다
+- `get` vs `find` 네이밍: `get`은 대상이 반드시 존재한다고 가정하며 없으면 예외를 던진다. `find`는 대상이 없을 수 있으며 `Optional` 또는 빈 컬렉션을 반환한다
 
 ## 레이어별 컨벤션
 
