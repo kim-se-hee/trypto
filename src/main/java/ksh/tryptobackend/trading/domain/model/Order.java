@@ -172,6 +172,10 @@ public class Order {
         this.status = OrderStatus.CANCELLED;
     }
 
+    public void assignId(Long id) {
+        this.id = id;
+    }
+
     public boolean isMarketOrder() {
         return this.orderType == OrderType.MARKET;
     }
@@ -190,9 +194,5 @@ public class Order {
 
     public BigDecimal getTotalCostForBuy() {
         return getFilledAmount().add(fee.getAmount());
-    }
-
-    public void assignId(Long id) {
-        this.id = id;
     }
 }
