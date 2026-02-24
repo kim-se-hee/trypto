@@ -4,11 +4,11 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 
-public class HealthCheckStepDef {
+public class HealthCheckStepDefinition {
 
     private final CommonApiClient commonApiClient;
 
-    public HealthCheckStepDef(CommonApiClient commonApiClient) {
+    public HealthCheckStepDefinition(CommonApiClient commonApiClient) {
         this.commonApiClient = commonApiClient;
     }
 

@@ -20,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrderStepDef {
+public class OrderStepDefinition {
 
     private static final Long WALLET_ID = 1L;
     private static final Long EXCHANGE_ID = 1L;
@@ -39,7 +39,7 @@ public class OrderStepDef {
     private String savedIdempotencyKey;
     private Long firstOrderId;
 
-    public OrderStepDef(CommonApiClient apiClient,
+    public OrderStepDefinition(CommonApiClient apiClient,
                         MockWalletBalanceAdapter walletBalanceAdapter,
                         MockLivePriceAdapter livePriceAdapter,
                         MockExchangeAdapter exchangeAdapter,
