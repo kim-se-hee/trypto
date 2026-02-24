@@ -57,6 +57,67 @@ class OrderTest {
     }
 
     @Nested
+    @DisplayName("주문 금액(orderAmount) 계산")
+    class AmountCalculationTest {
+
+        @Test
+        @DisplayName("시장가 매수 — orderAmount는 체결 수량 × 현재가")
+        void createMarketBuyOrder_orderAmount_equalsQuantityTimesPrice() {
+            BigDecimal orderAmount = new BigDecimal("100000");
+            BigDecimal currentPrice = new BigDecimal("100274000");
+
+            Order order = Order.createMarketBuyOrder(
+                UUID.randomUUID(), 1L, 1L,
+                orderAmount, currentPrice, new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+
+            BigDecimal expectedAmount = order.getQuantity().value().multiply(currentPrice);
+            assertThat(order.getOrderAmount()).isEqualByComparingTo(expectedAmount);
+        }
+
+        @Test
+        @DisplayName("시장가 매도 — orderAmount는 매도 수량 × 현재가")
+        void createMarketSellOrder_orderAmount_equalsQuantityTimesPrice() {
+            BigDecimal sellQuantity = new BigDecimal("0.5");
+            BigDecimal currentPrice = new BigDecimal("100274000");
+
+            Order order = Order.createMarketSellOrder(
+                UUID.randomUUID(), 1L, 1L,
+                sellQuantity, currentPrice, new BigDecimal("0.0005"), LocalDateTime.now());
+
+            BigDecimal expectedAmount = sellQuantity.multiply(currentPrice);
+            assertThat(order.getOrderAmount()).isEqualByComparingTo(expectedAmount);
+        }
+
+        @Test
+        @DisplayName("지정가 매수 — orderAmount는 체결 수량 × 지정가")
+        void createLimitBuyOrder_orderAmount_equalsQuantityTimesLimitPrice() {
+            BigDecimal orderAmount = new BigDecimal("500000");
+            BigDecimal limitPrice = new BigDecimal("100000000");
+
+            Order order = Order.createLimitBuyOrder(
+                UUID.randomUUID(), 1L, 1L,
+                orderAmount, limitPrice, new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+
+            BigDecimal expectedAmount = order.getQuantity().value().multiply(limitPrice);
+            assertThat(order.getOrderAmount()).isEqualByComparingTo(expectedAmount);
+        }
+
+        @Test
+        @DisplayName("지정가 매도 — orderAmount는 매도 수량 × 지정가")
+        void createLimitSellOrder_orderAmount_equalsQuantityTimesLimitPrice() {
+            BigDecimal sellQuantity = new BigDecimal("0.001");
+            BigDecimal limitPrice = new BigDecimal("110000000");
+
+            Order order = Order.createLimitSellOrder(
+                UUID.randomUUID(), 1L, 1L,
+                sellQuantity, limitPrice, new BigDecimal("0.0005"), LocalDateTime.now());
+
+            BigDecimal expectedAmount = sellQuantity.multiply(limitPrice);
+            assertThat(order.getOrderAmount()).isEqualByComparingTo(expectedAmount);
+        }
+    }
+
+    @Nested
     @DisplayName("수수료 계산")
     class FeeCalculationTest {
 

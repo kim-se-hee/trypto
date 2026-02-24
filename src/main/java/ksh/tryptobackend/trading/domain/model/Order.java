@@ -53,7 +53,7 @@ public class Order {
         Fee fee = Fee.calculate(filledAmount, feeRate);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
-            Side.SELL, OrderType.MARKET, sellQuantity, new Quantity(sellQuantity), null, currentPrice, fee, now);
+            Side.SELL, OrderType.MARKET, filledAmount, new Quantity(sellQuantity), null, currentPrice, fee, now);
     }
 
     public static Order createLimitBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
@@ -73,10 +73,11 @@ public class Order {
                                              BigDecimal sellQuantity, BigDecimal limitPrice, BigDecimal feeRate,
                                              LocalDateTime now) {
         validateLimitPrice(limitPrice);
-        Fee fee = Fee.calculate(sellQuantity.multiply(limitPrice), feeRate);
+        BigDecimal filledAmount = sellQuantity.multiply(limitPrice);
+        Fee fee = Fee.calculate(filledAmount, feeRate);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
-            Side.SELL, OrderType.LIMIT, sellQuantity, new Quantity(sellQuantity), limitPrice, null, fee, now);
+            Side.SELL, OrderType.LIMIT, filledAmount, new Quantity(sellQuantity), limitPrice, null, fee, now);
     }
 
     public static Order reconstitute(Long id, UUID idempotencyKey, Long walletId, Long exchangeCoinId,
