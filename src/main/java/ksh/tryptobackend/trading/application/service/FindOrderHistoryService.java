@@ -25,15 +25,7 @@ public class FindOrderHistoryService implements FindOrderHistoryUseCase {
             query.walletId(), query.exchangeCoinId(), query.side(),
             query.status(), query.cursorOrderId(), query.size() + 1);
 
-        boolean hasNext = orders.size() > query.size();
-        List<Order> result = hasNext ? orders.subList(0, query.size()) : orders;
-
-        List<OrderHistoryResult> content = result.stream()
-            .map(OrderHistoryResult::from)
-            .toList();
-
-        Long nextCursor = hasNext ? result.getLast().getId() : null;
-
-        return CursorPageResponseDto.of(content, nextCursor, hasNext);
+        return CursorPageResponseDto.fromPage(
+            orders, query.size(), OrderHistoryResult::from, Order::getId);
     }
 }
