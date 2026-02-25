@@ -15,6 +15,22 @@ export interface WalletData {
   balances: WalletCoinBalance[];
 }
 
+export interface TransferRecord {
+  id: string;
+  exchangeId: string;
+  type: "DEPOSIT" | "WITHDRAW";
+  asset: string;
+  amount: number;
+  fee: number;
+  network: string;
+  address: string;
+  tag?: string;
+  txId?: string;
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "RETURNED" | "DELAYED";
+  requestedAt: string;
+  completedAt?: string;
+}
+
 /** 코인별 지원 체인 목록 */
 export const coinChains: Record<string, string[]> = {
   BTC: ["Bitcoin", "ERC-20", "BEP-20", "TRC-20"],
@@ -140,5 +156,131 @@ export const walletData: WalletData[] = [
       { coinSymbol: "LINK", coinName: "Chainlink", available: 180.00000000, locked: 20.00000000, currentPrice: 19.78 },
       { coinSymbol: "ARB", coinName: "Arbitrum", available: 1_500.00000000, locked: 0, currentPrice: 1.8934 },
     ],
+  },
+];
+
+export const transferHistory: TransferRecord[] = [
+  {
+    id: "upbit-1",
+    exchangeId: "upbit",
+    type: "WITHDRAW",
+    asset: "BTC",
+    amount: 0.0042,
+    fee: 0.0005,
+    network: "Bitcoin",
+    address: "bc1qvk5q7v9wzq0w6u2us6s0dp0q3l9uc8f3m9q7d8",
+    txId: "0x9bd2f1a7c7b04f9c8a1cbe3b1f5f0a1b",
+    status: "PROCESSING",
+    requestedAt: "2026-02-24T13:22:00Z",
+  },
+  {
+    id: "upbit-2",
+    exchangeId: "upbit",
+    type: "DEPOSIT",
+    asset: "ETH",
+    amount: 0.85,
+    fee: 0,
+    network: "ERC-20",
+    address: "0x1a2B3c4D5e6F7890AbCdEf1234567890aBcDeF12",
+    txId: "0x73aa2e5b8c2d4f4fa1c71f4d9b3f1c55",
+    status: "COMPLETED",
+    requestedAt: "2026-02-20T05:40:00Z",
+    completedAt: "2026-02-20T06:12:00Z",
+  },
+  {
+    id: "upbit-3",
+    exchangeId: "upbit",
+    type: "WITHDRAW",
+    asset: "XRP",
+    amount: 320,
+    fee: 1,
+    network: "Ripple",
+    address: "rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe",
+    tag: "12345678",
+    txId: "0x91e9c4d9ff2b4b1dbd4d91b2b0d3cc22",
+    status: "RETURNED",
+    requestedAt: "2026-02-18T09:10:00Z",
+    completedAt: "2026-02-18T12:30:00Z",
+  },
+  {
+    id: "bithumb-1",
+    exchangeId: "bithumb",
+    type: "DEPOSIT",
+    asset: "ADA",
+    amount: 1200,
+    fee: 0,
+    network: "Cardano",
+    address: "addr1q9jk27p8e3fmn0x4cvr8ykz5qhae",
+    txId: "0x4b8a64b75b7d48d2b22a35c0f1a4b210",
+    status: "PENDING",
+    requestedAt: "2026-02-24T01:05:00Z",
+  },
+  {
+    id: "bithumb-2",
+    exchangeId: "bithumb",
+    type: "WITHDRAW",
+    asset: "BTC",
+    amount: 0.0018,
+    fee: 0.0005,
+    network: "Bitcoin",
+    address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+    txId: "0x2e4a5f8c1d3c4b7a9e1c1a2b3c4d5e6f",
+    status: "COMPLETED",
+    requestedAt: "2026-02-14T03:30:00Z",
+    completedAt: "2026-02-14T04:10:00Z",
+  },
+  {
+    id: "bithumb-3",
+    exchangeId: "bithumb",
+    type: "WITHDRAW",
+    asset: "DOT",
+    amount: 58,
+    fee: 0.1,
+    network: "Polkadot",
+    address: "15oF4uVJwmo4TdGW7VfQxNLavjCXviqWrztPu7CAkKiA",
+    txId: "0x4f7c3a8b1d2e4f5a6b7c8d9e0f1a2b3c",
+    status: "FAILED",
+    requestedAt: "2026-02-11T07:45:00Z",
+  },
+  {
+    id: "binance-1",
+    exchangeId: "binance",
+    type: "WITHDRAW",
+    asset: "USDT",
+    amount: 650,
+    fee: 1,
+    network: "TRC-20",
+    address: "TJDENsfBJs4RFETt1X1W8wMDc8M5XnJhCe",
+    txId: "0x7d2c1f9a0b2c4d5e6f7a8b9c0d1e2f3a",
+    status: "DELAYED",
+    requestedAt: "2026-02-23T12:15:00Z",
+  },
+  {
+    id: "binance-2",
+    exchangeId: "binance",
+    type: "DEPOSIT",
+    asset: "SOL",
+    amount: 14.2,
+    fee: 0,
+    network: "Solana",
+    address: "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S",
+    txId: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+    status: "COMPLETED",
+    requestedAt: "2026-02-09T08:00:00Z",
+    completedAt: "2026-02-09T08:12:00Z",
+  },
+  {
+    id: "binance-3",
+    exchangeId: "binance",
+    type: "WITHDRAW",
+    asset: "ARB",
+    amount: 420,
+    fee: 0.1,
+    network: "Arbitrum One",
+    address: "0x28C6c06298d514Db089934071355E5743bf21d60",
+    txId: "0x5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+    status: "COMPLETED",
+    requestedAt: "2026-01-30T10:55:00Z",
+    completedAt: "2026-01-30T11:10:00Z",
   },
 ];

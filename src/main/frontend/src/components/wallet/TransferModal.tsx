@@ -121,7 +121,7 @@ export function TransferModal({
           <div className="flex items-center gap-3">
             <CoinIcon symbol={coin.coinSymbol} size={32} />
             <div>
-              <DialogTitle>{coin.coinSymbol} 송금</DialogTitle>
+              <DialogTitle>{coin.coinSymbol} 출금</DialogTitle>
               <DialogDescription className="mt-0.5">
                 {coin.coinName}
               </DialogDescription>
@@ -261,7 +261,7 @@ export function TransferModal({
 
           {/* Submit */}
           <Button className="w-full" onClick={handleSubmit}>
-            송금하기
+            출금하기
           </Button>
         </div>
       </DialogContent>

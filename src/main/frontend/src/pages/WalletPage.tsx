@@ -7,7 +7,8 @@ import { WalletAssetTable } from "@/components/wallet/WalletAssetTable";
 import { WalletAssetDetail } from "@/components/wallet/WalletAssetDetail";
 import { TransferModal } from "@/components/wallet/TransferModal";
 import { DepositModal } from "@/components/wallet/DepositModal";
-import { walletData } from "@/mocks/wallet";
+import { TransferHistoryPanel } from "@/components/wallet/TransferHistoryPanel";
+import { walletData, transferHistory } from "@/mocks/wallet";
 import type { WalletCoinBalance } from "@/mocks/wallet";
 
 const exchangeTabItems = walletData.map((w) => ({
@@ -64,7 +65,7 @@ export function WalletPage() {
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight">입출금</h1>
               <p className="mt-1.5 text-sm font-medium text-muted-foreground">
-                자산 관리 &middot; 입금, 거래소 간 송금
+                자산 관리 &middot; 입금/출금 내역 확인
               </p>
             </div>
             <ExchangeTabs
@@ -95,8 +96,6 @@ export function WalletPage() {
             baseCurrency={wallet.baseCurrency}
             onSelectCoin={setSelectedCoin}
             selectedCoin={selectedCoin?.coinSymbol ?? null}
-            onDeposit={handleDeposit}
-            onTransfer={handleTransfer}
           />
 
           {/* Desktop: side panel */}
@@ -111,6 +110,12 @@ export function WalletPage() {
                   onTransfer={handleTransfer}
                 />
               </div>
+              <TransferHistoryPanel
+                exchangeId={wallet.exchangeId}
+                exchanges={walletData}
+                records={transferHistory}
+                assetFilter={selectedCoin.coinSymbol}
+              />
             </div>
           )}
         </div>
@@ -136,6 +141,14 @@ export function WalletPage() {
               onDeposit={handleDeposit}
               onTransfer={handleTransfer}
             />
+            <div className="px-4 pb-6">
+              <TransferHistoryPanel
+                exchangeId={wallet.exchangeId}
+                exchanges={walletData}
+                records={transferHistory}
+                assetFilter={selectedCoin.coinSymbol}
+              />
+            </div>
           </div>
         </div>
       )}

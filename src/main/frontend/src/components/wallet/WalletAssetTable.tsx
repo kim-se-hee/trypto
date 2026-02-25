@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, ArrowDownToLine, ArrowLeftRight, Lock } from "lucide-react";
+import { Search, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity, formatCurrencyCompact, SMALL_AMOUNT_THRESHOLD } from "@/lib/formatters";
@@ -13,8 +13,6 @@ interface WalletAssetTableProps {
   baseCurrency: string;
   onSelectCoin?: (coin: WalletCoinBalance | null) => void;
   selectedCoin?: string | null;
-  onDeposit?: (coin: WalletCoinBalance) => void;
-  onTransfer?: (coin: WalletCoinBalance) => void;
 }
 
 type SortKey = "name" | "total" | "available" | "locked";
@@ -35,9 +33,9 @@ function formatDisplayQuantity(quantity: number, symbol: string, baseCurrency: s
   return formatQuantity(quantity);
 }
 
-const GRID_COLS = "grid-cols-[1.4fr_minmax(100px,1.2fr)_minmax(90px,1fr)_minmax(80px,0.8fr)_minmax(100px,auto)]";
+const GRID_COLS = "grid-cols-[1.6fr_minmax(120px,1.2fr)_minmax(100px,1fr)_minmax(90px,0.8fr)]";
 
-export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selectedCoin, onDeposit, onTransfer }: WalletAssetTableProps) {
+export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selectedCoin }: WalletAssetTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [hideSmall, setHideSmall] = useState(false);
 
@@ -136,7 +134,6 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
               {col.key === "name" && <SortIcon column="name" activeColumn={sortKey} direction={sortDir} />}
             </button>
           ))}
-          <span className="whitespace-nowrap text-right text-xs font-medium text-muted-foreground">거래</span>
         </div>
 
         {/* Body */}
@@ -200,35 +197,6 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
                       : "—"}
                   </div>
 
-                  {/* Actions — 입금/송금 for coins, 입금 for base currency */}
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    {isBase ? (
-                      <button
-                        onClick={() => onDeposit?.(b)}
-                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                      >
-                        <ArrowDownToLine className="mr-0.5 inline h-3 w-3" />
-                        입금
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => onDeposit?.(b)}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                        >
-                          <ArrowDownToLine className="mr-0.5 inline h-3 w-3" />
-                          입금
-                        </button>
-                        <button
-                          onClick={() => onTransfer?.(b)}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                        >
-                          <ArrowLeftRight className="mr-0.5 inline h-3 w-3" />
-                          송금
-                        </button>
-                      </>
-                    )}
-                  </div>
                 </div>
               );
             })

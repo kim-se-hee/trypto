@@ -1,4 +1,4 @@
-import { X, ArrowDownToLine, ArrowLeftRight } from "lucide-react";
+import { X, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity, formatFiatEstimate } from "@/lib/formatters";
@@ -53,7 +53,7 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onDeposit, onTr
           </p>
         )}
 
-        {/* Action buttons — 입금/송금 for coins, 입금 for base currency */}
+        {/* Action buttons — 입금/출금 for coins, 입금 for base currency */}
         <div className="mt-4 flex gap-2">
           {isBase ? (
             <button
@@ -76,8 +76,8 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onDeposit, onTr
                 onClick={() => onTransfer?.(coin)}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]"
               >
-                <ArrowLeftRight className="h-4 w-4" />
-                송금
+                <ArrowUpFromLine className="h-4 w-4" />
+                출금
               </button>
             </>
           )}
