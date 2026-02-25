@@ -123,3 +123,5 @@ export const rankingData: Record<RankingPeriod, RankingEntry[]> = {
   weekly: generateRanking("weekly"),
   monthly: generateRanking("monthly"),
 };
+
+export const MY_USER_ID = 1024;
