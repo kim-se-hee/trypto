@@ -9,6 +9,7 @@ const navItems = [
   { path: "/portfolio", label: "투자내역" },
   { path: "/wallet", label: "입출금" },
   { path: "/ranking", label: "랭킹" },
+  { path: "/regret", label: "투자 복기" },
 ];
 
 export function Header() {

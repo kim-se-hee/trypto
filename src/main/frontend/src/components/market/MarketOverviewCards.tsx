@@ -12,8 +12,8 @@ interface MarketOverviewCardsProps {
 
 function formatCardPrice(price: number, baseCurrency: string): string {
   if (baseCurrency === "SOL") {
-    if (price >= 1) return `◎${price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
-    return `◎${price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 8 })}`;
+    if (price >= 1) return `${price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL`;
+    return `${price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 8 })} SOL`;
   }
   if (baseCurrency === "USDT") {
     return `$${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
