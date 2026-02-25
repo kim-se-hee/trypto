@@ -132,8 +132,19 @@ public class Order {
         return quantity.value().multiply(filledPrice != null ? filledPrice : price);
     }
 
-    public BigDecimal getTotalCostForBuy() {
+    public BigDecimal getSettlementDebit() {
         return getFilledAmount().add(fee.amount());
+    }
+
+    public BigDecimal getSettlementCredit() {
+        return getFilledAmount().subtract(fee.amount());
+    }
+
+    public void validateSufficientBalance(BigDecimal available) {
+        BigDecimal required = side == Side.BUY ? getSettlementDebit() : quantity.value();
+        if (required.compareTo(available) > 0) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
     }
 
     private static Order createOrder(String idempotencyKey, Long walletId, Long exchangeCoinId,

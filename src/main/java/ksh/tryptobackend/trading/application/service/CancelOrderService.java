@@ -48,7 +48,7 @@ public class CancelOrderService implements CancelOrderUseCase {
         if (order.getSide() == Side.BUY) {
             TradingVenue venue = tradingVenuePort.findByExchangeId(exchangeCoin.exchangeId())
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-            walletBalancePort.unlockBalance(order.getWalletId(), venue.baseCurrencyCoinId(), order.getTotalCostForBuy());
+            walletBalancePort.unlockBalance(order.getWalletId(), venue.baseCurrencyCoinId(), order.getSettlementDebit());
         } else {
             walletBalancePort.unlockBalance(order.getWalletId(), exchangeCoin.coinId(), order.getQuantity().value());
         }
