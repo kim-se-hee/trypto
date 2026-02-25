@@ -15,6 +15,84 @@ export interface WalletData {
   balances: WalletCoinBalance[];
 }
 
+/** 코인별 지원 체인 목록 */
+export const coinChains: Record<string, string[]> = {
+  BTC: ["Bitcoin", "ERC-20", "BEP-20", "TRC-20"],
+  ETH: ["ERC-20", "BEP-20", "Arbitrum One"],
+  XRP: ["Ripple"],
+  SOL: ["Solana"],
+  DOGE: ["Dogecoin", "BEP-20"],
+  ADA: ["Cardano"],
+  AVAX: ["Avalanche C-Chain", "BEP-20"],
+  LINK: ["ERC-20", "BEP-20"],
+  DOT: ["Polkadot"],
+  ARB: ["Arbitrum One", "ERC-20"],
+  KRW: [],
+  USDT: ["ERC-20", "TRC-20", "BEP-20", "Solana", "Arbitrum One"],
+};
+
+/** 태그/메모 필요 코인 */
+export const tagRequiredCoins: string[] = ["XRP", "XLM", "EOS", "ATOM"];
+
+/** 출금 수수료: 거래소 → 코인 → 체인 → 수수료(코인 단위) */
+export const withdrawalFees: Record<string, Record<string, Record<string, number>>> = {
+  upbit: {
+    BTC: { Bitcoin: 0.0005, "ERC-20": 0.0008, "BEP-20": 0.0002 },
+    ETH: { "ERC-20": 0.005, "BEP-20": 0.0005, "Arbitrum One": 0.0003 },
+    XRP: { Ripple: 1 },
+    SOL: { Solana: 0.01 },
+    DOGE: { Dogecoin: 5, "BEP-20": 0.5 },
+    ADA: { Cardano: 1 },
+    AVAX: { "Avalanche C-Chain": 0.01, "BEP-20": 0.002 },
+    LINK: { "ERC-20": 0.5, "BEP-20": 0.05 },
+  },
+  bithumb: {
+    BTC: { Bitcoin: 0.0005, "ERC-20": 0.0009, "BEP-20": 0.00025 },
+    ETH: { "ERC-20": 0.005, "BEP-20": 0.0005 },
+    ADA: { Cardano: 1 },
+    DOT: { Polkadot: 0.1 },
+  },
+  binance: {
+    BTC: { Bitcoin: 0.00015, "ERC-20": 0.0003, "BEP-20": 0.0000065 },
+    ETH: { "ERC-20": 0.0016, "BEP-20": 0.000058, "Arbitrum One": 0.00013 },
+    SOL: { Solana: 0.01 },
+    LINK: { "ERC-20": 0.3, "BEP-20": 0.02 },
+    ARB: { "Arbitrum One": 0.1, "ERC-20": 1.5 },
+    USDT: { "ERC-20": 3.5, "TRC-20": 1, "BEP-20": 0.29, Solana: 1, "Arbitrum One": 0.1 },
+  },
+};
+
+/** 거래소별 입금 주소: 거래소 → 체인 → { address, tag? } */
+export const depositAddresses: Record<string, Record<string, { address: string; tag?: string }>> = {
+  upbit: {
+    Bitcoin: { address: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy" },
+    "ERC-20": { address: "0x1a2B3c4D5e6F7890AbCdEf1234567890aBcDeF12" },
+    "BEP-20": { address: "bnb1grpf0955h0efa6603a0b43771db4bc27d6e1r4e" },
+    "TRC-20": { address: "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7" },
+    Ripple: { address: "rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe", tag: "12345678" },
+    Solana: { address: "4fYNw3VBn7JtSRcLBmf5M8EPJ1K9CZyJGCz5AE3AwdHP" },
+    Dogecoin: { address: "DDogepartyxxxxxxxxxxxxxxxxxxw1dfzr" },
+    Cardano: { address: "addr1qxck68p7h8fjm5...r3vcfyz7smhae" },
+    "Avalanche C-Chain": { address: "0x7a8b9c0D1e2F3a4B5C6D7E8F9a0b1C2D3E4f5A6b" },
+  },
+  bithumb: {
+    Bitcoin: { address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" },
+    "ERC-20": { address: "0x9f8e7D6c5B4a3F2E1d0C9b8A7F6e5D4c3B2a1F0e" },
+    "BEP-20": { address: "bnb1pq9f85l2k63hy5xwdpvgsx4c0h9s3k7dz2nmvf" },
+    Ripple: { address: "rBithumbHotWaLLetXXXXXXXXXXX2fGq", tag: "87654321" },
+    Cardano: { address: "addr1q9jk27p8e3fmn...x4cvr8ykz5qhae" },
+    Polkadot: { address: "15oF4uVJwmo4TdGW7VfQxNLavjCXviqWrztPu7CAkKiA" },
+  },
+  binance: {
+    Bitcoin: { address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" },
+    "ERC-20": { address: "0x28C6c06298d514Db089934071355E5743bf21d60" },
+    "BEP-20": { address: "bnb136ns6lfw4zs5hg4n85vdthaad7hq5m4gtkgf23" },
+    "TRC-20": { address: "TJDENsfBJs4RFETt1X1W8wMDc8M5XnJhCe" },
+    Solana: { address: "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S" },
+    "Arbitrum One": { address: "0x28C6c06298d514Db089934071355E5743bf21d60" },
+  },
+};
+
 export const walletData: WalletData[] = [
   {
     exchangeId: "upbit",

@@ -13,6 +13,8 @@ interface WalletAssetTableProps {
   baseCurrency: string;
   onSelectCoin?: (coin: WalletCoinBalance | null) => void;
   selectedCoin?: string | null;
+  onDeposit?: (coin: WalletCoinBalance) => void;
+  onTransfer?: (coin: WalletCoinBalance) => void;
 }
 
 type SortKey = "name" | "total" | "available" | "locked";
@@ -35,7 +37,7 @@ function formatDisplayQuantity(quantity: number, symbol: string, baseCurrency: s
 
 const GRID_COLS = "grid-cols-[1.4fr_minmax(100px,1.2fr)_minmax(90px,1fr)_minmax(80px,0.8fr)_minmax(100px,auto)]";
 
-export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selectedCoin }: WalletAssetTableProps) {
+export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selectedCoin, onDeposit, onTransfer }: WalletAssetTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [hideSmall, setHideSmall] = useState(false);
 
@@ -201,17 +203,26 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
                   {/* Actions — 입금/송금 for coins, 입금 for base currency */}
                   <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                     {isBase ? (
-                      <button className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10">
+                      <button
+                        onClick={() => onDeposit?.(b)}
+                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                      >
                         <ArrowDownToLine className="mr-0.5 inline h-3 w-3" />
                         입금
                       </button>
                     ) : (
                       <>
-                        <button className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10">
+                        <button
+                          onClick={() => onDeposit?.(b)}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
                           <ArrowDownToLine className="mr-0.5 inline h-3 w-3" />
                           입금
                         </button>
-                        <button className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10">
+                        <button
+                          onClick={() => onTransfer?.(b)}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
                           <ArrowLeftRight className="mr-0.5 inline h-3 w-3" />
                           송금
                         </button>

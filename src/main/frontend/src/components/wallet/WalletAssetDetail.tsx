@@ -8,6 +8,8 @@ interface WalletAssetDetailProps {
   coin: WalletCoinBalance;
   baseCurrency: string;
   onClose: () => void;
+  onDeposit?: (coin: WalletCoinBalance) => void;
+  onTransfer?: (coin: WalletCoinBalance) => void;
 }
 
 function formatDisplay(quantity: number, coinSymbol: string, baseCurrency: string): string {
@@ -15,7 +17,7 @@ function formatDisplay(quantity: number, coinSymbol: string, baseCurrency: strin
   return formatQuantity(quantity);
 }
 
-export function WalletAssetDetail({ coin, baseCurrency, onClose }: WalletAssetDetailProps) {
+export function WalletAssetDetail({ coin, baseCurrency, onClose, onDeposit, onTransfer }: WalletAssetDetailProps) {
   const total = coin.available + coin.locked;
   const totalValue = total * coin.currentPrice;
   const isBase = coin.coinSymbol === baseCurrency;
@@ -54,17 +56,26 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose }: WalletAssetDe
         {/* Action buttons — 입금/송금 for coins, 입금 for base currency */}
         <div className="mt-4 flex gap-2">
           {isBase ? (
-            <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]">
+            <button
+              onClick={() => onDeposit?.(coin)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]"
+            >
               <ArrowDownToLine className="h-4 w-4" />
               입금
             </button>
           ) : (
             <>
-              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]">
+              <button
+                onClick={() => onDeposit?.(coin)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]"
+              >
                 <ArrowDownToLine className="h-4 w-4" />
                 입금
               </button>
-              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]">
+              <button
+                onClick={() => onTransfer?.(coin)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]"
+              >
                 <ArrowLeftRight className="h-4 w-4" />
                 송금
               </button>

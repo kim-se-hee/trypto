@@ -1,10 +1,12 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { WalletSummary } from "@/components/wallet/WalletSummary";
 import { WalletAssetTable } from "@/components/wallet/WalletAssetTable";
 import { WalletAssetDetail } from "@/components/wallet/WalletAssetDetail";
+import { TransferModal } from "@/components/wallet/TransferModal";
+import { DepositModal } from "@/components/wallet/DepositModal";
 import { walletData } from "@/mocks/wallet";
 import type { WalletCoinBalance } from "@/mocks/wallet";
 
@@ -24,10 +26,21 @@ export function WalletPage() {
     [selectedExchange],
   );
 
+  const [transferCoin, setTransferCoin] = useState<WalletCoinBalance | null>(null);
+  const [depositCoin, setDepositCoin] = useState<WalletCoinBalance | null>(null);
+
   const handleExchangeChange = (exchangeId: string) => {
     setSearchParams({ exchange: exchangeId });
     setSelectedCoin(null);
   };
+
+  const handleDeposit = useCallback((coin: WalletCoinBalance) => {
+    setDepositCoin(coin);
+  }, []);
+
+  const handleTransfer = useCallback((coin: WalletCoinBalance) => {
+    setTransferCoin(coin);
+  }, []);
 
   // 모바일 바텀시트 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -82,6 +95,8 @@ export function WalletPage() {
             baseCurrency={wallet.baseCurrency}
             onSelectCoin={setSelectedCoin}
             selectedCoin={selectedCoin?.coinSymbol ?? null}
+            onDeposit={handleDeposit}
+            onTransfer={handleTransfer}
           />
 
           {/* Desktop: side panel */}
@@ -92,6 +107,8 @@ export function WalletPage() {
                   coin={selectedCoin}
                   baseCurrency={wallet.baseCurrency}
                   onClose={() => setSelectedCoin(null)}
+                  onDeposit={handleDeposit}
+                  onTransfer={handleTransfer}
                 />
               </div>
             </div>
@@ -116,9 +133,33 @@ export function WalletPage() {
               coin={selectedCoin}
               baseCurrency={wallet.baseCurrency}
               onClose={() => setSelectedCoin(null)}
+              onDeposit={handleDeposit}
+              onTransfer={handleTransfer}
             />
           </div>
         </div>
+      )}
+
+      {/* Transfer Modal */}
+      {transferCoin && (
+        <TransferModal
+          isOpen
+          onClose={() => setTransferCoin(null)}
+          coin={transferCoin}
+          exchangeId={wallet.exchangeId}
+          baseCurrency={wallet.baseCurrency}
+        />
+      )}
+
+      {/* Deposit Modal */}
+      {depositCoin && (
+        <DepositModal
+          isOpen
+          onClose={() => setDepositCoin(null)}
+          coin={depositCoin}
+          exchangeId={wallet.exchangeId}
+          baseCurrency={wallet.baseCurrency}
+        />
       )}
     </div>
   );
