@@ -8,6 +8,7 @@ import { MarketPage } from "@/pages/MarketPage";
 import { PortfolioPage } from "@/pages/PortfolioPage";
 import { WalletPage } from "@/pages/WalletPage";
 import { RankingPage } from "@/pages/RankingPage";
+import { MyPage } from "@/pages/MyPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/ranking" element={<RankingPage />} />
+        <Route path="/mypage" element={<MyPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

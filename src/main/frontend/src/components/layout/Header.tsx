@@ -48,7 +48,12 @@ export function Header() {
         {/* Desktop user info */}
         <div className="hidden items-center gap-3 sm:flex">
           {user && (
-            <span className="text-sm font-medium text-muted-foreground">{user.nickname}</span>
+            <Link
+              to="/mypage"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              {user.nickname}
+            </Link>
           )}
           <button
             onClick={logout}
@@ -93,7 +98,13 @@ export function Header() {
 
           <div className="mt-2 flex items-center justify-between border-t border-border/30 px-3 pt-3">
             {user && (
-              <span className="text-sm font-medium text-muted-foreground">{user.nickname}</span>
+              <Link
+                to="/mypage"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                {user.nickname}
+              </Link>
             )}
             <button
               onClick={() => {
