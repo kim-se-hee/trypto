@@ -2,8 +2,10 @@ package ksh.tryptobackend.trading.domain.model;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.trading.domain.vo.Fee;
+import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Quantity;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrderTest {
+
+    private static final TradingVenue DOMESTIC_VENUE = new TradingVenue(
+        new BigDecimal("0.0005"), 1L, OrderAmountPolicy.DOMESTIC);
 
     @Nested
     @DisplayName("수량 계산")
@@ -68,7 +73,7 @@ class OrderTest {
 
             Order order = Order.createMarketBuyOrder(
                 UUID.randomUUID(), 1L, 1L,
-                orderAmount, currentPrice, new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+                orderAmount, currentPrice, DOMESTIC_VENUE, LocalDateTime.now());
 
             BigDecimal expectedAmount = order.getQuantity().value().multiply(currentPrice);
             assertThat(order.getAmount()).isEqualByComparingTo(expectedAmount);
@@ -82,7 +87,7 @@ class OrderTest {
 
             Order order = Order.createMarketSellOrder(
                 UUID.randomUUID(), 1L, 1L,
-                sellQuantity, currentPrice, new BigDecimal("0.0005"), LocalDateTime.now());
+                sellQuantity, currentPrice, DOMESTIC_VENUE, LocalDateTime.now());
 
             BigDecimal expectedAmount = sellQuantity.multiply(currentPrice);
             assertThat(order.getAmount()).isEqualByComparingTo(expectedAmount);
@@ -96,7 +101,7 @@ class OrderTest {
 
             Order order = Order.createLimitBuyOrder(
                 UUID.randomUUID(), 1L, 1L,
-                orderAmount, limitPrice, new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+                orderAmount, limitPrice, DOMESTIC_VENUE, LocalDateTime.now());
 
             BigDecimal expectedAmount = order.getQuantity().value().multiply(limitPrice);
             assertThat(order.getAmount()).isEqualByComparingTo(expectedAmount);
@@ -110,7 +115,7 @@ class OrderTest {
 
             Order order = Order.createLimitSellOrder(
                 UUID.randomUUID(), 1L, 1L,
-                sellQuantity, limitPrice, new BigDecimal("0.0005"), LocalDateTime.now());
+                sellQuantity, limitPrice, DOMESTIC_VENUE, LocalDateTime.now());
 
             BigDecimal expectedAmount = sellQuantity.multiply(limitPrice);
             assertThat(order.getAmount()).isEqualByComparingTo(expectedAmount);
@@ -154,7 +159,7 @@ class OrderTest {
             Order order = Order.createLimitBuyOrder(
                 UUID.randomUUID(), 1L, 1L,
                 new BigDecimal("500000"), new BigDecimal("100000000"),
-                new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+                DOMESTIC_VENUE, LocalDateTime.now());
 
             order.cancel();
 
@@ -167,7 +172,7 @@ class OrderTest {
             Order order = Order.createMarketBuyOrder(
                 UUID.randomUUID(), 1L, 1L,
                 new BigDecimal("100000"), new BigDecimal("100274000"),
-                new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+                DOMESTIC_VENUE, LocalDateTime.now());
 
             assertThatThrownBy(order::cancel)
                 .isInstanceOf(CustomException.class);
@@ -179,7 +184,7 @@ class OrderTest {
             Order order = Order.createLimitBuyOrder(
                 UUID.randomUUID(), 1L, 1L,
                 new BigDecimal("500000"), new BigDecimal("100000000"),
-                new BigDecimal("0.0005"), "KRW", LocalDateTime.now());
+                DOMESTIC_VENUE, LocalDateTime.now());
 
             order.cancel();
             order.cancel();

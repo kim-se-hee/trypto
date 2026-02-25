@@ -6,10 +6,10 @@ import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
 import ksh.tryptobackend.trading.application.port.out.*;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
-import ksh.tryptobackend.trading.application.port.out.TradingVenuePort.TradingVenue;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Side;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,31 +43,29 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         TradingVenue venue = tradingVenuePort.findByExchangeId(exchangeCoin.exchangeId())
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
-        BigDecimal feeRate = venue.feeRate();
         LocalDateTime now = LocalDateTime.now(clock);
 
         if (command.orderType() == OrderType.MARKET) {
-            return placeMarketOrder(command, exchangeCoin, venue, feeRate, now);
+            return placeMarketOrder(command, exchangeCoin, venue, now);
         }
-        return placeLimitOrder(command, exchangeCoin, venue, feeRate, now);
+        return placeLimitOrder(command, exchangeCoin, venue, now);
     }
 
     private Order placeMarketOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
-                                   TradingVenue venue, BigDecimal feeRate, LocalDateTime now) {
+                                   TradingVenue venue, LocalDateTime now) {
         BigDecimal currentPrice = livePricePort.getCurrentPrice(command.exchangeCoinId());
 
         if (command.side() == Side.BUY) {
-            return placeMarketBuyOrder(command, exchangeCoin, venue, currentPrice, feeRate, now);
+            return placeMarketBuyOrder(command, exchangeCoin, venue, currentPrice, now);
         }
-        return placeMarketSellOrder(command, exchangeCoin, venue, currentPrice, feeRate, now);
+        return placeMarketSellOrder(command, exchangeCoin, venue, currentPrice, now);
     }
 
     private Order placeMarketBuyOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
-                                      TradingVenue venue, BigDecimal currentPrice,
-                                      BigDecimal feeRate, LocalDateTime now) {
+                                      TradingVenue venue, BigDecimal currentPrice, LocalDateTime now) {
         Order order = Order.createMarketBuyOrder(
             command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-            command.amount(), currentPrice, feeRate, venue.baseCurrencySymbol(), now);
+            command.amount(), currentPrice, venue, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
             command.walletId(), venue.baseCurrencyCoinId());
@@ -82,8 +80,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     }
 
     private Order placeMarketSellOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
-                                       TradingVenue venue, BigDecimal currentPrice,
-                                       BigDecimal feeRate, LocalDateTime now) {
+                                       TradingVenue venue, BigDecimal currentPrice, LocalDateTime now) {
         BigDecimal available = walletBalancePort.getAvailableBalance(
             command.walletId(), exchangeCoin.coinId());
         if (command.amount().compareTo(available) > 0) {
@@ -92,7 +89,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
         Order order = Order.createMarketSellOrder(
             command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-            command.amount(), currentPrice, feeRate, now);
+            command.amount(), currentPrice, venue, now);
 
         walletBalancePort.deductBalance(command.walletId(), exchangeCoin.coinId(), order.getQuantity().value());
 
@@ -103,18 +100,17 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     }
 
     private Order placeLimitOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
-                                  TradingVenue venue, BigDecimal feeRate, LocalDateTime now) {
+                                  TradingVenue venue, LocalDateTime now) {
         if (command.side() == Side.BUY) {
-            return placeLimitBuyOrder(command, venue, feeRate, now);
+            return placeLimitBuyOrder(command, venue, now);
         }
-        return placeLimitSellOrder(command, exchangeCoin, feeRate, now);
+        return placeLimitSellOrder(command, exchangeCoin, venue, now);
     }
 
-    private Order placeLimitBuyOrder(PlaceOrderCommand command, TradingVenue venue,
-                                     BigDecimal feeRate, LocalDateTime now) {
+    private Order placeLimitBuyOrder(PlaceOrderCommand command, TradingVenue venue, LocalDateTime now) {
         Order order = Order.createLimitBuyOrder(
             command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-            command.amount(), command.price(), feeRate, venue.baseCurrencySymbol(), now);
+            command.amount(), command.price(), venue, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
             command.walletId(), venue.baseCurrencyCoinId());
@@ -128,10 +124,10 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     }
 
     private Order placeLimitSellOrder(PlaceOrderCommand command, ExchangeCoinData exchangeCoin,
-                                      BigDecimal feeRate, LocalDateTime now) {
+                                      TradingVenue venue, LocalDateTime now) {
         Order order = Order.createLimitSellOrder(
             command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
-            command.amount(), command.price(), feeRate, now);
+            command.amount(), command.price(), venue, now);
 
         BigDecimal available = walletBalancePort.getAvailableBalance(
             command.walletId(), exchangeCoin.coinId());

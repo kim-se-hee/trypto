@@ -11,7 +11,8 @@ import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.trading.adapter.out.OrderJpaRepository;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
-import ksh.tryptobackend.trading.application.port.out.TradingVenuePort.TradingVenue;
+import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -67,7 +68,8 @@ public class OrderStepDefinition {
 
     @Given("업비트 거래소가 등록되어 있다")
     public void 업비트_거래소가_등록되어_있다() {
-        tradingVenueAdapter.addVenue(new TradingVenue(EXCHANGE_ID, new BigDecimal("0.0005"), KRW_COIN_ID, "KRW"));
+        tradingVenueAdapter.addVenue(EXCHANGE_ID,
+            new TradingVenue(new BigDecimal("0.0005"), KRW_COIN_ID, OrderAmountPolicy.DOMESTIC));
     }
 
     @Given("업비트에 BTC가 상장되어 있다")

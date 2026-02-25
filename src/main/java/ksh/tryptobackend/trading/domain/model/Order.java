@@ -3,11 +3,11 @@ package ksh.tryptobackend.trading.domain.model;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.domain.vo.Fee;
-import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
 import ksh.tryptobackend.trading.domain.vo.Quantity;
 import ksh.tryptobackend.trading.domain.vo.Side;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -35,50 +35,50 @@ public class Order {
     private LocalDateTime filledAt;
 
     public static Order createMarketBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
-                                             BigDecimal amount, BigDecimal currentPrice, BigDecimal feeRate,
-                                             String baseCurrencySymbol, LocalDateTime now) {
-        OrderAmountPolicy.of(baseCurrencySymbol).validate(amount);
+                                             BigDecimal amount, BigDecimal currentPrice, TradingVenue venue,
+                                             LocalDateTime now) {
+        venue.validateOrderAmount(amount);
         Quantity quantity = Quantity.fromAmountAndPrice(amount, currentPrice);
         BigDecimal filledAmount = quantity.value().multiply(currentPrice);
-        Fee fee = Fee.calculate(filledAmount, feeRate);
+        Fee fee = venue.calculateFee(filledAmount);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
             Side.BUY, OrderType.MARKET, filledAmount, quantity, null, currentPrice, fee, now);
     }
 
     public static Order createMarketSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
-                                              BigDecimal sellQuantity, BigDecimal currentPrice, BigDecimal feeRate,
+                                              BigDecimal sellQuantity, BigDecimal currentPrice, TradingVenue venue,
                                               LocalDateTime now) {
         BigDecimal filledAmount = sellQuantity.multiply(currentPrice);
-        Fee fee = Fee.calculate(filledAmount, feeRate);
+        Fee fee = venue.calculateFee(filledAmount);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
             Side.SELL, OrderType.MARKET, filledAmount, new Quantity(sellQuantity), null, currentPrice, fee, now);
     }
 
     public static Order createLimitBuyOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
-                                            BigDecimal amount, BigDecimal limitPrice, BigDecimal feeRate,
-                                            String baseCurrencySymbol, LocalDateTime now) {
+                                            BigDecimal amount, BigDecimal limitPrice, TradingVenue venue,
+                                            LocalDateTime now) {
         if (limitPrice == null) {
             throw new CustomException(ErrorCode.PRICE_REQUIRED_FOR_LIMIT);
         }
-        OrderAmountPolicy.of(baseCurrencySymbol).validate(amount);
+        venue.validateOrderAmount(amount);
         Quantity quantity = Quantity.fromAmountAndPrice(amount, limitPrice);
         BigDecimal filledAmount = quantity.value().multiply(limitPrice);
-        Fee fee = Fee.calculate(filledAmount, feeRate);
+        Fee fee = venue.calculateFee(filledAmount);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
             Side.BUY, OrderType.LIMIT, filledAmount, quantity, limitPrice, limitPrice, fee, now);
     }
 
     public static Order createLimitSellOrder(UUID idempotencyKey, Long walletId, Long exchangeCoinId,
-                                             BigDecimal sellQuantity, BigDecimal limitPrice, BigDecimal feeRate,
+                                             BigDecimal sellQuantity, BigDecimal limitPrice, TradingVenue venue,
                                              LocalDateTime now) {
         if (limitPrice == null) {
             throw new CustomException(ErrorCode.PRICE_REQUIRED_FOR_LIMIT);
         }
         BigDecimal filledAmount = sellQuantity.multiply(limitPrice);
-        Fee fee = Fee.calculate(filledAmount, feeRate);
+        Fee fee = venue.calculateFee(filledAmount);
 
         return createOrder(idempotencyKey, walletId, exchangeCoinId,
             Side.SELL, OrderType.LIMIT, filledAmount, new Quantity(sellQuantity), limitPrice, limitPrice, fee, now);

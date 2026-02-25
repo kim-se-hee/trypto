@@ -6,7 +6,7 @@
 |--------|---------------|--------|--------------|
 | Identity | User | — | Email, Password |
 | Wallet | Wallet, Transfer | WalletBalance | WalletAddress, TransferStatus, Chain |
-| Trading | Order, Swap | RuleViolation | Side, OrderType, OrderStatus, Fee, Slippage, ViolationReason, OrderAmountPolicy |
+| Trading | Order, Swap | RuleViolation | Side, OrderType, OrderStatus, Fee, Slippage, ViolationReason, OrderAmountPolicy, TradingVenue |
 | MarketData | Coin, Exchange | ExchangeCoin, PriceCandle, WithdrawalFee | — |
 | Portfolio | PortfolioSnapshot | Ranking, SnapshotDetail | ProfitRate, AvgBuyPrice, TotalBuyAmount, RankingPeriod |
 | InvestmentRound | InvestmentRound | InvestmentRule, EmergencyFunding | SeedPolicy, RoundStatus, RuleType, RuleValue |
@@ -15,6 +15,7 @@
 **소유 관계:**
 - WalletBalance → WalletAddress
 - Transfer → TransferStatus, Chain
+- TradingVenue → OrderAmountPolicy
 - Order → Side, OrderType, OrderStatus, Fee, RuleViolation
 - RuleViolation → ViolationReason
 - Exchange → ExchangeCoin, WithdrawalFee

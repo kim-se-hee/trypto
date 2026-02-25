@@ -1,6 +1,7 @@
 package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,8 +18,8 @@ public class MockTradingVenueAdapter implements TradingVenuePort {
         return Optional.ofNullable(venues.get(exchangeId));
     }
 
-    public void addVenue(TradingVenue data) {
-        venues.put(data.exchangeId(), data);
+    public void addVenue(Long exchangeId, TradingVenue venue) {
+        venues.put(exchangeId, venue);
     }
 
     public void clear() {
