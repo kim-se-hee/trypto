@@ -2,13 +2,11 @@ package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class MockTradingVenueAdapter implements TradingVenuePort {
 
     private final Map<Long, TradingVenue> venues = new ConcurrentHashMap<>();

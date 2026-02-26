@@ -2,14 +2,12 @@ package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.trading.application.port.out.ViolationPersistencePort;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class MockViolationPersistenceAdapter implements ViolationPersistencePort {
 
     private final Map<Long, List<RuleViolation>> violationsByOrderId = new ConcurrentHashMap<>();

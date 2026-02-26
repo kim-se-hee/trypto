@@ -2,14 +2,12 @@ package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.portfolio.domain.model.Holding;
 import ksh.tryptobackend.trading.application.port.out.HoldingPort;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class MockHoldingAdapter implements HoldingPort {
 
     private final Map<String, Holding> holdings = new ConcurrentHashMap<>();

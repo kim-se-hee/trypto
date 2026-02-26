@@ -3,12 +3,10 @@ package ksh.tryptobackend.acceptance.mock;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.application.port.out.WalletInfoPort;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class MockWalletInfoAdapter implements WalletInfoPort {
 
     private final Map<Long, Long> walletToRound = new ConcurrentHashMap<>();
