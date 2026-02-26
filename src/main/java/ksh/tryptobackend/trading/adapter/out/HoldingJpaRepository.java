@@ -1,4 +1,4 @@
-package ksh.tryptobackend.portfolio.adapter.out;
+package ksh.tryptobackend.trading.adapter.out;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

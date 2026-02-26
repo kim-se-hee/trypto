@@ -1,4 +1,4 @@
-package ksh.tryptobackend.portfolio.domain.model;
+package ksh.tryptobackend.trading.domain.model;
 
 import lombok.Builder;
 import lombok.Getter;

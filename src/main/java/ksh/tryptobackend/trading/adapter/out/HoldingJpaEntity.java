@@ -1,7 +1,7 @@
-package ksh.tryptobackend.portfolio.adapter.out;
+package ksh.tryptobackend.trading.adapter.out;
 
 import jakarta.persistence.*;
-import ksh.tryptobackend.portfolio.domain.model.Holding;
+import ksh.tryptobackend.trading.domain.model.Holding;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

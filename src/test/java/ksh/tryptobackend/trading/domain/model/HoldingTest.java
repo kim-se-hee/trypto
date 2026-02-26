@@ -1,4 +1,4 @@
-package ksh.tryptobackend.portfolio.domain.model;
+package ksh.tryptobackend.trading.domain.model;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

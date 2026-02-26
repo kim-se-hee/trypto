@@ -1,7 +1,7 @@
-package ksh.tryptobackend.portfolio.adapter.out;
+package ksh.tryptobackend.trading.adapter.out;
 
-import ksh.tryptobackend.portfolio.domain.model.Holding;
 import ksh.tryptobackend.trading.application.port.out.HoldingPort;
+import ksh.tryptobackend.trading.domain.model.Holding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

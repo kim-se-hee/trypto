@@ -1,6 +1,6 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.portfolio.domain.model.Holding;
+import ksh.tryptobackend.trading.domain.model.Holding;
 import ksh.tryptobackend.trading.application.port.out.HoldingPort;
 
 import java.math.BigDecimal;
