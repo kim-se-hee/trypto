@@ -102,6 +102,16 @@ erDiagram
         datetime created_at "송금 시각"
     }
 
+    HOLDING {
+        id holding_id PK "주 식별자"
+        id wallet_id FK "지갑 ID"
+        id coin_id FK "코인 ID"
+        number avg_buy_price "평균 매수가"
+        number total_quantity "총 보유 수량"
+        number total_buy_amount "총 매수 금액"
+        number averaging_down_count "물타기 횟수"
+    }
+
     ORDERS {
         id order_id PK "주 식별자"
         id wallet_id FK "주문 지갑 ID"
@@ -229,6 +239,8 @@ erDiagram
     WALLET ||--o{ TRANSFER : "from"
     WALLET ||--o{ TRANSFER : "to"
     COIN ||--o{ TRANSFER : ""
+    WALLET ||--o{ HOLDING : ""
+    COIN ||--o{ HOLDING : ""
     WALLET ||--o{ ORDERS : ""
     EXCHANGE_COIN ||--o{ ORDERS : ""
     ORDERS ||--o{ RULE_VIOLATION : ""
