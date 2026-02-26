@@ -9,6 +9,7 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,6 +59,11 @@ public class OrderJpaPersistenceAdapter implements OrderPersistencePort {
             .stream()
             .map(OrderJpaEntity::toDomain)
             .toList();
+    }
+
+    @Override
+    public long countByWalletIdAndCreatedAtBetween(Long walletId, LocalDateTime from, LocalDateTime to) {
+        return orderJpaRepository.countByWalletIdAndCreatedAtBetween(walletId, from, to);
     }
 
     private BooleanExpression exchangeCoinIdEq(QOrderJpaEntity order, Long exchangeCoinId) {

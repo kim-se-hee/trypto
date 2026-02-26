@@ -1,13 +1,11 @@
 package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class MockExchangeCoinAdapter implements ExchangeCoinPort {
 
     private final Map<Long, ExchangeCoinData> exchangeCoins = new ConcurrentHashMap<>();

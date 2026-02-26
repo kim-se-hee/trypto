@@ -5,9 +5,14 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import ksh.tryptobackend.acceptance.mock.MockExchangeCoinAdapter;
+import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
+import ksh.tryptobackend.acceptance.mock.MockInvestmentRuleAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTradingVenueAdapter;
+import ksh.tryptobackend.acceptance.mock.MockViolationPersistenceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockWalletInfoAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.trading.adapter.out.OrderJpaRepository;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
@@ -28,12 +33,18 @@ public class OrderStepDefinition {
     private static final Long EXCHANGE_COIN_ID = 1L;
     private static final Long KRW_COIN_ID = 1L;
     private static final Long BTC_COIN_ID = 2L;
+    private static final Long ROUND_ID = 1L;
 
     private final CommonApiClient apiClient;
     private final MockWalletBalanceAdapter walletBalanceAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
     private final MockTradingVenueAdapter tradingVenueAdapter;
     private final MockExchangeCoinAdapter exchangeCoinAdapter;
+    private final MockHoldingAdapter holdingAdapter;
+    private final MockInvestmentRuleAdapter investmentRuleAdapter;
+    private final MockPriceChangeRateAdapter priceChangeRateAdapter;
+    private final MockViolationPersistenceAdapter violationPersistenceAdapter;
+    private final MockWalletInfoAdapter walletInfoAdapter;
     private final OrderJpaRepository orderJpaRepository;
 
     private Long lastOrderId;
@@ -45,12 +56,22 @@ public class OrderStepDefinition {
                                MockLivePriceAdapter livePriceAdapter,
                                MockTradingVenueAdapter tradingVenueAdapter,
                                MockExchangeCoinAdapter exchangeCoinAdapter,
+                               MockHoldingAdapter holdingAdapter,
+                               MockInvestmentRuleAdapter investmentRuleAdapter,
+                               MockPriceChangeRateAdapter priceChangeRateAdapter,
+                               MockViolationPersistenceAdapter violationPersistenceAdapter,
+                               MockWalletInfoAdapter walletInfoAdapter,
                                OrderJpaRepository orderJpaRepository) {
         this.apiClient = apiClient;
         this.walletBalanceAdapter = walletBalanceAdapter;
         this.livePriceAdapter = livePriceAdapter;
         this.tradingVenueAdapter = tradingVenueAdapter;
         this.exchangeCoinAdapter = exchangeCoinAdapter;
+        this.holdingAdapter = holdingAdapter;
+        this.investmentRuleAdapter = investmentRuleAdapter;
+        this.priceChangeRateAdapter = priceChangeRateAdapter;
+        this.violationPersistenceAdapter = violationPersistenceAdapter;
+        this.walletInfoAdapter = walletInfoAdapter;
         this.orderJpaRepository = orderJpaRepository;
     }
 
@@ -61,6 +82,12 @@ public class OrderStepDefinition {
         livePriceAdapter.clear();
         tradingVenueAdapter.clear();
         exchangeCoinAdapter.clear();
+        holdingAdapter.clear();
+        investmentRuleAdapter.clear();
+        priceChangeRateAdapter.clear();
+        violationPersistenceAdapter.clear();
+        walletInfoAdapter.clear();
+        walletInfoAdapter.setRoundId(WALLET_ID, ROUND_ID);
         lastOrderId = null;
         savedIdempotencyKey = null;
         firstOrderId = null;
