@@ -1,0 +1,159 @@
+import { useState, useMemo } from "react";
+import {
+  TriangleAlert,
+  TrendingDown,
+  TrendingUp,
+  Ban,
+  Layers,
+  Timer,
+  Flame,
+  Target,
+  Swords,
+  type LucideIcon,
+} from "lucide-react";
+import { CoinIcon } from "@/components/market/CoinIcon";
+import {
+  violationTrades,
+  RULE_LABELS,
+  RULE_COLORS,
+  EMOTION_STYLES,
+} from "@/mocks/regret";
+import type { ViolationFilter, ViolationEmotion } from "@/mocks/regret";
+import type { RuleType } from "@/mocks/round";
+import { cn } from "@/lib/utils";
+
+const RULE_ICON_MAP: Record<RuleType, LucideIcon> = {
+  STOP_LOSS: TrendingDown,
+  TAKE_PROFIT: TrendingUp,
+  NO_CHASE_BUY: Ban,
+  AVERAGING_LIMIT: Layers,
+  OVERTRADE_LIMIT: Timer,
+};
+
+const EMOTION_ICON_MAP: Record<ViolationEmotion, { icon: LucideIcon; label: string }> = {
+  FOMO: { icon: Flame, label: "FOMO" },
+  "감이 좋아서": { icon: Target, label: "감이 좋아서" },
+  "복수 매매": { icon: Swords, label: "복수 매매" },
+};
+
+const FILTER_TABS: { key: ViolationFilter; label: string }[] = [
+  { key: "ALL", label: "전체" },
+  { key: "LOSS", label: "손실" },
+  { key: "PROFIT", label: "수익" },
+];
+
+export function ViolationTradeList() {
+  const [filter, setFilter] = useState<ViolationFilter>("ALL");
+
+  const filtered = useMemo(() => {
+    if (filter === "LOSS") return violationTrades.filter((t) => t.profitLoss < 0);
+    if (filter === "PROFIT") return violationTrades.filter((t) => t.profitLoss >= 0);
+    return violationTrades;
+  }, [filter]);
+
+  const counts = useMemo(() => {
+    const loss = violationTrades.filter((t) => t.profitLoss < 0).length;
+    const profit = violationTrades.filter((t) => t.profitLoss >= 0).length;
+    return { all: violationTrades.length, loss, profit };
+  }, []);
+
+  return (
+    <div className="rounded-2xl bg-card p-5 shadow-card sm:p-6">
+      {/* 헤더 */}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          <TriangleAlert className="h-5 w-5 text-negative" />
+          규칙 위반 거래
+        </h2>
+
+        <div className="flex gap-1.5 rounded-lg bg-secondary/60 p-1">
+          {FILTER_TABS.map((tab) => {
+            const count =
+              tab.key === "ALL" ? counts.all : tab.key === "LOSS" ? counts.loss : counts.profit;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-xs font-semibold transition-all",
+                  filter === tab.key
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {tab.label} {count}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 거래 목록 */}
+      <div className="space-y-2">
+        {filtered.map((trade) => {
+          const isLoss = trade.profitLoss < 0;
+          const emotionStyle = EMOTION_STYLES[trade.emotion];
+          const emotionInfo = EMOTION_ICON_MAP[trade.emotion];
+          const EmotionIcon = emotionInfo.icon;
+
+          return (
+            <div
+              key={trade.id}
+              className="flex items-center gap-3 rounded-xl border border-border/40 px-4 py-3 transition-colors hover:bg-primary/[0.02]"
+            >
+              <CoinIcon symbol={trade.coinSymbol} size={28} />
+
+              <span className="text-sm font-bold">{trade.coinSymbol}</span>
+              <span className="text-xs text-muted-foreground">{trade.date}</span>
+
+              <span
+                className={cn(
+                  "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
+                  emotionStyle.bg,
+                  emotionStyle.text,
+                )}
+              >
+                <EmotionIcon className="h-3 w-3" />
+                {emotionInfo.label}
+              </span>
+
+              {/* 위반 규칙 태그 */}
+              {trade.violatedRules.map((ruleType) => {
+                const Icon = RULE_ICON_MAP[ruleType];
+                return (
+                  <span
+                    key={ruleType}
+                    className="flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                    style={{
+                      backgroundColor: `${RULE_COLORS[ruleType]}15`,
+                      color: RULE_COLORS[ruleType],
+                    }}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {RULE_LABELS[ruleType]}
+                  </span>
+                );
+              })}
+
+              <span
+                className={cn(
+                  "ml-auto shrink-0 font-mono text-sm font-bold tabular-nums",
+                  isLoss ? "text-negative" : "text-positive",
+                )}
+              >
+                {isLoss ? "" : "+"}
+                {trade.profitLoss.toLocaleString("ko-KR")}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="py-8 text-center text-sm text-muted-foreground">
+          해당 조건의 위반 거래가 없습니다.
+        </div>
+      )}
+    </div>
+  );
+}
