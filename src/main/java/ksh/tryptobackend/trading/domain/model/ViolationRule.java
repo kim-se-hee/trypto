@@ -6,13 +6,13 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-public sealed interface InvestmentRule {
+public sealed interface ViolationRule {
 
     Long ruleId();
 
     Optional<RuleViolation> check(ViolationCheckContext context);
 
-    static InvestmentRule of(Long ruleId, RuleType ruleType, BigDecimal thresholdValue) {
+    static ViolationRule of(Long ruleId, RuleType ruleType, BigDecimal thresholdValue) {
         return switch (ruleType) {
             case LOSS_CUT -> new LossCutRule(ruleId, thresholdValue);
             case PROFIT_TAKE -> new ProfitTakeRule(ruleId, thresholdValue);
@@ -22,7 +22,7 @@ public sealed interface InvestmentRule {
         };
     }
 
-    record LossCutRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {
+    record LossCutRule(Long ruleId, BigDecimal thresholdPercent) implements ViolationRule {
 
         @Override
         public Optional<RuleViolation> check(ViolationCheckContext context) {
@@ -30,7 +30,7 @@ public sealed interface InvestmentRule {
         }
     }
 
-    record ProfitTakeRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {
+    record ProfitTakeRule(Long ruleId, BigDecimal thresholdPercent) implements ViolationRule {
 
         @Override
         public Optional<RuleViolation> check(ViolationCheckContext context) {
@@ -38,7 +38,7 @@ public sealed interface InvestmentRule {
         }
     }
 
-    record ChaseBuyBanRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {
+    record ChaseBuyBanRule(Long ruleId, BigDecimal thresholdPercent) implements ViolationRule {
 
         @Override
         public Optional<RuleViolation> check(ViolationCheckContext context) {
@@ -53,7 +53,7 @@ public sealed interface InvestmentRule {
         }
     }
 
-    record AveragingDownLimitRule(Long ruleId, int maxCount) implements InvestmentRule {
+    record AveragingDownLimitRule(Long ruleId, int maxCount) implements ViolationRule {
 
         @Override
         public Optional<RuleViolation> check(ViolationCheckContext context) {
@@ -75,7 +75,7 @@ public sealed interface InvestmentRule {
         }
     }
 
-    record OvertradingLimitRule(Long ruleId, long maxOrderCount) implements InvestmentRule {
+    record OvertradingLimitRule(Long ruleId, long maxOrderCount) implements ViolationRule {
 
         @Override
         public Optional<RuleViolation> check(ViolationCheckContext context) {

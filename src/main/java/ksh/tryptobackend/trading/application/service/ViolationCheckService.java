@@ -28,7 +28,7 @@ public class ViolationCheckService {
                                                     Long exchangeCoinId, Long coinId,
                                                     BigDecimal currentPrice) {
         Long roundId = walletInfoPort.getRoundIdByWalletId(walletId);
-        List<InvestmentRule> rules = investmentRulePort.findByRoundId(roundId);
+        List<ViolationRule> rules = investmentRulePort.findByRoundId(roundId);
         if (rules.isEmpty()) {
             return List.of();
         }

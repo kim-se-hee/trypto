@@ -23,7 +23,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매수 + 상승률 ≥ 설정값 → 위반")
         void buyWithHighChangeRate_violation() {
-            InvestmentRule rule = InvestmentRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
+            ViolationRule rule = ViolationRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, new BigDecimal("5"), null, new BigDecimal("50000000"), 0, NOW);
 
@@ -36,7 +36,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매수 + 상승률 < 설정값 → 위반 없음")
         void buyWithLowChangeRate_noViolation() {
-            InvestmentRule rule = InvestmentRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
+            ViolationRule rule = ViolationRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, new BigDecimal("4.9"), null, new BigDecimal("50000000"), 0, NOW);
 
@@ -48,7 +48,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매도 주문 → 추격 매수 체크 스킵")
         void sellOrder_skipped() {
-            InvestmentRule rule = InvestmentRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
+            ViolationRule rule = ViolationRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.SELL, new BigDecimal("10"), null, new BigDecimal("50000000"), 0, NOW);
 
@@ -65,7 +65,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매수 + 손실 중 + 물타기 횟수 ≥ 설정값 → 위반")
         void buyAtLossExceedingLimit_violation() {
-            InvestmentRule rule = InvestmentRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"));
+            ViolationRule rule = ViolationRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"));
             Holding holding = createHolding(new BigDecimal("60000000"), new BigDecimal("0.01"), 2);
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, holding, new BigDecimal("50000000"), 0, NOW);
@@ -80,7 +80,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매수 + 손실 중 + 물타기 횟수 < 설정값 → 위반 없음")
         void buyAtLossBelowLimit_noViolation() {
-            InvestmentRule rule = InvestmentRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"));
+            ViolationRule rule = ViolationRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"));
             Holding holding = createHolding(new BigDecimal("60000000"), new BigDecimal("0.01"), 1);
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, holding, new BigDecimal("50000000"), 0, NOW);
@@ -94,7 +94,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매수 + 이익 중 → 물타기 아님")
         void buyAtProfit_noViolation() {
-            InvestmentRule rule = InvestmentRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("1"));
+            ViolationRule rule = ViolationRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("1"));
             Holding holding = createHolding(new BigDecimal("40000000"), new BigDecimal("0.01"), 5);
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, holding, new BigDecimal("50000000"), 0, NOW);
@@ -108,7 +108,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("보유 없음 → 물타기 체크 스킵")
         void noHolding_skipped() {
-            InvestmentRule rule = InvestmentRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("1"));
+            ViolationRule rule = ViolationRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("1"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, null, new BigDecimal("50000000"), 0, NOW);
 
@@ -125,7 +125,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("오늘 주문 건수 + 1 ≥ 설정값 → 위반")
         void orderCountExceedingLimit_violation() {
-            InvestmentRule rule = InvestmentRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"));
+            ViolationRule rule = ViolationRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, null, new BigDecimal("50000000"), 9, NOW);
 
@@ -139,7 +139,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("오늘 주문 건수 + 1 < 설정값 → 위반 없음")
         void orderCountBelowLimit_noViolation() {
-            InvestmentRule rule = InvestmentRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"));
+            ViolationRule rule = ViolationRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, BigDecimal.ZERO, null, new BigDecimal("50000000"), 8, NOW);
 
@@ -152,7 +152,7 @@ class ViolationCheckerTest {
         @Test
         @DisplayName("매도 주문도 과매매 체크 대상")
         void sellOrder_alsoChecked() {
-            InvestmentRule rule = InvestmentRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("5"));
+            ViolationRule rule = ViolationRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("5"));
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.SELL, BigDecimal.ZERO, null, new BigDecimal("50000000"), 4, NOW);
 
@@ -170,10 +170,10 @@ class ViolationCheckerTest {
         @DisplayName("여러 규칙 동시 위반 — 모두 기록")
         void multipleViolations_allRecorded() {
             Holding holding = createHolding(new BigDecimal("60000000"), new BigDecimal("0.01"), 2);
-            List<InvestmentRule> rules = List.of(
-                InvestmentRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5")),
-                InvestmentRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3")),
-                InvestmentRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"))
+            List<ViolationRule> rules = List.of(
+                ViolationRule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5")),
+                ViolationRule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3")),
+                ViolationRule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"))
             );
             ViolationCheckContext context = new ViolationCheckContext(
                 Side.BUY, new BigDecimal("10"), holding, new BigDecimal("50000000"), 9, NOW);
