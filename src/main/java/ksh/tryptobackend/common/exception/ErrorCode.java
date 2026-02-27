@@ -15,6 +15,10 @@ public enum ErrorCode {
     PRICE_REQUIRED_FOR_LIMIT(400, "price.required.for.limit"),
     UNSUPPORTED_BASE_CURRENCY(400, "unsupported.base.currency"),
     ORDER_NOT_CANCELLABLE(400, "order.not.cancellable"),
+    ACTIVE_ROUND_EXISTS(409, "active.round.exists"),
+    INVALID_SEED_AMOUNT(400, "invalid.seed.amount"),
+    INVALID_EMERGENCY_FUNDING_LIMIT(400, "invalid.emergency.funding.limit"),
+    INVALID_RULE_THRESHOLD(400, "invalid.rule.threshold"),
 
     WALLET_NOT_FOUND(404, "wallet.not.found"),
     EXCHANGE_COIN_NOT_FOUND(404, "exchange.coin.not.found"),

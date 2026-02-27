@@ -14,10 +14,28 @@ public sealed interface InvestmentRule {
 
     static InvestmentRule of(Long ruleId, RuleType ruleType, BigDecimal thresholdValue) {
         return switch (ruleType) {
+            case LOSS_CUT -> new LossCutRule(ruleId, thresholdValue);
+            case PROFIT_TAKE -> new ProfitTakeRule(ruleId, thresholdValue);
             case CHASE_BUY_BAN -> new ChaseBuyBanRule(ruleId, thresholdValue);
             case AVERAGING_DOWN_LIMIT -> new AveragingDownLimitRule(ruleId, thresholdValue.intValue());
             case OVERTRADING_LIMIT -> new OvertradingLimitRule(ruleId, thresholdValue.longValue());
         };
+    }
+
+    record LossCutRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {
+
+        @Override
+        public Optional<RuleViolation> check(ViolationCheckContext context) {
+            return Optional.empty();
+        }
+    }
+
+    record ProfitTakeRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {
+
+        @Override
+        public Optional<RuleViolation> check(ViolationCheckContext context) {
+            return Optional.empty();
+        }
     }
 
     record ChaseBuyBanRule(Long ruleId, BigDecimal thresholdPercent) implements InvestmentRule {

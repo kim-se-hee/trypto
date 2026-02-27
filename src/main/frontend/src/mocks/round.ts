@@ -43,7 +43,7 @@ const DEV_DEFAULT_ROUND: InvestmentRound = {
   endedAt: null,
 };
 
-export let mockActiveRound: InvestmentRound | null = DEV_DEFAULT_ROUND;
+export let mockActiveRound: InvestmentRound | null = null;
 
 let nextRoundId = 2;
 let nextRuleId = 3;
