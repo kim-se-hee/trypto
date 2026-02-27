@@ -10,8 +10,8 @@ import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeC
 import ksh.tryptobackend.trading.application.port.out.LivePricePort;
 import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
 import ksh.tryptobackend.trading.application.port.out.WalletBalancePort;
-import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import ksh.tryptobackend.trading.domain.vo.Side;
+import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,19 +30,30 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
     @Override
     @Transactional(readOnly = true)
     public OrderAvailabilityResult getAvailability(GetOrderAvailabilityQuery query) {
-        ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(query.exchangeCoinId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        ExchangeCoinData exchangeCoin = getExchangeCoin(query.exchangeCoinId());
+        TradingVenue venue = getTradingVenue(exchangeCoin.exchangeId());
 
-        TradingVenue venue = tradingVenuePort.findByExchangeId(exchangeCoin.exchangeId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-
-        Long targetCoinId = query.side() == Side.BUY
-            ? venue.baseCurrencyCoinId()
-            : exchangeCoin.coinId();
-        BigDecimal available = walletBalancePort.getAvailableBalance(query.walletId(), targetCoinId);
-
+        BigDecimal available = getAvailableBalance(query.walletId(), query.side(), venue, exchangeCoin);
         BigDecimal currentPrice = livePricePort.getCurrentPrice(query.exchangeCoinId());
 
         return new OrderAvailabilityResult(available, currentPrice);
+    }
+
+    private ExchangeCoinData getExchangeCoin(Long exchangeCoinId) {
+        return exchangeCoinPort.findById(exchangeCoinId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+    }
+
+    private TradingVenue getTradingVenue(Long exchangeId) {
+        return tradingVenuePort.findByExchangeId(exchangeId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+    }
+
+    private BigDecimal getAvailableBalance(Long walletId, Side side,
+                                            TradingVenue venue, ExchangeCoinData exchangeCoin) {
+        Long targetCoinId = side == Side.BUY
+            ? venue.baseCurrencyCoinId()
+            : exchangeCoin.coinId();
+        return walletBalancePort.getAvailableBalance(walletId, targetCoinId);
     }
 }

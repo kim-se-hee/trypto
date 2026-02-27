@@ -46,52 +46,54 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     }
 
     private Order executeOrder(PlaceOrderCommand command) {
-        ExchangeCoinData exchangeCoin = exchangeCoinPort.findById(command.exchangeCoinId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
-
-        TradingVenue venue = tradingVenuePort.findByExchangeId(exchangeCoin.exchangeId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-
+        ExchangeCoinData exchangeCoin = getExchangeCoin(command.exchangeCoinId());
+        TradingVenue venue = getTradingVenue(exchangeCoin.exchangeId());
         OrderPlacementStrategy strategy = resolveStrategy(command.orderType(), command.side());
-
         BigDecimal currentPrice = livePricePort.getCurrentPrice(command.exchangeCoinId());
 
-        LocalDateTime now = LocalDateTime.now(clock);
-        Order order = strategy.createOrder(command, venue, currentPrice, now);
-
-        Long balanceCoinId = strategy.resolveBalanceCoinId(venue, exchangeCoin.coinId());
-        BigDecimal available = walletBalancePort.getAvailableBalance(command.walletId(), balanceCoinId);
-        order.validateSufficientBalance(available);
+        Order order = strategy.createOrder(command, venue, currentPrice, LocalDateTime.now(clock));
+        validateBalance(strategy, order, command.walletId(), venue, exchangeCoin.coinId());
 
         List<RuleViolation> violations = violationCheckService.checkOrderViolations(
             order, command.walletId(), command.exchangeCoinId(), exchangeCoin.coinId(), currentPrice);
-
-        for (BalanceChange change : strategy.planBalanceChanges(order, venue, exchangeCoin.coinId())) {
-            applyBalanceChange(command.walletId(), change);
-        }
+        applyBalanceChanges(strategy, order, command.walletId(), venue, exchangeCoin.coinId());
 
         Order savedOrder = orderPersistencePort.save(order);
-
-        if (order.isMarketOrder()) {
-            updateHolding(command.walletId(), exchangeCoin.coinId(), order, currentPrice);
-        }
-
-        if (!violations.isEmpty()) {
-            violationPersistencePort.saveAll(savedOrder.getId(), violations);
-        }
+        updateHoldingIfMarketOrder(order, command.walletId(), exchangeCoin.coinId(), currentPrice);
+        saveViolations(savedOrder.getId(), violations);
 
         return savedOrder;
     }
 
-    private void updateHolding(Long walletId, Long coinId, Order order, BigDecimal currentPrice) {
-        Holding holding = holdingPersistencePort.findByWalletIdAndCoinId(walletId, coinId)
-            .orElseGet(() -> Holding.empty(walletId, coinId));
-        if (order.getSide() == Side.BUY) {
-            holding.applyBuy(order.getFilledPrice(), order.getQuantity().value(), currentPrice);
-        } else {
-            holding.applySell(order.getQuantity().value());
+    private ExchangeCoinData getExchangeCoin(Long exchangeCoinId) {
+        return exchangeCoinPort.findById(exchangeCoinId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+    }
+
+    private TradingVenue getTradingVenue(Long exchangeId) {
+        return tradingVenuePort.findByExchangeId(exchangeId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+    }
+
+    private OrderPlacementStrategy resolveStrategy(OrderType orderType, Side side) {
+        return strategies.stream()
+            .filter(s -> s.supports(orderType, side))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    private void validateBalance(OrderPlacementStrategy strategy, Order order,
+                                  Long walletId, TradingVenue venue, Long coinId) {
+        Long balanceCoinId = strategy.resolveBalanceCoinId(venue, coinId);
+        BigDecimal available = walletBalancePort.getAvailableBalance(walletId, balanceCoinId);
+        order.validateSufficientBalance(available);
+    }
+
+    private void applyBalanceChanges(OrderPlacementStrategy strategy, Order order,
+                                      Long walletId, TradingVenue venue, Long coinId) {
+        for (BalanceChange change : strategy.planBalanceChanges(order, venue, coinId)) {
+            applyBalanceChange(walletId, change);
         }
-        holdingPersistencePort.save(holding);
     }
 
     private void applyBalanceChange(Long walletId, BalanceChange change) {
@@ -102,10 +104,24 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         }
     }
 
-    private OrderPlacementStrategy resolveStrategy(OrderType orderType, Side side) {
-        return strategies.stream()
-            .filter(s -> s.supports(orderType, side))
-            .findFirst()
-            .orElseThrow();
+    private void updateHoldingIfMarketOrder(Order order, Long walletId, Long coinId,
+                                             BigDecimal currentPrice) {
+        if (!order.isMarketOrder()) {
+            return;
+        }
+        Holding holding = holdingPersistencePort.findByWalletIdAndCoinId(walletId, coinId)
+            .orElseGet(() -> Holding.empty(walletId, coinId));
+        if (order.getSide() == Side.BUY) {
+            holding.applyBuy(order.getFilledPrice(), order.getQuantity().value(), currentPrice);
+        } else {
+            holding.applySell(order.getQuantity().value());
+        }
+        holdingPersistencePort.save(holding);
+    }
+
+    private void saveViolations(Long orderId, List<RuleViolation> violations) {
+        if (!violations.isEmpty()) {
+            violationPersistencePort.saveAll(orderId, violations);
+        }
     }
 }

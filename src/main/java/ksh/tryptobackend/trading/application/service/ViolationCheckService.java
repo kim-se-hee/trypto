@@ -27,28 +27,47 @@ public class ViolationCheckService {
     public List<RuleViolation> checkOrderViolations(Order order, Long walletId,
                                                     Long exchangeCoinId, Long coinId,
                                                     BigDecimal currentPrice) {
-        Long roundId = walletInfoPort.getRoundIdByWalletId(walletId);
-        List<ViolationRule> rules = investmentRulePort.findByRoundId(roundId);
+        List<ViolationRule> rules = fetchRules(walletId);
         if (rules.isEmpty()) {
             return List.of();
         }
 
-        Holding holding = holdingPersistencePort.findByWalletIdAndCoinId(walletId, coinId)
-            .orElse(null);
-
-        BigDecimal changeRate = BigDecimal.ZERO;
-        if (order.getSide() == Side.BUY) {
-            changeRate = priceChangeRatePort.getChangeRate(exchangeCoinId);
-        }
-
-        LocalDate today = LocalDate.now(clock);
-        long todayOrderCount = orderPersistencePort.countByWalletIdAndCreatedAtBetween(
-            walletId, today.atStartOfDay(), today.atTime(LocalTime.MAX));
-
-        ViolationCheckContext context = new ViolationCheckContext(
-            order.getSide(), changeRate, holding, currentPrice, todayOrderCount,
-            LocalDateTime.now(clock));
+        ViolationCheckContext context = buildContext(
+            order, walletId, exchangeCoinId, coinId, currentPrice);
 
         return ViolationChecker.check(rules, context);
+    }
+
+    private List<ViolationRule> fetchRules(Long walletId) {
+        Long roundId = walletInfoPort.getRoundIdByWalletId(walletId);
+        return investmentRulePort.findByRoundId(roundId);
+    }
+
+    private ViolationCheckContext buildContext(Order order, Long walletId,
+                                               Long exchangeCoinId, Long coinId,
+                                               BigDecimal currentPrice) {
+        Holding holding = holdingPersistencePort
+            .findByWalletIdAndCoinId(walletId, coinId)
+            .orElse(null);
+
+        BigDecimal changeRate = resolveChangeRate(order.getSide(), exchangeCoinId);
+        long todayOrderCount = countTodayOrders(walletId);
+
+        return new ViolationCheckContext(
+            order.getSide(), changeRate, holding, currentPrice, todayOrderCount,
+            LocalDateTime.now(clock));
+    }
+
+    private BigDecimal resolveChangeRate(Side side, Long exchangeCoinId) {
+        if (side == Side.BUY) {
+            return priceChangeRatePort.getChangeRate(exchangeCoinId);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private long countTodayOrders(Long walletId) {
+        LocalDate today = LocalDate.now(clock);
+        return orderPersistencePort.countByWalletIdAndCreatedAtBetween(
+            walletId, today.atStartOfDay(), today.atTime(LocalTime.MAX));
     }
 }

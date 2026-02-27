@@ -28,8 +28,7 @@ public class CancelOrderService implements CancelOrderUseCase {
     @Override
     @Transactional
     public Order cancelOrder(CancelOrderCommand command) {
-        Order order = orderPersistencePort.findById(command.orderId())
-            .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = getOrder(command.orderId());
 
         if (order.isAlreadyCancelled()) {
             return order;
@@ -39,6 +38,11 @@ public class CancelOrderService implements CancelOrderUseCase {
         unlockBalance(order);
 
         return orderPersistencePort.save(order);
+    }
+
+    private Order getOrder(Long orderId) {
+        return orderPersistencePort.findById(orderId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
     }
 
     private void unlockBalance(Order order) {
