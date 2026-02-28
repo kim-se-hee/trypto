@@ -5,14 +5,8 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
-import ksh.tryptobackend.ranking.adapter.out.entity.RankingUserJpaEntity;
-import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
-import ksh.tryptobackend.ranking.adapter.out.repository.RankingUserJpaRepository;
-import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,34 +14,28 @@ import java.time.LocalDateTime;
 public class RankingMyStepDefinition {
 
     private final CommonApiClient apiClient;
-    private final RankingJpaRepository rankingJpaRepository;
-    private final RankingUserJpaRepository rankingUserJpaRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public RankingMyStepDefinition(CommonApiClient apiClient,
-                                   RankingJpaRepository rankingJpaRepository,
-                                   RankingUserJpaRepository rankingUserJpaRepository) {
+    public RankingMyStepDefinition(CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
-        this.rankingJpaRepository = rankingJpaRepository;
-        this.rankingUserJpaRepository = rankingUserJpaRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Before
     public void setUp() {
-        rankingJpaRepository.deleteAllInBatch();
-        rankingUserJpaRepository.deleteAllInBatch();
+        jdbcTemplate.execute("DELETE FROM ranking");
     }
 
     @Given("내 랭킹 테스트 데이터가 준비되어 있다")
     public void 내_랭킹_테스트_데이터가_준비되어_있다() {
-        RankingUserJpaEntity user = createRankingUser(1L, "테스터", true);
-        rankingUserJpaRepository.save(user);
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES (1, '테스터', true)");
 
-        RankingJpaEntity ranking = createRanking(
-            1L, 1L, RankingPeriod.DAILY, 1,
-            new BigDecimal("12.5000"), 5,
-            LocalDate.of(2026, 3, 1)
+        LocalDate referenceDate = LocalDate.of(2026, 3, 1);
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(
+            "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count, reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            1L, 1L, "DAILY", 1, new BigDecimal("12.5000"), 5, referenceDate, now
         );
-        rankingJpaRepository.save(ranking);
     }
 
     @When("유저 {long}이 기간 {string}로 내 랭킹을 조회한다")
@@ -67,38 +55,5 @@ public class RankingMyStepDefinition {
         apiClient.getLastResponse()
             .expectBody()
             .jsonPath("$.data").isEqualTo(null);
-    }
-
-    private RankingUserJpaEntity createRankingUser(Long id, String nickname, boolean portfolioPublic) {
-        RankingUserJpaEntity entity = instantiate(RankingUserJpaEntity.class);
-        ReflectionTestUtils.setField(entity, "id", id);
-        ReflectionTestUtils.setField(entity, "nickname", nickname);
-        ReflectionTestUtils.setField(entity, "portfolioPublic", portfolioPublic);
-        return entity;
-    }
-
-    private RankingJpaEntity createRanking(Long userId, Long roundId, RankingPeriod period,
-                                           int rank, BigDecimal profitRate, int tradeCount,
-                                           LocalDate referenceDate) {
-        RankingJpaEntity entity = instantiate(RankingJpaEntity.class);
-        ReflectionTestUtils.setField(entity, "userId", userId);
-        ReflectionTestUtils.setField(entity, "roundId", roundId);
-        ReflectionTestUtils.setField(entity, "period", period);
-        ReflectionTestUtils.setField(entity, "rank", rank);
-        ReflectionTestUtils.setField(entity, "profitRate", profitRate);
-        ReflectionTestUtils.setField(entity, "tradeCount", tradeCount);
-        ReflectionTestUtils.setField(entity, "referenceDate", referenceDate);
-        ReflectionTestUtils.setField(entity, "createdAt", LocalDateTime.now());
-        return entity;
-    }
-
-    private <T> T instantiate(Class<T> clazz) {
-        try {
-            Constructor<T> constructor = clazz.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            return constructor.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }
