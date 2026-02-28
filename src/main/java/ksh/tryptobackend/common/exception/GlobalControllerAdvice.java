@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -50,6 +51,22 @@ public class GlobalControllerAdvice {
         ApiResponseDto<Void> response = ApiResponseDto.of(
             HttpStatus.BAD_REQUEST.value(),
             "VALIDATION_ERROR",
+            message,
+            null
+        );
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleTypeMismatchException(
+        MethodArgumentTypeMismatchException e
+    ) {
+        String message = String.format("'%s' 파라미터의 값이 유효하지 않습니다: %s", e.getName(), e.getValue());
+
+        ApiResponseDto<Void> response = ApiResponseDto.of(
+            HttpStatus.BAD_REQUEST.value(),
+            "TYPE_MISMATCH",
             message,
             null
         );
