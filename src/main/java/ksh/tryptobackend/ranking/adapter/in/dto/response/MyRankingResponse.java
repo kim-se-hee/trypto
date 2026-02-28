@@ -15,7 +15,7 @@ public record MyRankingResponse(
         return new MyRankingResponse(
             result.rank(),
             result.nickname(),
-            result.profitRate(),
+            result.profitRate().value(),
             result.tradeCount()
         );
     }
