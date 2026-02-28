@@ -1,0 +1,30 @@
+package ksh.tryptobackend.ranking.domain.model;
+
+import ksh.tryptobackend.ranking.domain.vo.ProfitRate;
+import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Getter
+@Builder
+public class Ranking {
+
+    private static final int TOP_RANK_THRESHOLD = 100;
+
+    private final Long id;
+    private final Long userId;
+    private final Long roundId;
+    private final RankingPeriod period;
+    private final int rank;
+    private final ProfitRate profitRate;
+    private final int tradeCount;
+    private final LocalDate referenceDate;
+    private final LocalDateTime createdAt;
+
+    public boolean isTop100() {
+        return rank <= TOP_RANK_THRESHOLD;
+    }
+}

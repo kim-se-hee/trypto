@@ -27,6 +27,32 @@
 - 주간 랭킹: 매주 월요일 00:00 KST 기준
 - 월간 랭킹: 매월 1일 00:00 KST 기준
 
+# 배치 집계
+
+랭킹은 실시간 계산이 아닌 **배치 집계** 결과를 조회한다. 배치가 RANKING 테이블에 집계 결과를 적재해 두면, API는 적재된 데이터를 조회만 한다.
+
+## RANKING 테이블
+
+배치가 집계한 랭킹 결과를 저장한다.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| ranking_id | Long (PK) | 주 식별자 |
+| user_id | Long (FK) | 유저 ID |
+| round_id | Long (FK) | 라운드 ID |
+| period | String | `DAILY` \| `WEEKLY` \| `MONTHLY` |
+| rank | Integer | 순위 |
+| profit_rate | BigDecimal | 수익률 (%) |
+| trade_count | Integer | 거래 횟수 |
+| reference_date | LocalDate | 기준 날짜 |
+| created_at | LocalDateTime | 집계 시각 |
+
+## 포트폴리오 스냅샷
+
+- `PORTFOLIO_SNAPSHOT` 테이블: 배치 시점의 총 자산, 총 수익금, 총 수익률을 저장한다
+- `PORTFOLIO_SNAPSHOT_DETAIL` 테이블: 코인별 보유 수량, 평균 매수가, 현재가, 수익률, 자산 비율을 저장한다
+- 스냅샷은 랭킹 배치가 실행될 때 함께 생성된다
+
 # 포트폴리오 열람
 
 - 랭킹 상위 100위까지 포트폴리오 열람이 가능하다

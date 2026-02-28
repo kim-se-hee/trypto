@@ -20,10 +20,17 @@ public enum ErrorCode {
     INVALID_EMERGENCY_FUNDING_LIMIT(400, "invalid.emergency.funding.limit"),
     INVALID_RULE_THRESHOLD(400, "invalid.rule.threshold"),
 
+    INVALID_RANKING_PERIOD(400, "invalid.ranking.period"),
+    PORTFOLIO_VIEW_NOT_ALLOWED(403, "portfolio.view.not.allowed"),
+    PORTFOLIO_PRIVATE(403, "portfolio.private"),
+
     WALLET_NOT_FOUND(404, "wallet.not.found"),
     EXCHANGE_COIN_NOT_FOUND(404, "exchange.coin.not.found"),
     EXCHANGE_NOT_FOUND(404, "exchange.not.found"),
     ORDER_NOT_FOUND(404, "order.not.found"),
+    RANKING_NOT_FOUND(404, "ranking.not.found"),
+    ROUND_NOT_ACTIVE(404, "round.not.active"),
+    USER_NOT_FOUND(404, "user.not.found"),
     ;
 
     private final int status;

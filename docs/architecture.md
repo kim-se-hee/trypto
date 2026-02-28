@@ -38,7 +38,7 @@ com.project/
 ├── identity/          # 인증, 회원
 ├── trading/           # 주문 (시장가/지정가), 스왑
 ├── wallet/            # 지갑, 잔고, 송금
-├── portfolio/         # 포트폴리오, 랭킹
+├── ranking/           # 랭킹, 포트폴리오 스냅샷
 ├── marketdata/        # 시세, 캔들
 ├── regretanalysis/    # 후회 그래프, 투자 원칙 위반 분석
 ├── investmentround/   # 투자 라운드, 투자 원칙

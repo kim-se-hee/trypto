@@ -8,7 +8,7 @@
 | Wallet | Wallet, Transfer | WalletBalance | WalletAddress, TransferStatus, Chain |
 | Trading | Order, Swap | Holding, RuleViolation | Side, OrderType, OrderStatus, Fee, Slippage, ViolationReason, OrderAmountPolicy, TradingVenue, ViolationRule |
 | MarketData | Coin, Exchange | ExchangeCoin, PriceCandle, WithdrawalFee | — |
-| Portfolio | PortfolioSnapshot, Holding | Ranking, SnapshotDetail | ProfitRate, AvgBuyPrice, TotalBuyAmount, RankingPeriod |
+| Ranking | Ranking, PortfolioSnapshot | SnapshotDetail | ProfitRate, RankingPeriod |
 | InvestmentRound | InvestmentRound | RuleSetting, EmergencyFunding | SeedPolicy, RoundStatus, RuleValue |
 | RegretAnalysis | RegretReport | RuleScenario, ViolationTrade | AssetHistory, ImpactGap |
 | Common (Shared Kernel) | — | — | RuleType |
@@ -35,11 +35,11 @@
 | Wallet → MarketData | exchangeId, coinId | 출금 수수료 조회 |
 | Trading → Wallet | walletId | 잔고 검증, 잔고 반영 |
 | Trading → MarketData | — | 현재가 조회 |
-| Trading → Portfolio | walletId, coinId | 평균 매수가 조회, 보유 수량 갱신 |
+| Trading → Ranking | walletId, coinId | 평균 매수가 조회, 보유 수량 갱신 |
 | Trading → InvestmentRound | roundId | 투자 원칙 위반 검증 |
-| Portfolio → Wallet | userId | 잔고 조회 |
-| Portfolio → MarketData | — | 현재가 조회 |
-| Portfolio → InvestmentRound | roundId | 랭킹 참여 자격 판단 |
+| Ranking → Wallet | userId | 잔고 조회 |
+| Ranking → MarketData | — | 현재가 조회 |
+| Ranking → InvestmentRound | roundId | 랭킹 참여 자격 판단 |
 | RegretAnalysis → Trading | orderId | 원칙 위반 주문 체결 이력 조회 |
 | RegretAnalysis → MarketData | — | 시세 조회 |
 | RegretAnalysis → InvestmentRound | roundId | 투자 원칙 조회 |
