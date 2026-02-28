@@ -22,7 +22,7 @@ export function LoginPage() {
 
     const success = login(email.trim());
     if (success) {
-      navigate("/round/new", { replace: true });
+      navigate("/market", { replace: true });
     } else {
       setError("등록되지 않은 이메일입니다.");
     }
