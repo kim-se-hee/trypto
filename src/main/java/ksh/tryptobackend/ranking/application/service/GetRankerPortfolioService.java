@@ -69,7 +69,7 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
 
     private List<PortfolioHoldingResult> findHoldings(Long userId, Long roundId) {
         return portfolioSnapshotPort.findLatestSnapshotDetails(userId, roundId).stream()
-            .map(PortfolioHoldingResult::from)
+            .map(p -> new PortfolioHoldingResult(p.coinSymbol(), p.exchangeName(), p.assetRatio(), p.profitRate()))
             .toList();
     }
 
