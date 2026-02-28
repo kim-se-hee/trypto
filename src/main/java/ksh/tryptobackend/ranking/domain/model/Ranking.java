@@ -24,7 +24,7 @@ public class Ranking {
     private final LocalDate referenceDate;
     private final LocalDateTime createdAt;
 
-    public boolean isTop100() {
+    public static boolean isTop100(int rank) {
         return rank <= TOP_RANK_THRESHOLD;
     }
 }

@@ -4,20 +4,25 @@ import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.dto.response.CursorPageResponseDto;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetMyRankingRequest;
+import ksh.tryptobackend.ranking.adapter.in.dto.request.GetRankerPortfolioRequest;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetRankingStatsRequest;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetRankingsRequest;
 import ksh.tryptobackend.ranking.adapter.in.dto.response.MyRankingResponse;
+import ksh.tryptobackend.ranking.adapter.in.dto.response.RankerPortfolioResponse;
 import ksh.tryptobackend.ranking.adapter.in.dto.response.RankingItemResponse;
 import ksh.tryptobackend.ranking.adapter.in.dto.response.RankingStatsResponse;
 import ksh.tryptobackend.ranking.application.port.in.GetMyRankingUseCase;
+import ksh.tryptobackend.ranking.application.port.in.GetRankerPortfolioUseCase;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingStatsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.MyRankingResult;
+import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingCursorResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,6 +34,7 @@ public class RankingController {
     private final GetRankingsUseCase getRankingsUseCase;
     private final GetMyRankingUseCase getMyRankingUseCase;
     private final GetRankingStatsUseCase getRankingStatsUseCase;
+    private final GetRankerPortfolioUseCase getRankerPortfolioUseCase;
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<RankingItemResponse>> getRankings(
@@ -53,5 +59,13 @@ public class RankingController {
     public ApiResponseDto<RankingStatsResponse> getRankingStats(@Valid @ModelAttribute GetRankingStatsRequest request) {
         RankingStatsResult result = getRankingStatsUseCase.getRankingStats(request.toQuery());
         return ApiResponseDto.success("랭킹 통계를 조회했습니다.", RankingStatsResponse.from(result));
+    }
+
+    @GetMapping("/{userId}/portfolio")
+    public ApiResponseDto<RankerPortfolioResponse> getRankerPortfolio(
+            @PathVariable Long userId,
+            @Valid @ModelAttribute GetRankerPortfolioRequest request) {
+        RankerPortfolioResult result = getRankerPortfolioUseCase.getRankerPortfolio(request.toQuery(userId));
+        return ApiResponseDto.success("포트폴리오를 조회했습니다.", RankerPortfolioResponse.from(result));
     }
 }

@@ -30,7 +30,13 @@ public class RankingJpaPersistenceAdapter implements RankingPersistencePort {
 
     @Override
     public Optional<LocalDate> findLatestReferenceDate(RankingPeriod period) {
-        return rankingJpaRepository.findLatestReferenceDate(period);
+        LocalDate result = queryFactory
+            .select(ranking.referenceDate.max())
+            .from(ranking)
+            .where(ranking.period.eq(period))
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
     @Override
