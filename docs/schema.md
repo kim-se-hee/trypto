@@ -133,7 +133,6 @@ erDiagram
         id order_id FK "주문 ID (nullable)"
         id swap_id FK "스왑 ID (nullable)"
         id rule_id FK "위반 투자 원칙 ID"
-        string violation_reason "위반 사유"
         datetime created_at "위반 시각"
     }
 
@@ -158,17 +157,19 @@ erDiagram
         id snapshot_id PK "주 식별자"
         id user_id FK "유저 ID"
         id round_id FK "라운드 ID"
-        number total_asset_krw "총 자산 (원화)"
-        number total_profit_krw "총 수익금"
+        id exchange_id FK "거래소 ID"
+        number total_asset "총 자산 (거래소 기축통화 단위)"
+        number total_asset_krw "총 자산 (원화 환산)"
+        number total_investment "총 투입금 (거래소 기축통화 단위)"
+        number total_profit "수익금 (거래소 기축통화 단위)"
         number total_profit_rate "총 수익률"
-        datetime snapshot_date "스냅샷 날짜"
+        date snapshot_date "스냅샷 날짜"
     }
 
     PORTFOLIO_SNAPSHOT_DETAIL {
         id detail_id PK "주 식별자"
         id snapshot_id FK "스냅샷 ID"
         id coin_id FK "코인 ID"
-        id exchange_id FK "거래소 ID"
         number quantity "보유 수량"
         number avg_buy_price "평균 매수가"
         number current_price "당시 현재가"
@@ -192,30 +193,34 @@ erDiagram
         id report_id PK "주 식별자"
         id user_id FK "유저 ID"
         id round_id FK "라운드 ID"
+        id exchange_id FK "거래소 ID"
+        number total_violations "총 위반 횟수"
+        number missed_profit "놓친 수익 (기축통화 단위)"
         number actual_profit_rate "실제 수익률"
         number rule_followed_profit_rate "원칙 준수 시 수익률"
-        datetime analysis_start "분석 시작일"
-        datetime analysis_end "분석 종료일"
+        date analysis_start "분석 시작일"
+        date analysis_end "분석 종료일"
         datetime created_at "생성일"
     }
 
     RULE_SCENARIO {
         id scenario_id PK "주 식별자"
-        id report_id FK "후회 보고서 ID"
-        id rule_id FK "관련 투자 원칙 ID"
-        number impact_gap "영향 차이"
-        string description "시나리오 설명"
+        id report_id FK "리포트 ID"
+        id rule_id FK "투자 원칙 ID"
+        number violation_count "위반 횟수"
+        number total_loss_amount "총 손실 금액 (기축통화 단위)"
+        number impact_gap "수익률 영향 차이 (%p)"
     }
 
     VIOLATION_TRADE {
         id violation_trade_id PK "주 식별자"
-        id report_id FK "후회 보고서 ID"
+        id report_id FK "리포트 ID"
         id order_id FK "주문 ID (nullable)"
-        id swap_id FK "스왑 ID (nullable)"
         id rule_id FK "위반 원칙 ID"
-        number actual_amount "실제 체결 금액"
-        number suggested_amount "원칙 준수 시 금액"
-        number loss_amount "손실 금액"
+        id coin_id FK "코인 ID"
+        number loss_amount "규칙 위반 손실 금액 (기축통화 단위)"
+        number profit_loss "거래 손익 (기축통화 단위)"
+        datetime occurred_at "발생 시각"
     }
 
     %% === 관계 ===
@@ -251,10 +256,12 @@ erDiagram
     COIN ||--o{ SWAP : "from"
     COIN ||--o{ SWAP : "to"
     PORTFOLIO_SNAPSHOT ||--|{ PORTFOLIO_SNAPSHOT_DETAIL : ""
+    EXCHANGE ||--o{ PORTFOLIO_SNAPSHOT : ""
     COIN ||--o{ PORTFOLIO_SNAPSHOT_DETAIL : ""
-    EXCHANGE ||--o{ PORTFOLIO_SNAPSHOT_DETAIL : ""
+    EXCHANGE ||--o{ REGRET_REPORT : ""
     REGRET_REPORT ||--|{ RULE_SCENARIO : ""
     REGRET_REPORT ||--|{ VIOLATION_TRADE : ""
     INVESTMENT_RULE ||--o{ RULE_SCENARIO : ""
     INVESTMENT_RULE ||--o{ VIOLATION_TRADE : ""
+    COIN ||--o{ VIOLATION_TRADE : ""
 ```

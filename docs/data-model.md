@@ -41,5 +41,6 @@
 | Ranking → MarketData | — | 현재가 조회 |
 | Ranking → InvestmentRound | roundId | 랭킹 참여 자격 판단 |
 | RegretAnalysis → Trading | orderId | 원칙 위반 주문 체결 이력 조회 |
-| RegretAnalysis → MarketData | — | 시세 조회 |
+| RegretAnalysis → MarketData | — | 시세 조회 (BTC 벤치마크, 미실현분 현재가) |
 | RegretAnalysis → InvestmentRound | roundId | 투자 원칙 조회 |
+| RegretAnalysis → Ranking | roundId, exchangeId | 포트폴리오 스냅샷 조회 |
