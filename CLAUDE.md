@@ -190,6 +190,11 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
   - `adapter/out/`: Persistence Adapter, 외부 API Adapter, 크로스 컨텍스트 Adapter
 - Persistence 클래스명: `{도메인}JpaPersistenceAdapter` (예: `OrderJpaPersistenceAdapter`)
 - External API 클래스명: `{외부서비스}ApiAdapter` (예: `JupiterApiAdapter`)
+- 크로스 컨텍스트 Adapter 클래스명: `{소비하는 컨텍스트 관점의 이름}Adapter` (예: `AnalysisRoundAdapter`, `OrderHistoryAdapter`)
+  - 다른 모듈이 노출하는 QueryPort를 주입받아 자기 모듈의 Port로 변환한다
+  - 타 모듈의 도메인 모델, Output Port, JPA 엔티티(Q 클래스)를 직접 의존하지 않는다
+  - 타 모듈의 DTO → 자기 모듈의 DTO 변환 책임은 이 어댑터에 있다
+  - 소비하는 컨텍스트의 Port/DTO는 자기 컨텍스트의 유비쿼터스 언어로 이름을 짓는다. 생산하는 컨텍스트의 이름을 그대로 복사하지 않는다 (예: trading의 `OrderInfo`를 regretanalysis에서 소비할 때 → `TradeRecord`)
 - 메서드명은 비즈니스 로직을 드러내지 않고 데이터 조회 조건을 표현한다 (예: `findByUserIdAndCoin()`, `saveOrder()`)
 - 조건이 2개 이하인 단순 조회는 Spring Data JPA 쿼리 메서드를 활용한다
 - 조건이 복잡하거나 동적 쿼리가 필요한 경우 반드시 QueryDSL을 사용한다

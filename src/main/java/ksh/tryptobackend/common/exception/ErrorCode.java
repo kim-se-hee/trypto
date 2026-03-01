@@ -36,6 +36,8 @@ public enum ErrorCode {
     ROUND_ACCESS_DENIED(403, "round.access.denied"),
     ROUND_NOT_ACTIVE(409, "round.not.active"),
     USER_NOT_FOUND(404, "user.not.found"),
+    REPORT_NOT_FOUND(404, "report.not.found"),
+    SNAPSHOT_NOT_FOUND(404, "snapshot.not.found"),
     ;
 
     private final int status;

@@ -9,16 +9,19 @@ import ksh.tryptobackend.ranking.adapter.out.entity.QRankingCoinJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingExchangeJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QSnapshotDetailJpaEntity;
 import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
+import ksh.tryptobackend.ranking.application.port.out.SnapshotQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotDetailProjection;
+import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort {
+public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort {
 
     private final JPAQueryFactory queryFactory;
 
@@ -42,6 +45,40 @@ public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshot
             .where(snapshot.userId.eq(userId)
                 .and(snapshot.roundId.eq(roundId))
                 .and(snapshot.snapshotDate.eq(latestSnapshotDate(userId, roundId))))
+            .fetch();
+    }
+
+    @Override
+    public Optional<SnapshotInfo> findLatestByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
+        SnapshotInfo result = queryFactory
+            .select(Projections.constructor(SnapshotInfo.class,
+                snapshot.id, snapshot.roundId, snapshot.exchangeId,
+                snapshot.totalAsset, snapshot.totalInvestment,
+                snapshot.totalProfitRate, snapshot.snapshotDate))
+            .from(snapshot)
+            .where(
+                snapshot.roundId.eq(roundId),
+                snapshot.exchangeId.eq(exchangeId)
+            )
+            .orderBy(snapshot.snapshotDate.desc())
+            .limit(1)
+            .fetchOne();
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<SnapshotInfo> findAllByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
+        return queryFactory
+            .select(Projections.constructor(SnapshotInfo.class,
+                snapshot.id, snapshot.roundId, snapshot.exchangeId,
+                snapshot.totalAsset, snapshot.totalInvestment,
+                snapshot.totalProfitRate, snapshot.snapshotDate))
+            .from(snapshot)
+            .where(
+                snapshot.roundId.eq(roundId),
+                snapshot.exchangeId.eq(exchangeId)
+            )
+            .orderBy(snapshot.snapshotDate.asc())
             .fetch();
     }
 
