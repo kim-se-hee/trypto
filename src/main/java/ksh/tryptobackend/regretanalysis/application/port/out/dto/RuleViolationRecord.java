@@ -2,7 +2,7 @@ package ksh.tryptobackend.regretanalysis.application.port.out.dto;
 
 import java.time.LocalDateTime;
 
-public record ViolationInfo(
+public record RuleViolationRecord(
     Long violationId,
     Long orderId,
     Long ruleId,

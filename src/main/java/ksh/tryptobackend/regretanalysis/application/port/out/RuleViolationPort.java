@@ -1,10 +1,10 @@
 package ksh.tryptobackend.regretanalysis.application.port.out;
 
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.ViolationInfo;
+import ksh.tryptobackend.regretanalysis.application.port.out.dto.RuleViolationRecord;
 
 import java.util.List;
 
 public interface RuleViolationPort {
 
-    List<ViolationInfo> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId);
+    List<RuleViolationRecord> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId);
 }
