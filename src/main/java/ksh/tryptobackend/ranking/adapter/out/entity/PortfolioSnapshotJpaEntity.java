@@ -30,11 +30,20 @@ public class PortfolioSnapshotJpaEntity {
     @Column(name = "round_id", nullable = false)
     private Long roundId;
 
+    @Column(name = "exchange_id", nullable = false)
+    private Long exchangeId;
+
+    @Column(name = "total_asset", nullable = false, precision = 30, scale = 8)
+    private BigDecimal totalAsset;
+
     @Column(name = "total_asset_krw", nullable = false, precision = 30, scale = 8)
     private BigDecimal totalAssetKrw;
 
-    @Column(name = "total_profit_krw", nullable = false, precision = 30, scale = 8)
-    private BigDecimal totalProfitKrw;
+    @Column(name = "total_investment", nullable = false, precision = 30, scale = 8)
+    private BigDecimal totalInvestment;
+
+    @Column(name = "total_profit", nullable = false, precision = 30, scale = 8)
+    private BigDecimal totalProfit;
 
     @Column(name = "total_profit_rate", nullable = false, precision = 10, scale = 4)
     private BigDecimal totalProfitRate;

@@ -29,9 +29,6 @@ public class SnapshotDetailJpaEntity {
     @Column(name = "coin_id", nullable = false)
     private Long coinId;
 
-    @Column(name = "exchange_id", nullable = false)
-    private Long exchangeId;
-
     @Column(name = "quantity", nullable = false, precision = 30, scale = 8)
     private BigDecimal quantity;
 
