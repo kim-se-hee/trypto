@@ -5,14 +5,18 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRuleJpaRepository;
+import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
+import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +30,8 @@ public class RoundStepDefinition {
     private final InvestmentRoundJpaRepository investmentRoundJpaRepository;
     private final InvestmentRuleJpaRepository investmentRuleJpaRepository;
     private final WalletJpaRepository walletJpaRepository;
+
+    private Long lastRoundId;
 
     public RoundStepDefinition(
         CommonApiClient apiClient,
@@ -47,6 +53,7 @@ public class RoundStepDefinition {
         walletJpaRepository.deleteAll();
         investmentRoundJpaRepository.deleteAll();
         exchangeJpaRepository.deleteAll();
+        lastRoundId = null;
     }
 
     @Given("라운드용 거래소 메타데이터가 준비되어 있다")
@@ -61,6 +68,7 @@ public class RoundStepDefinition {
     @When("기본 라운드 시작 요청을 보낸다")
     public void 기본_라운드_시작_요청을_보낸다() {
         apiClient.post("/api/rounds", defaultRequest());
+        extractRoundIdIfSuccess();
     }
 
     @When("국내 거래소 시드머니를 {long}원으로 라운드 시작 요청을 보낸다")
@@ -127,6 +135,40 @@ public class RoundStepDefinition {
             .jsonPath("$.data.rules.length()").isEqualTo(count);
     }
 
+    @When("라운드 종료 요청을 보낸다")
+    public void 라운드_종료_요청을_보낸다() {
+        Map<String, Object> body = Map.of("userId", USER_ID);
+        apiClient.post("/api/rounds/" + lastRoundId + "/end", body);
+    }
+
+    @When("다른 사용자로 라운드 종료 요청을 보낸다")
+    public void 다른_사용자로_라운드_종료_요청을_보낸다() {
+        Map<String, Object> body = Map.of("userId", 999L);
+        apiClient.post("/api/rounds/" + lastRoundId + "/end", body);
+    }
+
+    @Given("파산 상태의 라운드가 존재한다")
+    public void 파산_상태의_라운드가_존재한다() {
+        InvestmentRoundJpaEntity entity = InvestmentRoundJpaEntity.fromDomain(
+            InvestmentRound.builder()
+                .userId(USER_ID)
+                .roundNumber(1L)
+                .initialSeed(new BigDecimal("1000000"))
+                .emergencyFundingLimit(new BigDecimal("500000"))
+                .emergencyChargeCount(3)
+                .status(RoundStatus.BANKRUPT)
+                .startedAt(LocalDateTime.now())
+                .build());
+        InvestmentRoundJpaEntity saved = investmentRoundJpaRepository.save(entity);
+        lastRoundId = saved.getId();
+    }
+
+    @When("존재하지 않는 라운드 종료 요청을 보낸다")
+    public void 존재하지_않는_라운드_종료_요청을_보낸다() {
+        Map<String, Object> body = Map.of("userId", USER_ID);
+        apiClient.post("/api/rounds/999999/end", body);
+    }
+
     private Map<String, Object> defaultRequest() {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", USER_ID);
@@ -168,5 +210,17 @@ public class RoundStepDefinition {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> getRules(Map<String, Object> request) {
         return (List<Map<String, Object>>) request.get("rules");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void extractRoundIdIfSuccess() {
+        Map<String, Object> body = apiClient.getLastResponse()
+            .expectBody(Map.class)
+            .returnResult()
+            .getResponseBody();
+        Map<String, Object> data = (Map<String, Object>) body.get("data");
+        if (data != null && data.get("roundId") instanceof Number num) {
+            lastRoundId = num.longValue();
+        }
     }
 }
