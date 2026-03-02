@@ -19,7 +19,7 @@ import type { InvestmentRound } from "@/mocks/round";
 
 interface EmergencyFundingCardProps {
   round: InvestmentRound;
-  onCharge: (amount: number) => boolean;
+  onCharge: (amount: number) => Promise<boolean>;
 }
 
 export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardProps) {
@@ -46,9 +46,9 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
     }
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!canCharge || !isValidAmount) return;
-    const ok = onCharge(amount);
+    const ok = await onCharge(amount);
     if (ok) {
       setOpen(false);
       setAmount(0);

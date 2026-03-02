@@ -1,77 +1,123 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import {
-  type InvestmentRound,
-  type RuleType,
-  createMockRound,
-  clearMockRound,
-  mockActiveRound,
-  setMockActiveRound,
-} from "@/mocks/round";
-
-interface CreateRoundParams {
-  userId: number;
-  initialSeed: number;
-  emergencyFundingLimit: number;
-  rules: { ruleType: RuleType; thresholdValue: number }[];
-}
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { InvestmentRound } from "@/mocks/round";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  chargeEmergencyFunding as chargeEmergencyFundingApi,
+  createIdempotencyKey,
+  createRound as createRoundApi,
+  fetchActiveRound,
+  type CreateRoundParams,
+} from "@/lib/api/round-api";
 
 interface RoundContextValue {
   activeRound: InvestmentRound | null;
   hasActiveRound: boolean;
-  createRound: (params: CreateRoundParams) => InvestmentRound;
+  isRoundLoading: boolean;
+  createRound: (params: CreateRoundParams) => Promise<InvestmentRound | null>;
   clearRound: () => void;
-  chargeEmergencyFunding: (amount: number) => boolean;
+  refreshActiveRound: () => Promise<void>;
+  chargeEmergencyFunding: (amount: number, exchangeId: number) => Promise<boolean>;
 }
 
 const RoundContext = createContext<RoundContextValue | null>(null);
 
 export function RoundProvider({ children }: { children: ReactNode }) {
-  const [activeRound, setActiveRound] = useState<InvestmentRound | null>(mockActiveRound);
+  const { user } = useAuth();
+  const [activeRound, setActiveRound] = useState<InvestmentRound | null>(null);
+  const [isRoundLoading, setIsRoundLoading] = useState(false);
 
-  const createRound = useCallback((params: CreateRoundParams): InvestmentRound => {
-    const round = createMockRound(
-      params.userId,
-      params.initialSeed,
-      params.emergencyFundingLimit,
-      params.rules,
-    );
-    setActiveRound(round);
-    return round;
+  const refreshActiveRound = useCallback(async () => {
+    if (!user) {
+      setActiveRound(null);
+      return;
+    }
+
+    setIsRoundLoading(true);
+    try {
+      const round = await fetchActiveRound(user.userId);
+      setActiveRound(round);
+    } catch (error) {
+      console.error("Failed to load active round", error);
+      setActiveRound(null);
+    } finally {
+      setIsRoundLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void refreshActiveRound();
+  }, [refreshActiveRound]);
+
+  const createRound = useCallback(async (params: CreateRoundParams): Promise<InvestmentRound | null> => {
+    try {
+      const round = await createRoundApi(params);
+      setActiveRound(round);
+      return round;
+    } catch (error) {
+      console.error("Failed to create round", error);
+      return null;
+    }
   }, []);
 
   const clearRound = useCallback(() => {
-    clearMockRound();
     setActiveRound(null);
   }, []);
 
-  const chargeEmergencyFunding = useCallback((amount: number): boolean => {
-    if (!activeRound) return false;
-    if (activeRound.status !== "ACTIVE") return false;
-    if (activeRound.emergencyChargeCount <= 0) return false;
-    if (amount <= 0 || amount > activeRound.emergencyFundingLimit) return false;
+  const chargeEmergencyFunding = useCallback(
+    async (amount: number, exchangeId: number): Promise<boolean> => {
+      if (!activeRound || !user) return false;
+      if (activeRound.status !== "ACTIVE") return false;
+      if (activeRound.emergencyChargeCount <= 0) return false;
+      if (amount <= 0 || amount > activeRound.emergencyFundingLimit) return false;
 
-    const updated: InvestmentRound = {
-      ...activeRound,
-      emergencyChargeCount: Math.max(0, activeRound.emergencyChargeCount - 1),
-    };
-    setMockActiveRound(updated);
-    setActiveRound(updated);
-    return true;
-  }, [activeRound]);
+      try {
+        const result = await chargeEmergencyFundingApi({
+          roundId: activeRound.roundId,
+          userId: user.userId,
+          exchangeId,
+          amount,
+          idempotencyKey: createIdempotencyKey(),
+        });
 
-  return (
-    <RoundContext.Provider
-      value={{
-        activeRound,
-        hasActiveRound: activeRound !== null,
-        createRound,
-        clearRound,
-        chargeEmergencyFunding,
-      }}
-    >
-      {children}
-    </RoundContext.Provider>
+        setActiveRound((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            emergencyChargeCount: result.remainingChargeCount,
+          };
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Failed to charge emergency funding", error);
+        return false;
+      }
+    },
+    [activeRound, user],
   );
+
+  const value = useMemo(
+    () => ({
+      activeRound,
+      hasActiveRound: activeRound !== null,
+      isRoundLoading,
+      createRound,
+      clearRound,
+      refreshActiveRound,
+      chargeEmergencyFunding,
+    }),
+    [activeRound, isRoundLoading, createRound, clearRound, refreshActiveRound, chargeEmergencyFunding],
+  );
+
+  return <RoundContext.Provider value={value}>{children}</RoundContext.Provider>;
 }
 
 export function useRound(): RoundContextValue {

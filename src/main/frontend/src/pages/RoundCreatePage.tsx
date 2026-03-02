@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,8 @@ export function RoundCreatePage() {
   const [seed, setSeed] = useState(0);
   const [emergencyLimit, setEmergencyLimit] = useState(0);
   const [rules, setRules] = useState<RulesMap>(getDefaultRules);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function handleRuleToggle(type: RuleType, enabled: boolean) {
     setRules((prev) => ({ ...prev, [type]: { ...prev[type], enabled } }));
@@ -32,18 +34,29 @@ export function RoundCreatePage() {
   const enabledRules = Object.entries(rules).filter(([, r]) => r.enabled);
   const canSubmit = seed > 0 && emergencyLimit > 0 && enabledRules.length >= 1;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit || !user) return;
 
-    createRound({
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    const created = await createRound({
       userId: user.userId,
       initialSeed: seed,
       emergencyFundingLimit: emergencyLimit,
-      rules: enabledRules.map(([type, r]) => ({
+      rules: enabledRules.map(([type, rule]) => ({
         ruleType: type as RuleType,
-        thresholdValue: r.value,
+        thresholdValue: rule.value,
       })),
     });
+
+    setIsSubmitting(false);
+
+    if (!created) {
+      setSubmitError("라운드 생성에 실패했습니다. 입력값을 다시 확인해 주세요.");
+      return;
+    }
+
     navigate("/market", { replace: true });
   }
 
@@ -51,19 +64,17 @@ export function RoundCreatePage() {
     <div className="min-h-dvh bg-background">
       <RoundCreateHeader />
 
-      {/* Hero */}
       <section className="bg-gradient-to-r from-primary/8 via-chart-2/6 to-primary/4 pb-8 pt-8">
         <div className="mx-auto max-w-2xl px-4">
-          <h1 className="text-3xl font-extrabold tracking-tight">새 라운드</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">투자 라운드 시작</h1>
           <p className="mt-1.5 text-sm font-medium text-muted-foreground">
-            시드머니와 투자 원칙을 설정하고 모의투자를 시작하세요
+            시드머니와 투자 원칙을 설정하고 모의투자를 시작하세요.
           </p>
         </div>
       </section>
 
       <main className="mx-auto max-w-2xl px-4 py-6">
         <div className="flex flex-col gap-8">
-          {/* 시드머니 섹션 */}
           <div>
             <h2 className="mb-4 text-lg font-extrabold tracking-tight">자금 설정</h2>
             <SeedMoneyCard
@@ -74,33 +85,30 @@ export function RoundCreatePage() {
             />
           </div>
 
-          {/* 투자 원칙 섹션 */}
           <InvestmentRulesSection
             rules={rules}
             onRuleToggle={handleRuleToggle}
             onRuleValueChange={handleRuleValueChange}
           />
 
-          {/* 제출 */}
           <div>
             <button
-              disabled={!canSubmit}
+              disabled={!canSubmit || isSubmitting}
               onClick={handleSubmit}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-[#9A6AFF] text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:pointer-events-none disabled:opacity-40"
             >
               <Rocket className="h-4 w-4" />
-              라운드 시작하기
+              {isSubmitting ? "생성 중..." : "라운드 시작하기"}
             </button>
 
             {!canSubmit && (
               <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                {seed <= 0 && "시드머니"}
-                {seed <= 0 && emergencyLimit <= 0 && ", "}
-                {emergencyLimit <= 0 && "긴급 자금 상한"}
-                {(seed <= 0 || emergencyLimit <= 0) && enabledRules.length < 1 && ", "}
-                {enabledRules.length < 1 && "투자 원칙 1개 이상"}
-                {" "}설정이 필요합니다
+                시드머니, 긴급 자금 상한, 투자 원칙 1개 이상 설정이 필요합니다.
               </p>
+            )}
+
+            {submitError && (
+              <p className="mt-2 text-center text-xs font-medium text-destructive">{submitError}</p>
             )}
           </div>
         </div>
@@ -108,3 +116,4 @@ export function RoundCreatePage() {
     </div>
   );
 }
+

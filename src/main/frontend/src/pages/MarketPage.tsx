@@ -11,6 +11,7 @@ import { OrderPanel } from "@/components/market/OrderPanel";
 import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { cexExchanges, dexExchanges } from "@/mocks/coins";
+import { getBackendExchangeId, resolveOrderTargetIds } from "@/lib/api/id-mapping";
 import type { MarketType } from "@/components/market/MarketTypeTabs";
 import type { FilterType } from "@/components/market/FilterChips";
 
@@ -31,6 +32,7 @@ export function MarketPage() {
     () => activeExchanges.find((e) => e.id === selectedExchange) ?? activeExchanges[0],
     [activeExchanges, selectedExchange],
   );
+  const backendExchangeId = getBackendExchangeId(selectedExchange);
 
   const filteredCoins = useMemo(() => {
     let coins = exchange.coins;
@@ -63,6 +65,9 @@ export function MarketPage() {
     const fromSelection = exchange.coins.find((coin) => coin.symbol === selectedSymbol);
     return fromSelection ?? filteredCoins[0] ?? exchange.coins[0];
   }, [exchange.coins, filteredCoins, selectedSymbol]);
+  const orderTargetIds = selectedCoin
+    ? resolveOrderTargetIds(selectedExchange, selectedCoin.symbol)
+    : null;
 
   const handleMarketTypeChange = (type: MarketType) => {
     const newExchanges = type === "cex" ? cexExchanges : dexExchanges;
@@ -135,10 +140,10 @@ export function MarketPage() {
 
           {/* Side panel */}
           <div className="space-y-4">
-            {activeRound && (
+            {activeRound && backendExchangeId !== null && (
               <EmergencyFundingCard
                 round={activeRound}
-                onCharge={chargeEmergencyFunding}
+                onCharge={(amount) => chargeEmergencyFunding(amount, backendExchangeId)}
               />
             )}
             {selectedCoin && (
@@ -147,9 +152,8 @@ export function MarketPage() {
                 coinSymbol={selectedCoin.symbol}
                 coinName={selectedCoin.name}
                 currentPrice={selectedCoin.currentPrice}
-                availableBase={exchange.baseCurrency === "KRW" ? 2500000 : 3250}
-                availableCoin={1.234567}
                 feeRate={0.0005}
+                orderTargetIds={orderTargetIds}
               />
             )}
           </div>
