@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorCode {
 
     INTERNAL_SERVER_ERROR(500, "internal.server.error"),
+    CONCURRENT_MODIFICATION(409, "concurrent.modification"),
 
     INSUFFICIENT_BALANCE(400, "insufficient.balance"),
     BELOW_MIN_ORDER_AMOUNT(400, "below.min.order.amount"),
