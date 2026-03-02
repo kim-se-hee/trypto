@@ -8,9 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public final class AssetTimeline {
 
@@ -33,12 +32,11 @@ public final class AssetTimeline {
             .toList();
     }
 
-    public Map<LocalDate, BigDecimal> getAssetByDate() {
+    public Optional<BigDecimal> findAssetAt(LocalDate date) {
         return snapshots.stream()
-            .collect(Collectors.toMap(
-                AssetSnapshot::getSnapshotLocalDate,
-                AssetSnapshot::getTotalAsset
-            ));
+            .filter(s -> s.getSnapshotLocalDate().equals(date))
+            .findFirst()
+            .map(AssetSnapshot::getTotalAsset);
     }
 
     public BigDecimal getSeedMoney() {

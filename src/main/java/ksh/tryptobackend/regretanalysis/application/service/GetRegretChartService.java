@@ -52,7 +52,7 @@ public class GetRegretChartService implements GetRegretChartUseCase {
 
         CumulativeLossTimeline lossTimeline = CumulativeLossTimeline.build(violations, timeline.getDates());
         BtcBenchmark btcBenchmark = buildBtcBenchmark(timeline, exchangeInfo.currency());
-        ViolationMarkers violationMarkers = ViolationMarkers.from(violations, timeline.getAssetByDate());
+        ViolationMarkers violationMarkers = ViolationMarkers.from(violations, timeline);
 
         List<ChartDataPoint> assetHistory = mapToAssetHistory(timeline.getSnapshots(), lossTimeline, btcBenchmark);
         List<ViolationMarkerPoint> markerPoints = mapToViolationMarkerPoints(violationMarkers);

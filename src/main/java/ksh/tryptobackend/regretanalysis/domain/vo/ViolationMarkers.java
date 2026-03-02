@@ -5,7 +5,6 @@ import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,15 +18,16 @@ public final class ViolationMarkers {
     }
 
     public static ViolationMarkers from(List<ViolationDetail> violations,
-                                         Map<LocalDate, BigDecimal> assetByDate) {
+                                         AssetTimeline timeline) {
         Set<LocalDate> violationDates = violations.stream()
             .map(v -> v.getOccurredAt().toLocalDate())
             .collect(Collectors.toSet());
 
         List<Marker> markers = violationDates.stream()
             .sorted()
-            .filter(assetByDate::containsKey)
-            .map(date -> new Marker(date, assetByDate.get(date)))
+            .flatMap(date -> timeline.findAssetAt(date)
+                .map(asset -> new Marker(date, asset))
+                .stream())
             .toList();
 
         return new ViolationMarkers(markers);
