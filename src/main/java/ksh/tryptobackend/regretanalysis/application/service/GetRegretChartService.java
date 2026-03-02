@@ -54,7 +54,7 @@ public class GetRegretChartService implements GetRegretChartUseCase {
         BtcBenchmark btcBenchmark = buildBtcBenchmark(timeline, exchangeInfo.currency());
         ViolationMarkers violationMarkers = ViolationMarkers.from(violations, timeline);
 
-        List<DailyComparison> assetHistory = mapToAssetHistory(timeline.getSnapshots(), lossTimeline, btcBenchmark);
+        List<DailyComparison> assetHistory = mapToAssetHistory(timeline, lossTimeline, btcBenchmark);
         List<ViolationMarkerPoint> markerPoints = mapToViolationMarkerPoints(violationMarkers);
 
         return new RegretChartResult(
@@ -101,10 +101,10 @@ public class GetRegretChartService implements GetRegretChartUseCase {
         return BtcBenchmark.calculate(timeline.getSeedMoney(), priceMap, timeline.getDates(), timeline.getStartDate());
     }
 
-    private List<DailyComparison> mapToAssetHistory(List<AssetSnapshot> snapshots,
+    private List<DailyComparison> mapToAssetHistory(AssetTimeline timeline,
                                                     CumulativeLossTimeline lossTimeline,
                                                     BtcBenchmark btcBenchmark) {
-        return snapshots.stream()
+        return timeline.getSnapshots().stream()
             .map(snapshot -> {
                 LocalDate date = snapshot.getSnapshotLocalDate();
                 BigDecimal actualAsset = snapshot.getTotalAsset();
