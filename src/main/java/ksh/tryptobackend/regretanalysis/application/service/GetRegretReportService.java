@@ -39,7 +39,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     @Transactional
     public GetRegretReportResult getRegretReport(GetRegretReportQuery query) {
         RoundInfoResult round = getRoundAndValidateOwner(query.roundId(), query.userId());
-        validateExchangeInRound(query.roundId(), query.exchangeId());
+        validateWalletExistsForExchange(query.roundId(), query.exchangeId());
         ExchangeMetadata exchange = exchangeMetadataPort.getExchangeMetadata(query.exchangeId());
         List<RuleInfo> rules = investmentRulePort.findByRoundId(query.roundId());
 
@@ -56,7 +56,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
         return round;
     }
 
-    private void validateExchangeInRound(Long roundId, Long exchangeId) {
+    private void validateWalletExistsForExchange(Long roundId, Long exchangeId) {
         if (!exchangeMetadataPort.existsWalletForExchange(roundId, exchangeId)) {
             throw new CustomException(ErrorCode.EXCHANGE_NOT_FOUND);
         }
