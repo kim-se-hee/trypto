@@ -29,6 +29,10 @@ public class InvestmentRoundJpaEntity {
     @Column(name = "round_id")
     private Long id;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -61,6 +65,7 @@ public class InvestmentRoundJpaEntity {
     public static InvestmentRoundJpaEntity fromDomain(InvestmentRound round) {
         InvestmentRoundJpaEntity entity = new InvestmentRoundJpaEntity();
         entity.id = round.getRoundId();
+        entity.version = round.getVersion();
         entity.userId = round.getUserId();
         entity.roundNumber = round.getRoundNumber();
         entity.initialSeed = round.getInitialSeed();
@@ -76,6 +81,7 @@ public class InvestmentRoundJpaEntity {
     public InvestmentRound toDomain() {
         return InvestmentRound.builder()
             .roundId(id)
+            .version(version)
             .userId(userId)
             .roundNumber(roundNumber)
             .initialSeed(initialSeed)
