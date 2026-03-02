@@ -87,43 +87,22 @@ public class GetRegretReportService implements GetRegretReportUseCase {
 
         List<ViolationDetail> violationDetails = buildViolationDetails(violations, rules);
         List<RuleImpact> ruleImpacts = buildRuleImpacts(violationDetails, snapshot);
-        BigDecimal missedProfit = RegretReport.calculateMissedProfit(ruleImpacts);
-        BigDecimal ruleFollowedProfitRate = RegretReport.calculateRuleFollowedProfitRate(
-            snapshot.totalAsset(), snapshot.totalInvestment(), ruleImpacts);
 
-        RegretReport report = RegretReport.builder()
-            .userId(round.userId())
-            .roundId(round.roundId())
-            .exchangeId(exchangeId)
-            .totalViolations(violations.size())
-            .missedProfit(missedProfit)
-            .actualProfitRate(snapshot.totalProfitRate())
-            .ruleFollowedProfitRate(ruleFollowedProfitRate)
-            .analysisStart(round.startedAt().toLocalDate())
-            .analysisEnd(snapshot.snapshotDate().toLocalDate())
-            .createdAt(LocalDateTime.now())
-            .ruleImpacts(ruleImpacts)
-            .violationDetails(violationDetails)
-            .build();
+        RegretReport report = RegretReport.create(
+            round.userId(), round.roundId(), exchangeId,
+            violations.size(), snapshot.totalProfitRate(),
+            snapshot.totalAsset(), snapshot.totalInvestment(),
+            round.startedAt().toLocalDate(), snapshot.snapshotDate().toLocalDate(),
+            ruleImpacts, violationDetails);
 
         return regretReportPersistencePort.save(report);
     }
 
     private RegretReport saveEmptyReport(RoundInfoResult round, Long exchangeId, AssetSnapshot snapshot) {
-        RegretReport report = RegretReport.builder()
-            .userId(round.userId())
-            .roundId(round.roundId())
-            .exchangeId(exchangeId)
-            .totalViolations(0)
-            .missedProfit(BigDecimal.ZERO)
-            .actualProfitRate(snapshot.totalProfitRate())
-            .ruleFollowedProfitRate(snapshot.totalProfitRate())
-            .analysisStart(round.startedAt().toLocalDate())
-            .analysisEnd(snapshot.snapshotDate().toLocalDate())
-            .createdAt(LocalDateTime.now())
-            .ruleImpacts(List.of())
-            .violationDetails(List.of())
-            .build();
+        RegretReport report = RegretReport.createEmpty(
+            round.userId(), round.roundId(), exchangeId,
+            snapshot.totalProfitRate(),
+            round.startedAt().toLocalDate(), snapshot.snapshotDate().toLocalDate());
 
         return regretReportPersistencePort.save(report);
     }

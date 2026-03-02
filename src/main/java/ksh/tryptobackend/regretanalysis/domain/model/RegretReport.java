@@ -30,23 +30,49 @@ public class RegretReport {
     private final List<RuleImpact> ruleImpacts;
     private final List<ViolationDetail> violationDetails;
 
-    public static BigDecimal calculateMissedProfit(List<RuleImpact> ruleImpacts) {
-        BigDecimal totalLoss = ruleImpacts.stream()
-            .map(RuleImpact::getTotalLossAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    public static RegretReport create(Long userId, Long roundId, Long exchangeId,
+                                       int totalViolations, BigDecimal actualProfitRate,
+                                       BigDecimal actualTotalAsset, BigDecimal totalInvestment,
+                                       LocalDate analysisStart, LocalDate analysisEnd,
+                                       List<RuleImpact> ruleImpacts,
+                                       List<ViolationDetail> violationDetails) {
+        BigDecimal missedProfit = calculateMissedProfit(ruleImpacts);
+        BigDecimal ruleFollowedProfitRate = calculateRuleFollowedProfitRate(
+            actualTotalAsset, totalInvestment, ruleImpacts);
 
-        return totalLoss.compareTo(BigDecimal.ZERO) > 0 ? totalLoss : BigDecimal.ZERO;
+        return RegretReport.builder()
+            .userId(userId)
+            .roundId(roundId)
+            .exchangeId(exchangeId)
+            .totalViolations(totalViolations)
+            .missedProfit(missedProfit)
+            .actualProfitRate(actualProfitRate)
+            .ruleFollowedProfitRate(ruleFollowedProfitRate)
+            .analysisStart(analysisStart)
+            .analysisEnd(analysisEnd)
+            .createdAt(LocalDateTime.now())
+            .ruleImpacts(ruleImpacts)
+            .violationDetails(violationDetails)
+            .build();
     }
 
-    public static BigDecimal calculateRuleFollowedProfitRate(BigDecimal actualTotalAsset,
-                                                              BigDecimal totalInvestment,
-                                                              List<RuleImpact> ruleImpacts) {
-        BigDecimal totalLoss = ruleImpacts.stream()
-            .map(RuleImpact::getTotalLossAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal ruleFollowedAsset = actualTotalAsset.add(totalLoss);
-        return calculateProfitRate(ruleFollowedAsset, totalInvestment);
+    public static RegretReport createEmpty(Long userId, Long roundId, Long exchangeId,
+                                           BigDecimal actualProfitRate,
+                                           LocalDate analysisStart, LocalDate analysisEnd) {
+        return RegretReport.builder()
+            .userId(userId)
+            .roundId(roundId)
+            .exchangeId(exchangeId)
+            .totalViolations(0)
+            .missedProfit(BigDecimal.ZERO)
+            .actualProfitRate(actualProfitRate)
+            .ruleFollowedProfitRate(actualProfitRate)
+            .analysisStart(analysisStart)
+            .analysisEnd(analysisEnd)
+            .createdAt(LocalDateTime.now())
+            .ruleImpacts(List.of())
+            .violationDetails(List.of())
+            .build();
     }
 
     public static RegretReport reconstitute(Long reportId, Long userId, Long roundId, Long exchangeId,
@@ -71,6 +97,25 @@ public class RegretReport {
             .ruleImpacts(ruleImpacts)
             .violationDetails(violationDetails)
             .build();
+    }
+
+    private static BigDecimal calculateMissedProfit(List<RuleImpact> ruleImpacts) {
+        BigDecimal totalLoss = ruleImpacts.stream()
+            .map(RuleImpact::getTotalLossAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalLoss.compareTo(BigDecimal.ZERO) > 0 ? totalLoss : BigDecimal.ZERO;
+    }
+
+    private static BigDecimal calculateRuleFollowedProfitRate(BigDecimal actualTotalAsset,
+                                                               BigDecimal totalInvestment,
+                                                               List<RuleImpact> ruleImpacts) {
+        BigDecimal totalLoss = ruleImpacts.stream()
+            .map(RuleImpact::getTotalLossAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal ruleFollowedAsset = actualTotalAsset.add(totalLoss);
+        return calculateProfitRate(ruleFollowedAsset, totalInvestment);
     }
 
     static BigDecimal calculateProfitRate(BigDecimal totalAsset, BigDecimal totalInvestment) {
