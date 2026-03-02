@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface RegretReportJpaRepository extends JpaRepository<RegretReportJpaEntity, Long> {
 
     Optional<RegretReportJpaEntity> findByRoundIdAndExchangeId(Long roundId, Long exchangeId);
+
+    boolean existsByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 }

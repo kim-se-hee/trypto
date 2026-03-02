@@ -63,7 +63,7 @@ public class ViolationDetailJpaEntity {
         return entity;
     }
 
-    ViolationDetail toDomain() {
+    public ViolationDetail toDomain() {
         return ViolationDetail.reconstitute(
             id, report.getId(), orderId, ruleId,
             coinId, lossAmount, profitLoss, occurredAt
