@@ -24,7 +24,7 @@ public class RegretReport {
     private final LocalDate analysisEnd;
     private final LocalDateTime createdAt;
     private final List<RuleImpact> ruleImpacts;
-    private final List<ViolationDetail> violationDetails;
+    private final ViolationDetails violationDetails;
 
     public static RegretReport reconstitute(Long reportId, Long userId, Long roundId, Long exchangeId,
                                             int totalViolations, BigDecimal missedProfit,
@@ -46,7 +46,8 @@ public class RegretReport {
             .analysisEnd(analysisEnd)
             .createdAt(createdAt)
             .ruleImpacts(ruleImpacts)
-            .violationDetails(violationDetails)
+            .violationDetails(new ViolationDetails(violationDetails))
             .build();
     }
+
 }

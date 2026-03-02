@@ -10,7 +10,7 @@
 | MarketData | Coin, Exchange | ExchangeCoin, PriceCandle, WithdrawalFee | — |
 | Ranking | Ranking, PortfolioSnapshot | SnapshotDetail | ProfitRate, RankingPeriod |
 | InvestmentRound | InvestmentRound | RuleSetting, EmergencyFunding | SeedPolicy, RoundStatus, RuleValue |
-| RegretAnalysis | RegretReport | RuleImpact, ViolationDetail | AssetHistory, ImpactGap |
+| RegretAnalysis | RegretReport | RuleImpact, ViolationDetail | ImpactGap, ThresholdUnit |
 | Common (Shared Kernel) | — | — | RuleType |
 
 **소유 관계:**

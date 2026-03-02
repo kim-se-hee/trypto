@@ -87,7 +87,7 @@ public class RegretReportJpaEntity {
                 entity.ruleImpacts.add(RuleImpactJpaEntity.fromDomain(ri, entity)));
         }
         if (report.getViolationDetails() != null) {
-            report.getViolationDetails().forEach(vd ->
+            report.getViolationDetails().toList().forEach(vd ->
                 entity.violationDetails.add(ViolationDetailJpaEntity.fromDomain(vd, entity)));
         }
 

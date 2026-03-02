@@ -52,7 +52,7 @@
 
 ### 리포트 생성
 
-배치(RegretReportJob)에서 리포트를 사전 생성한다. API는 배치가 생성한 데이터를 조회만 한다. 리포트가 아직 없으면 (라운드 시작 당일 등) 조회 시점에 생성하고 저장한다.
+배치(RegretReportJob)에서 리포트를 사전 생성한다. API는 배치가 생성한 데이터를 조회만 한다. 리포트가 아직 없으면 (라운드 시작 당일 등) `REPORT_NOT_FOUND` 에러를 반환한다.
 
 배치 상세는 [portfolio-snapshot-batch.md](../../../../Desktop/batch/portfolio-snapshot-batch.md)를 참조한다.
 
@@ -91,7 +91,7 @@ missedProfit = max(0, Σ all loss_amounts)
 
 - **ACTIVE 라운드**: 배치(RegretReportJob)가 매일 갱신한다. API는 배치 결과를 조회만 한다. 미실현분은 배치 시점의 현재가로 계산되어 있으며, 다음 배치까지 변하지 않는다
 - **ENDED 라운드**: 종료 시 1회 확정 생성 후 변하지 않는다. 실현분은 매도 체결가로 고정된다
-- **리포트 미존재 시** (라운드 시작 당일 등): API 조회 시점에 생성하고 저장한다
+- **리포트 미존재 시** (라운드 시작 당일 등): `REPORT_NOT_FOUND` 에러를 반환한다. 배치 실행 후 조회 가능하다
 
 ### 규칙 기준값 단위 (`thresholdUnit`)
 
@@ -123,7 +123,7 @@ missedProfit = max(0, Σ all loss_amounts)
 
 ### 참고사항
 
-- 배치가 생성한 리포트를 조회한다. 리포트가 없으면 조회 시점에 생성 후 반환한다
+- 배치가 생성한 리포트를 조회한다. 리포트가 없으면 `REPORT_NOT_FOUND` 에러를 반환한다
 - 거래소별로 요청한다
 
 `GET /api/rounds/{roundId}/regret?exchangeId={exchangeId}`
@@ -277,8 +277,8 @@ GET /api/rounds/1/regret?exchangeId=1
 |------|--------|------|
 | ROUND_NOT_FOUND | 404 | 투자 라운드를 찾을 수 없음 |
 | ROUND_ACCESS_DENIED | 403 | 본인의 라운드가 아님 |
-| EXCHANGE_NOT_FOUND | 404 | 해당 거래소가 라운드에 존재하지 않음 |
-| SNAPSHOT_NOT_FOUND | 404 | 포트폴리오 스냅샷이 아직 생성되지 않음 (라운드 시작 당일 조회 시) |
+| WALLET_NOT_FOUND | 404 | 해당 거래소의 지갑이 라운드에 존재하지 않음 |
+| REPORT_NOT_FOUND | 404 | 복기 리포트가 아직 생성되지 않음 (배치 실행 전 조회 시) |
 
 투자 원칙이 없는 라운드는 에러 대신 빈 `ruleImpacts`/`violationDetails`를 반환한다.
 
@@ -289,17 +289,12 @@ sequenceDiagram
     participant Client
     participant Controller as RegretController
     participant Service as GetRegretReportService
-    participant RoundAdapter as InvestmentRoundAdapter
-    participant ReportAdapter as RegretReportPersistenceAdapter
-    participant RuleAdapter as InvestmentRuleAdapter
-    participant ViolationAdapter as RuleViolationAdapter
-    participant OrderAdapter as OrderHistoryAdapter
-    participant PriceAdapter as LivePriceAdapter
-    participant FundingAdapter as EmergencyFundingAdapter
-    participant SnapshotAdapter as PortfolioSnapshotAdapter
-    participant RegretReport
+    participant RoundPort as InvestmentRoundPort
+    participant ExchangePort as ExchangeMetadataPort
+    participant RulePort as InvestmentRulePort
+    participant ReportPort as RegretReportPersistencePort
+    participant CoinPort as CoinQueryPort
     participant MySQL
-    participant Redis
 
     Client->>Controller: GET /api/rounds/{roundId}/regret?exchangeId={exchangeId}
     Controller->>Service: getRegretReport(query)
@@ -307,72 +302,41 @@ sequenceDiagram
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 01 라운드 조회 + 소유자 검증
     end
-    Service->>RoundAdapter: getRound(roundId)
-    RoundAdapter->>MySQL: SELECT investment_round + wallet
+    Service->>RoundPort: getRound(roundId)
+    RoundPort->>MySQL: SELECT investment_round
     Note over Service: 소유자 검증 (userId 비교)
-    Note over Service: 해당 거래소가 라운드에 존재하는지 검증
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 02 기존 리포트 조회
+        Note over Service,MySQL: STEP 02 지갑 존재 검증
     end
-    Service->>ReportAdapter: findByRoundIdAndExchangeId(roundId, exchangeId)
-    ReportAdapter->>MySQL: SELECT regret_report WHERE round_id AND exchange_id
-    Note over Service: 리포트 존재 시 STEP 10으로 점프
+    Service->>ExchangePort: existsWalletForExchange(roundId, exchangeId)
+    Note over Service: 미존재 시 WALLET_NOT_FOUND
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 03 투자 원칙 조회
+        Note over Service,MySQL: STEP 03 거래소 메타데이터 조회
     end
-    Service->>RuleAdapter: findByRoundId(roundId)
-    RuleAdapter->>MySQL: SELECT investment_rule
+    Service->>ExchangePort: getExchangeMetadata(roundId, exchangeId)
+    ExchangePort->>MySQL: SELECT exchange metadata
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 04 위반 기록 조회
+        Note over Service,MySQL: STEP 04 투자 원칙 조회
     end
-    Service->>ViolationAdapter: findByRuleIdsAndExchangeId(ruleIds, exchangeId)
-    ViolationAdapter->>MySQL: SELECT rule_violation WHERE exchange_id
+    Service->>RulePort: findByRoundId(roundId)
+    RulePort->>MySQL: SELECT investment_rule
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 05 위반 주문 + 이후 매도 이력 조회
+        Note over Service,MySQL: STEP 05 리포트 조회
     end
-    Service->>OrderAdapter: findByOrderIds(violationOrderIds)
-    OrderAdapter->>MySQL: SELECT orders (위반 주문)
-    Service->>OrderAdapter: findSellOrdersAfter(coinIds, filledAtMap)
-    OrderAdapter->>MySQL: SELECT orders (위반 이후 매도 이력)
+    Service->>ReportPort: getByRoundIdAndExchangeId(roundId, exchangeId)
+    ReportPort->>MySQL: SELECT regret_report + rule_impact + violation_detail
+    Note over Service: 미존재 시 REPORT_NOT_FOUND
 
     rect rgb(60, 60, 60)
-        Note over Service,Redis: STEP 06 현재가 조회 (미실현분 기준가)
+        Note over Service,MySQL: STEP 06 코인 심볼 조회 + 결과 변환
     end
-    Service->>PriceAdapter: getCurrentPrices(exchangeCoinIds)
-    PriceAdapter->>Redis: MGET coin_prices
+    Service->>CoinPort: findSymbolsByIds(coinIds)
+    Note over Service: RegretReportResult.from(report, exchange, rules, coinSymbols)
 
-    rect rgb(60, 60, 60)
-        Note over Service,RegretReport: STEP 07 손실 금액 계산 + 시나리오 생성
-    end
-    Service->>FundingAdapter: getTotalFundingAmount(roundId, exchangeId)
-    FundingAdapter->>MySQL: SELECT SUM(amount) WHERE round_id AND exchange_id
-    Service->>RegretReport: createReport(round, exchangeId, rules, violations, orders, sellOrders, prices, totalInvestment)
-    Note over RegretReport: 위반분 우선 매칭으로 기준가 결정
-    Note over RegretReport: 위반 거래별 loss_amount 계산
-    Note over RegretReport: 위반 거래 그룹핑 (동일 주문 → violatedRules[])
-    Note over RegretReport: 규칙별 impactGap 계산
-    RegretReport-->>Service: regretReport
-
-    rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 08 놓친 수익 계산
-    end
-    Service->>SnapshotAdapter: findLatestByRoundIdAndExchangeId(roundId, exchangeId)
-    SnapshotAdapter->>MySQL: SELECT portfolio_snapshot WHERE round_id AND exchange_id ORDER BY snapshot_date DESC LIMIT 1
-    Note over Service: missedProfit = max(0, ruleFollowedAsset - actualAsset)
-
-    rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 09 리포트 저장
-    end
-    Service->>ReportAdapter: save(regretReport)
-    ReportAdapter->>MySQL: INSERT regret_report + rule_impact + violation_detail
-
-    rect rgb(60, 60, 60)
-        Note over Service: STEP 10 리포트 반환
-    end
-    Service-->>Controller: RegretReport
+    Service-->>Controller: RegretReportResult
     Controller-->>Client: 200 OK
 ```

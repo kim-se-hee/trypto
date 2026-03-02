@@ -32,6 +32,14 @@ public class ViolationDetail {
             .build();
     }
 
+    public boolean isOrderViolation() {
+        return orderId != null;
+    }
+
+    public boolean isMonitoringViolation() {
+        return orderId == null;
+    }
+
     public static ViolationDetail reconstitute(Long violationDetailId, Long reportId, Long orderId,
                                                Long ruleId, Long coinId, BigDecimal lossAmount,
                                                BigDecimal profitLoss, LocalDateTime occurredAt) {

@@ -8,6 +8,7 @@ import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersist
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -18,12 +19,14 @@ public class RegretReportJpaPersistenceAdapter implements RegretReportPersistenc
     private final RegretReportJpaRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return repository.findByRoundIdAndExchangeId(roundId, exchangeId)
             .map(RegretReportJpaEntity::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RegretReport getByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return repository.findByRoundIdAndExchangeId(roundId, exchangeId)
             .map(RegretReportJpaEntity::toDomain)
