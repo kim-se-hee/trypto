@@ -88,8 +88,8 @@ public class RankerPortfolioStepDefinition {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.execute("DELETE FROM investment_round WHERE user_id = 1");
         jdbcTemplate.update(
-            "INSERT INTO investment_round (round_id, user_id, round_number, initial_seed, emergency_funding_limit, emergency_charge_count, status, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            1L, 1L, 1L, new BigDecimal("10000000.00000000"), new BigDecimal("500000.00000000"), 3, "ACTIVE", now);
+            "INSERT INTO investment_round (round_id, user_id, round_number, initial_seed, emergency_funding_limit, emergency_charge_count, status, started_at, version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            1L, 1L, 1L, new BigDecimal("10000000.00000000"), new BigDecimal("500000.00000000"), 3, "ACTIVE", now, 0L);
     }
 
     private void insertPortfolioSnapshot() {

@@ -18,6 +18,7 @@ public class InvestmentRound {
     private static final int DEFAULT_EMERGENCY_CHARGE_COUNT = 3;
 
     private final Long roundId;
+    private final Long version;
     private final Long userId;
     private final long roundNumber;
     private final BigDecimal initialSeed;
@@ -52,6 +53,7 @@ public class InvestmentRound {
 
         return InvestmentRound.builder()
             .roundId(roundId)
+            .version(version)
             .userId(userId)
             .roundNumber(roundNumber)
             .initialSeed(initialSeed)
@@ -68,6 +70,7 @@ public class InvestmentRound {
 
         return InvestmentRound.builder()
             .roundId(roundId)
+            .version(version)
             .userId(userId)
             .roundNumber(roundNumber)
             .initialSeed(initialSeed)
@@ -77,6 +80,10 @@ public class InvestmentRound {
             .startedAt(startedAt)
             .endedAt(endedAt)
             .build();
+    }
+
+    public boolean isEnded() {
+        return status == RoundStatus.ENDED;
     }
 
     public void validateOwnedBy(Long requesterUserId) {
