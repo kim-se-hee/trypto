@@ -12,6 +12,7 @@ import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRoun
 import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRuleInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,14 +24,15 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
     private final InvestmentRuleQueryPort investmentRuleQueryPort;
 
     @Override
+    @Transactional(readOnly = true)
     public GetActiveRoundResult getActiveRound(GetActiveRoundQuery query) {
-        InvestmentRoundInfo round = findActiveRound(query.userId());
+        InvestmentRoundInfo round = getActiveRound(query.userId());
         List<GetActiveRoundRuleResult> rules = findRules(round.roundId());
 
         return toResult(round, rules);
     }
 
-    private InvestmentRoundInfo findActiveRound(Long userId) {
+    private InvestmentRoundInfo getActiveRound(Long userId) {
         return investmentRoundQueryPort.findActiveRoundByUserId(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
     }
