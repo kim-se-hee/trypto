@@ -53,7 +53,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
 
     private void validateWalletExistsForExchange(Long roundId, Long exchangeId) {
         if (!exchangeMetadataPort.existsWalletForExchange(roundId, exchangeId)) {
-            throw new CustomException(ErrorCode.EXCHANGE_NOT_FOUND);
+            throw new CustomException(ErrorCode.WALLET_NOT_FOUND);
         }
     }
 
