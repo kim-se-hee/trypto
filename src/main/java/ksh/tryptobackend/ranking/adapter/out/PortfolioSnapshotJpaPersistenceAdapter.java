@@ -13,6 +13,7 @@ import ksh.tryptobackend.ranking.adapter.out.entity.SnapshotDetailJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.PortfolioSnapshotJpaRepository;
 import ksh.tryptobackend.ranking.adapter.out.repository.SnapshotDetailJpaRepository;
 import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
+import ksh.tryptobackend.ranking.application.port.out.SnapshotPersistencePort;
 import ksh.tryptobackend.ranking.application.port.out.SnapshotQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotDetailProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotInfo;
@@ -27,7 +28,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort {
+public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort, SnapshotPersistencePort {
 
     private final JPAQueryFactory queryFactory;
     private final PortfolioSnapshotJpaRepository snapshotRepository;
