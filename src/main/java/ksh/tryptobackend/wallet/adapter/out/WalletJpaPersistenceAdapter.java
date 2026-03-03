@@ -41,6 +41,16 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     @Override
     public Optional<WalletInfo> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return repository.findByRoundIdAndExchangeId(roundId, exchangeId)
-            .map(wallet -> new WalletInfo(wallet.getId(), wallet.getRoundId(), wallet.getExchangeId()));
+            .map(this::toWalletInfo);
+    }
+
+    @Override
+    public Optional<WalletInfo> findById(Long walletId) {
+        return repository.findById(walletId)
+            .map(this::toWalletInfo);
+    }
+
+    private WalletInfo toWalletInfo(WalletJpaEntity entity) {
+        return new WalletInfo(entity.getId(), entity.getRoundId(), entity.getExchangeId());
     }
 }

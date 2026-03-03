@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface WalletQueryPort {
 
     Optional<WalletInfo> findByRoundIdAndExchangeId(Long roundId, Long exchangeId);
+
+    Optional<WalletInfo> findById(Long walletId);
 }
