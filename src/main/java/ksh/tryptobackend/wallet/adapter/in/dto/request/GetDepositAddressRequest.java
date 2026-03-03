@@ -2,14 +2,14 @@ package ksh.tryptobackend.wallet.adapter.in.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import ksh.tryptobackend.wallet.application.port.in.dto.query.GetDepositAddressQuery;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.IssueDepositAddressCommand;
 
 public record GetDepositAddressRequest(
     @NotNull Long coinId,
     @NotBlank String chain
 ) {
 
-    public GetDepositAddressQuery toQuery(Long walletId) {
-        return new GetDepositAddressQuery(walletId, coinId, chain);
+    public IssueDepositAddressCommand toCommand(Long walletId) {
+        return new IssueDepositAddressCommand(walletId, coinId, chain);
     }
 }

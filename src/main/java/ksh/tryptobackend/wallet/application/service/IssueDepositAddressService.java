@@ -2,8 +2,8 @@ package ksh.tryptobackend.wallet.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.wallet.application.port.in.GetDepositAddressUseCase;
-import ksh.tryptobackend.wallet.application.port.in.dto.query.GetDepositAddressQuery;
+import ksh.tryptobackend.wallet.application.port.in.IssueDepositAddressUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.IssueDepositAddressCommand;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangeCoinChainPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangePort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressPersistencePort;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class GetDepositAddressService implements GetDepositAddressUseCase {
+public class IssueDepositAddressService implements IssueDepositAddressUseCase {
 
     private final WalletQueryPort walletQueryPort;
     private final DepositAddressExchangePort exchangePort;
@@ -27,17 +27,17 @@ public class GetDepositAddressService implements GetDepositAddressUseCase {
 
     @Override
     @Transactional
-    public DepositAddress getDepositAddress(GetDepositAddressQuery query) {
-        WalletInfo wallet = getWallet(query.walletId());
+    public DepositAddress issueDepositAddress(IssueDepositAddressCommand command) {
+        WalletInfo wallet = getWallet(command.walletId());
         DepositTargetExchange exchange = exchangePort.getExchange(wallet.exchangeId());
-        exchange.validateTransferable(query.coinId());
+        exchange.validateTransferable(command.coinId());
 
         DepositAddressChainInfo chainInfo = chainPort.getExchangeCoinChain(
-            wallet.exchangeId(), query.coinId(), query.chain());
+            wallet.exchangeId(), command.coinId(), command.chain());
 
-        return depositAddressPersistencePort.findByWalletIdAndChain(query.walletId(), query.chain())
+        return depositAddressPersistencePort.findByWalletIdAndChain(command.walletId(), command.chain())
             .orElseGet(() -> depositAddressPersistencePort.save(
-                DepositAddress.create(query.walletId(), query.chain(), chainInfo.tagRequired())));
+                DepositAddress.create(command.walletId(), command.chain(), chainInfo.tagRequired())));
     }
 
     private WalletInfo getWallet(Long walletId) {

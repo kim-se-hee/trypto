@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.wallet.adapter.in.dto.request.GetDepositAddressRequest;
 import ksh.tryptobackend.wallet.adapter.in.dto.response.DepositAddressResponse;
-import ksh.tryptobackend.wallet.application.port.in.GetDepositAddressUseCase;
+import ksh.tryptobackend.wallet.application.port.in.IssueDepositAddressUseCase;
 import ksh.tryptobackend.wallet.domain.model.DepositAddress;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DepositAddressController {
 
-    private final GetDepositAddressUseCase getDepositAddressUseCase;
+    private final IssueDepositAddressUseCase issueDepositAddressUseCase;
 
     @GetMapping
     public ApiResponseDto<DepositAddressResponse> getDepositAddress(
             @PathVariable Long walletId,
             @Valid @ModelAttribute GetDepositAddressRequest request) {
-        DepositAddress depositAddress = getDepositAddressUseCase.getDepositAddress(request.toQuery(walletId));
+        DepositAddress depositAddress = issueDepositAddressUseCase.issueDepositAddress(request.toCommand(walletId));
         return ApiResponseDto.success("조회 성공", DepositAddressResponse.from(depositAddress));
     }
 }
