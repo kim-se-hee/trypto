@@ -4,11 +4,11 @@ import ksh.tryptobackend.transfer.adapter.out.entity.TransferJpaEntity;
 import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.transfer.application.port.out.TransferPersistencePort;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
+import ksh.tryptobackend.transfer.domain.vo.TransferType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,20 +32,7 @@ public class TransferJpaPersistenceAdapter implements TransferPersistencePort {
     }
 
     @Override
-    public Page<Transfer> findByFromWalletId(Long walletId, Pageable pageable) {
-        return repository.findByFromWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
-    }
-
-    @Override
-    public Page<Transfer> findByToWalletId(Long walletId, Pageable pageable) {
-        return repository.findByToWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
-    }
-
-    @Override
-    public Page<Transfer> findByWalletId(Long walletId, Pageable pageable) {
-        return repository.findByFromWalletIdOrToWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
+    public List<Transfer> findByCursor(Long walletId, TransferType type, Long cursorTransferId, int size) {
+        throw new UnsupportedOperationException("QueryDSL 구현 예정");
     }
 }

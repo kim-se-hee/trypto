@@ -1,9 +1,9 @@
 package ksh.tryptobackend.transfer.application.port.out;
 
 import ksh.tryptobackend.transfer.domain.model.Transfer;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import ksh.tryptobackend.transfer.domain.vo.TransferType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,9 +13,5 @@ public interface TransferPersistencePort {
 
     Optional<Transfer> findByIdempotencyKey(UUID idempotencyKey);
 
-    Page<Transfer> findByFromWalletId(Long walletId, Pageable pageable);
-
-    Page<Transfer> findByToWalletId(Long walletId, Pageable pageable);
-
-    Page<Transfer> findByWalletId(Long walletId, Pageable pageable);
+    List<Transfer> findByCursor(Long walletId, TransferType type, Long cursorTransferId, int size);
 }
