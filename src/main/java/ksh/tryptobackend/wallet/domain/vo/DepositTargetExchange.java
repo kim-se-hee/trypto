@@ -10,25 +10,21 @@ import java.util.Objects;
 public class DepositTargetExchange {
 
     private final Long baseCurrencyCoinId;
-    private final String currency;
+    private final boolean fiatCurrency;
 
-    private DepositTargetExchange(Long baseCurrencyCoinId, String currency) {
+    private DepositTargetExchange(Long baseCurrencyCoinId, boolean fiatCurrency) {
         this.baseCurrencyCoinId = baseCurrencyCoinId;
-        this.currency = currency;
+        this.fiatCurrency = fiatCurrency;
     }
 
-    public static DepositTargetExchange of(Long baseCurrencyCoinId, String currency) {
-        return new DepositTargetExchange(baseCurrencyCoinId, currency);
+    public static DepositTargetExchange of(Long baseCurrencyCoinId, boolean fiatCurrency) {
+        return new DepositTargetExchange(baseCurrencyCoinId, fiatCurrency);
     }
 
     public void validateTransferable(Long coinId) {
-        if (isFiatCurrency() && baseCurrencyCoinId.equals(coinId)) {
+        if (fiatCurrency && baseCurrencyCoinId.equals(coinId)) {
             throw new CustomException(ErrorCode.BASE_CURRENCY_NOT_TRANSFERABLE);
         }
-    }
-
-    private boolean isFiatCurrency() {
-        return "KRW".equals(currency);
     }
 
     @Override
@@ -36,12 +32,12 @@ public class DepositTargetExchange {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DepositTargetExchange that = (DepositTargetExchange) o;
-        return Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId)
-            && Objects.equals(currency, that.currency);
+        return fiatCurrency == that.fiatCurrency
+            && Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(baseCurrencyCoinId, currency);
+        return Objects.hash(baseCurrencyCoinId, fiatCurrency);
     }
 }

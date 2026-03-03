@@ -17,7 +17,8 @@ public class DepositAddressExchangeAdapter implements DepositAddressExchangePort
     @Override
     public DepositTargetExchange getExchange(Long exchangeId) {
         return exchangeQueryPort.findExchangeDetailById(exchangeId)
-            .map(detail -> DepositTargetExchange.of(detail.baseCurrencyCoinId(), detail.currency()))
+            .map(detail -> DepositTargetExchange.of(
+                detail.baseCurrencyCoinId(), "KRW".equals(detail.currency())))
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 }
