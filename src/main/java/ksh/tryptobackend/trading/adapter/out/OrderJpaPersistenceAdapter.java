@@ -109,6 +109,16 @@ public class OrderJpaPersistenceAdapter implements OrderPersistencePort, OrderQu
     }
 
     @Override
+    public boolean existsFilledByWalletId(Long walletId) {
+        return orderJpaRepository.existsByWalletIdAndStatus(walletId, OrderStatus.FILLED);
+    }
+
+    @Override
+    public int countFilledByWalletId(Long walletId) {
+        return orderJpaRepository.countByWalletIdAndStatus(walletId, OrderStatus.FILLED);
+    }
+
+    @Override
     public List<OrderInfo> findFilledSellOrders(Long walletId, Long exchangeCoinId, LocalDateTime after) {
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
         return queryFactory
