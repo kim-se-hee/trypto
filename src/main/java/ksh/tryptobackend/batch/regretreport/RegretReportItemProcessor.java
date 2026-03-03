@@ -42,7 +42,7 @@ public class RegretReportItemProcessor implements ItemProcessor<RegretReportInpu
     private final LivePricePort livePricePort;
     private final PortfolioSnapshotPort portfolioSnapshotPort;
 
-    private static final List<ViolationLossStrategy> LOSS_STRATEGIES = ViolationLossStrategy.all();
+    private static final List<ViolationLossStrategy> LOSS_STRATEGIES = List.of(ViolationLossStrategy.values());
 
     @Override
     public RegretReport process(RegretReportInput input) {
