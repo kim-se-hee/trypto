@@ -2,12 +2,10 @@ package ksh.tryptobackend.batch.snapshot;
 
 import ksh.tryptobackend.ranking.application.port.out.BalanceQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.EmergencyFundingSnapshotPort;
-import ksh.tryptobackend.ranking.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.ExchangeInfoQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.HoldingQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.LivePricePort;
 import ksh.tryptobackend.ranking.application.port.out.dto.ExchangeSnapshotInfo;
-import ksh.tryptobackend.ranking.application.port.out.dto.HoldingInfo;
+import ksh.tryptobackend.ranking.domain.model.EvaluatedHoldings;
 import ksh.tryptobackend.ranking.domain.model.PortfolioSnapshot;
 import ksh.tryptobackend.ranking.domain.model.SnapshotDetail;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -29,8 +26,6 @@ public class SnapshotItemProcessor implements ItemProcessor<SnapshotInput, Snaps
     private final ExchangeInfoQueryPort exchangeInfoQueryPort;
     private final BalanceQueryPort balanceQueryPort;
     private final HoldingQueryPort holdingQueryPort;
-    private final LivePricePort livePricePort;
-    private final ExchangeCoinQueryPort exchangeCoinQueryPort;
     private final EmergencyFundingSnapshotPort emergencyFundingSnapshotPort;
 
     @Value("#{jobParameters['snapshotDate']}")
@@ -42,52 +37,23 @@ public class SnapshotItemProcessor implements ItemProcessor<SnapshotInput, Snaps
         ExchangeSnapshotInfo exchangeInfo = exchangeInfoQueryPort.getExchangeInfo(input.exchangeId());
 
         BigDecimal balance = balanceQueryPort.getAvailableBalance(input.walletId(), exchangeInfo.baseCurrencyCoinId());
-        List<HoldingInfo> holdings = holdingQueryPort.findAllByWalletId(input.walletId());
+        EvaluatedHoldings evaluatedHoldings = holdingQueryPort.findAllByWalletId(input.walletId(), input.exchangeId());
 
-        BigDecimal holdingAsset = calculateHoldingAsset(holdings, input.exchangeId());
-        BigDecimal totalAsset = balance.add(holdingAsset);
+        BigDecimal totalAsset = balance.add(evaluatedHoldings.totalEvaluatedAmount());
         BigDecimal totalInvestment = calculateTotalInvestment(input);
 
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             input.userId(), input.roundId(), input.exchangeId(),
-            totalAsset, totalInvestment, exchangeInfo.conversionRate(), snapshotDate
-        );
+            totalAsset, totalInvestment, exchangeInfo.conversionRate(), snapshotDate);
 
-        List<SnapshotDetail> details = buildDetails(holdings, input.exchangeId(), totalAsset);
+        List<SnapshotDetail> details = evaluatedHoldings.toSnapshotDetails(totalAsset);
 
         return new SnapshotOutput(snapshot, details);
-    }
-
-    private BigDecimal calculateHoldingAsset(List<HoldingInfo> holdings, Long exchangeId) {
-        BigDecimal total = BigDecimal.ZERO;
-        for (HoldingInfo holding : holdings) {
-            BigDecimal currentPrice = getCurrentPrice(exchangeId, holding.coinId());
-            total = total.add(currentPrice.multiply(holding.totalQuantity()));
-        }
-        return total;
     }
 
     private BigDecimal calculateTotalInvestment(SnapshotInput input) {
         BigDecimal emergencyFunding = emergencyFundingSnapshotPort.sumByRoundIdAndExchangeId(
             input.roundId(), input.exchangeId());
         return input.seedAmount().add(emergencyFunding);
-    }
-
-    private List<SnapshotDetail> buildDetails(List<HoldingInfo> holdings, Long exchangeId, BigDecimal totalAsset) {
-        List<SnapshotDetail> details = new ArrayList<>();
-        for (HoldingInfo holding : holdings) {
-            BigDecimal currentPrice = getCurrentPrice(exchangeId, holding.coinId());
-            details.add(SnapshotDetail.create(
-                holding.coinId(), holding.totalQuantity(), holding.avgBuyPrice(),
-                currentPrice, totalAsset
-            ));
-        }
-        return details;
-    }
-
-    private BigDecimal getCurrentPrice(Long exchangeId, Long coinId) {
-        return exchangeCoinQueryPort.findExchangeCoinId(exchangeId, coinId)
-            .map(livePricePort::getCurrentPrice)
-            .orElse(BigDecimal.ZERO);
     }
 }

@@ -1,10 +1,8 @@
 package ksh.tryptobackend.ranking.application.port.out;
 
-import ksh.tryptobackend.ranking.application.port.out.dto.HoldingInfo;
-
-import java.util.List;
+import ksh.tryptobackend.ranking.domain.model.EvaluatedHoldings;
 
 public interface HoldingQueryPort {
 
-    List<HoldingInfo> findAllByWalletId(Long walletId);
+    EvaluatedHoldings findAllByWalletId(Long walletId, Long exchangeId);
 }
