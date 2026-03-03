@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -53,5 +54,13 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     private WalletInfo toWalletInfo(WalletJpaEntity entity) {
         return new WalletInfo(entity.getId(), entity.getRoundId(), entity.getExchangeId(),
             entity.getSeedAmount());
+    }
+
+    @Override
+    public List<WalletInfo> findByRoundId(Long roundId) {
+        return repository.findByRoundId(roundId).stream()
+            .map(wallet -> new WalletInfo(wallet.getId(), wallet.getRoundId(), wallet.getExchangeId(),
+                wallet.getSeedAmount()))
+            .toList();
     }
 }
