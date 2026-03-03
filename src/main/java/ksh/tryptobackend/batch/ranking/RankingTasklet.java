@@ -6,9 +6,7 @@ import ksh.tryptobackend.ranking.application.port.out.SnapshotAggregationPort;
 import ksh.tryptobackend.ranking.application.port.out.TradeCountPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.ActiveRoundInfo;
 import ksh.tryptobackend.ranking.application.port.out.dto.RoundKey;
-import ksh.tryptobackend.ranking.application.port.out.dto.UserSnapshotSummary;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
-import ksh.tryptobackend.ranking.domain.vo.ProfitRate;
 import ksh.tryptobackend.ranking.domain.vo.RankingCandidate;
 import ksh.tryptobackend.ranking.domain.vo.RankingCandidates;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
@@ -26,7 +24,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @StepScope
@@ -52,12 +49,12 @@ public class RankingTasklet implements Tasklet {
             return RepeatStatus.FINISHED;
         }
 
-        Map<RoundKey, UserSnapshotSummary> todaySummaryMap = buildSummaryMap(snapshotDate);
+        SnapshotSummaries todaySummaries = loadSummaries(snapshotDate);
 
         for (RankingPeriod period : RankingPeriod.values()) {
-            Map<RoundKey, UserSnapshotSummary> comparisonMap =
-                buildSummaryMap(snapshotDate.minusDays(period.getWindowDays()));
-            RankingCandidates candidates = buildCandidates(eligibleRounds, todaySummaryMap, comparisonMap);
+            SnapshotSummaries comparisonSummaries =
+                loadSummaries(snapshotDate.minusDays(period.getWindowDays()));
+            RankingCandidates candidates = buildCandidates(eligibleRounds, todaySummaries, comparisonSummaries);
             List<Ranking> rankings = candidates.toRankings(period, snapshotDate);
             saveForPeriod(rankings, period, snapshotDate);
         }
@@ -84,31 +81,19 @@ public class RankingTasklet implements Tasklet {
             .toList();
     }
 
-    private Map<RoundKey, UserSnapshotSummary> buildSummaryMap(LocalDate date) {
-        return snapshotAggregationPort.findLatestSummaries(date).stream()
-            .collect(Collectors.toMap(UserSnapshotSummary::roundKey, s -> s));
+    private SnapshotSummaries loadSummaries(LocalDate date) {
+        return new SnapshotSummaries(snapshotAggregationPort.findLatestSummaries(date));
     }
 
     private RankingCandidates buildCandidates(List<EligibleRound> eligibleRounds,
-                                               Map<RoundKey, UserSnapshotSummary> todaySummaryMap,
-                                               Map<RoundKey, UserSnapshotSummary> comparisonSummaryMap) {
+                                               SnapshotSummaries todaySummaries,
+                                               SnapshotSummaries comparisonSummaries) {
         List<RankingCandidate> candidates = new ArrayList<>();
         for (EligibleRound round : eligibleRounds) {
-            RoundKey key = round.roundKey();
-            UserSnapshotSummary todaySummary = todaySummaryMap.get(key);
-            UserSnapshotSummary comparisonSummary = comparisonSummaryMap.get(key);
-
-            if (todaySummary == null || comparisonSummary == null) {
-                continue;
-            }
-
-            ProfitRate profitRate = ProfitRate.fromAssetChange(
-                todaySummary.totalAssetKrw(), comparisonSummary.totalAssetKrw()
-            );
-
-            candidates.add(new RankingCandidate(
-                round.userId(), round.roundId(), profitRate, round.tradeCount(), round.startedAt()
-            ));
+            todaySummaries.calculateProfitRate(round.roundKey(), comparisonSummaries)
+                .ifPresent(profitRate -> candidates.add(new RankingCandidate(
+                    round.userId(), round.roundId(), profitRate, round.tradeCount(), round.startedAt()
+                )));
         }
         return new RankingCandidates(candidates);
     }
