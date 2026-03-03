@@ -16,6 +16,7 @@ erDiagram
     INVESTMENT_ROUND {
         id round_id PK "주 식별자"
         id user_id FK "유저 ID"
+        number version "낙관적 잠금 버전"
         number round_number "라운드 번호"
         number initial_seed "시작 시드머니"
         number emergency_funding_limit "1회 긴급 자금 투입 상한"
@@ -36,14 +37,17 @@ erDiagram
     EMERGENCY_FUNDING {
         id funding_id PK "주 식별자"
         id round_id FK "라운드 ID"
+        id exchange_id FK "거래소 ID"
         number amount "투입 금액"
+        uuid idempotency_key UK "멱등 키"
         datetime created_at "투입 시각"
     }
 
     EXCHANGE {
         id exchange_id PK "주 식별자"
         string name "거래소명"
-        string type "CEX DEX"
+        string market_type "CEX DEX"
+        id base_currency_coin_id FK "기축통화 코인 ID"
         number fee_rate "기본 수수료율"
     }
 
@@ -231,10 +235,12 @@ erDiagram
     USER ||--o{ REGRET_REPORT : ""
     INVESTMENT_ROUND ||--|{ INVESTMENT_RULE : ""
     INVESTMENT_ROUND ||--o{ EMERGENCY_FUNDING : ""
+    EXCHANGE ||--o{ EMERGENCY_FUNDING : ""
     INVESTMENT_ROUND ||--o{ PORTFOLIO_SNAPSHOT : ""
     INVESTMENT_ROUND ||--o{ RANKING : ""
     INVESTMENT_ROUND ||--o{ REGRET_REPORT : ""
     EXCHANGE ||--|{ EXCHANGE_COIN : ""
+    COIN ||--o| EXCHANGE : "base_currency"
     COIN ||--|{ EXCHANGE_COIN : ""
     EXCHANGE ||--|{ WITHDRAWAL_FEE : ""
     COIN ||--|{ WITHDRAWAL_FEE : ""

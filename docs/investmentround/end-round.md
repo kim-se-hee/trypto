@@ -21,6 +21,7 @@
 - 이미 `ENDED` 상태면 상태를 변경하지 않고 기존 `endedAt`으로 성공 응답한다(멱등 처리).
 - `BANKRUPT` 상태는 종료 API 대상이 아니며 `ROUND_NOT_ACTIVE`를 반환한다.
 - 종료 후 활성 라운드 조회에서 해당 라운드는 반환되지 않는다.
+- `@Version` 낙관적 잠금으로 동시 종료 요청 시 하나만 성공하고 나머지는 `CONCURRENT_MODIFICATION(409)`를 반환한다.
 
 # API 명세
 `POST /api/rounds/{roundId}/end`
@@ -105,6 +106,6 @@ sequenceDiagram
     Service->>RoundAdapter: save(endedRound)
     RoundAdapter->>MySQL: UPDATE investment_round SET status='ENDED', ended_at=NOW()
 
-    Service-->>Controller: EndRoundResult
+    Service-->>Controller: InvestmentRound
     Controller-->>Client: 200 OK
 ```

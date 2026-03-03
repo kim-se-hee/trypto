@@ -93,9 +93,8 @@
 |----------|------|------|
 | `ChargeEmergencyFundingUseCase` | 긴급 자금 투입 유스케이스 | 신규 |
 | `InvestmentRoundPersistencePort` | 라운드 조회/저장(횟수 감소) | 기존 확장 |
-| `WalletQueryPort` | `roundId + exchangeId`로 지갑 조회 | 신규 |
-| `WalletBalanceOperationPort` | 기축통화 잔고 증가 | 기존 |
-| `EmergencyFundingPersistencePort` | 긴급 자금 이력 저장 | 신규 |
+| `FundingWalletPort` | 지갑 ID 조회 + 잔고 증가 (크로스 컨텍스트) | 신규 |
+| `EmergencyFundingPersistencePort` | 긴급 자금 이력 저장/멱등 키 조회 | 신규 |
 | `ExchangeInfoPort` | 거래소 기축통화 코인 조회 | 기존 재사용 |
 
 # 시퀀스 다이어그램
@@ -106,8 +105,7 @@ sequenceDiagram
     participant Service as ChargeEmergencyFundingService
     participant RoundAdapter as InvestmentRoundAdapter
     participant ExchangeAdapter as ExchangeInfoAdapter
-    participant WalletAdapter as WalletAdapter
-    participant BalanceAdapter as WalletBalanceAdapter
+    participant FundingWalletAdapter as FundingWalletAdapter
     participant FundingAdapter as EmergencyFundingAdapter
     participant MySQL
 
@@ -115,29 +113,35 @@ sequenceDiagram
     Controller->>Service: charge(command)
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 01 라운드 조회 + 권한/상태 검증
+        Note over Service,MySQL: STEP 01 멱등성 검사
+    end
+    Service->>FundingAdapter: findByRoundIdAndIdempotencyKey(roundId, idempotencyKey)
+    Note over Service: 기존 이력 존재 시 기존 결과 반환
+
+    rect rgb(60, 60, 60)
+        Note over Service,MySQL: STEP 02 라운드 조회 + 권한/상태 검증
     end
     Service->>RoundAdapter: getRound(roundId)
     RoundAdapter->>MySQL: SELECT investment_round
-    Note over Service: userId 소유자 검증, ACTIVE 검증, 횟수/상한 검증
+    Note over Service: userId 소유자 검증, 도메인 4단계 검증 (ACTIVE/비활성/횟수/한도)
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 02 대상 지갑 및 코인 식별
+        Note over Service,MySQL: STEP 03 대상 지갑 및 코인 식별
     end
-    Service->>WalletAdapter: findByRoundIdAndExchangeId(roundId, exchangeId)
-    WalletAdapter->>MySQL: SELECT wallet
+    Service->>FundingWalletAdapter: findWalletId(roundId, exchangeId)
+    FundingWalletAdapter->>MySQL: SELECT wallet
     Service->>ExchangeAdapter: findById(exchangeId)
     ExchangeAdapter->>MySQL: SELECT exchange
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 03 자금 반영 + 이력 저장
+        Note over Service,MySQL: STEP 04 자금 반영 + 이력 저장
     end
-    Service->>BalanceAdapter: addBalance(walletId, baseCurrencyCoinId, amount)
-    BalanceAdapter->>MySQL: UPDATE wallet_balance
+    Service->>RoundAdapter: save(round)
+    RoundAdapter->>MySQL: UPDATE investment_round (낙관적 잠금)
+    Service->>FundingWalletAdapter: addBalance(walletId, baseCurrencyCoinId, amount)
+    FundingWalletAdapter->>MySQL: UPDATE wallet_balance
     Service->>FundingAdapter: save(funding)
     FundingAdapter->>MySQL: INSERT emergency_funding
-    Service->>RoundAdapter: save(round)
-    RoundAdapter->>MySQL: UPDATE investment_round
 
     Service-->>Controller: ChargeEmergencyFundingResult
     Controller-->>Client: 200 OK
