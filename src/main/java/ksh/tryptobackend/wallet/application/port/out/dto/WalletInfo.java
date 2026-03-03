@@ -1,4 +1,6 @@
 package ksh.tryptobackend.wallet.application.port.out.dto;
 
-public record WalletInfo(Long walletId, Long roundId, Long exchangeId) {
+import java.math.BigDecimal;
+
+public record WalletInfo(Long walletId, Long roundId, Long exchangeId, BigDecimal seedAmount) {
 }

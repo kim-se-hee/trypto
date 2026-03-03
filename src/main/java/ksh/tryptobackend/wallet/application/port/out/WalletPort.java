@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 public interface WalletPort {
 
-    Long createWallet(Long roundId, Long exchangeId, LocalDateTime createdAt);
+    Long createWallet(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt);
 
     Long createWalletWithBalance(Long roundId, Long exchangeId, Long baseCurrencyCoinId,
                                  BigDecimal initialAmount, LocalDateTime createdAt);

@@ -23,8 +23,8 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     private final WalletBalanceJpaRepository balanceRepository;
 
     @Override
-    public Long createWallet(Long roundId, Long exchangeId, LocalDateTime createdAt) {
-        Wallet wallet = Wallet.create(roundId, exchangeId, createdAt);
+    public Long createWallet(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+        Wallet wallet = Wallet.create(roundId, exchangeId, seedAmount, createdAt);
         WalletJpaEntity saved = repository.save(WalletJpaEntity.fromDomain(wallet));
         return saved.getId();
     }
@@ -32,7 +32,7 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     @Override
     public Long createWalletWithBalance(Long roundId, Long exchangeId, Long baseCurrencyCoinId,
                                         BigDecimal initialAmount, LocalDateTime createdAt) {
-        Long walletId = createWallet(roundId, exchangeId, createdAt);
+        Long walletId = createWallet(roundId, exchangeId, initialAmount, createdAt);
         balanceRepository.save(
             new WalletBalanceJpaEntity(walletId, baseCurrencyCoinId, initialAmount, BigDecimal.ZERO));
         return walletId;
@@ -51,6 +51,7 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     }
 
     private WalletInfo toWalletInfo(WalletJpaEntity entity) {
-        return new WalletInfo(entity.getId(), entity.getRoundId(), entity.getExchangeId());
+        return new WalletInfo(entity.getId(), entity.getRoundId(), entity.getExchangeId(),
+            entity.getSeedAmount());
     }
 }

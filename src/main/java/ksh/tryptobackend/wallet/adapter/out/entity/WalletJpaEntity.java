@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,6 +37,9 @@ public class WalletJpaEntity {
     @Column(name = "exchange_id", nullable = false)
     private Long exchangeId;
 
+    @Column(name = "seed_amount", nullable = false, precision = 30, scale = 8)
+    private BigDecimal seedAmount;
+
     @Column(name = "wallet_address", length = 255)
     private String walletAddress;
 
@@ -48,13 +52,15 @@ public class WalletJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private WalletJpaEntity(Long roundId, Long exchangeId, LocalDateTime createdAt) {
+    private WalletJpaEntity(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
         this.roundId = roundId;
         this.exchangeId = exchangeId;
+        this.seedAmount = seedAmount;
         this.createdAt = createdAt;
     }
 
     public static WalletJpaEntity fromDomain(Wallet wallet) {
-        return new WalletJpaEntity(wallet.getRoundId(), wallet.getExchangeId(), wallet.getCreatedAt());
+        return new WalletJpaEntity(wallet.getRoundId(), wallet.getExchangeId(),
+            wallet.getSeedAmount(), wallet.getCreatedAt());
     }
 }
