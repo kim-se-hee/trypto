@@ -28,7 +28,7 @@
 
 # API 명세
 
-`GET /api/wallets/{walletId}/transfers?page=0&size=20&type=ALL`
+`GET /api/wallets/{walletId}/transfers?cursor=100&size=20&type=ALL`
 
 ## Path Parameters
 
@@ -40,7 +40,7 @@
 
 | 파라미터 | 타입 | 필수 | 기본값 | 설명 |
 |----------|------|------|--------|------|
-| page | Integer | X | 0 | 페이지 번호 (0부터 시작) |
+| cursor | Long | X | null | 이전 페이지의 마지막 transferId (첫 페이지는 생략) |
 | size | Integer | X | 20 | 페이지 크기 (1~50) |
 | type | String | X | ALL | `ALL` \| `DEPOSIT` \| `WITHDRAW` |
 
@@ -49,12 +49,9 @@
 ```json
 {
   "status": 200,
-  "code": "OK",
+  "code": "SUCCESS",
   "message": "송금 내역을 조회했습니다.",
   "data": {
-    "page": 0,
-    "size": 20,
-    "totalPages": 1,
     "content": [
       {
         "transferId": 2,
@@ -84,7 +81,9 @@
         "frozenUntil": null,
         "createdAt": "2026-03-03T14:00:00"
       }
-    ]
+    ],
+    "nextCursor": 1,
+    "hasNext": false
   }
 }
 ```
@@ -96,6 +95,8 @@
 | type | `DEPOSIT`: 입금 (해당 지갑이 도착지), `WITHDRAW`: 출금 (해당 지갑이 출발지) |
 | fee | 입금(DEPOSIT)인 경우 0. 수수료는 출발 지갑에서 부담한다 |
 | frozenUntil | FROZEN 상태일 때만 값이 있다. 이 시각 이후 자동 반환된다 |
+| nextCursor | 다음 페이지의 커서 값. 마지막 페이지이면 null |
+| hasNext | 다음 페이지 존재 여부 |
 
 ## 에러 응답
 
@@ -116,7 +117,7 @@
 
 | 컴포넌트 | 책임 |
 |----------|------|
-| TransferPersistencePort | 지갑 ID와 type으로 송금 내역 페이징 조회 |
+| TransferPersistencePort | 지갑 ID와 type으로 송금 내역 커서 기반 조회 |
 
 ## 크로스 컨텍스트 포트
 
@@ -135,7 +136,7 @@ sequenceDiagram
     participant TransferAdapter as TransferPersistenceAdapter
     participant MySQL
 
-    Client->>Controller: GET /api/wallets/{walletId}/transfers?type=ALL&page=0&size=20
+    Client->>Controller: GET /api/wallets/{walletId}/transfers?type=ALL&cursor=100&size=20
     Controller->>Service: getTransferHistory(query)
 
     rect rgb(60, 60, 60)
@@ -145,11 +146,11 @@ sequenceDiagram
     WalletAdapter->>MySQL: SELECT wallet
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 02 송금 내역 조회
+        Note over Service,MySQL: STEP 02 송금 내역 커서 기반 조회
     end
-    Service->>TransferAdapter: findByWalletIdAndType(walletId, type, pageable)
-    TransferAdapter->>MySQL: SELECT transfer WHERE from_wallet_id = ? OR to_wallet_id = ?
+    Service->>TransferAdapter: findByCursor(walletId, type, cursorTransferId, size + 1)
+    TransferAdapter->>MySQL: SELECT transfer WHERE (from_wallet_id = ? OR to_wallet_id = ?) AND id < cursor
 
-    Service-->>Controller: Page<Transfer>
-    Controller-->>Client: 200 OK (PageResponseDto)
+    Service-->>Controller: TransferHistoryCursorResult(List<Transfer>, nextCursor, hasNext)
+    Controller-->>Client: 200 OK (CursorPageResponseDto<TransferHistoryResponse>)
 ```
