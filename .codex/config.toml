@@ -1,0 +1,46 @@
+﻿# Synced from CLAUDE settings
+
+[mcp_servers.shadcn]
+command = "npx"
+args = ["shadcn@latest", "mcp"]
+
+[mcp_servers.playwright]
+command = "cmd"
+args = ["/c", "npx", "-y", "@executeautomation/playwright-mcp-server"]
+
+[agents.architect]
+description = "Synced role from .claude/agents/architect.md"
+config_file = "agents/architect.toml"
+
+[agents.architecture-reviewer]
+description = "Synced role from .claude/agents/architecture-reviewer.md"
+config_file = "agents/architecture-reviewer.toml"
+
+[agents.blog-writer]
+description = "Synced role from .claude/agents/blog-writer.md"
+config_file = "agents/blog-writer.toml"
+
+[agents.code-quality-reviewer]
+description = "Synced role from .claude/agents/code-quality-reviewer.md"
+config_file = "agents/code-quality-reviewer.toml"
+
+[agents.concurrency-reviewer]
+description = "Synced role from .claude/agents/concurrency-reviewer.md"
+config_file = "agents/concurrency-reviewer.toml"
+
+[agents.debugger]
+description = "Synced role from .claude/agents/debugger.md"
+config_file = "agents/debugger.toml"
+
+[agents.performance-reviewer]
+description = "Synced role from .claude/agents/performance-reviewer.md"
+config_file = "agents/performance-reviewer.toml"
+
+[agents.test-automator]
+description = "Synced role from .claude/agents/test-automator.md"
+config_file = "agents/test-automator.toml"
+
+[agents.ui-analyst]
+description = "Synced role from .claude/agents/ui-analyst.md"
+config_file = "agents/ui-analyst.toml"
+
