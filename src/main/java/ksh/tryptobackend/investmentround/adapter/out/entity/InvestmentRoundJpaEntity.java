@@ -58,10 +58,6 @@ public class InvestmentRoundJpaEntity {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
-    @Version
-    @Column(name = "version", nullable = false)
-    private Long version;
-
     public static InvestmentRoundJpaEntity fromDomain(InvestmentRound round) {
         InvestmentRoundJpaEntity entity = new InvestmentRoundJpaEntity();
         entity.id = round.getRoundId();
@@ -74,7 +70,6 @@ public class InvestmentRoundJpaEntity {
         entity.status = round.getStatus();
         entity.startedAt = round.getStartedAt();
         entity.endedAt = round.getEndedAt();
-        entity.version = round.getVersion();
         return entity;
     }
 
@@ -90,7 +85,6 @@ public class InvestmentRoundJpaEntity {
             .status(status)
             .startedAt(startedAt)
             .endedAt(endedAt)
-            .version(version)
             .build();
     }
 }

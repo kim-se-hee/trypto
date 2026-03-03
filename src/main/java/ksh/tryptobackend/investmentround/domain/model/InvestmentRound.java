@@ -27,7 +27,6 @@ public class InvestmentRound {
     private final RoundStatus status;
     private final LocalDateTime startedAt;
     private final LocalDateTime endedAt;
-    private final Long version;
 
     public static InvestmentRound start(Long userId, long previousRoundCount, BigDecimal initialSeed,
                                         BigDecimal emergencyFundingLimit, LocalDateTime startedAt) {
@@ -63,7 +62,6 @@ public class InvestmentRound {
             .status(RoundStatus.ENDED)
             .startedAt(startedAt)
             .endedAt(endedAt)
-            .version(version)
             .build();
     }
 
@@ -81,7 +79,6 @@ public class InvestmentRound {
             .status(status)
             .startedAt(startedAt)
             .endedAt(endedAt)
-            .version(version)
             .build();
     }
 
