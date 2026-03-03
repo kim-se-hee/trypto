@@ -14,18 +14,21 @@ import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
+import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetails;
+import ksh.tryptobackend.regretanalysis.domain.strategy.ViolationLossStrategy;
+import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext;
+import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext.SoldPortion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,13 +36,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RegretReportItemProcessor implements ItemProcessor<RegretReportInput, RegretReport> {
 
-    private static final int RATE_SCALE = 4;
-
     private final InvestmentRulePort investmentRulePort;
     private final RuleViolationPort ruleViolationPort;
     private final OrderHistoryPort orderHistoryPort;
     private final LivePricePort livePricePort;
     private final PortfolioSnapshotPort portfolioSnapshotPort;
+
+    private static final List<ViolationLossStrategy> LOSS_STRATEGIES = ViolationLossStrategy.all();
 
     @Override
     public RegretReport process(RegretReportInput input) {
@@ -57,36 +60,36 @@ public class RegretReportItemProcessor implements ItemProcessor<RegretReportInpu
         Map<Long, RuleInfo> ruleMap = rules.stream()
             .collect(Collectors.toMap(RuleInfo::ruleId, r -> r));
 
-        List<ViolationDetail> details = buildViolationDetails(violations, ruleMap, input);
-        List<RuleImpact> impacts = buildRuleImpacts(details, ruleMap, input);
+        List<ViolationDetail> details = buildViolationDetails(violations, ruleMap);
 
         AssetSnapshot snapshot = portfolioSnapshotPort
             .findLatestByRoundIdAndExchangeId(input.roundId(), input.exchangeId())
             .orElse(null);
-
         BigDecimal actualProfitRate = snapshot != null ? snapshot.getTotalProfitRate() : BigDecimal.ZERO;
         BigDecimal totalInvestment = snapshot != null ? snapshot.getTotalInvestment() : BigDecimal.ZERO;
-        LocalDate analysisStart = input.startedAt().toLocalDate();
-        LocalDate analysisEnd = LocalDate.now();
+
+        ViolationDetails violationDetails = new ViolationDetails(details);
+        List<RuleImpact> impacts = violationDetails.toRuleImpacts(totalInvestment);
 
         return RegretReport.generate(
             input.userId(), input.roundId(), input.exchangeId(),
             actualProfitRate, totalInvestment,
             impacts, details,
-            analysisStart, analysisEnd
+            input.startedAt().toLocalDate(), LocalDate.now()
         );
     }
 
     private List<ViolationDetail> buildViolationDetails(List<RuleViolationRecord> violations,
-                                                        Map<Long, RuleInfo> ruleMap,
-                                                        RegretReportInput input) {
+                                                         Map<Long, RuleInfo> ruleMap) {
         List<Long> orderIds = violations.stream()
             .map(RuleViolationRecord::orderId)
-            .filter(id -> id != null)
+            .filter(Objects::nonNull)
             .toList();
 
         Map<Long, TradeRecord> tradeMap = orderHistoryPort.findByOrderIds(orderIds).stream()
             .collect(Collectors.toMap(TradeRecord::orderId, t -> t));
+
+        Map<Long, BigDecimal> currentPrices = resolveCurrentPrices(tradeMap);
 
         List<ViolationDetail> details = new ArrayList<>();
         for (RuleViolationRecord violation : violations) {
@@ -100,7 +103,10 @@ public class RegretReportItemProcessor implements ItemProcessor<RegretReportInpu
                 continue;
             }
 
-            BigDecimal lossAmount = calculateLoss(rule, trade, input);
+            ViolationLossContext context = buildLossContext(trade, currentPrices);
+            ViolationLossStrategy strategy = resolveStrategy(rule.ruleType(), trade.side() == TradeSide.BUY);
+            BigDecimal lossAmount = strategy.calculateLoss(context);
+
             details.add(ViolationDetail.create(
                 violation.orderId(), violation.ruleId(), null,
                 lossAmount, lossAmount, violation.createdAt()
@@ -109,98 +115,28 @@ public class RegretReportItemProcessor implements ItemProcessor<RegretReportInpu
         return details;
     }
 
-    private BigDecimal calculateLoss(RuleInfo rule, TradeRecord trade, RegretReportInput input) {
-        return switch (rule.ruleType()) {
-            case CHASE_BUY_BAN, AVERAGING_DOWN_LIMIT ->
-                calculateBuyViolationLoss(trade, input);
-            case OVERTRADING_LIMIT ->
-                trade.side() == TradeSide.BUY
-                    ? calculateBuyViolationLoss(trade, input)
-                    : calculateSellViolationLoss(trade);
-            case LOSS_CUT ->
-                calculateLossCutLoss(trade);
-            case PROFIT_TAKE ->
-                calculateProfitTakeLoss(trade);
-        };
+    private Map<Long, BigDecimal> resolveCurrentPrices(Map<Long, TradeRecord> tradeMap) {
+        return tradeMap.values().stream()
+            .map(TradeRecord::exchangeCoinId)
+            .distinct()
+            .collect(Collectors.toMap(id -> id, livePricePort::getCurrentPrice));
     }
 
-    private BigDecimal calculateBuyViolationLoss(TradeRecord trade, RegretReportInput input) {
-        List<TradeRecord> sellOrders = orderHistoryPort.findSellOrdersAfter(
-            trade.walletId(), trade.exchangeCoinId(), trade.filledAt());
-
-        BigDecimal remainingQty = trade.quantity();
-        BigDecimal totalLoss = BigDecimal.ZERO;
-
-        for (TradeRecord sell : sellOrders) {
-            if (remainingQty.compareTo(BigDecimal.ZERO) <= 0) {
-                break;
-            }
-            BigDecimal matchedQty = sell.quantity().min(remainingQty);
-            BigDecimal loss = trade.filledPrice().subtract(sell.filledPrice()).multiply(matchedQty);
-            totalLoss = totalLoss.add(loss);
-            remainingQty = remainingQty.subtract(matchedQty);
-        }
-
-        if (remainingQty.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal currentPrice = livePricePort.getCurrentPrice(trade.exchangeCoinId());
-            BigDecimal unrealizedLoss = trade.filledPrice().subtract(currentPrice).multiply(remainingQty);
-            totalLoss = totalLoss.add(unrealizedLoss);
-        }
-
-        return totalLoss;
+    private ViolationLossContext buildLossContext(TradeRecord trade, Map<Long, BigDecimal> currentPrices) {
+        BigDecimal currentPrice = currentPrices.get(trade.exchangeCoinId());
+        List<SoldPortion> soldPortions = orderHistoryPort
+            .findSellOrdersAfter(trade.walletId(), trade.exchangeCoinId(), trade.filledAt())
+            .stream()
+            .map(s -> new SoldPortion(s.filledPrice(), s.quantity()))
+            .toList();
+        return new ViolationLossContext(
+            trade.filledPrice(), trade.quantity(), trade.amount(), currentPrice, soldPortions);
     }
 
-    private BigDecimal calculateSellViolationLoss(TradeRecord trade) {
-        BigDecimal currentPrice = livePricePort.getCurrentPrice(trade.exchangeCoinId());
-        return currentPrice.subtract(trade.filledPrice()).multiply(trade.quantity());
-    }
-
-    private BigDecimal calculateLossCutLoss(TradeRecord trade) {
-        BigDecimal currentPrice = livePricePort.getCurrentPrice(trade.exchangeCoinId());
-        BigDecimal actualAmount = currentPrice.multiply(trade.quantity());
-        return actualAmount.subtract(trade.amount());
-    }
-
-    private BigDecimal calculateProfitTakeLoss(TradeRecord trade) {
-        BigDecimal currentPrice = livePricePort.getCurrentPrice(trade.exchangeCoinId());
-        BigDecimal actualAmount = currentPrice.multiply(trade.quantity());
-        return trade.amount().subtract(actualAmount);
-    }
-
-    private List<RuleImpact> buildRuleImpacts(List<ViolationDetail> details,
-                                              Map<Long, RuleInfo> ruleMap,
-                                              RegretReportInput input) {
-        AssetSnapshot snapshot = portfolioSnapshotPort
-            .findLatestByRoundIdAndExchangeId(input.roundId(), input.exchangeId())
-            .orElse(null);
-        BigDecimal totalInvestment = snapshot != null ? snapshot.getTotalInvestment() : BigDecimal.ZERO;
-
-        Map<Long, List<ViolationDetail>> grouped = details.stream()
-            .collect(Collectors.groupingBy(ViolationDetail::getRuleId));
-
-        List<RuleImpact> impacts = new ArrayList<>();
-        for (Map.Entry<Long, List<ViolationDetail>> entry : grouped.entrySet()) {
-            Long ruleId = entry.getKey();
-            List<ViolationDetail> ruleDetails = entry.getValue();
-
-            BigDecimal totalLoss = ruleDetails.stream()
-                .map(ViolationDetail::getLossAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            ImpactGap gap = calculateImpactGap(totalLoss, totalInvestment);
-
-            impacts.add(RuleImpact.create(ruleId, ruleDetails.size(), totalLoss, gap));
-        }
-        return impacts;
-    }
-
-    private ImpactGap calculateImpactGap(BigDecimal totalLoss, BigDecimal totalInvestment) {
-        if (totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
-            return ImpactGap.of(BigDecimal.ZERO);
-        }
-        BigDecimal gap = totalLoss
-            .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
-            .multiply(new BigDecimal("100"));
-        return ImpactGap.of(gap);
+    private ViolationLossStrategy resolveStrategy(RuleType ruleType, boolean isBuy) {
+        return LOSS_STRATEGIES.stream()
+            .filter(s -> s.supports(ruleType, isBuy))
+            .findFirst()
+            .orElseThrow();
     }
 }
