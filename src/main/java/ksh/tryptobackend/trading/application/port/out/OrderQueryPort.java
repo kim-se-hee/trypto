@@ -4,6 +4,7 @@ import ksh.tryptobackend.trading.application.port.out.dto.OrderInfo;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface OrderQueryPort {
 
@@ -14,4 +15,6 @@ public interface OrderQueryPort {
     boolean existsFilledByWalletId(Long walletId);
 
     int countFilledByWalletId(Long walletId);
+
+    Map<Long, Integer> countFilledGroupByWalletId(List<Long> walletIds);
 }
