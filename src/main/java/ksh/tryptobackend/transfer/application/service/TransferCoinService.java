@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class TransferCoinService implements TransferCoinUseCase {
     @Override
     @Transactional
     public Transfer transferCoin(TransferCoinCommand command) {
-        return transferPersistencePort.findByIdempotencyKey(command.clientTransferId())
+        return transferPersistencePort.findByIdempotencyKey(command.idempotencyKey())
             .orElseGet(() -> executeTransfer(command));
     }
 
@@ -59,7 +60,7 @@ public class TransferCoinService implements TransferCoinUseCase {
             command.amount());
 
         TransferDestination destination = resolveDestination(command, wallet);
-        Transfer transfer = Transfer.create(command.clientTransferId(), command.fromWalletId(),
+        Transfer transfer = Transfer.create(command.idempotencyKey(), command.fromWalletId(),
             command.coinId(), command.chain(), command.toAddress(), command.toTag(),
             command.amount(), condition.fee(), destination, LocalDateTime.now(clock));
         applyBalanceChanges(transfer);
@@ -73,7 +74,7 @@ public class TransferCoinService implements TransferCoinUseCase {
 
     private TransferDestination resolveDestination(TransferCoinCommand command,
                                                    TransferWalletInfo wallet) {
-        var depositAddress = depositPort.findByRoundIdAndChainAndAddress(
+        Optional<TransferDepositAddressInfo> depositAddress = depositPort.findByRoundIdAndChainAndAddress(
             wallet.roundId(), command.chain(), command.toAddress());
         if (depositAddress.isEmpty()) {
             return new TransferDestination.Failed(TransferFailureReason.WRONG_ADDRESS);
@@ -82,7 +83,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         TransferDepositAddressInfo destAddress = depositAddress.get();
         TransferWalletInfo destWallet = walletPort.getWallet(destAddress.walletId());
 
-        var destChainInfo = chainPort.findByExchangeIdAndCoinIdAndChain(
+        Optional<TransferDestinationChain> destChainInfo = chainPort.findByExchangeIdAndCoinIdAndChain(
             destWallet.exchangeId(), command.coinId(), command.chain());
         if (destChainInfo.isEmpty()) {
             return new TransferDestination.Failed(TransferFailureReason.WRONG_CHAIN);

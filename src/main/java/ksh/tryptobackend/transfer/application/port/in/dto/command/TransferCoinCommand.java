@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record TransferCoinCommand(
-    UUID clientTransferId,
+    UUID idempotencyKey,
     Long fromWalletId,
     Long coinId,
     String chain,

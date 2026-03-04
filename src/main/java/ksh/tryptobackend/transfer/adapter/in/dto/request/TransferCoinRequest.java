@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record TransferCoinRequest(
-    @NotNull UUID clientTransferId,
+    @NotNull UUID idempotencyKey,
     @NotNull Long fromWalletId,
     @NotNull Long coinId,
     @NotBlank String chain,
@@ -19,6 +19,6 @@ public record TransferCoinRequest(
 ) {
 
     public TransferCoinCommand toCommand() {
-        return new TransferCoinCommand(clientTransferId, fromWalletId, coinId, chain, toAddress, toTag, amount);
+        return new TransferCoinCommand(idempotencyKey, fromWalletId, coinId, chain, toAddress, toTag, amount);
     }
 }
