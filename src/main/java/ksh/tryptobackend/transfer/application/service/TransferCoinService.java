@@ -47,21 +47,26 @@ public class TransferCoinService implements TransferCoinUseCase {
     }
 
     private Transfer executeTransfer(TransferCoinCommand command) {
+        Long coinId = command.coinId();
+        String chain = command.chain();
+
         TransferWalletInfo wallet = walletPort.getWallet(command.fromWalletId());
-        TransferSourceExchange sourceExchange = exchangePort.getExchangeDetail(wallet.exchangeId());
-        sourceExchange.validateTransferable(command.coinId());
-        validateSourceChainSupport(wallet.exchangeId(), command.coinId(), command.chain());
+        Long sourceExchangeId = wallet.exchangeId();
+
+        TransferSourceExchange sourceExchange = exchangePort.getExchangeDetail(sourceExchangeId);
+        sourceExchange.validateTransferable(coinId);
+        validateSourceChainSupport(sourceExchangeId, coinId, chain);
 
         WithdrawalCondition condition = withdrawalFeePort.getWithdrawalFee(
-            wallet.exchangeId(), command.coinId(), command.chain());
+            sourceExchangeId, coinId, chain);
         condition.validateMinWithdrawal(command.amount());
         condition.validateSufficientBalance(
-            walletPort.getAvailableBalance(command.fromWalletId(), command.coinId()),
+            walletPort.getAvailableBalance(command.fromWalletId(), coinId),
             command.amount());
 
-        TransferDestination destination = resolveDestination(command, wallet);
+        TransferDestination destination = resolveDestination(command, wallet, coinId, chain);
         Transfer transfer = Transfer.create(command.idempotencyKey(), command.fromWalletId(),
-            command.coinId(), command.chain(), command.toAddress(), command.toTag(),
+            coinId, chain, command.toAddress(), command.toTag(),
             command.amount(), condition.fee(), destination, LocalDateTime.now(clock));
         applyBalanceChanges(transfer);
         return transferPersistencePort.save(transfer);
@@ -73,9 +78,10 @@ public class TransferCoinService implements TransferCoinUseCase {
     }
 
     private TransferDestination resolveDestination(TransferCoinCommand command,
-                                                   TransferWalletInfo wallet) {
+                                                   TransferWalletInfo wallet,
+                                                   Long coinId, String chain) {
         Optional<TransferDepositAddressInfo> depositAddress = depositPort.findByRoundIdAndChainAndAddress(
-            wallet.roundId(), command.chain(), command.toAddress());
+            wallet.roundId(), chain, command.toAddress());
         if (depositAddress.isEmpty()) {
             return new TransferDestination.Failed(TransferFailureReason.WRONG_ADDRESS);
         }
@@ -84,7 +90,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         TransferWalletInfo destWallet = walletPort.getWallet(destAddress.walletId());
 
         Optional<TransferDestinationChain> destChainInfo = chainPort.findByExchangeIdAndCoinIdAndChain(
-            destWallet.exchangeId(), command.coinId(), command.chain());
+            destWallet.exchangeId(), coinId, chain);
         if (destChainInfo.isEmpty()) {
             return new TransferDestination.Failed(TransferFailureReason.WRONG_CHAIN);
         }
