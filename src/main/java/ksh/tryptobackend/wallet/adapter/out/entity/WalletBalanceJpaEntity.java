@@ -1,6 +1,8 @@
 package ksh.tryptobackend.wallet.adapter.out.entity;
 
 import jakarta.persistence.*;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +40,11 @@ public class WalletBalanceJpaEntity {
     }
 
     public void deductAvailable(BigDecimal amount) {
-        this.available = available.subtract(amount);
+        BigDecimal result = available.subtract(amount);
+        if (result.signum() < 0) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+        this.available = result;
     }
 
     public void addAvailable(BigDecimal amount) {
@@ -46,7 +52,11 @@ public class WalletBalanceJpaEntity {
     }
 
     public void lock(BigDecimal amount) {
-        this.available = available.subtract(amount);
+        BigDecimal result = available.subtract(amount);
+        if (result.signum() < 0) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+        this.available = result;
         this.locked = locked.add(amount);
     }
 

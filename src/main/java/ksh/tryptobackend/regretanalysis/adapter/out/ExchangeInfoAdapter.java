@@ -20,6 +20,6 @@ public class ExchangeInfoAdapter implements ExchangeInfoPort {
         ExchangeDetail detail = exchangeQueryPort.findExchangeDetailById(exchangeId)
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
-        return new ExchangeInfoRecord(exchangeId, detail.name(), detail.currency());
+        return new ExchangeInfoRecord(exchangeId, detail.name(), detail.domestic() ? "KRW" : "USDT");
     }
 }
