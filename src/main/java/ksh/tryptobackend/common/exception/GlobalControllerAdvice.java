@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,6 +75,28 @@ public class GlobalControllerAdvice {
         ApiResponseDto<Void> response = ApiResponseDto.of(
             ErrorCode.CONCURRENT_MODIFICATION.getStatus(),
             ErrorCode.CONCURRENT_MODIFICATION.name(),
+            message,
+            null
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleDataIntegrityViolation(
+        DataIntegrityViolationException e
+    ) {
+        log.warn("Data integrity violation: {}", e.getMessage());
+
+        String message = messageSource.getMessage(
+            ErrorCode.DUPLICATE_REQUEST.getMessageKey(),
+            null,
+            Locale.getDefault()
+        );
+
+        ApiResponseDto<Void> response = ApiResponseDto.of(
+            ErrorCode.DUPLICATE_REQUEST.getStatus(),
+            ErrorCode.DUPLICATE_REQUEST.name(),
             message,
             null
         );
