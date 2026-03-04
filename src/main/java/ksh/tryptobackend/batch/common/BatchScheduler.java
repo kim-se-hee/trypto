@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
-import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ public class BatchScheduler {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    private final JobOperator jobOperator;
+    private final JobLauncher jobLauncher;
     private final Job snapshotJob;
     private final Job regretReportJob;
     private final Job rankingJob;
@@ -38,7 +38,7 @@ public class BatchScheduler {
         try {
             log.info("배치 시작: snapshotDate={}", snapshotDate);
 
-            jobOperator.start(snapshotJob, params);
+            jobLauncher.run(snapshotJob, params);
             log.info("SnapshotJob 완료");
 
             CompletableFuture.allOf(
@@ -54,10 +54,10 @@ public class BatchScheduler {
 
     private void runJob(Job job, JobParameters params) {
         try {
-            jobOperator.start(job, params);
+            jobLauncher.run(job, params);
             log.info("{} 완료", job.getName());
         } catch (Exception e) {
-            log.error("{} 실패", job.getName(), e);
+            throw new RuntimeException(job.getName() + " 실패", e);
         }
     }
 }
