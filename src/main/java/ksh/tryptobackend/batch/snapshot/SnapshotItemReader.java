@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @StepScope
@@ -32,8 +34,12 @@ public class SnapshotItemReader implements ItemReader<SnapshotInput> {
 
     private List<SnapshotInput> buildInputList() {
         List<ActiveRoundInfo> activeRounds = activeRoundQueryPort.findAllActiveRounds();
+        List<Long> roundIds = activeRounds.stream().map(ActiveRoundInfo::roundId).toList();
+        Map<Long, List<WalletSnapshotInfo>> walletsByRoundId = walletSnapshotPort.findByRoundIds(roundIds).stream()
+            .collect(Collectors.groupingBy(WalletSnapshotInfo::roundId));
+
         return activeRounds.stream()
-            .flatMap(round -> walletSnapshotPort.findByRoundId(round.roundId()).stream()
+            .flatMap(round -> walletsByRoundId.getOrDefault(round.roundId(), List.of()).stream()
                 .map(wallet -> toSnapshotInput(round, wallet)))
             .toList();
     }
