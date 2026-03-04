@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component("rankingHoldingQueryAdapter")
 @RequiredArgsConstructor
@@ -23,23 +25,32 @@ public class HoldingQueryAdapter implements HoldingQueryPort {
 
     @Override
     public EvaluatedHoldings findAllByWalletId(Long walletId, Long exchangeId) {
-        List<EvaluatedHolding> holdings = holdingPersistencePort.findAllByWalletId(walletId).stream()
+        List<Holding> activeHoldings = holdingPersistencePort.findAllByWalletId(walletId).stream()
             .filter(Holding::isHolding)
-            .map(h -> toEvaluatedHolding(h, exchangeId))
+            .toList();
+
+        if (activeHoldings.isEmpty()) {
+            return new EvaluatedHoldings(List.of());
+        }
+
+        List<Long> coinIds = activeHoldings.stream().map(Holding::getCoinId).toList();
+        Map<Long, Long> coinToExchangeCoinMap = exchangeCoinQueryPort.findExchangeCoinIdsByExchangeIdAndCoinIds(exchangeId, coinIds);
+        Map<Long, BigDecimal> priceMap = livePricePort.getCurrentPrices(new ArrayList<>(coinToExchangeCoinMap.values()));
+
+        List<EvaluatedHolding> holdings = activeHoldings.stream()
+            .map(h -> toEvaluatedHolding(h, coinToExchangeCoinMap, priceMap))
             .toList();
         return new EvaluatedHoldings(holdings);
     }
 
-    private EvaluatedHolding toEvaluatedHolding(Holding holding, Long exchangeId) {
-        BigDecimal currentPrice = resolveCurrentPrice(exchangeId, holding.getCoinId());
+    private EvaluatedHolding toEvaluatedHolding(Holding holding, Map<Long, Long> coinToExchangeCoinMap,
+                                                 Map<Long, BigDecimal> priceMap) {
+        Long exchangeCoinId = coinToExchangeCoinMap.get(holding.getCoinId());
+        BigDecimal currentPrice = exchangeCoinId != null
+            ? priceMap.getOrDefault(exchangeCoinId, BigDecimal.ZERO)
+            : BigDecimal.ZERO;
         return EvaluatedHolding.create(
             holding.getCoinId(), holding.getAvgBuyPrice(),
             holding.getTotalQuantity(), currentPrice);
-    }
-
-    private BigDecimal resolveCurrentPrice(Long exchangeId, Long coinId) {
-        return exchangeCoinQueryPort.findExchangeCoinId(exchangeId, coinId)
-            .map(livePricePort::getCurrentPrice)
-            .orElse(BigDecimal.ZERO);
     }
 }

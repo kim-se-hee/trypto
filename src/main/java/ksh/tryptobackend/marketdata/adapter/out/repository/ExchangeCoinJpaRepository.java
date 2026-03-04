@@ -12,4 +12,6 @@ public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpa
     List<ExchangeCoinJpaEntity> findByIdIn(Collection<Long> ids);
 
     Optional<ExchangeCoinJpaEntity> findByExchangeIdAndCoinId(Long exchangeId, Long coinId);
+
+    List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(Long exchangeId, Collection<Long> coinIds);
 }
