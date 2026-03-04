@@ -1,5 +1,6 @@
 package ksh.tryptobackend.batch.snapshot;
 
+import ksh.tryptobackend.ranking.application.port.in.dto.result.SnapshotResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -41,7 +42,7 @@ public class SnapshotJobConfig {
                              SnapshotItemProcessor processor,
                              SnapshotItemWriter writer) {
         return new StepBuilder("snapshot-step", jobRepository)
-            .<SnapshotInput, SnapshotOutput>chunk(CHUNK_SIZE)
+            .<SnapshotInput, SnapshotResult>chunk(CHUNK_SIZE)
             .transactionManager(transactionManager)
             .reader(reader)
             .processor(processor)
