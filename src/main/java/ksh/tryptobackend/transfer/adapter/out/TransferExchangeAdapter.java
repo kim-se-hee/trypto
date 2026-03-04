@@ -18,7 +18,7 @@ public class TransferExchangeAdapter implements TransferExchangePort {
     public TransferSourceExchange getExchangeDetail(Long exchangeId) {
         return exchangeQueryPort.findExchangeDetailById(exchangeId)
             .map(detail -> TransferSourceExchange.of(
-                detail.baseCurrencyCoinId(), "KRW".equals(detail.currency())))
+                detail.baseCurrencyCoinId(), detail.domestic()))
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 }

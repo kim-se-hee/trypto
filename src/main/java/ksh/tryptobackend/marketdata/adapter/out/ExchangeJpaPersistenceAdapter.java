@@ -29,7 +29,8 @@ public class ExchangeJpaPersistenceAdapter implements ExchangePort, ExchangeQuer
     @Override
     public Optional<ExchangeDetail> findExchangeDetailById(Long exchangeId) {
         return repository.findById(exchangeId)
-            .map(entity -> new ExchangeDetail(entity.getName(), entity.getBaseCurrencyCoinId(), entity.getMarketType()));
+            .map(entity -> new ExchangeDetail(entity.getName(), entity.getBaseCurrencyCoinId(),
+                entity.getMarketType() == ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType.DOMESTIC));
     }
 
     @Override
