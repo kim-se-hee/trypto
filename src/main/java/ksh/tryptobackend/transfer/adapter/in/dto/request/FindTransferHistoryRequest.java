@@ -13,15 +13,6 @@ public record FindTransferHistoryRequest(
     @Min(1) @Max(50) Integer size
 ) {
 
-    public FindTransferHistoryRequest {
-        if (type == null) {
-            type = TransferType.ALL;
-        }
-        if (size == null) {
-            size = 20;
-        }
-    }
-
     public FindTransferHistoryQuery toQuery(Long walletId) {
         return new FindTransferHistoryQuery(walletId, userId, type, cursorTransferId, size);
     }
