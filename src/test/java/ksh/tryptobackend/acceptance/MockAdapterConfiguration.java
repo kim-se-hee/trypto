@@ -11,6 +11,7 @@ import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTradingVenueAdapter;
 import ksh.tryptobackend.acceptance.mock.MockViolationPersistenceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockTransferWalletAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletInfoAdapter;
 import ksh.tryptobackend.regretanalysis.application.port.out.BtcPriceHistoryPort;
 import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
@@ -22,6 +23,7 @@ import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
 import ksh.tryptobackend.trading.application.port.out.ViolationPersistencePort;
 import ksh.tryptobackend.trading.application.port.out.WalletBalancePort;
 import ksh.tryptobackend.trading.application.port.out.WalletInfoPort;
+import ksh.tryptobackend.transfer.application.port.out.TransferWalletPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangeCoinChainPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangePort;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -101,5 +103,11 @@ public class MockAdapterConfiguration {
     @Primary
     public DepositAddressExchangeCoinChainPort depositAddressExchangeCoinChainPort() {
         return new MockDepositAddressExchangeCoinChainAdapter();
+    }
+
+    @Bean
+    @Primary
+    public TransferWalletPort transferWalletPort() {
+        return new MockTransferWalletAdapter();
     }
 }

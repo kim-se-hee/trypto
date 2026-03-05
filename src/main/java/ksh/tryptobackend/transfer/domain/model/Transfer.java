@@ -4,6 +4,7 @@ import ksh.tryptobackend.transfer.domain.vo.TransferBalanceChange;
 import ksh.tryptobackend.transfer.domain.vo.TransferDestination;
 import ksh.tryptobackend.transfer.domain.vo.TransferFailureReason;
 import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
+import ksh.tryptobackend.transfer.domain.vo.TransferType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -105,5 +106,13 @@ public class Transfer {
             .frozenUntil(createdAt.plusHours(FROZEN_HOURS))
             .createdAt(createdAt)
             .build();
+    }
+
+    public TransferType resolveType(Long viewerWalletId) {
+        return fromWalletId.equals(viewerWalletId) ? TransferType.WITHDRAW : TransferType.DEPOSIT;
+    }
+
+    public BigDecimal resolveVisibleFee(Long viewerWalletId) {
+        return resolveType(viewerWalletId) == TransferType.WITHDRAW ? fee : BigDecimal.ZERO;
     }
 }

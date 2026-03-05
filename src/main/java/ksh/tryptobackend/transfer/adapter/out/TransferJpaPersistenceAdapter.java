@@ -1,14 +1,17 @@
 package ksh.tryptobackend.transfer.adapter.out;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import ksh.tryptobackend.transfer.adapter.out.entity.QTransferJpaEntity;
 import ksh.tryptobackend.transfer.adapter.out.entity.TransferJpaEntity;
 import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.transfer.application.port.out.TransferPersistencePort;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
+import ksh.tryptobackend.transfer.domain.vo.TransferType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +20,7 @@ import java.util.UUID;
 public class TransferJpaPersistenceAdapter implements TransferPersistencePort {
 
     private final TransferJpaRepository repository;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Transfer save(Transfer transfer) {
@@ -32,20 +36,32 @@ public class TransferJpaPersistenceAdapter implements TransferPersistencePort {
     }
 
     @Override
-    public Page<Transfer> findByFromWalletId(Long walletId, Pageable pageable) {
-        return repository.findByFromWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
+    public List<Transfer> findByCursor(Long walletId, TransferType type, Long cursorTransferId, int size) {
+        QTransferJpaEntity transfer = QTransferJpaEntity.transferJpaEntity;
+
+        return queryFactory
+            .selectFrom(transfer)
+            .where(
+                walletCondition(transfer, walletId, type),
+                cursorLt(transfer, cursorTransferId)
+            )
+            .orderBy(transfer.id.desc())
+            .limit(size)
+            .fetch()
+            .stream()
+            .map(TransferJpaEntity::toDomain)
+            .toList();
     }
 
-    @Override
-    public Page<Transfer> findByToWalletId(Long walletId, Pageable pageable) {
-        return repository.findByToWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
+    private BooleanExpression walletCondition(QTransferJpaEntity transfer, Long walletId, TransferType type) {
+        return switch (type) {
+            case DEPOSIT -> transfer.toWalletId.eq(walletId);
+            case WITHDRAW -> transfer.fromWalletId.eq(walletId);
+            case ALL -> transfer.fromWalletId.eq(walletId).or(transfer.toWalletId.eq(walletId));
+        };
     }
 
-    @Override
-    public Page<Transfer> findByWalletId(Long walletId, Pageable pageable) {
-        return repository.findByFromWalletIdOrToWalletId(walletId, pageable)
-            .map(TransferJpaEntity::toDomain);
+    private BooleanExpression cursorLt(QTransferJpaEntity transfer, Long cursorTransferId) {
+        return cursorTransferId != null ? transfer.id.lt(cursorTransferId) : null;
     }
 }
