@@ -18,13 +18,11 @@ public class TransferWalletAdapter implements TransferWalletPort {
     private final InvestmentRoundQueryPort investmentRoundQueryPort;
 
     @Override
-    public void validateOwnership(Long walletId, Long userId) {
+    public Long getOwnerUserId(Long walletId) {
         WalletInfo wallet = walletQueryPort.findById(walletId)
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
         InvestmentRoundInfo round = investmentRoundQueryPort.findRoundInfoById(wallet.roundId())
             .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
-        if (!round.userId().equals(userId)) {
-            throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
-        }
+        return round.userId();
     }
 }

@@ -1,5 +1,7 @@
 package ksh.tryptobackend.transfer.application.service;
 
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.transfer.application.port.in.FindTransferHistoryUseCase;
 import ksh.tryptobackend.transfer.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.transfer.application.port.in.dto.result.TransferHistoryCursorResult;
@@ -22,13 +24,20 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
     @Override
     @Transactional(readOnly = true)
     public TransferHistoryCursorResult findTransferHistory(FindTransferHistoryQuery query) {
-        transferWalletPort.validateOwnership(query.walletId(), query.userId());
+        validateWalletOwnership(query.walletId(), query.userId());
 
         List<Transfer> transfers = fetchTransfersWithOverflow(query);
         boolean hasNext = transfers.size() > query.size();
         List<Transfer> pagedTransfers = hasNext ? transfers.subList(0, query.size()) : transfers;
 
         return buildCursorResult(pagedTransfers, hasNext);
+    }
+
+    private void validateWalletOwnership(Long walletId, Long userId) {
+        Long ownerUserId = transferWalletPort.getOwnerUserId(walletId);
+        if (!ownerUserId.equals(userId)) {
+            throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
+        }
     }
 
     private List<Transfer> fetchTransfersWithOverflow(FindTransferHistoryQuery query) {
