@@ -17,4 +17,6 @@ public interface RegretReportPersistencePort {
     List<ViolationDetail> findViolationDetailsByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 
     RegretReport save(RegretReport report);
+
+    void saveAll(List<RegretReport> reports);
 }

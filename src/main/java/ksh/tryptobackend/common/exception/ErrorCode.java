@@ -44,6 +44,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "user.not.found"),
     REPORT_NOT_FOUND(404, "report.not.found"),
     SNAPSHOT_NOT_FOUND(404, "snapshot.not.found"),
+
+    PRICE_NOT_AVAILABLE(500, "price.not.available"),
     ;
 
     private final int status;

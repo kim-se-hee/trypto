@@ -24,6 +24,21 @@ public class Ranking {
     private final LocalDate referenceDate;
     private final LocalDateTime createdAt;
 
+    public static Ranking create(Long userId, Long roundId, RankingPeriod period,
+                                  int rank, ProfitRate profitRate, int tradeCount,
+                                  LocalDate referenceDate) {
+        return Ranking.builder()
+            .userId(userId)
+            .roundId(roundId)
+            .period(period)
+            .rank(rank)
+            .profitRate(profitRate)
+            .tradeCount(tradeCount)
+            .referenceDate(referenceDate)
+            .createdAt(LocalDateTime.now())
+            .build();
+    }
+
     public static boolean isTop100(int rank) {
         return rank <= TOP_RANK_THRESHOLD;
     }

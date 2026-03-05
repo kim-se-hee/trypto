@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -23,8 +24,8 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     private final WalletBalanceJpaRepository balanceRepository;
 
     @Override
-    public Long createWallet(Long roundId, Long exchangeId, LocalDateTime createdAt) {
-        Wallet wallet = Wallet.create(roundId, exchangeId, createdAt);
+    public Long createWallet(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+        Wallet wallet = Wallet.create(roundId, exchangeId, seedAmount, createdAt);
         WalletJpaEntity saved = repository.save(WalletJpaEntity.fromDomain(wallet));
         return saved.getId();
     }
@@ -32,7 +33,7 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
     @Override
     public Long createWalletWithBalance(Long roundId, Long exchangeId, Long baseCurrencyCoinId,
                                         BigDecimal initialAmount, LocalDateTime createdAt) {
-        Long walletId = createWallet(roundId, exchangeId, createdAt);
+        Long walletId = createWallet(roundId, exchangeId, initialAmount, createdAt);
         balanceRepository.save(
             new WalletBalanceJpaEntity(walletId, baseCurrencyCoinId, initialAmount, BigDecimal.ZERO));
         return walletId;
@@ -50,7 +51,25 @@ public class WalletJpaPersistenceAdapter implements WalletPort, WalletQueryPort 
             .map(this::toWalletInfo);
     }
 
-    private WalletInfo toWalletInfo(WalletJpaEntity entity) {
-        return new WalletInfo(entity.getId(), entity.getRoundId(), entity.getExchangeId());
+    @Override
+    public List<WalletInfo> findByRoundId(Long roundId) {
+        return repository.findByRoundId(roundId).stream()
+            .map(this::toWalletInfo)
+            .toList();
+    }
+
+    @Override
+    public List<WalletInfo> findByRoundIds(List<Long> roundIds) {
+        if (roundIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByRoundIdIn(roundIds).stream()
+            .map(this::toWalletInfo)
+            .toList();
+    }
+
+    private WalletInfo toWalletInfo(WalletJpaEntity wallet) {
+        return new WalletInfo(wallet.getId(), wallet.getRoundId(), wallet.getExchangeId(),
+            wallet.getSeedAmount());
     }
 }

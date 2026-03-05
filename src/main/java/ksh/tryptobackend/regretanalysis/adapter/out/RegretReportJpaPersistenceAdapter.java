@@ -64,8 +64,16 @@ public class RegretReportJpaPersistenceAdapter implements RegretReportPersistenc
     }
 
     @Override
-    public RegretReport save(RegretReport report) {
-        RegretReportJpaEntity saved = repository.save(RegretReportJpaEntity.fromDomain(report));
+    public RegretReport save(RegretReport domain) {
+        RegretReportJpaEntity saved = repository.save(RegretReportJpaEntity.fromDomain(domain));
         return saved.toDomain();
+    }
+
+    @Override
+    public void saveAll(List<RegretReport> reports) {
+        List<RegretReportJpaEntity> entities = reports.stream()
+            .map(RegretReportJpaEntity::fromDomain)
+            .toList();
+        repository.saveAll(entities);
     }
 }

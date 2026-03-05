@@ -5,4 +5,6 @@ import java.math.BigDecimal;
 public interface EmergencyFundingQueryPort {
 
     BigDecimal sumAmountByRoundId(Long roundId);
+
+    BigDecimal sumAmountByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 }

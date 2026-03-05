@@ -95,10 +95,11 @@ public class RankerPortfolioStepDefinition {
     private void insertPortfolioSnapshot() {
         LocalDateTime snapshotDate = LocalDateTime.of(2026, 3, 1, 0, 0);
         jdbcTemplate.update(
-            "INSERT INTO portfolio_snapshot (snapshot_id, user_id, round_id, exchange_id, total_asset, total_asset_krw, total_investment, total_profit, total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO portfolio_snapshot (snapshot_id, user_id, round_id, exchange_id, total_asset, total_asset_krw, total_investment, total_investment_krw, total_profit, total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             1L, 1L, 1L, 1L,
             new BigDecimal("11550000.00000000"), new BigDecimal("11550000.00000000"),
-            new BigDecimal("10000000.00000000"), new BigDecimal("1550000.00000000"),
+            new BigDecimal("10000000.00000000"), new BigDecimal("10000000.00000000"),
+            new BigDecimal("1550000.00000000"),
             new BigDecimal("15.5000"), snapshotDate);
 
         jdbcTemplate.update(

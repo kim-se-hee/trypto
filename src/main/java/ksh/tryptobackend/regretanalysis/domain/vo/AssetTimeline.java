@@ -28,13 +28,13 @@ public final class AssetTimeline {
 
     public List<LocalDate> getDates() {
         return snapshots.stream()
-            .map(AssetSnapshot::getSnapshotLocalDate)
+            .map(AssetSnapshot::getSnapshotDate)
             .toList();
     }
 
     public Optional<BigDecimal> findAssetAt(LocalDate date) {
         return snapshots.stream()
-            .filter(s -> s.getSnapshotLocalDate().equals(date))
+            .filter(s -> s.getSnapshotDate().equals(date))
             .findFirst()
             .map(AssetSnapshot::getTotalAsset);
     }
@@ -44,11 +44,11 @@ public final class AssetTimeline {
     }
 
     public LocalDate getStartDate() {
-        return snapshots.getFirst().getSnapshotLocalDate();
+        return snapshots.getFirst().getSnapshotDate();
     }
 
     public LocalDate getEndDate() {
-        return snapshots.getLast().getSnapshotLocalDate();
+        return snapshots.getLast().getSnapshotDate();
     }
 
     public int calculateTotalDays() {

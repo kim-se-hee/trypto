@@ -4,6 +4,7 @@ import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEn
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface InvestmentRoundJpaRepository extends JpaRepository<InvestmentRoundJpaEntity, Long> {
@@ -15,4 +16,6 @@ public interface InvestmentRoundJpaRepository extends JpaRepository<InvestmentRo
     Optional<InvestmentRoundJpaEntity> findByUserIdAndStatus(Long userId, RoundStatus status);
 
     Optional<InvestmentRoundJpaEntity> findByIdAndUserId(Long roundId, Long userId);
+
+    List<InvestmentRoundJpaEntity> findByStatus(RoundStatus status);
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import ksh.tryptobackend.ranking.domain.model.SnapshotDetail;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,4 +44,16 @@ public class SnapshotDetailJpaEntity {
 
     @Column(name = "asset_ratio", nullable = false, precision = 10, scale = 4)
     private BigDecimal assetRatio;
+
+    public static SnapshotDetailJpaEntity fromDomain(SnapshotDetail detail, Long snapshotId) {
+        SnapshotDetailJpaEntity entity = new SnapshotDetailJpaEntity();
+        entity.snapshotId = snapshotId;
+        entity.coinId = detail.getCoinId();
+        entity.quantity = detail.getQuantity();
+        entity.avgBuyPrice = detail.getAvgBuyPrice();
+        entity.currentPrice = detail.getCurrentPrice();
+        entity.profitRate = detail.getProfitRate();
+        entity.assetRatio = detail.getAssetRatio();
+        return entity;
+    }
 }

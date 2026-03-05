@@ -6,12 +6,16 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingUserJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
+import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
 import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
+import ksh.tryptobackend.ranking.application.port.out.RankingWritePort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
+import ksh.tryptobackend.ranking.domain.model.Ranking;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,7 +24,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class RankingJpaPersistenceAdapter implements RankingPersistencePort {
+public class RankingJpaPersistenceAdapter implements RankingPersistencePort, RankingWritePort {
 
     private final RankingJpaRepository rankingJpaRepository;
     private final JPAQueryFactory queryFactory;
@@ -90,6 +94,19 @@ public class RankingJpaPersistenceAdapter implements RankingPersistencePort {
             .where(ranking.period.eq(period)
                 .and(ranking.referenceDate.eq(referenceDate)))
             .fetchOne();
+    }
+
+    @Override
+    @Transactional
+    public void replaceByPeriodAndDate(List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate) {
+        queryFactory.delete(ranking)
+            .where(ranking.period.eq(period)
+                .and(ranking.referenceDate.eq(referenceDate)))
+            .execute();
+        List<RankingJpaEntity> entities = rankings.stream()
+            .map(RankingJpaEntity::fromDomain)
+            .toList();
+        rankingJpaRepository.saveAll(entities);
     }
 
     private BooleanExpression cursorRankGt(Integer cursorRank) {

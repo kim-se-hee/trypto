@@ -1,7 +1,7 @@
 package ksh.tryptobackend.ranking.application.port.out.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record SnapshotInfo(
     Long snapshotId,
@@ -10,6 +10,6 @@ public record SnapshotInfo(
     BigDecimal totalAsset,
     BigDecimal totalInvestment,
     BigDecimal totalProfitRate,
-    LocalDateTime snapshotDate
+    LocalDate snapshotDate
 ) {
 }

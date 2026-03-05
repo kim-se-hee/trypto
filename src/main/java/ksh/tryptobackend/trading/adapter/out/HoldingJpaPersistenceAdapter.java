@@ -7,6 +7,7 @@ import ksh.tryptobackend.trading.domain.model.Holding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -19,6 +20,13 @@ public class HoldingJpaPersistenceAdapter implements HoldingPersistencePort {
     public Optional<Holding> findByWalletIdAndCoinId(Long walletId, Long coinId) {
         return repository.findByWalletIdAndCoinId(walletId, coinId)
             .map(HoldingJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<Holding> findAllByWalletId(Long walletId) {
+        return repository.findByWalletId(walletId).stream()
+            .map(HoldingJpaEntity::toDomain)
+            .toList();
     }
 
     @Override

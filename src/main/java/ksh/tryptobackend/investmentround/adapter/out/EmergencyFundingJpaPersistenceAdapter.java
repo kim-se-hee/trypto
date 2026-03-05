@@ -34,4 +34,9 @@ public class EmergencyFundingJpaPersistenceAdapter implements EmergencyFundingPe
     public BigDecimal sumAmountByRoundId(Long roundId) {
         return repository.sumAmountByRoundId(roundId);
     }
+
+    @Override
+    public BigDecimal sumAmountByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
+        return repository.sumAmountByRoundIdAndExchangeId(roundId, exchangeId);
+    }
 }

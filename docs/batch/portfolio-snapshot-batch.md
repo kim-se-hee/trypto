@@ -142,15 +142,13 @@ SnapshotJob 완료
 
 ### 실행 주기
 
-- 일간: 매일 (SnapshotJob 완료 후)
-- 주간: 매주 월요일
-- 월간: 매월 1일
+매일 (모든 기간 매일 계산). period는 실행 주기가 아니라 **수익률 산출 기간(window)**을 의미한다.
 
 ### Step 구조
 
 | Step | Reader | Processor | Writer |
 |------|--------|-----------|--------|
-| rankingStep | 최신 스냅샷의 거래소별 total_asset_krw | 유저별 SUM + 자격 검증 + 수익률 순 정렬 | RANKING 저장 |
+| rankingStep | 오늘 스냅샷 + N일 전 스냅샷의 거래소별 total_asset_krw | 유저별 SUM + 자격 검증 + 윈도우 수익률 계산 + 정렬 | RANKING 저장 (기간별) |
 
 ### 처리 절차
 
@@ -158,13 +156,15 @@ SnapshotJob 완료
    - `status = ACTIVE`인 라운드
    - `started_at`이 24시간 이전
    - 최소 1건의 FILLED 주문 존재
-2. 유저별 수익률 계산:
-   - 최신 `PORTFOLIO_SNAPSHOT`에서 `SUM(total_asset_krw) GROUP BY user_id`
-   - 전체 총 투입금 합산 (SUM of total_investment, KRW 환산)
-   - 수익률 = (합산 자산 - 합산 투입금) / 합산 투입금 x 100
-3. 거래 횟수 집계
-4. 동률 처리 기준에 따라 고유 순위 부여 ([ranking-list.md](../ranking/ranking-list.md) 참조)
-5. `RANKING` 테이블 적재
+2. 오늘 스냅샷 summary map 생성 (유저별 전 거래소 KRW 합산)
+3. 라운드별 거래 횟수를 1회 집계하여 캐싱
+4. 각 기간(DAILY/WEEKLY/MONTHLY)에 대해:
+   - N일 전 스냅샷 summary map 생성 (DAILY=1일, WEEKLY=7일, MONTHLY=30일)
+   - 오늘과 N일 전 스냅샷이 **모두 있는** 유저만 후보로 선정
+   - 수익률 = (오늘 자산 - N일 전 자산) / N일 전 자산 × 100
+   - N일 전 스냅샷이 없는 유저(라운드 시작 직후 등)는 해당 기간 랭킹에서 제외
+   - 동률 처리 기준에 따라 고유 순위 부여 ([ranking-list.md](../ranking/ranking-list.md) 참조)
+   - `RANKING` 테이블 적재
 
 ---
 

@@ -4,6 +4,7 @@ import ksh.tryptobackend.trading.application.port.out.HoldingPersistencePort;
 import ksh.tryptobackend.trading.domain.model.Holding;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +16,13 @@ public class MockHoldingAdapter implements HoldingPersistencePort {
     @Override
     public Optional<Holding> findByWalletIdAndCoinId(Long walletId, Long coinId) {
         return Optional.ofNullable(holdings.get(key(walletId, coinId)));
+    }
+
+    @Override
+    public List<Holding> findAllByWalletId(Long walletId) {
+        return holdings.values().stream()
+            .filter(h -> h.getWalletId().equals(walletId))
+            .toList();
     }
 
     @Override

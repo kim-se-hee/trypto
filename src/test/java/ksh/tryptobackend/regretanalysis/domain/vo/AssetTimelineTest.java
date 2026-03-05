@@ -26,7 +26,7 @@ class AssetTimelineTest {
         return AssetSnapshot.reconstitute(
             1L, 1L, 1L,
             totalAsset, BigDecimal.ZERO, BigDecimal.ZERO,
-            date.atStartOfDay()
+            date
         );
     }
 

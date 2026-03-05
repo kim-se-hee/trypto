@@ -106,7 +106,7 @@ public class GetRegretChartService implements GetRegretChartUseCase {
                                                     BtcBenchmark btcBenchmark) {
         return timeline.getSnapshots().stream()
             .map(snapshot -> {
-                LocalDate date = snapshot.getSnapshotLocalDate();
+                LocalDate date = snapshot.getSnapshotDate();
                 BigDecimal actualAsset = snapshot.getTotalAsset();
                 return new DailyComparison(
                     date,

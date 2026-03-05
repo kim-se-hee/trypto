@@ -179,9 +179,9 @@ public class RegretReportStepDefinition {
 
     private void insertWallets(Long roundId) {
         walletJpaRepository.save(WalletJpaEntity.fromDomain(
-            Wallet.create(roundId, EXCHANGE_ID_WITH_REPORT, LocalDateTime.now())));
+            Wallet.create(roundId, EXCHANGE_ID_WITH_REPORT, BigDecimal.ZERO, LocalDateTime.now())));
         walletJpaRepository.save(WalletJpaEntity.fromDomain(
-            Wallet.create(roundId, EXCHANGE_ID_WITHOUT_REPORT, LocalDateTime.now())));
+            Wallet.create(roundId, EXCHANGE_ID_WITHOUT_REPORT, BigDecimal.ZERO, LocalDateTime.now())));
     }
 
     private Long insertRule(Long roundId) {

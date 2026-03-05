@@ -4,11 +4,22 @@ spring:
   datasource:
     url: jdbc:h2:mem:trypto;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
+    hikari:
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+        rewriteBatchedStatements: true
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
   jpa:
     hibernate:
       ddl-auto: create
     properties:
       hibernate:
         format_sql: true
-        globally_quoted_identifiers: true
     open-in-view: false

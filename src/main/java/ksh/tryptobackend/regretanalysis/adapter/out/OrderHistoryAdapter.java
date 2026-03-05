@@ -5,7 +5,7 @@ import ksh.tryptobackend.trading.application.port.out.dto.OrderInfo;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.regretanalysis.application.port.out.OrderHistoryPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.dto.TradeRecord;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.TradeSide;
+import ksh.tryptobackend.regretanalysis.domain.vo.TradeSide;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

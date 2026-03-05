@@ -10,6 +10,7 @@ import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -48,6 +49,13 @@ public class InvestmentRoundJpaPersistenceAdapter implements InvestmentRoundPers
     @Override
     public Optional<InvestmentRoundInfo> findRoundInfoById(Long roundId) {
         return repository.findById(roundId).map(this::toRoundInfo);
+    }
+
+    @Override
+    public List<InvestmentRoundInfo> findAllActiveRounds() {
+        return repository.findByStatus(RoundStatus.ACTIVE).stream()
+            .map(this::toRoundInfo)
+            .toList();
     }
 
     private InvestmentRoundInfo toRoundInfo(InvestmentRoundJpaEntity entity) {

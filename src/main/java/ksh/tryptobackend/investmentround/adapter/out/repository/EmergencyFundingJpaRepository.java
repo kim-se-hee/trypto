@@ -14,4 +14,7 @@ public interface EmergencyFundingJpaRepository extends JpaRepository<EmergencyFu
 
     @Query("SELECT COALESCE(SUM(e.amount), 0) FROM EmergencyFundingJpaEntity e WHERE e.roundId = :roundId")
     BigDecimal sumAmountByRoundId(Long roundId);
+
+    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM EmergencyFundingJpaEntity e WHERE e.roundId = :roundId AND e.exchangeId = :exchangeId")
+    BigDecimal sumAmountByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 }

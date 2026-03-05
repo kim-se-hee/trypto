@@ -4,26 +4,38 @@ import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import ksh.tryptobackend.ranking.adapter.out.entity.PortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QPortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingCoinJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingExchangeJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QSnapshotDetailJpaEntity;
+import ksh.tryptobackend.ranking.adapter.out.entity.SnapshotDetailJpaEntity;
+import ksh.tryptobackend.ranking.adapter.out.repository.PortfolioSnapshotJpaRepository;
+import ksh.tryptobackend.ranking.adapter.out.repository.SnapshotDetailJpaRepository;
 import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
+import ksh.tryptobackend.ranking.application.port.out.SnapshotAggregationPort;
+import ksh.tryptobackend.ranking.application.port.out.SnapshotPersistencePort;
 import ksh.tryptobackend.ranking.application.port.out.SnapshotQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotDetailProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotInfo;
+import ksh.tryptobackend.ranking.application.port.out.dto.UserSnapshotSummary;
+import ksh.tryptobackend.ranking.domain.model.PortfolioSnapshot;
+import ksh.tryptobackend.ranking.domain.model.SnapshotDetail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort {
+public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort, SnapshotPersistencePort, SnapshotAggregationPort {
 
     private final JPAQueryFactory queryFactory;
+    private final PortfolioSnapshotJpaRepository snapshotRepository;
+    private final SnapshotDetailJpaRepository detailRepository;
 
     private static final QPortfolioSnapshotJpaEntity snapshot = QPortfolioSnapshotJpaEntity.portfolioSnapshotJpaEntity;
     private static final QSnapshotDetailJpaEntity detail = QSnapshotDetailJpaEntity.snapshotDetailJpaEntity;
@@ -82,7 +94,55 @@ public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshot
             .fetch();
     }
 
-    private Expression<LocalDateTime> latestSnapshotDate(Long userId, Long roundId) {
+    @Override
+    public PortfolioSnapshot save(PortfolioSnapshot domain) {
+        PortfolioSnapshotJpaEntity entity = PortfolioSnapshotJpaEntity.fromDomain(domain);
+        PortfolioSnapshotJpaEntity saved = snapshotRepository.save(entity);
+        return saved.toDomain();
+    }
+
+    @Override
+    public void saveDetails(Long snapshotId, List<SnapshotDetail> details) {
+        List<SnapshotDetailJpaEntity> entities = details.stream()
+            .map(d -> SnapshotDetailJpaEntity.fromDomain(d, snapshotId))
+            .toList();
+        detailRepository.saveAll(entities);
+    }
+
+    @Override
+    public List<PortfolioSnapshot> saveAll(List<PortfolioSnapshot> snapshots) {
+        List<PortfolioSnapshotJpaEntity> entities = snapshots.stream()
+            .map(PortfolioSnapshotJpaEntity::fromDomain)
+            .toList();
+        return snapshotRepository.saveAll(entities).stream()
+            .map(PortfolioSnapshotJpaEntity::toDomain)
+            .toList();
+    }
+
+    @Override
+    public void saveAllDetails(Map<Long, List<SnapshotDetail>> snapshotDetailsMap) {
+        List<SnapshotDetailJpaEntity> entities = snapshotDetailsMap.entrySet().stream()
+            .flatMap(entry -> entry.getValue().stream()
+                .map(d -> SnapshotDetailJpaEntity.fromDomain(d, entry.getKey())))
+            .toList();
+        detailRepository.saveAll(entities);
+    }
+
+    @Override
+    public List<UserSnapshotSummary> findLatestSummaries(LocalDate snapshotDate) {
+        return queryFactory
+            .select(Projections.constructor(UserSnapshotSummary.class,
+                snapshot.userId,
+                snapshot.roundId,
+                snapshot.totalAssetKrw.sum(),
+                snapshot.totalInvestmentKrw.sum()))
+            .from(snapshot)
+            .where(snapshot.snapshotDate.eq(snapshotDate))
+            .groupBy(snapshot.userId, snapshot.roundId)
+            .fetch();
+    }
+
+    private Expression<LocalDate> latestSnapshotDate(Long userId, Long roundId) {
         return JPAExpressions
             .select(snapshot.snapshotDate.max())
             .from(snapshot)

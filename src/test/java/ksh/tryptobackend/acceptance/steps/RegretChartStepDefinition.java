@@ -121,15 +121,15 @@ public class RegretChartStepDefinition {
 
         jdbcTemplate.update(
             "INSERT INTO investment_round (round_id, user_id, round_number, initial_seed, "
-                + "emergency_funding_limit, emergency_charge_count, status, started_at, ended_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                + "emergency_funding_limit, emergency_charge_count, status, started_at, ended_at, version) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
             ROUND_ID, USER_ID, 1L, new BigDecimal("10000000.00000000"),
             new BigDecimal("500000.00000000"), 3, "ENDED", startedAt, endedAt);
 
         jdbcTemplate.update(
             "INSERT INTO investment_round (round_id, user_id, round_number, initial_seed, "
-                + "emergency_funding_limit, emergency_charge_count, status, started_at, ended_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                + "emergency_funding_limit, emergency_charge_count, status, started_at, ended_at, version) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
             ROUND_ID_NO_REPORT, USER_ID, 2L, new BigDecimal("10000000.00000000"),
             new BigDecimal("500000.00000000"), 3, "ENDED", startedAt, endedAt);
     }
@@ -189,10 +189,10 @@ public class RegretChartStepDefinition {
                                  BigDecimal totalAsset, BigDecimal totalInvestment, BigDecimal profitRate) {
         jdbcTemplate.update(
             "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, total_asset, "
-                + "total_asset_krw, total_investment, total_profit, total_profit_rate, snapshot_date) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                + "total_asset_krw, total_investment, total_investment_krw, total_profit, total_profit_rate, snapshot_date) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             USER_ID, roundId, exchangeId, totalAsset, totalAsset,
-            totalInvestment, totalAsset.subtract(totalInvestment), profitRate,
+            totalInvestment, totalInvestment, totalAsset.subtract(totalInvestment), profitRate,
             date.atStartOfDay());
     }
 

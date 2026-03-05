@@ -15,10 +15,14 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import com.querydsl.core.Tuple;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -106,6 +110,40 @@ public class OrderJpaPersistenceAdapter implements OrderPersistencePort, OrderQu
                 o.status.eq(OrderStatus.FILLED)
             )
             .fetch();
+    }
+
+    @Override
+    public boolean existsFilledByWalletId(Long walletId) {
+        return orderJpaRepository.existsByWalletIdAndStatus(walletId, OrderStatus.FILLED);
+    }
+
+    @Override
+    public int countFilledByWalletId(Long walletId) {
+        return orderJpaRepository.countByWalletIdAndStatus(walletId, OrderStatus.FILLED);
+    }
+
+    @Override
+    public Map<Long, Integer> countFilledGroupByWalletId(List<Long> walletIds) {
+        if (walletIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
+        List<Tuple> results = queryFactory
+            .select(o.walletId, o.walletId.count())
+            .from(o)
+            .where(
+                o.walletId.in(walletIds),
+                o.status.eq(OrderStatus.FILLED)
+            )
+            .groupBy(o.walletId)
+            .fetch();
+
+        return results.stream()
+            .collect(Collectors.toMap(
+                tuple -> tuple.get(o.walletId),
+                tuple -> tuple.get(o.walletId.count()).intValue()
+            ));
     }
 
     @Override
