@@ -1,12 +1,12 @@
 package ksh.tryptobackend.ranking.application.port.out;
 
-import ksh.tryptobackend.ranking.application.port.out.dto.WalletSnapshotInfo;
+import ksh.tryptobackend.ranking.domain.vo.WalletSnapshot;
 
 import java.util.List;
 
 public interface WalletSnapshotPort {
 
-    List<WalletSnapshotInfo> findByRoundId(Long roundId);
+    List<WalletSnapshot> findByRoundId(Long roundId);
 
-    List<WalletSnapshotInfo> findByRoundIds(List<Long> roundIds);
+    List<WalletSnapshot> findByRoundIds(List<Long> roundIds);
 }

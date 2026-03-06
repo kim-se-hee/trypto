@@ -1,7 +1,7 @@
 package ksh.tryptobackend.ranking.adapter.out;
 
 import ksh.tryptobackend.ranking.application.port.out.ExchangeCoinQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.HoldingQueryPort;
+import ksh.tryptobackend.ranking.application.port.out.EvaluatedHoldingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.LivePricePort;
 import ksh.tryptobackend.ranking.domain.model.EvaluatedHolding;
 import ksh.tryptobackend.ranking.domain.model.EvaluatedHoldings;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Component("rankingHoldingQueryAdapter")
+@Component("rankingEvaluatedHoldingQueryAdapter")
 @RequiredArgsConstructor
-public class HoldingQueryAdapter implements HoldingQueryPort {
+public class EvaluatedHoldingQueryAdapter implements EvaluatedHoldingQueryPort {
 
     private final FindActiveHoldingsUseCase findActiveHoldingsUseCase;
     private final ExchangeCoinQueryPort exchangeCoinQueryPort;

@@ -5,12 +5,12 @@ import ksh.tryptobackend.ranking.application.port.in.dto.command.TakeSnapshotCom
 import ksh.tryptobackend.ranking.application.port.in.dto.result.SnapshotResult;
 import ksh.tryptobackend.ranking.application.port.out.BalanceQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.EmergencyFundingSnapshotPort;
-import ksh.tryptobackend.ranking.application.port.out.ExchangeInfoQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.HoldingQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.dto.ExchangeSnapshotInfo;
+import ksh.tryptobackend.ranking.application.port.out.ExchangeSnapshotPort;
+import ksh.tryptobackend.ranking.application.port.out.EvaluatedHoldingQueryPort;
 import ksh.tryptobackend.ranking.domain.model.EvaluatedHoldings;
 import ksh.tryptobackend.ranking.domain.model.PortfolioSnapshot;
 import ksh.tryptobackend.ranking.domain.model.SnapshotDetail;
+import ksh.tryptobackend.ranking.domain.vo.ExchangeSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,31 +21,31 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCase {
 
-    private final ExchangeInfoQueryPort exchangeInfoQueryPort;
+    private final ExchangeSnapshotPort exchangeSnapshotPort;
     private final BalanceQueryPort balanceQueryPort;
-    private final HoldingQueryPort holdingQueryPort;
+    private final EvaluatedHoldingQueryPort evaluatedHoldingQueryPort;
     private final EmergencyFundingSnapshotPort emergencyFundingSnapshotPort;
 
     @Override
     public SnapshotResult takeSnapshot(TakeSnapshotCommand command) {
-        ExchangeSnapshotInfo exchangeInfo = exchangeInfoQueryPort.getExchangeInfo(command.exchangeId());
-        EvaluatedHoldings evaluatedHoldings = holdingQueryPort.findAllByWalletId(command.walletId(), command.exchangeId());
+        ExchangeSnapshot exchangeSnapshot = exchangeSnapshotPort.getExchangeInfo(command.exchangeId());
+        EvaluatedHoldings evaluatedHoldings = evaluatedHoldingQueryPort.findAllByWalletId(command.walletId(), command.exchangeId());
 
-        BigDecimal totalAsset = calculateTotalAsset(command, exchangeInfo, evaluatedHoldings);
+        BigDecimal totalAsset = calculateTotalAsset(command, exchangeSnapshot, evaluatedHoldings);
         BigDecimal totalInvestment = calculateTotalInvestment(command);
 
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             command.userId(), command.roundId(), command.exchangeId(),
-            totalAsset, totalInvestment, exchangeInfo.conversionRate(), command.snapshotDate());
+            totalAsset, totalInvestment, exchangeSnapshot.conversionRate(), command.snapshotDate());
 
         List<SnapshotDetail> details = evaluatedHoldings.toSnapshotDetails(totalAsset);
 
         return new SnapshotResult(snapshot, details);
     }
 
-    private BigDecimal calculateTotalAsset(TakeSnapshotCommand command, ExchangeSnapshotInfo exchangeInfo,
+    private BigDecimal calculateTotalAsset(TakeSnapshotCommand command, ExchangeSnapshot exchangeSnapshot,
                                            EvaluatedHoldings evaluatedHoldings) {
-        BigDecimal balance = balanceQueryPort.getAvailableBalance(command.walletId(), exchangeInfo.baseCurrencyCoinId());
+        BigDecimal balance = balanceQueryPort.getAvailableBalance(command.walletId(), exchangeSnapshot.baseCurrencyCoinId());
         return balance.add(evaluatedHoldings.totalEvaluatedAmount());
     }
 

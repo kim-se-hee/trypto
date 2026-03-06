@@ -6,12 +6,12 @@ import ksh.tryptobackend.ranking.application.port.in.GetRankerPortfolioUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankerPortfolioQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.PortfolioHoldingResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioResult;
-import ksh.tryptobackend.ranking.application.port.out.InvestmentRoundPort;
+import ksh.tryptobackend.ranking.application.port.out.ActiveRoundPort;
 import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
 import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
-import ksh.tryptobackend.ranking.application.port.out.dto.RoundInfo;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
+import ksh.tryptobackend.ranking.domain.vo.ActiveRound;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ import java.util.List;
 public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
 
     private final RankingPersistencePort rankingPersistencePort;
-    private final InvestmentRoundPort investmentRoundPort;
+    private final ActiveRoundPort activeRoundPort;
     private final PortfolioSnapshotPort portfolioSnapshotPort;
 
     @Override
@@ -34,7 +34,7 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         RankingWithUserProjection ranking = findRanking(query, latestDate);
         validateTop100(ranking);
         validatePortfolioPublic(ranking);
-        RoundInfo round = findActiveRound(query.userId());
+        ActiveRound round = findActiveRound(query.userId());
         List<PortfolioHoldingResult> holdings = findHoldings(query.userId(), round.roundId());
         return buildResult(ranking, holdings);
     }
@@ -62,8 +62,8 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         }
     }
 
-    private RoundInfo findActiveRound(Long userId) {
-        return investmentRoundPort.findActiveRoundByUserId(userId)
+    private ActiveRound findActiveRound(Long userId) {
+        return activeRoundPort.findActiveRoundByUserId(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
     }
 

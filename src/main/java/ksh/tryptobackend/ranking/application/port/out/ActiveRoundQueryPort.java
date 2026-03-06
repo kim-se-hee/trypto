@@ -1,6 +1,6 @@
 package ksh.tryptobackend.ranking.application.port.out;
 
-import ksh.tryptobackend.ranking.application.port.out.dto.ActiveRoundInfo;
+import ksh.tryptobackend.ranking.domain.vo.ActiveRoundInfo;
 
 import java.util.List;
 

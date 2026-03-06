@@ -1,6 +1,4 @@
-package ksh.tryptobackend.ranking.application.port.out.dto;
-
-import ksh.tryptobackend.ranking.domain.vo.RoundKey;
+package ksh.tryptobackend.ranking.domain.vo;
 
 import java.time.LocalDateTime;
 
