@@ -2,8 +2,8 @@ package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import ksh.tryptobackend.trading.application.port.in.FindFilledOrdersUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
-import ksh.tryptobackend.regretanalysis.application.port.out.OrderHistoryPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.TradeRecord;
+import ksh.tryptobackend.regretanalysis.application.port.out.TradeRecordPort;
+import ksh.tryptobackend.regretanalysis.domain.vo.TradeRecord;
 import ksh.tryptobackend.regretanalysis.domain.vo.TradeSide;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class OrderHistoryAdapter implements OrderHistoryPort {
+public class TradeRecordAdapter implements TradeRecordPort {
 
     private final FindFilledOrdersUseCase findFilledOrdersUseCase;
 

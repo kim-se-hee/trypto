@@ -1,7 +1,7 @@
 package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import ksh.tryptobackend.regretanalysis.application.port.out.BtcPriceHistoryPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.BtcDailyPrice;
+import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrice;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

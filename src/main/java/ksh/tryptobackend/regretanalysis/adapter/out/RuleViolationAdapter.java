@@ -2,7 +2,7 @@ package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import ksh.tryptobackend.trading.application.port.in.FindViolationsUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.out.RuleViolationPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.RuleViolationRecord;
+import ksh.tryptobackend.regretanalysis.domain.vo.RuleViolation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +15,9 @@ public class RuleViolationAdapter implements RuleViolationPort {
     private final FindViolationsUseCase findViolationsUseCase;
 
     @Override
-    public List<RuleViolationRecord> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId) {
+    public List<RuleViolation> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId) {
         return findViolationsUseCase.findByRuleIdsAndExchangeId(ruleIds, exchangeId).stream()
-            .map(result -> new RuleViolationRecord(result.violationId(), result.orderId(), result.ruleId(), result.createdAt()))
+            .map(result -> new RuleViolation(result.violationId(), result.orderId(), result.ruleId(), result.createdAt()))
             .toList();
     }
 }

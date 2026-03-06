@@ -1,8 +1,8 @@
-package ksh.tryptobackend.regretanalysis.application.port.out.dto;
+package ksh.tryptobackend.regretanalysis.domain.vo;
 
 import java.time.LocalDateTime;
 
-public record RuleViolationRecord(
+public record RuleViolation(
     Long violationId,
     Long orderId,
     Long ruleId,

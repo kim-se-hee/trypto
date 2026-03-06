@@ -7,18 +7,18 @@ import ksh.tryptobackend.regretanalysis.application.port.in.dto.query.GetRegretC
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult.DailyComparison;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult.ViolationMarkerPoint;
+import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePort;
+import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRoundPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.BtcPriceHistoryPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.ExchangeInfoPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.InvestmentRoundPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.PortfolioSnapshotPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersistencePort;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.BtcDailyPrice;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.ExchangeInfoRecord;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.RoundInfoResult;
 import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcBenchmark;
+import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrice;
 import ksh.tryptobackend.regretanalysis.domain.vo.CumulativeLossTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationMarkers;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetRegretChartService implements GetRegretChartUseCase {
 
-    private final InvestmentRoundPort investmentRoundPort;
+    private final AnalysisRoundPort analysisRoundPort;
     private final RegretReportPersistencePort regretReportPersistencePort;
     private final PortfolioSnapshotPort portfolioSnapshotPort;
     private final BtcPriceHistoryPort btcPriceHistoryPort;
-    private final ExchangeInfoPort exchangeInfoPort;
+    private final AnalysisExchangePort analysisExchangePort;
 
     @Override
     @Transactional(readOnly = true)
@@ -47,11 +47,11 @@ public class GetRegretChartService implements GetRegretChartUseCase {
         getRoundAndValidateOwner(query);
         validateReportExists(query);
         List<ViolationDetail> violations = getViolationDetails(query);
-        ExchangeInfoRecord exchangeInfo = getExchangeInfo(query.exchangeId());
+        AnalysisExchange exchange = getExchangeInfo(query.exchangeId());
         AssetTimeline timeline = getAssetTimeline(query);
 
         CumulativeLossTimeline lossTimeline = CumulativeLossTimeline.build(violations, timeline.getDates());
-        BtcBenchmark btcBenchmark = buildBtcBenchmark(timeline, exchangeInfo.currency());
+        BtcBenchmark btcBenchmark = buildBtcBenchmark(timeline, exchange.currency());
         ViolationMarkers violationMarkers = ViolationMarkers.from(violations, timeline);
 
         List<DailyComparison> assetHistory = mapToAssetHistory(timeline, lossTimeline, btcBenchmark);
@@ -59,13 +59,13 @@ public class GetRegretChartService implements GetRegretChartUseCase {
 
         return new RegretChartResult(
             query.roundId(), query.exchangeId(),
-            exchangeInfo.name(), exchangeInfo.currency(),
+            exchange.name(), exchange.currency(),
             timeline.calculateTotalDays(), assetHistory, markerPoints
         );
     }
 
     private void getRoundAndValidateOwner(GetRegretChartQuery query) {
-        RoundInfoResult round = investmentRoundPort.getRound(query.roundId());
+        AnalysisRound round = analysisRoundPort.getRound(query.roundId());
         if (!round.userId().equals(query.userId())) {
             throw new CustomException(ErrorCode.ROUND_ACCESS_DENIED);
         }
@@ -82,8 +82,8 @@ public class GetRegretChartService implements GetRegretChartUseCase {
             query.roundId(), query.exchangeId());
     }
 
-    private ExchangeInfoRecord getExchangeInfo(Long exchangeId) {
-        return exchangeInfoPort.getExchangeInfo(exchangeId);
+    private AnalysisExchange getExchangeInfo(Long exchangeId) {
+        return analysisExchangePort.getExchangeInfo(exchangeId);
     }
 
     private AssetTimeline getAssetTimeline(GetRegretChartQuery query) {

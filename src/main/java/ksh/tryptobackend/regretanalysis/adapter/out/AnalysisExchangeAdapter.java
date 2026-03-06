@@ -4,22 +4,22 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
-import ksh.tryptobackend.regretanalysis.application.port.out.ExchangeInfoPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.ExchangeInfoRecord;
+import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePort;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("regretExchangeInfoAdapter")
+@Component
 @RequiredArgsConstructor
-public class ExchangeInfoAdapter implements ExchangeInfoPort {
+public class AnalysisExchangeAdapter implements AnalysisExchangePort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
 
     @Override
-    public ExchangeInfoRecord getExchangeInfo(Long exchangeId) {
+    public AnalysisExchange getExchangeInfo(Long exchangeId) {
         ExchangeDetailResult detail = findExchangeDetailUseCase.findExchangeDetail(exchangeId)
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
-        return new ExchangeInfoRecord(exchangeId, detail.name(), detail.domestic() ? "KRW" : "USDT");
+        return new AnalysisExchange(exchangeId, detail.name(), detail.domestic() ? "KRW" : "USDT");
     }
 }

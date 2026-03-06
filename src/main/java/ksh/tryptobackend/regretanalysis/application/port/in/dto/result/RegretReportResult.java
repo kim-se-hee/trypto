@@ -1,12 +1,12 @@
 package ksh.tryptobackend.regretanalysis.application.port.in.dto.result;
 
 import ksh.tryptobackend.common.domain.vo.RuleType;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.ExchangeMetadata;
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.RuleInfo;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetails;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchangeProfile;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.ThresholdUnit;
 
 import java.math.BigDecimal;
@@ -33,8 +33,8 @@ public record RegretReportResult(
 ) {
 
     public static RegretReportResult from(RegretReport report,
-                                          ExchangeMetadata exchange,
-                                          Map<Long, RuleInfo> ruleMap,
+                                          AnalysisExchangeProfile exchange,
+                                          Map<Long, AnalysisRule> ruleMap,
                                           Map<Long, String> coinSymbols) {
         return new RegretReportResult(
             report.getReportId(),
@@ -54,13 +54,13 @@ public record RegretReportResult(
     }
 
     private static List<RuleImpactResult> toRuleImpactResults(List<RuleImpact> ruleImpacts,
-                                                               Map<Long, RuleInfo> ruleMap) {
+                                                               Map<Long, AnalysisRule> ruleMap) {
         return ruleImpacts.stream()
             .map(ri -> toRuleImpactResult(ri, ruleMap.get(ri.getRuleId())))
             .toList();
     }
 
-    private static RuleImpactResult toRuleImpactResult(RuleImpact ruleImpact, RuleInfo rule) {
+    private static RuleImpactResult toRuleImpactResult(RuleImpact ruleImpact, AnalysisRule rule) {
         return new RuleImpactResult(
             ruleImpact.getRuleImpactId(),
             ruleImpact.getRuleId(),
@@ -75,7 +75,7 @@ public record RegretReportResult(
 
     private static List<ViolationDetailResult> toViolationDetailResults(
             ViolationDetails violationDetails,
-            Map<Long, RuleInfo> ruleMap,
+            Map<Long, AnalysisRule> ruleMap,
             Map<Long, String> coinSymbols) {
         List<ViolationDetailResult> results = new ArrayList<>();
         results.addAll(toOrderViolationResults(violationDetails, ruleMap, coinSymbols));
@@ -85,7 +85,7 @@ public record RegretReportResult(
 
     private static List<ViolationDetailResult> toOrderViolationResults(
             ViolationDetails violationDetails,
-            Map<Long, RuleInfo> ruleMap,
+            Map<Long, AnalysisRule> ruleMap,
             Map<Long, String> coinSymbols) {
         return violationDetails.groupByOrder().entrySet().stream()
             .map(entry -> {
@@ -103,7 +103,7 @@ public record RegretReportResult(
 
     private static List<ViolationDetailResult> toMonitoringViolationResults(
             ViolationDetails violationDetails,
-            Map<Long, RuleInfo> ruleMap,
+            Map<Long, AnalysisRule> ruleMap,
             Map<Long, String> coinSymbols) {
         return violationDetails.findMonitoringViolations().stream()
             .map(detail -> new ViolationDetailResult(
@@ -117,7 +117,7 @@ public record RegretReportResult(
     }
 
     private static List<String> extractViolatedRuleNames(List<ViolationDetail> violations,
-                                                          Map<Long, RuleInfo> ruleMap) {
+                                                          Map<Long, AnalysisRule> ruleMap) {
         return violations.stream()
             .map(d -> ruleMap.get(d.getRuleId()).ruleType().name())
             .distinct()

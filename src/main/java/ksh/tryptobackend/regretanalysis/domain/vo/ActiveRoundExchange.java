@@ -1,8 +1,8 @@
-package ksh.tryptobackend.regretanalysis.application.port.out.dto;
+package ksh.tryptobackend.regretanalysis.domain.vo;
 
 import java.time.LocalDateTime;
 
-public record RoundExchangeInfo(
+public record ActiveRoundExchange(
     Long roundId,
     Long userId,
     Long exchangeId,

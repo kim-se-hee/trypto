@@ -1,4 +1,4 @@
-package ksh.tryptobackend.regretanalysis.application.port.out.dto;
+package ksh.tryptobackend.regretanalysis.domain.vo;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

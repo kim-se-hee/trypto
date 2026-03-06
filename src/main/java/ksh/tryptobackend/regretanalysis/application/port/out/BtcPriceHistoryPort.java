@@ -1,6 +1,6 @@
 package ksh.tryptobackend.regretanalysis.application.port.out;
 
-import ksh.tryptobackend.regretanalysis.application.port.out.dto.BtcDailyPrice;
+import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrice;
 
 import java.time.LocalDate;
 import java.util.List;
