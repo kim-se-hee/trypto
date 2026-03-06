@@ -156,14 +156,6 @@ public class TransferHistoryStepDefinition {
         assertThat(types).isNotEmpty().allMatch(type -> type.equals(expectedType));
     }
 
-    @Then("다음 페이지가 존재한다")
-    public void 다음_페이지가_존재한다() {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.hasNext").isEqualTo(true)
-            .jsonPath("$.data.nextCursor").isNotEmpty();
-    }
-
     private void saveTransfer(Transfer transfer) {
         transferJpaRepository.save(TransferJpaEntity.fromDomain(transfer));
     }
