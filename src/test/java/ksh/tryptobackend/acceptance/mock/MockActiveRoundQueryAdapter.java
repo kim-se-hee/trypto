@@ -1,7 +1,7 @@
 package ksh.tryptobackend.acceptance.mock;
 
 import ksh.tryptobackend.ranking.application.port.out.ActiveRoundQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.dto.ActiveRoundInfo;
+import ksh.tryptobackend.ranking.domain.vo.ActiveRoundInfo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

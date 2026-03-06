@@ -1,6 +1,6 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.ranking.application.port.out.HoldingQueryPort;
+import ksh.tryptobackend.ranking.application.port.out.EvaluatedHoldingQueryPort;
 import ksh.tryptobackend.ranking.domain.model.EvaluatedHolding;
 import ksh.tryptobackend.ranking.domain.model.EvaluatedHoldings;
 
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MockSnapshotHoldingQueryAdapter implements HoldingQueryPort {
+public class MockSnapshotHoldingQueryAdapter implements EvaluatedHoldingQueryPort {
 
     private final Map<String, List<EvaluatedHolding>> holdingsMap = new ConcurrentHashMap<>();
 

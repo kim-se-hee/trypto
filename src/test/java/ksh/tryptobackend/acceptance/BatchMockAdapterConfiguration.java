@@ -14,11 +14,11 @@ import ksh.tryptobackend.ranking.application.port.out.ActiveRoundQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.BalanceQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.EligibleRoundQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.EmergencyFundingSnapshotPort;
-import ksh.tryptobackend.ranking.application.port.out.ExchangeInfoQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.HoldingQueryPort;
+import ksh.tryptobackend.ranking.application.port.out.ExchangeSnapshotPort;
+import ksh.tryptobackend.ranking.application.port.out.EvaluatedHoldingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.LivePricePort;
 import ksh.tryptobackend.ranking.application.port.out.WalletSnapshotPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.ActiveRoundListPort;
+import ksh.tryptobackend.regretanalysis.application.port.out.ActiveRoundExchangePort;
 import ksh.tryptobackend.regretanalysis.application.port.out.TradeViolationQueryPort;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -41,13 +41,13 @@ public class BatchMockAdapterConfiguration {
 
     @Bean
     @Primary
-    public ExchangeInfoQueryPort exchangeInfoQueryPort() {
+    public ExchangeSnapshotPort exchangeSnapshotPort() {
         return new MockExchangeInfoQueryAdapter();
     }
 
     @Bean
     @Primary
-    public HoldingQueryPort holdingQueryPort() {
+    public EvaluatedHoldingQueryPort evaluatedHoldingQueryPort() {
         return new MockSnapshotHoldingQueryAdapter();
     }
 
@@ -71,7 +71,7 @@ public class BatchMockAdapterConfiguration {
 
     @Bean
     @Primary
-    public ActiveRoundListPort activeRoundListPort() {
+    public ActiveRoundExchangePort activeRoundExchangePort() {
         return new MockActiveRoundListAdapter();
     }
 
