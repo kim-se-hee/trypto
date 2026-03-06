@@ -2,13 +2,13 @@ package ksh.tryptobackend.transfer.adapter.out;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
-import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRoundInfo;
+import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.transfer.application.port.out.TransferWalletPort;
 import ksh.tryptobackend.transfer.application.port.out.dto.TransferWalletInfo;
-import ksh.tryptobackend.wallet.application.port.out.WalletBalanceOperationPort;
-import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
-import ksh.tryptobackend.wallet.application.port.out.dto.WalletInfo;
+import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
+import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
+import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,43 +18,44 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class TransferWalletAdapter implements TransferWalletPort {
 
-    private final WalletQueryPort walletQueryPort;
-    private final InvestmentRoundQueryPort investmentRoundQueryPort;
-    private final WalletBalanceOperationPort walletBalanceOperationPort;
+    private final FindWalletUseCase findWalletUseCase;
+    private final FindRoundInfoUseCase findRoundInfoUseCase;
+    private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
+    private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
 
     @Override
     public Long getOwnerUserId(Long walletId) {
-        WalletInfo wallet = walletQueryPort.findById(walletId)
+        WalletResult wallet = findWalletUseCase.findById(walletId)
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
-        InvestmentRoundInfo round = investmentRoundQueryPort.findRoundInfoById(wallet.roundId())
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
-        return round.userId();
+        return findRoundInfoUseCase.findById(wallet.roundId())
+            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND))
+            .userId();
     }
 
     @Override
     public TransferWalletInfo getWallet(Long walletId) {
-        return walletQueryPort.findById(walletId)
-            .map(info -> new TransferWalletInfo(info.walletId(), info.roundId(), info.exchangeId()))
+        return findWalletUseCase.findById(walletId)
+            .map(result -> new TransferWalletInfo(result.walletId(), result.roundId(), result.exchangeId()))
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     @Override
     public BigDecimal getAvailableBalance(Long walletId, Long coinId) {
-        return walletBalanceOperationPort.getAvailableBalance(walletId, coinId);
+        return getAvailableBalanceUseCase.getAvailableBalance(walletId, coinId);
     }
 
     @Override
     public void deductBalance(Long walletId, Long coinId, BigDecimal amount) {
-        walletBalanceOperationPort.deductBalance(walletId, coinId, amount);
+        manageWalletBalanceUseCase.deductBalance(walletId, coinId, amount);
     }
 
     @Override
     public void addBalance(Long walletId, Long coinId, BigDecimal amount) {
-        walletBalanceOperationPort.addBalance(walletId, coinId, amount);
+        manageWalletBalanceUseCase.addBalance(walletId, coinId, amount);
     }
 
     @Override
     public void lockBalance(Long walletId, Long coinId, BigDecimal amount) {
-        walletBalanceOperationPort.lockBalance(walletId, coinId, amount);
+        manageWalletBalanceUseCase.lockBalance(walletId, coinId, amount);
     }
 }
