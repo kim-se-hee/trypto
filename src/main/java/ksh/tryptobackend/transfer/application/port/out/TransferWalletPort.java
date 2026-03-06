@@ -1,6 +1,6 @@
 package ksh.tryptobackend.transfer.application.port.out;
 
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferWalletInfo;
+import ksh.tryptobackend.transfer.domain.vo.TransferWallet;
 
 import java.math.BigDecimal;
 
@@ -8,7 +8,7 @@ public interface TransferWalletPort {
 
     Long getOwnerUserId(Long walletId);
 
-    TransferWalletInfo getWallet(Long walletId);
+    TransferWallet getWallet(Long walletId);
 
     BigDecimal getAvailableBalance(Long walletId, Long coinId);
 

@@ -1,10 +1,10 @@
 package ksh.tryptobackend.transfer.application.port.out;
 
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferDepositAddressInfo;
+import ksh.tryptobackend.transfer.domain.vo.TransferDepositAddress;
 
 import java.util.Optional;
 
 public interface TransferDepositPort {
 
-    Optional<TransferDepositAddressInfo> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address);
+    Optional<TransferDepositAddress> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address);
 }

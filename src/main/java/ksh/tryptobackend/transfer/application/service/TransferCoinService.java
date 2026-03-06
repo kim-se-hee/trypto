@@ -10,8 +10,8 @@ import ksh.tryptobackend.transfer.application.port.out.TransferExchangePort;
 import ksh.tryptobackend.transfer.application.port.out.TransferPersistencePort;
 import ksh.tryptobackend.transfer.application.port.out.TransferWalletPort;
 import ksh.tryptobackend.transfer.application.port.out.TransferWithdrawalFeePort;
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferDepositAddressInfo;
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferWalletInfo;
+import ksh.tryptobackend.transfer.domain.vo.TransferDepositAddress;
+import ksh.tryptobackend.transfer.domain.vo.TransferWallet;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
 import ksh.tryptobackend.transfer.domain.vo.TransferBalanceChange;
 import ksh.tryptobackend.transfer.domain.vo.TransferDestination;
@@ -50,7 +50,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         Long coinId = command.coinId();
         String chain = command.chain();
 
-        TransferWalletInfo wallet = walletPort.getWallet(command.fromWalletId());
+        TransferWallet wallet = walletPort.getWallet(command.fromWalletId());
         Long sourceExchangeId = wallet.exchangeId();
 
         TransferSourceExchange sourceExchange = exchangePort.getExchangeDetail(sourceExchangeId);
@@ -78,16 +78,16 @@ public class TransferCoinService implements TransferCoinUseCase {
     }
 
     private TransferDestination resolveDestination(TransferCoinCommand command,
-                                                   TransferWalletInfo wallet,
+                                                   TransferWallet wallet,
                                                    Long coinId, String chain) {
-        Optional<TransferDepositAddressInfo> depositAddress = depositPort.findByRoundIdAndChainAndAddress(
+        Optional<TransferDepositAddress> depositAddress = depositPort.findByRoundIdAndChainAndAddress(
             wallet.roundId(), chain, command.toAddress());
         if (depositAddress.isEmpty()) {
             return new TransferDestination.Failed(TransferFailureReason.WRONG_ADDRESS);
         }
 
-        TransferDepositAddressInfo destAddress = depositAddress.get();
-        TransferWalletInfo destWallet = walletPort.getWallet(destAddress.walletId());
+        TransferDepositAddress destAddress = depositAddress.get();
+        TransferWallet destWallet = walletPort.getWallet(destAddress.walletId());
 
         Optional<TransferDestinationChain> destChainInfo = chainPort.findByExchangeIdAndCoinIdAndChain(
             destWallet.exchangeId(), coinId, chain);

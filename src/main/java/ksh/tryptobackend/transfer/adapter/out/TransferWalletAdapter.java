@@ -4,7 +4,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.transfer.application.port.out.TransferWalletPort;
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferWalletInfo;
+import ksh.tryptobackend.transfer.domain.vo.TransferWallet;
 import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
@@ -33,9 +33,9 @@ public class TransferWalletAdapter implements TransferWalletPort {
     }
 
     @Override
-    public TransferWalletInfo getWallet(Long walletId) {
+    public TransferWallet getWallet(Long walletId) {
         return findWalletUseCase.findById(walletId)
-            .map(result -> new TransferWalletInfo(result.walletId(), result.roundId(), result.exchangeId()))
+            .map(result -> new TransferWallet(result.walletId(), result.roundId(), result.exchangeId()))
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 

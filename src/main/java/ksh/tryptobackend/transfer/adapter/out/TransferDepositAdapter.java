@@ -1,7 +1,7 @@
 package ksh.tryptobackend.transfer.adapter.out;
 
 import ksh.tryptobackend.transfer.application.port.out.TransferDepositPort;
-import ksh.tryptobackend.transfer.application.port.out.dto.TransferDepositAddressInfo;
+import ksh.tryptobackend.transfer.domain.vo.TransferDepositAddress;
 import ksh.tryptobackend.wallet.application.port.in.FindDepositAddressUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,8 +15,8 @@ public class TransferDepositAdapter implements TransferDepositPort {
     private final FindDepositAddressUseCase findDepositAddressUseCase;
 
     @Override
-    public Optional<TransferDepositAddressInfo> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address) {
+    public Optional<TransferDepositAddress> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address) {
         return findDepositAddressUseCase.findByRoundIdAndChainAndAddress(roundId, chain, address)
-            .map(result -> new TransferDepositAddressInfo(result.walletId(), result.chain(), result.address(), result.tag()));
+            .map(result -> new TransferDepositAddress(result.walletId(), result.chain(), result.address(), result.tag()));
     }
 }
