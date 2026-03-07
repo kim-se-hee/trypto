@@ -9,7 +9,7 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiv
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.RuleSettingQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRoundInfo;
-import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRuleInfo;
+import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,8 +43,8 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
             .toList();
     }
 
-    private GetActiveRoundRuleResult toRuleResult(InvestmentRuleInfo info) {
-        return new GetActiveRoundRuleResult(info.ruleId(), info.ruleType(), info.thresholdValue());
+    private GetActiveRoundRuleResult toRuleResult(RuleSetting rule) {
+        return new GetActiveRoundRuleResult(rule.getRuleId(), rule.getRuleType(), rule.getThresholdValue());
     }
 
     private GetActiveRoundResult toResult(InvestmentRoundInfo round, List<GetActiveRoundRuleResult> rules) {
