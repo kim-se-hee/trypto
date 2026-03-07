@@ -74,8 +74,8 @@ public class EmergencyFundingStepDefinition {
     @Given("긴급자금용 거래소 메타데이터가 준비되어 있다")
     public void 긴급자금용_거래소_메타데이터가_준비되어_있다() {
         exchangeJpaRepository.saveAll(List.of(
-            new ExchangeJpaEntity(1L, "UPBIT", DOMESTIC, 1L),
-            new ExchangeJpaEntity(2L, "BITHUMB", DOMESTIC, 1L)
+            new ExchangeJpaEntity(1L, "UPBIT", DOMESTIC, 1L, new BigDecimal("0.0005")),
+            new ExchangeJpaEntity(2L, "BITHUMB", DOMESTIC, 1L, new BigDecimal("0.0005"))
         ));
     }
 

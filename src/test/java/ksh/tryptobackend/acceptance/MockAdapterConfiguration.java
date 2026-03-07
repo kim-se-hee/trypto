@@ -3,26 +3,24 @@ package ksh.tryptobackend.acceptance;
 import ksh.tryptobackend.acceptance.mock.MockBtcPriceHistoryAdapter;
 import ksh.tryptobackend.acceptance.mock.MockDepositAddressExchangeAdapter;
 import ksh.tryptobackend.acceptance.mock.MockDepositAddressExchangeCoinChainAdapter;
-import ksh.tryptobackend.acceptance.mock.MockExchangeCoinAdapter;
 import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
-import ksh.tryptobackend.acceptance.mock.MockInvestmentRuleAdapter;
+import ksh.tryptobackend.acceptance.mock.MockListedCoinAdapter;
+import ksh.tryptobackend.acceptance.mock.MockViolationRuleAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTradingVenueAdapter;
 import ksh.tryptobackend.acceptance.mock.MockViolationPersistenceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTransferWalletAdapter;
-import ksh.tryptobackend.acceptance.mock.MockWalletInfoAdapter;
 import ksh.tryptobackend.regretanalysis.application.port.out.BtcPriceHistoryPort;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
 import ksh.tryptobackend.trading.application.port.out.HoldingPersistencePort;
-import ksh.tryptobackend.trading.application.port.out.InvestmentRulePort;
+import ksh.tryptobackend.trading.application.port.out.ListedCoinPort;
+import ksh.tryptobackend.trading.application.port.out.ViolationRulePort;
 import ksh.tryptobackend.trading.application.port.out.LivePricePort;
 import ksh.tryptobackend.trading.application.port.out.PriceChangeRatePort;
 import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
 import ksh.tryptobackend.trading.application.port.out.ViolationPersistencePort;
 import ksh.tryptobackend.trading.application.port.out.WalletBalancePort;
-import ksh.tryptobackend.trading.application.port.out.WalletInfoPort;
 import ksh.tryptobackend.transfer.application.port.out.TransferWalletPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangeCoinChainPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressExchangePort;
@@ -53,8 +51,8 @@ public class MockAdapterConfiguration {
 
     @Bean
     @Primary
-    public ExchangeCoinPort exchangeCoinPort() {
-        return new MockExchangeCoinAdapter();
+    public ListedCoinPort listedCoinPort() {
+        return new MockListedCoinAdapter();
     }
 
     @Bean
@@ -65,8 +63,8 @@ public class MockAdapterConfiguration {
 
     @Bean
     @Primary
-    public InvestmentRulePort investmentRulePort() {
-        return new MockInvestmentRuleAdapter();
+    public ViolationRulePort violationRulePort() {
+        return new MockViolationRuleAdapter();
     }
 
     @Bean
@@ -79,12 +77,6 @@ public class MockAdapterConfiguration {
     @Primary
     public ViolationPersistencePort violationPersistencePort() {
         return new MockViolationPersistenceAdapter();
-    }
-
-    @Bean
-    @Primary
-    public WalletInfoPort walletInfoPort() {
-        return new MockWalletInfoAdapter();
     }
 
     @Bean

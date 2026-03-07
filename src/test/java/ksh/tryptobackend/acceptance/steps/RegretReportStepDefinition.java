@@ -159,8 +159,8 @@ public class RegretReportStepDefinition {
 
     private void insertExchanges() {
         exchangeJpaRepository.saveAll(List.of(
-            new ExchangeJpaEntity(EXCHANGE_ID_WITH_REPORT, "UPBIT", ExchangeMarketType.DOMESTIC, KRW_COIN_ID),
-            new ExchangeJpaEntity(EXCHANGE_ID_WITHOUT_REPORT, "BITHUMB", ExchangeMarketType.DOMESTIC, KRW_COIN_ID)
+            new ExchangeJpaEntity(EXCHANGE_ID_WITH_REPORT, "UPBIT", ExchangeMarketType.DOMESTIC, KRW_COIN_ID, new BigDecimal("0.0005")),
+            new ExchangeJpaEntity(EXCHANGE_ID_WITHOUT_REPORT, "BITHUMB", ExchangeMarketType.DOMESTIC, KRW_COIN_ID, new BigDecimal("0.0005"))
         ));
     }
 

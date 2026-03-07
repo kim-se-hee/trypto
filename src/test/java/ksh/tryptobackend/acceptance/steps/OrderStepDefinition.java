@@ -4,18 +4,17 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import ksh.tryptobackend.acceptance.mock.MockExchangeCoinAdapter;
 import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
-import ksh.tryptobackend.acceptance.mock.MockInvestmentRuleAdapter;
+import ksh.tryptobackend.acceptance.mock.MockListedCoinAdapter;
+import ksh.tryptobackend.acceptance.mock.MockViolationRuleAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTradingVenueAdapter;
 import ksh.tryptobackend.acceptance.mock.MockViolationPersistenceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockWalletInfoAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
+import ksh.tryptobackend.trading.domain.vo.ListedCoinRef;
 import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 
@@ -33,18 +32,15 @@ public class OrderStepDefinition {
     private static final Long EXCHANGE_COIN_ID = 1L;
     private static final Long KRW_COIN_ID = 1L;
     private static final Long BTC_COIN_ID = 2L;
-    private static final Long ROUND_ID = 1L;
-
     private final CommonApiClient apiClient;
     private final MockWalletBalanceAdapter walletBalanceAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
     private final MockTradingVenueAdapter tradingVenueAdapter;
-    private final MockExchangeCoinAdapter exchangeCoinAdapter;
+    private final MockListedCoinAdapter listedCoinAdapter;
     private final MockHoldingAdapter holdingAdapter;
-    private final MockInvestmentRuleAdapter investmentRuleAdapter;
+    private final MockViolationRuleAdapter violationRuleAdapter;
     private final MockPriceChangeRateAdapter priceChangeRateAdapter;
     private final MockViolationPersistenceAdapter violationPersistenceAdapter;
-    private final MockWalletInfoAdapter walletInfoAdapter;
     private final OrderJpaRepository orderJpaRepository;
 
     private Long lastOrderId;
@@ -55,23 +51,21 @@ public class OrderStepDefinition {
                                MockWalletBalanceAdapter walletBalanceAdapter,
                                MockLivePriceAdapter livePriceAdapter,
                                MockTradingVenueAdapter tradingVenueAdapter,
-                               MockExchangeCoinAdapter exchangeCoinAdapter,
+                               MockListedCoinAdapter listedCoinAdapter,
                                MockHoldingAdapter holdingAdapter,
-                               MockInvestmentRuleAdapter investmentRuleAdapter,
+                               MockViolationRuleAdapter violationRuleAdapter,
                                MockPriceChangeRateAdapter priceChangeRateAdapter,
                                MockViolationPersistenceAdapter violationPersistenceAdapter,
-                               MockWalletInfoAdapter walletInfoAdapter,
                                OrderJpaRepository orderJpaRepository) {
         this.apiClient = apiClient;
         this.walletBalanceAdapter = walletBalanceAdapter;
         this.livePriceAdapter = livePriceAdapter;
         this.tradingVenueAdapter = tradingVenueAdapter;
-        this.exchangeCoinAdapter = exchangeCoinAdapter;
+        this.listedCoinAdapter = listedCoinAdapter;
         this.holdingAdapter = holdingAdapter;
-        this.investmentRuleAdapter = investmentRuleAdapter;
+        this.violationRuleAdapter = violationRuleAdapter;
         this.priceChangeRateAdapter = priceChangeRateAdapter;
         this.violationPersistenceAdapter = violationPersistenceAdapter;
-        this.walletInfoAdapter = walletInfoAdapter;
         this.orderJpaRepository = orderJpaRepository;
     }
 
@@ -81,13 +75,11 @@ public class OrderStepDefinition {
         walletBalanceAdapter.clear();
         livePriceAdapter.clear();
         tradingVenueAdapter.clear();
-        exchangeCoinAdapter.clear();
+        listedCoinAdapter.clear();
         holdingAdapter.clear();
-        investmentRuleAdapter.clear();
+        violationRuleAdapter.clear();
         priceChangeRateAdapter.clear();
         violationPersistenceAdapter.clear();
-        walletInfoAdapter.clear();
-        walletInfoAdapter.setRoundId(WALLET_ID, ROUND_ID);
         lastOrderId = null;
         savedIdempotencyKey = null;
         firstOrderId = null;
@@ -101,7 +93,7 @@ public class OrderStepDefinition {
 
     @Given("업비트에 BTC가 상장되어 있다")
     public void 업비트에_BTC가_상장되어_있다() {
-        exchangeCoinAdapter.addExchangeCoin(new ExchangeCoinData(EXCHANGE_COIN_ID, EXCHANGE_ID, BTC_COIN_ID));
+        listedCoinAdapter.addListedCoin(new ListedCoinRef(EXCHANGE_COIN_ID, EXCHANGE_ID, BTC_COIN_ID));
     }
 
     @Given("BTC 현재가는 {long}원이다")
