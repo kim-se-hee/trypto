@@ -6,7 +6,7 @@ import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import java.util.List;
 import java.util.Optional;
 
-public interface RegretReportPersistencePort {
+public interface RegretReportQueryPort {
 
     Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 
@@ -15,8 +15,4 @@ public interface RegretReportPersistencePort {
     boolean existsByRoundIdAndExchangeId(Long roundId, Long exchangeId);
 
     List<ViolationDetail> findViolationDetailsByRoundIdAndExchangeId(Long roundId, Long exchangeId);
-
-    RegretReport save(RegretReport report);
-
-    void saveAll(List<RegretReport> reports);
 }

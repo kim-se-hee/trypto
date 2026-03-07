@@ -8,7 +8,8 @@ import ksh.tryptobackend.regretanalysis.adapter.out.entity.QViolationDetailJpaEn
 import ksh.tryptobackend.regretanalysis.adapter.out.entity.RegretReportJpaEntity;
 import ksh.tryptobackend.regretanalysis.adapter.out.entity.ViolationDetailJpaEntity;
 import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
-import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersistencePort;
+import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportCommandPort;
+import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPort;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class RegretReportJpaPersistenceAdapter implements RegretReportPersistencePort {
+public class RegretReportJpaPersistenceAdapter implements RegretReportCommandPort, RegretReportQueryPort {
 
     private final RegretReportJpaRepository repository;
     private final JPAQueryFactory queryFactory;

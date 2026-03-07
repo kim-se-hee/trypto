@@ -9,7 +9,7 @@ import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePort;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRoundPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRulePort;
-import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersistencePort;
+import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPort;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
@@ -25,7 +25,7 @@ import java.util.Map;
 public class GetRegretReportService implements GetRegretReportUseCase {
 
     private final AnalysisRoundPort analysisRoundPort;
-    private final RegretReportPersistencePort regretReportPersistencePort;
+    private final RegretReportQueryPort regretReportQueryPort;
     private final AnalysisRulePort analysisRulePort;
     private final AnalysisExchangePort analysisExchangePort;
     private final CoinQueryPort coinQueryPort;
@@ -37,7 +37,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
         AnalysisExchange exchange = analysisExchangePort.getExchangeInfo(query.exchangeId());
         AnalysisRules rules = analysisRulePort.findByRoundId(query.roundId());
 
-        RegretReport report = regretReportPersistencePort.getByRoundIdAndExchangeId(
+        RegretReport report = regretReportQueryPort.getByRoundIdAndExchangeId(
             query.roundId(), query.exchangeId());
 
         return toResult(report, exchange, rules);

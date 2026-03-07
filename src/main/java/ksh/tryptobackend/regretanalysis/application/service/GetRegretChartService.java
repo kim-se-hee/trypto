@@ -11,7 +11,7 @@ import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePor
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRoundPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.BtcPriceHistoryPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.PortfolioSnapshotPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersistencePort;
+import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPort;
 import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class GetRegretChartService implements GetRegretChartUseCase {
 
     private final AnalysisRoundPort analysisRoundPort;
-    private final RegretReportPersistencePort regretReportPersistencePort;
+    private final RegretReportQueryPort regretReportQueryPort;
     private final PortfolioSnapshotPort portfolioSnapshotPort;
     private final BtcPriceHistoryPort btcPriceHistoryPort;
     private final AnalysisExchangePort analysisExchangePort;
@@ -72,13 +72,13 @@ public class GetRegretChartService implements GetRegretChartUseCase {
     }
 
     private void validateReportExists(GetRegretChartQuery query) {
-        if (!regretReportPersistencePort.existsByRoundIdAndExchangeId(query.roundId(), query.exchangeId())) {
+        if (!regretReportQueryPort.existsByRoundIdAndExchangeId(query.roundId(), query.exchangeId())) {
             throw new CustomException(ErrorCode.REPORT_NOT_FOUND);
         }
     }
 
     private List<ViolationDetail> getViolationDetails(GetRegretChartQuery query) {
-        return regretReportPersistencePort.findViolationDetailsByRoundIdAndExchangeId(
+        return regretReportQueryPort.findViolationDetailsByRoundIdAndExchangeId(
             query.roundId(), query.exchangeId());
     }
 
