@@ -6,6 +6,7 @@ import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCas
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePort;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
+import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class AnalysisExchangeAdapter implements AnalysisExchangePort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
+    private final FindWalletUseCase findWalletUseCase;
 
     @Override
     public AnalysisExchange getExchangeInfo(Long exchangeId) {
@@ -21,5 +23,10 @@ public class AnalysisExchangeAdapter implements AnalysisExchangePort {
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         return new AnalysisExchange(exchangeId, detail.name(), detail.domestic() ? "KRW" : "USDT");
+    }
+
+    @Override
+    public boolean existsWalletForExchange(Long roundId, Long exchangeId) {
+        return findWalletUseCase.findByRoundIdAndExchangeId(roundId, exchangeId).isPresent();
     }
 }

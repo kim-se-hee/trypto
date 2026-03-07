@@ -5,7 +5,7 @@ import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetails;
-import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchangeProfile;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.ThresholdUnit;
 
@@ -33,7 +33,7 @@ public record RegretReportResult(
 ) {
 
     public static RegretReportResult from(RegretReport report,
-                                          AnalysisExchangeProfile exchange,
+                                          AnalysisExchange exchange,
                                           Map<Long, AnalysisRule> ruleMap,
                                           Map<Long, String> coinSymbols) {
         return new RegretReportResult(

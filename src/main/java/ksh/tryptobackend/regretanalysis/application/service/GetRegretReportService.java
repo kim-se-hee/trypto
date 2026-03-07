@@ -6,12 +6,12 @@ import ksh.tryptobackend.regretanalysis.application.port.in.GetRegretReportUseCa
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.query.GetRegretReportQuery;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretReportResult;
 import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
-import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangeProfilePort;
+import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisExchangePort;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRoundPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.AnalysisRulePort;
 import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportPersistencePort;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
-import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchangeProfile;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
@@ -27,14 +27,14 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     private final AnalysisRoundPort analysisRoundPort;
     private final RegretReportPersistencePort regretReportPersistencePort;
     private final AnalysisRulePort analysisRulePort;
-    private final AnalysisExchangeProfilePort analysisExchangeProfilePort;
+    private final AnalysisExchangePort analysisExchangePort;
     private final CoinQueryPort coinQueryPort;
 
     @Override
     public RegretReportResult getRegretReport(GetRegretReportQuery query) {
         validateRoundOwner(query.roundId(), query.userId());
         validateWalletExistsForExchange(query.roundId(), query.exchangeId());
-        AnalysisExchangeProfile exchange = analysisExchangeProfilePort.getExchangeProfile(query.exchangeId());
+        AnalysisExchange exchange = analysisExchangePort.getExchangeInfo(query.exchangeId());
         AnalysisRules rules = analysisRulePort.findByRoundId(query.roundId());
 
         RegretReport report = regretReportPersistencePort.getByRoundIdAndExchangeId(
@@ -51,12 +51,12 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     }
 
     private void validateWalletExistsForExchange(Long roundId, Long exchangeId) {
-        if (!analysisExchangeProfilePort.existsWalletForExchange(roundId, exchangeId)) {
+        if (!analysisExchangePort.existsWalletForExchange(roundId, exchangeId)) {
             throw new CustomException(ErrorCode.WALLET_NOT_FOUND);
         }
     }
 
-    private RegretReportResult toResult(RegretReport report, AnalysisExchangeProfile exchange,
+    private RegretReportResult toResult(RegretReport report, AnalysisExchange exchange,
                                         AnalysisRules rules) {
         Map<Long, AnalysisRule> ruleMap = rules.toMap();
         Map<Long, String> coinSymbols = coinQueryPort.findSymbolsByIds(
