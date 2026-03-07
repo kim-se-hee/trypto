@@ -34,7 +34,7 @@ public class EmergencyFundingJpaEntity {
     @Column(name = "funding_id")
     private Long id;
 
-    @Column(name = "round_id", nullable = false)
+    @Column(name = "round_id", insertable = false, updatable = false)
     private Long roundId;
 
     @Column(name = "exchange_id", nullable = false)

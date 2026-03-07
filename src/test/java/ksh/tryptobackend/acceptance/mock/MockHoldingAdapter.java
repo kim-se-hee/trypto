@@ -1,6 +1,7 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.trading.application.port.out.HoldingPersistencePort;
+import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
+import ksh.tryptobackend.trading.application.port.out.HoldingQueryPort;
 import ksh.tryptobackend.trading.domain.model.Holding;
 
 import java.math.BigDecimal;
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MockHoldingAdapter implements HoldingPersistencePort {
+public class MockHoldingAdapter implements HoldingCommandPort, HoldingQueryPort {
 
     private final Map<String, Holding> holdings = new ConcurrentHashMap<>();
 

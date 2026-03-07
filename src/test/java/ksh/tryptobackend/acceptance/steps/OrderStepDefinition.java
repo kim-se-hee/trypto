@@ -10,7 +10,6 @@ import ksh.tryptobackend.acceptance.mock.MockViolationRuleAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockTradingVenueAdapter;
-import ksh.tryptobackend.acceptance.mock.MockViolationPersistenceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockWalletBalanceAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
@@ -40,7 +39,6 @@ public class OrderStepDefinition {
     private final MockHoldingAdapter holdingAdapter;
     private final MockViolationRuleAdapter violationRuleAdapter;
     private final MockPriceChangeRateAdapter priceChangeRateAdapter;
-    private final MockViolationPersistenceAdapter violationPersistenceAdapter;
     private final OrderJpaRepository orderJpaRepository;
 
     private Long lastOrderId;
@@ -55,7 +53,6 @@ public class OrderStepDefinition {
                                MockHoldingAdapter holdingAdapter,
                                MockViolationRuleAdapter violationRuleAdapter,
                                MockPriceChangeRateAdapter priceChangeRateAdapter,
-                               MockViolationPersistenceAdapter violationPersistenceAdapter,
                                OrderJpaRepository orderJpaRepository) {
         this.apiClient = apiClient;
         this.walletBalanceAdapter = walletBalanceAdapter;
@@ -65,7 +62,6 @@ public class OrderStepDefinition {
         this.holdingAdapter = holdingAdapter;
         this.violationRuleAdapter = violationRuleAdapter;
         this.priceChangeRateAdapter = priceChangeRateAdapter;
-        this.violationPersistenceAdapter = violationPersistenceAdapter;
         this.orderJpaRepository = orderJpaRepository;
     }
 
@@ -79,7 +75,6 @@ public class OrderStepDefinition {
         holdingAdapter.clear();
         violationRuleAdapter.clear();
         priceChangeRateAdapter.clear();
-        violationPersistenceAdapter.clear();
         lastOrderId = null;
         savedIdempotencyKey = null;
         firstOrderId = null;

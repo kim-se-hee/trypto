@@ -5,13 +5,9 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
-import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRuleJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
-import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRuleJpaRepository;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
@@ -47,10 +43,10 @@ public class RegretReportStepDefinition {
     private final RegretReportJpaRepository regretReportJpaRepository;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final InvestmentRoundJpaRepository investmentRoundJpaRepository;
-    private final InvestmentRuleJpaRepository investmentRuleJpaRepository;
     private final WalletJpaRepository walletJpaRepository;
 
     private Long savedRoundId;
+    private Long savedRuleId;
 
     public RegretReportStepDefinition(
             CommonApiClient apiClient,
@@ -58,23 +54,20 @@ public class RegretReportStepDefinition {
             RegretReportJpaRepository regretReportJpaRepository,
             ExchangeJpaRepository exchangeJpaRepository,
             InvestmentRoundJpaRepository investmentRoundJpaRepository,
-            InvestmentRuleJpaRepository investmentRuleJpaRepository,
             WalletJpaRepository walletJpaRepository) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;
         this.regretReportJpaRepository = regretReportJpaRepository;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.investmentRoundJpaRepository = investmentRoundJpaRepository;
-        this.investmentRuleJpaRepository = investmentRuleJpaRepository;
         this.walletJpaRepository = walletJpaRepository;
     }
 
     @Before
     public void setUp() {
         regretReportJpaRepository.deleteAll();
-        investmentRuleJpaRepository.deleteAllInBatch();
         walletJpaRepository.deleteAllInBatch();
-        investmentRoundJpaRepository.deleteAllInBatch();
+        investmentRoundJpaRepository.deleteAll();
         exchangeJpaRepository.deleteAllInBatch();
         jdbcTemplate.execute("DELETE FROM `coin`");
     }
@@ -89,8 +82,8 @@ public class RegretReportStepDefinition {
 
     @Given("복기 리포트가 생성되어 있다")
     public void 복기_리포트가_생성되어_있다() {
-        Long ruleId = insertRule(savedRoundId);
-        insertReport(savedRoundId, ruleId);
+        savedRuleId = insertRuleViaCascade(savedRoundId);
+        insertReport(savedRoundId, savedRuleId);
     }
 
     @When("복기 리포트 조회 요청을 보낸다")
@@ -181,14 +174,13 @@ public class RegretReportStepDefinition {
             Wallet.create(roundId, EXCHANGE_ID_WITHOUT_REPORT, BigDecimal.ZERO, LocalDateTime.now())));
     }
 
-    private Long insertRule(Long roundId) {
-        RuleSetting rule = RuleSetting.builder()
-            .roundId(roundId)
-            .ruleType(RuleType.LOSS_CUT)
-            .thresholdValue(new BigDecimal("10"))
-            .createdAt(LocalDateTime.now())
-            .build();
-        return investmentRuleJpaRepository.save(InvestmentRuleJpaEntity.fromDomain(rule)).getId();
+    private Long insertRuleViaCascade(Long roundId) {
+        jdbcTemplate.update(
+            "INSERT INTO investment_rule (round_id, rule_type, threshold_value, created_at) VALUES (?, ?, ?, ?)",
+            roundId, "LOSS_CUT", new BigDecimal("10"), LocalDateTime.now());
+        return jdbcTemplate.queryForObject(
+            "SELECT rule_id FROM investment_rule WHERE round_id = ? AND rule_type = ?",
+            Long.class, roundId, "LOSS_CUT");
     }
 
     private void insertReport(Long roundId, Long ruleId) {

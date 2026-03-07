@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +26,7 @@ class PortfolioSnapshotTest {
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             USER_ID, ROUND_ID, EXCHANGE_ID,
             totalAsset, totalInvestment,
-            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE);
+            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE, List.of());
 
         assertThat(snapshot.getTotalProfit()).isEqualByComparingTo(new BigDecimal("1000000"));
         assertThat(snapshot.getTotalProfitRate()).isEqualByComparingTo(new BigDecimal("10.0000"));
@@ -40,7 +41,7 @@ class PortfolioSnapshotTest {
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             USER_ID, ROUND_ID, EXCHANGE_ID,
             totalAsset, totalInvestment,
-            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE);
+            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE, List.of());
 
         assertThat(snapshot.getTotalProfit()).isEqualByComparingTo(new BigDecimal("-250000"));
         assertThat(snapshot.getTotalProfitRate()).isEqualByComparingTo(new BigDecimal("-2.5000"));
@@ -55,7 +56,7 @@ class PortfolioSnapshotTest {
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             USER_ID, ROUND_ID, EXCHANGE_ID,
             totalAsset, totalInvestment,
-            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE);
+            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE, List.of());
 
         assertThat(snapshot.getTotalAssetKrw()).isEqualByComparingTo(new BigDecimal("5000000"));
         assertThat(snapshot.getTotalInvestmentKrw()).isEqualByComparingTo(new BigDecimal("5000000"));
@@ -70,7 +71,7 @@ class PortfolioSnapshotTest {
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             USER_ID, ROUND_ID, EXCHANGE_ID,
             totalAsset, totalInvestment,
-            KrwConversionRate.OVERSEAS, SNAPSHOT_DATE);
+            KrwConversionRate.OVERSEAS, SNAPSHOT_DATE, List.of());
 
         assertThat(snapshot.getTotalAssetKrw()).isEqualByComparingTo(new BigDecimal("1400000"));
         assertThat(snapshot.getTotalInvestmentKrw()).isEqualByComparingTo(new BigDecimal("1400000"));
@@ -85,7 +86,7 @@ class PortfolioSnapshotTest {
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
             USER_ID, ROUND_ID, EXCHANGE_ID,
             totalAsset, totalInvestment,
-            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE);
+            KrwConversionRate.DOMESTIC, SNAPSHOT_DATE, List.of());
 
         assertThat(snapshot.getTotalProfitRate()).isEqualByComparingTo(BigDecimal.ZERO);
     }

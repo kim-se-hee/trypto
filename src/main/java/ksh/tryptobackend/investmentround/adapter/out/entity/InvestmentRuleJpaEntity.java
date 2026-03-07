@@ -28,7 +28,7 @@ public class InvestmentRuleJpaEntity {
     @Column(name = "rule_id")
     private Long id;
 
-    @Column(name = "round_id", nullable = false)
+    @Column(name = "round_id", insertable = false, updatable = false)
     private Long roundId;
 
     @Enumerated(EnumType.STRING)

@@ -19,7 +19,7 @@ public class RuleViolationJpaEntity {
     @Column(name = "violation_id")
     private Long id;
 
-    @Column(name = "order_id")
+    @Column(name = "order_id", insertable = false, updatable = false)
     private Long orderId;
 
     @Column(name = "swap_id")
