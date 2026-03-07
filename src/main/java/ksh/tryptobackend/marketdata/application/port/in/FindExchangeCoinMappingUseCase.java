@@ -10,7 +10,5 @@ public interface FindExchangeCoinMappingUseCase {
 
     Optional<ExchangeCoinMappingResult> findById(Long exchangeCoinId);
 
-    Optional<Long> findExchangeCoinId(Long exchangeId, Long coinId);
-
     Map<Long, Long> findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds);
 }

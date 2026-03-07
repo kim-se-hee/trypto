@@ -23,11 +23,6 @@ public class FindExchangeCoinMappingService implements FindExchangeCoinMappingUs
     }
 
     @Override
-    public Optional<Long> findExchangeCoinId(Long exchangeId, Long coinId) {
-        return exchangeCoinQueryPort.findExchangeCoinId(exchangeId, coinId);
-    }
-
-    @Override
     public Map<Long, Long> findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds) {
         return exchangeCoinQueryPort.findExchangeCoinIdMap(exchangeId, coinIds);
     }
