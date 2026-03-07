@@ -1,6 +1,9 @@
 package ksh.tryptobackend.trading.application.service;
 
-import ksh.tryptobackend.trading.application.port.out.*;
+import ksh.tryptobackend.trading.application.port.out.HoldingPersistencePort;
+import ksh.tryptobackend.trading.application.port.out.OrderPersistencePort;
+import ksh.tryptobackend.trading.application.port.out.PriceChangeRatePort;
+import ksh.tryptobackend.trading.application.port.out.ViolationRulePort;
 import ksh.tryptobackend.trading.domain.model.*;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ViolationCheckService {
 
-    private final WalletInfoPort walletInfoPort;
-    private final InvestmentRulePort investmentRulePort;
+    private final ViolationRulePort violationRulePort;
     private final HoldingPersistencePort holdingPersistencePort;
     private final PriceChangeRatePort priceChangeRatePort;
     private final OrderPersistencePort orderPersistencePort;
@@ -27,7 +29,7 @@ public class ViolationCheckService {
     public List<RuleViolation> checkOrderViolations(Order order, Long walletId,
                                                     Long exchangeCoinId, Long coinId,
                                                     BigDecimal currentPrice) {
-        List<ViolationRule> rules = fetchRules(walletId);
+        List<ViolationRule> rules = violationRulePort.findByWalletId(walletId);
         if (rules.isEmpty()) {
             return List.of();
         }
@@ -36,11 +38,6 @@ public class ViolationCheckService {
             order, walletId, exchangeCoinId, coinId, currentPrice);
 
         return ViolationChecker.check(rules, context);
-    }
-
-    private List<ViolationRule> fetchRules(Long walletId) {
-        Long roundId = walletInfoPort.getRoundIdByWalletId(walletId);
-        return investmentRulePort.findByRoundId(roundId);
     }
 
     private ViolationCheckContext buildContext(Order order, Long walletId,

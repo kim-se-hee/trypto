@@ -4,7 +4,7 @@ import ksh.tryptobackend.trading.domain.model.ViolationRule;
 
 import java.util.List;
 
-public interface InvestmentRulePort {
+public interface ViolationRulePort {
 
-    List<ViolationRule> findByRoundId(Long roundId);
+    List<ViolationRule> findByWalletId(Long walletId);
 }

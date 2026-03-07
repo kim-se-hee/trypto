@@ -5,11 +5,11 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.application.port.in.GetOrderAvailabilityUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.query.GetOrderAvailabilityQuery;
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinPort.ExchangeCoinData;
+import ksh.tryptobackend.trading.application.port.out.ListedCoinPort;
 import ksh.tryptobackend.trading.application.port.out.LivePricePort;
 import ksh.tryptobackend.trading.application.port.out.TradingVenuePort;
 import ksh.tryptobackend.trading.application.port.out.WalletBalancePort;
+import ksh.tryptobackend.trading.domain.vo.ListedCoinRef;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import lombok.RequiredArgsConstructor;
@@ -25,22 +25,22 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
     private final WalletBalancePort walletBalancePort;
     private final LivePricePort livePricePort;
     private final TradingVenuePort tradingVenuePort;
-    private final ExchangeCoinPort exchangeCoinPort;
+    private final ListedCoinPort listedCoinPort;
 
     @Override
     @Transactional(readOnly = true)
     public OrderAvailabilityResult getAvailability(GetOrderAvailabilityQuery query) {
-        ExchangeCoinData exchangeCoin = getExchangeCoin(query.exchangeCoinId());
-        TradingVenue venue = getTradingVenue(exchangeCoin.exchangeId());
+        ListedCoinRef listedCoin = getListedCoin(query.exchangeCoinId());
+        TradingVenue venue = getTradingVenue(listedCoin.exchangeId());
 
-        BigDecimal available = getAvailableBalance(query.walletId(), query.side(), venue, exchangeCoin);
+        BigDecimal available = getAvailableBalance(query.walletId(), query.side(), venue, listedCoin);
         BigDecimal currentPrice = livePricePort.getCurrentPrice(query.exchangeCoinId());
 
         return new OrderAvailabilityResult(available, currentPrice);
     }
 
-    private ExchangeCoinData getExchangeCoin(Long exchangeCoinId) {
-        return exchangeCoinPort.findById(exchangeCoinId)
+    private ListedCoinRef getListedCoin(Long exchangeCoinId) {
+        return listedCoinPort.findById(exchangeCoinId)
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
     }
 
@@ -50,10 +50,10 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
     }
 
     private BigDecimal getAvailableBalance(Long walletId, Side side,
-                                            TradingVenue venue, ExchangeCoinData exchangeCoin) {
+                                            TradingVenue venue, ListedCoinRef listedCoin) {
         Long targetCoinId = side == Side.BUY
             ? venue.baseCurrencyCoinId()
-            : exchangeCoin.coinId();
+            : listedCoin.coinId();
         return walletBalancePort.getAvailableBalance(walletId, targetCoinId);
     }
 }
