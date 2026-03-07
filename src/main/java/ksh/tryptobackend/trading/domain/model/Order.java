@@ -13,6 +13,8 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Builder(access = lombok.AccessLevel.PRIVATE)
@@ -32,6 +34,8 @@ public class Order {
     private OrderStatus status;
     private final LocalDateTime createdAt;
     private LocalDateTime filledAt;
+    @Builder.Default
+    private final List<RuleViolation> violations = new ArrayList<>();
 
     public static Order createMarketBuyOrder(String idempotencyKey, Long walletId, Long exchangeCoinId,
                                              BigDecimal amount, BigDecimal currentPrice, TradingVenue venue,
@@ -86,7 +90,8 @@ public class Order {
     public static Order reconstitute(Long id, String idempotencyKey, Long walletId, Long exchangeCoinId,
                                      Side side, OrderType orderType, BigDecimal amount, Quantity quantity,
                                      BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
-                                     LocalDateTime createdAt, LocalDateTime filledAt) {
+                                     LocalDateTime createdAt, LocalDateTime filledAt,
+                                     List<RuleViolation> violations) {
         return Order.builder()
             .id(id)
             .idempotencyKey(idempotencyKey)
@@ -102,9 +107,14 @@ public class Order {
             .status(status)
             .createdAt(createdAt)
             .filledAt(filledAt)
+            .violations(violations != null ? new ArrayList<>(violations) : new ArrayList<>())
             .build();
     }
 
+
+    public void addViolations(List<RuleViolation> newViolations) {
+        this.violations.addAll(newViolations);
+    }
 
     public void cancel() {
         if (this.status == OrderStatus.CANCELLED) {
