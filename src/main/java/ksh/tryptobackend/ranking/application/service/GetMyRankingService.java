@@ -3,7 +3,7 @@ package ksh.tryptobackend.ranking.application.service;
 import ksh.tryptobackend.ranking.application.port.in.GetMyRankingUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetMyRankingQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.MyRankingResult;
-import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
+import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import ksh.tryptobackend.ranking.domain.vo.ProfitRate;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
@@ -18,7 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GetMyRankingService implements GetMyRankingUseCase {
 
-    private final RankingPersistencePort rankingPersistencePort;
+    private final RankingQueryPort rankingQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -29,11 +29,11 @@ public class GetMyRankingService implements GetMyRankingUseCase {
     }
 
     private Optional<LocalDate> findLatestReferenceDate(RankingPeriod period) {
-        return rankingPersistencePort.findLatestReferenceDate(period);
+        return rankingQueryPort.findLatestReferenceDate(period);
     }
 
     private Optional<MyRankingResult> findMyRanking(GetMyRankingQuery query, LocalDate latestDate) {
-        return rankingPersistencePort.findByUserIdAndPeriodAndReferenceDate(
+        return rankingQueryPort.findByUserIdAndPeriodAndReferenceDate(
                 query.userId(), query.period(), latestDate)
             .map(this::toResult);
     }

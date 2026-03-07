@@ -5,7 +5,7 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingStatsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingStatsQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
-import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
+import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class GetRankingStatsService implements GetRankingStatsUseCase {
 
-    private final RankingPersistencePort rankingPersistencePort;
+    private final RankingQueryPort rankingQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -27,12 +27,12 @@ public class GetRankingStatsService implements GetRankingStatsUseCase {
     }
 
     private LocalDate findLatestReferenceDate(GetRankingStatsQuery query) {
-        return rankingPersistencePort.findLatestReferenceDate(query.period())
+        return rankingQueryPort.findLatestReferenceDate(query.period())
             .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 
     private RankingStatsResult buildStats(GetRankingStatsQuery query, LocalDate latestDate) {
-        RankingStatsProjection stats = rankingPersistencePort.getRankingStats(query.period(), latestDate);
+        RankingStatsProjection stats = rankingQueryPort.getRankingStats(query.period(), latestDate);
         return new RankingStatsResult(
             stats.totalParticipants(),
             stats.maxProfitRate(),

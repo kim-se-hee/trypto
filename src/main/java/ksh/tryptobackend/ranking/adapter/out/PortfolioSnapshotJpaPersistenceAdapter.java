@@ -10,10 +10,8 @@ import ksh.tryptobackend.ranking.adapter.out.entity.QRankingCoinJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingExchangeJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QSnapshotDetailJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.PortfolioSnapshotJpaRepository;
-import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
-import ksh.tryptobackend.ranking.application.port.out.SnapshotAggregationPort;
-import ksh.tryptobackend.ranking.application.port.out.SnapshotPersistencePort;
-import ksh.tryptobackend.ranking.application.port.out.SnapshotQueryPort;
+import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotCommandPort;
+import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotDetailProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.SnapshotInfo;
 import ksh.tryptobackend.ranking.application.port.out.dto.UserSnapshotSummary;
@@ -27,7 +25,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotPort, SnapshotQueryPort, SnapshotPersistencePort, SnapshotAggregationPort {
+public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotCommandPort, PortfolioSnapshotQueryPort {
 
     private final JPAQueryFactory queryFactory;
     private final PortfolioSnapshotJpaRepository snapshotRepository;

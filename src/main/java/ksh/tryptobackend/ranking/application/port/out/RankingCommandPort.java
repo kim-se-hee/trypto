@@ -6,7 +6,7 @@ import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface RankingWritePort {
+public interface RankingCommandPort {
 
     void replaceByPeriodAndDate(List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate);
 }

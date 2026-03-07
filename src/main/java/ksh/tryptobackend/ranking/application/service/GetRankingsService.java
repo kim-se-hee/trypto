@@ -6,7 +6,7 @@ import ksh.tryptobackend.ranking.application.port.in.GetRankingsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingsQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingCursorResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingItemResult;
-import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
+import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetRankingsService implements GetRankingsUseCase {
 
-    private final RankingPersistencePort rankingPersistencePort;
+    private final RankingQueryPort rankingQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -36,12 +36,12 @@ public class GetRankingsService implements GetRankingsUseCase {
         if (query.referenceDate() != null) {
             return query.referenceDate();
         }
-        return rankingPersistencePort.findLatestReferenceDate(query.period())
+        return rankingQueryPort.findLatestReferenceDate(query.period())
             .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 
     private List<RankingWithUserProjection> fetchRankingsWithOverflow(GetRankingsQuery query, LocalDate referenceDate) {
-        return rankingPersistencePort.findRankings(
+        return rankingQueryPort.findRankings(
             query.period(), referenceDate, query.cursorRank(), query.size() + 1);
     }
 

@@ -7,8 +7,8 @@ import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankerPortfoli
 import ksh.tryptobackend.ranking.application.port.in.dto.result.PortfolioHoldingResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioResult;
 import ksh.tryptobackend.ranking.application.port.out.ActiveRoundPort;
-import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotPort;
-import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
+import ksh.tryptobackend.ranking.application.port.out.PortfolioSnapshotQueryPort;
+import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
 import ksh.tryptobackend.ranking.domain.vo.ActiveRound;
@@ -23,9 +23,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
 
-    private final RankingPersistencePort rankingPersistencePort;
+    private final RankingQueryPort rankingQueryPort;
     private final ActiveRoundPort activeRoundPort;
-    private final PortfolioSnapshotPort portfolioSnapshotPort;
+    private final PortfolioSnapshotQueryPort portfolioSnapshotQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -40,12 +40,12 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     }
 
     private LocalDate findLatestReferenceDate(GetRankerPortfolioQuery query) {
-        return rankingPersistencePort.findLatestReferenceDate(query.period())
+        return rankingQueryPort.findLatestReferenceDate(query.period())
             .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 
     private RankingWithUserProjection findRanking(GetRankerPortfolioQuery query, LocalDate latestDate) {
-        return rankingPersistencePort.findByUserIdAndPeriodAndReferenceDate(
+        return rankingQueryPort.findByUserIdAndPeriodAndReferenceDate(
                 query.userId(), query.period(), latestDate)
             .orElseThrow(() -> new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED));
     }
@@ -68,7 +68,7 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     }
 
     private List<PortfolioHoldingResult> findHoldings(Long userId, Long roundId) {
-        return portfolioSnapshotPort.findLatestSnapshotDetails(userId, roundId).stream()
+        return portfolioSnapshotQueryPort.findLatestSnapshotDetails(userId, roundId).stream()
             .map(p -> new PortfolioHoldingResult(p.coinSymbol(), p.exchangeName(), p.assetRatio(), p.profitRate()))
             .toList();
     }

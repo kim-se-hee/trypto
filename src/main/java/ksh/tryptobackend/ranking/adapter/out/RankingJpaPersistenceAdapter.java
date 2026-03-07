@@ -7,8 +7,8 @@ import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingUserJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
 import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
-import ksh.tryptobackend.ranking.application.port.out.RankingPersistencePort;
-import ksh.tryptobackend.ranking.application.port.out.RankingWritePort;
+import ksh.tryptobackend.ranking.application.port.out.RankingCommandPort;
+import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
@@ -24,7 +24,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class RankingJpaPersistenceAdapter implements RankingPersistencePort, RankingWritePort {
+public class RankingJpaPersistenceAdapter implements RankingCommandPort, RankingQueryPort {
 
     private final RankingJpaRepository rankingJpaRepository;
     private final JPAQueryFactory queryFactory;

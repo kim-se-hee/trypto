@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface RankingPersistencePort {
+public interface RankingQueryPort {
 
     Optional<LocalDate> findLatestReferenceDate(RankingPeriod period);
 
