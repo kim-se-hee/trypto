@@ -17,6 +17,17 @@ description: >
 
 ## Phase 1: 구현
 
+### 사전 읽기
+
+구현 시작 전 아래 파일을 Read로 읽는다:
+
+1. `docs/ai-context/interface-map.json` — 대상 컨텍스트 및 연관 컨텍스트의 UseCase 시그니처와 DTO 확인
+2. `docs/data-model.md`의 "모듈 간 의존" 섹션 — 크로스 컨텍스트 의존 파악
+
+단, 기능 문서에서 크로스 컨텍스트 연동이 없는 단일 컨텍스트 작업이면 2번은 생략한다.
+
+### 구현
+
 CLAUDE.md의 코딩 컨벤션과 Git 컨벤션을 따라 구현한다.
 
 - 컴파일 의존 순서대로 구현한다 (domain → application → adapter)
