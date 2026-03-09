@@ -1,8 +1,8 @@
 package ksh.tryptobackend.batch.regretreport;
 
-import ksh.tryptobackend.regretanalysis.application.port.in.GenerateRegretReportUseCase;
+import ksh.tryptobackend.regretanalysis.application.port.in.GenerateRegretReportBatchUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.command.GenerateRegretReportCommand;
-import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 @Component
 @StepScope
 @RequiredArgsConstructor
-public class RegretReportItemProcessor implements ItemProcessor<RegretReportInput, RegretReport> {
+public class RegretReportItemProcessor implements ItemProcessor<RegretReportInput, GeneratedRegretReportResult> {
 
-    private final GenerateRegretReportUseCase generateRegretReportUseCase;
+    private final GenerateRegretReportBatchUseCase generateRegretReportBatchUseCase;
 
     @Override
-    public RegretReport process(RegretReportInput input) {
+    public GeneratedRegretReportResult process(RegretReportInput input) {
         GenerateRegretReportCommand command = new GenerateRegretReportCommand(
             input.roundId(), input.userId(), input.exchangeId(),
             input.walletId(), input.startedAt());
-        return generateRegretReportUseCase.generateReport(command).orElse(null);
+        return generateRegretReportBatchUseCase.generateReport(command).orElse(null);
     }
 }

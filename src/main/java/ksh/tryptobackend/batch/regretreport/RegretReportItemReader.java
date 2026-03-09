@@ -1,7 +1,7 @@
 package ksh.tryptobackend.batch.regretreport;
 
-import ksh.tryptobackend.regretanalysis.application.port.out.ActiveRoundExchangeQueryPort;
-import ksh.tryptobackend.regretanalysis.domain.vo.ActiveRoundExchange;
+import ksh.tryptobackend.regretanalysis.application.port.in.FindRegretReportInputsUseCase;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretReportInputResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.ItemReader;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RegretReportItemReader implements ItemReader<RegretReportInput> {
 
-    private final ActiveRoundExchangeQueryPort activeRoundExchangeQueryPort;
+    private final FindRegretReportInputsUseCase findRegretReportInputsUseCase;
 
     private Iterator<RegretReportInput> iterator;
 
@@ -28,15 +28,14 @@ public class RegretReportItemReader implements ItemReader<RegretReportInput> {
     }
 
     private List<RegretReportInput> buildInputList() {
-        return activeRoundExchangeQueryPort.findAllActiveRoundExchanges().stream()
+        return findRegretReportInputsUseCase.findAllInputs().stream()
             .map(this::toInput)
             .toList();
     }
 
-    private RegretReportInput toInput(ActiveRoundExchange info) {
+    private RegretReportInput toInput(RegretReportInputResult result) {
         return new RegretReportInput(
-            info.roundId(), info.userId(), info.exchangeId(),
-            info.walletId(), info.startedAt()
-        );
+            result.roundId(), result.userId(), result.exchangeId(),
+            result.walletId(), result.startedAt());
     }
 }

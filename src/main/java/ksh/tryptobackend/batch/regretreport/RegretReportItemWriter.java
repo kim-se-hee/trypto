@@ -1,7 +1,7 @@
 package ksh.tryptobackend.batch.regretreport;
 
-import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportCommandPort;
-import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
+import ksh.tryptobackend.regretanalysis.application.port.in.SaveRegretReportsUseCase;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.Chunk;
@@ -13,12 +13,12 @@ import java.util.ArrayList;
 @Component
 @StepScope
 @RequiredArgsConstructor
-public class RegretReportItemWriter implements ItemWriter<RegretReport> {
+public class RegretReportItemWriter implements ItemWriter<GeneratedRegretReportResult> {
 
-    private final RegretReportCommandPort regretReportCommandPort;
+    private final SaveRegretReportsUseCase saveRegretReportsUseCase;
 
     @Override
-    public void write(Chunk<? extends RegretReport> chunk) {
-        regretReportCommandPort.saveAll(new ArrayList<>(chunk.getItems()));
+    public void write(Chunk<? extends GeneratedRegretReportResult> chunk) {
+        saveRegretReportsUseCase.saveAll(new ArrayList<>(chunk.getItems()));
     }
 }
