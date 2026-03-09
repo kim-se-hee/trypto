@@ -263,11 +263,3 @@ GitHub Flow를 따른다. `main` 브랜치와 `feature/*` 브랜치만 사용한
 - `main`: 항상 배포 가능한 상태를 유지한다
 - `feature/*`: 기능 단위로 `main`에서 분기하고 완성되면 `main`에 머지한다
 
----
-
-# 문서 안내
-
-작업에 필요한 상세 문서는 아래 경로에 있다. 필요할 때 참조한다.
-
-- 공통: `docs/architecture.md`, `docs/testing.md`, `docs/data-model.md`, `docs/schema.md`
-- 도메인별: `docs/{domain}/{기능}.md` (예: `docs/trading/cex-order.md`)
