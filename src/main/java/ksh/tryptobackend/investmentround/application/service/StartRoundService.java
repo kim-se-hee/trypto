@@ -8,13 +8,15 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRo
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRoundSeedCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundRuleResult;
-import ksh.tryptobackend.investmentround.application.port.out.SeedFundingSpecQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
-import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocation;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocations;
+import ksh.tryptobackend.investmentround.domain.vo.SeedAmountPolicy;
+import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
+import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
 import ksh.tryptobackend.wallet.application.port.in.CreateWalletWithBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.CreateWalletWithBalanceCommand;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +33,7 @@ import java.util.List;
 public class StartRoundService implements StartRoundUseCase {
 
     private final InvestmentRoundCommandPort investmentRoundCommandPort;
-    private final SeedFundingSpecQueryPort seedFundingSpecQueryPort;
+    private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final CreateWalletWithBalanceUseCase createWalletWithBalanceUseCase;
     private final Clock clock;
 
@@ -66,11 +68,22 @@ public class StartRoundService implements StartRoundUseCase {
     }
 
     private SeedAllocation toSeedAllocation(StartRoundSeedCommand seed) {
-        SeedFundingSpec spec = seedFundingSpecQueryPort.findById(seed.exchangeId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        SeedFundingSpec spec = getSeedFundingSpec(seed.exchangeId());
         return SeedAllocation.create(
             seed.exchangeId(), spec.baseCurrencyCoinId(),
             seed.amount(), spec.seedAmountPolicy());
+    }
+
+    private SeedFundingSpec getSeedFundingSpec(Long exchangeId) {
+        return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
+            .map(this::toSeedFundingSpec)
+            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+    }
+
+    private SeedFundingSpec toSeedFundingSpec(ExchangeDetailResult detail) {
+        return new SeedFundingSpec(
+            detail.baseCurrencyCoinId(),
+            detail.domestic() ? SeedAmountPolicy.DOMESTIC : SeedAmountPolicy.OVERSEAS);
     }
 
     private InvestmentRound createRound(Long userId, BigDecimal emergencyFundingLimit,

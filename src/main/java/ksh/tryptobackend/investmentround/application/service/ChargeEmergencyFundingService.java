@@ -6,13 +6,16 @@ import ksh.tryptobackend.investmentround.application.port.in.ChargeEmergencyFund
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.ChargeEmergencyFundingCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.ChargeEmergencyFundingResult;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
-import ksh.tryptobackend.investmentround.application.port.out.SeedFundingSpecQueryPort;
-import ksh.tryptobackend.investmentround.application.port.out.FundingWalletCommandPort;
-import ksh.tryptobackend.investmentround.application.port.out.FundingWalletQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
-import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
 import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
+import ksh.tryptobackend.investmentround.domain.vo.SeedAmountPolicy;
+import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
+import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
+import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
+import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +30,9 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
 
     private final InvestmentRoundCommandPort investmentRoundCommandPort;
     private final EmergencyFundingQueryPort emergencyFundingQueryPort;
-    private final SeedFundingSpecQueryPort seedFundingSpecQueryPort;
-    private final FundingWalletQueryPort fundingWalletQueryPort;
-    private final FundingWalletCommandPort fundingWalletCommandPort;
+    private final FindExchangeDetailUseCase findExchangeDetailUseCase;
+    private final FindWalletUseCase findWalletUseCase;
+    private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
     private final Clock clock;
 
     @Override
@@ -47,7 +50,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
         round.chargeEmergencyFunding(command.amount());
 
         Long walletId = getWalletId(command.roundId(), command.exchangeId());
-        SeedFundingSpec exchange = getExchange(command.exchangeId());
+        SeedFundingSpec spec = getSeedFundingSpec(command.exchangeId());
 
         LocalDateTime now = LocalDateTime.now(clock);
         EmergencyFunding funding = EmergencyFunding.create(
@@ -55,7 +58,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
         round.addFunding(funding);
 
         InvestmentRound savedRound = investmentRoundCommandPort.save(round);
-        fundingWalletCommandPort.addBalance(walletId, exchange.baseCurrencyCoinId(), command.amount());
+        manageWalletBalanceUseCase.addBalance(walletId, spec.baseCurrencyCoinId(), command.amount());
 
         EmergencyFunding savedFunding = savedRound.getFundings().stream()
             .filter(f -> command.idempotencyKey().equals(f.getIdempotencyKey()))
@@ -71,13 +74,21 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
     }
 
     private Long getWalletId(Long roundId, Long exchangeId) {
-        return fundingWalletQueryPort.findWalletId(roundId, exchangeId)
+        return findWalletUseCase.findByRoundIdAndExchangeId(roundId, exchangeId)
+            .map(WalletResult::walletId)
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
-    private SeedFundingSpec getExchange(Long exchangeId) {
-        return seedFundingSpecQueryPort.findById(exchangeId)
+    private SeedFundingSpec getSeedFundingSpec(Long exchangeId) {
+        return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
+            .map(this::toSeedFundingSpec)
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+    }
+
+    private SeedFundingSpec toSeedFundingSpec(ExchangeDetailResult detail) {
+        return new SeedFundingSpec(
+            detail.baseCurrencyCoinId(),
+            detail.domestic() ? SeedAmountPolicy.DOMESTIC : SeedAmountPolicy.OVERSEAS);
     }
 
     private ChargeEmergencyFundingResult toResult(EmergencyFunding funding, InvestmentRound round) {
