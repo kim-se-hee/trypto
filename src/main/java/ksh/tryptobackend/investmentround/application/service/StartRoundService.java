@@ -15,7 +15,8 @@ import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocation;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocations;
-import ksh.tryptobackend.wallet.application.port.out.WalletCommandPort;
+import ksh.tryptobackend.wallet.application.port.in.CreateWalletWithBalanceUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.CreateWalletWithBalanceCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class StartRoundService implements StartRoundUseCase {
 
     private final InvestmentRoundCommandPort investmentRoundCommandPort;
     private final SeedFundingSpecQueryPort seedFundingSpecQueryPort;
-    private final WalletCommandPort walletCommandPort;
+    private final CreateWalletWithBalanceUseCase createWalletWithBalanceUseCase;
     private final Clock clock;
 
     @Override
@@ -96,9 +97,10 @@ public class StartRoundService implements StartRoundUseCase {
     private void initializeWallets(Long roundId, SeedAllocations seedAllocations) {
         LocalDateTime now = LocalDateTime.now(clock);
         for (SeedAllocation allocation : seedAllocations.getAll()) {
-            walletCommandPort.createWalletWithBalance(
-                roundId, allocation.exchangeId(), allocation.baseCurrencyCoinId(),
-                allocation.amount(), now);
+            createWalletWithBalanceUseCase.createWalletWithBalance(
+                new CreateWalletWithBalanceCommand(
+                    roundId, allocation.exchangeId(), allocation.baseCurrencyCoinId(),
+                    allocation.amount(), now));
         }
     }
 

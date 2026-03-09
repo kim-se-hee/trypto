@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class SeedFundingSpecAdapter implements SeedFundingSpecQueryPort {
+public class SeedFundingSpecQueryAdapter implements SeedFundingSpecQueryPort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
 

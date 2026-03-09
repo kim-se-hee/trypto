@@ -14,4 +14,6 @@ public interface FindWalletUseCase {
     List<WalletResult> findByRoundId(Long roundId);
 
     List<WalletResult> findByRoundIds(List<Long> roundIds);
+
+    List<WalletResult> findByExchangeId(Long exchangeId);
 }

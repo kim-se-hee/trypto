@@ -4,16 +4,12 @@ import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import ksh.tryptobackend.portfolio.adapter.out.entity.PortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.entity.QPortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.entity.QSnapshotDetailJpaEntity;
-import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
-import ksh.tryptobackend.portfolio.application.port.out.PortfolioSnapshotCommandPort;
 import ksh.tryptobackend.portfolio.application.port.out.PortfolioSnapshotQueryPort;
 import ksh.tryptobackend.portfolio.application.port.out.dto.SnapshotDetailProjection;
 import ksh.tryptobackend.portfolio.application.port.out.dto.SnapshotInfo;
 import ksh.tryptobackend.portfolio.application.port.out.dto.UserSnapshotSummary;
-import ksh.tryptobackend.portfolio.domain.model.PortfolioSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,30 +19,12 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class PortfolioSnapshotJpaPersistenceAdapter implements PortfolioSnapshotCommandPort, PortfolioSnapshotQueryPort {
+public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort {
 
-    private final PortfolioSnapshotJpaRepository snapshotRepository;
     private final JPAQueryFactory queryFactory;
 
     private static final QPortfolioSnapshotJpaEntity snapshot = QPortfolioSnapshotJpaEntity.portfolioSnapshotJpaEntity;
     private static final QSnapshotDetailJpaEntity detail = QSnapshotDetailJpaEntity.snapshotDetailJpaEntity;
-
-    @Override
-    public PortfolioSnapshot save(PortfolioSnapshot domain) {
-        PortfolioSnapshotJpaEntity entity = PortfolioSnapshotJpaEntity.fromDomain(domain);
-        PortfolioSnapshotJpaEntity saved = snapshotRepository.save(entity);
-        return saved.toDomain();
-    }
-
-    @Override
-    public List<PortfolioSnapshot> saveAll(List<PortfolioSnapshot> snapshots) {
-        List<PortfolioSnapshotJpaEntity> entities = snapshots.stream()
-            .map(PortfolioSnapshotJpaEntity::fromDomain)
-            .toList();
-        return snapshotRepository.saveAll(entities).stream()
-            .map(PortfolioSnapshotJpaEntity::toDomain)
-            .toList();
-    }
 
     @Override
     public List<SnapshotDetailProjection> findLatestSnapshotDetails(Long userId, Long roundId) {

@@ -2,7 +2,7 @@ package ksh.tryptobackend.trading.application.port.out;
 
 import java.math.BigDecimal;
 
-public interface PriceChangeRatePort {
+public interface PriceChangeRateQueryPort {
 
     BigDecimal getChangeRate(Long exchangeCoinId);
 }

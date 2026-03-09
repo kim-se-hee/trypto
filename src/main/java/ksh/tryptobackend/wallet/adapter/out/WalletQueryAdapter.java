@@ -50,6 +50,13 @@ public class WalletQueryAdapter implements WalletQueryPort {
     }
 
     @Override
+    public List<WalletInfo> findByExchangeId(Long exchangeId) {
+        return walletRepository.findByExchangeId(exchangeId).stream()
+            .map(this::toWalletInfo)
+            .toList();
+    }
+
+    @Override
     public BigDecimal getAvailableBalance(Long walletId, Long coinId) {
         return balanceRepository.findByWalletIdAndCoinId(walletId, coinId)
             .map(WalletBalanceJpaEntity::getAvailable)

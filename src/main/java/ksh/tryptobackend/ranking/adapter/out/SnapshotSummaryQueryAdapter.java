@@ -11,7 +11,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class SnapshotSummaryAdapter implements SnapshotSummaryQueryPort {
+public class SnapshotSummaryQueryAdapter implements SnapshotSummaryQueryPort {
 
     private final FindSnapshotSummariesUseCase findSnapshotSummariesUseCase;
 

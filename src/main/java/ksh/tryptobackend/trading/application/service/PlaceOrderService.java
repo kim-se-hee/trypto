@@ -35,7 +35,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final ListedCoinQueryPort listedCoinQueryPort;
     private final HoldingCommandPort holdingCommandPort;
     private final ViolationRuleQueryPort violationRuleQueryPort;
-    private final PriceChangeRatePort priceChangeRatePort;
+    private final PriceChangeRateQueryPort priceChangeRatePort;
     private final List<OrderPlacementStrategy> strategies;
     private final Clock clock;
 

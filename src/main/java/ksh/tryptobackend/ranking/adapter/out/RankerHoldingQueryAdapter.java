@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class RankerHoldingAdapter implements RankerHoldingQueryPort {
+public class RankerHoldingQueryAdapter implements RankerHoldingQueryPort {
 
     private final FindSnapshotDetailsUseCase findSnapshotDetailsUseCase;
     private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;

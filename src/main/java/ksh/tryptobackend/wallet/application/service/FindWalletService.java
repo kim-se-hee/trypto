@@ -36,6 +36,11 @@ public class FindWalletService implements FindWalletUseCase {
         return walletQueryPort.findByRoundIds(roundIds).stream().map(this::toResult).toList();
     }
 
+    @Override
+    public List<WalletResult> findByExchangeId(Long exchangeId) {
+        return walletQueryPort.findByExchangeId(exchangeId).stream().map(this::toResult).toList();
+    }
+
     private WalletResult toResult(WalletInfo info) {
         return new WalletResult(info.walletId(), info.roundId(), info.exchangeId(), info.seedAmount());
     }

@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface RuleViolationQueryPort {
 
-    List<RuleViolationRef> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId);
+    List<RuleViolationRef> findByRuleIdsAndWalletIds(List<Long> ruleIds, List<Long> walletIds);
 }

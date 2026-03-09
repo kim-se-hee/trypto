@@ -16,5 +16,7 @@ public interface WalletQueryPort {
 
     List<WalletInfo> findByRoundIds(List<Long> roundIds);
 
+    List<WalletInfo> findByExchangeId(Long exchangeId);
+
     BigDecimal getAvailableBalance(Long walletId, Long coinId);
 }

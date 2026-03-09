@@ -6,7 +6,6 @@ import ksh.tryptobackend.trading.adapter.out.entity.QOrderJpaEntity;
 import ksh.tryptobackend.trading.adapter.out.entity.QRuleViolationJpaEntity;
 import ksh.tryptobackend.trading.application.port.out.RuleViolationQueryPort;
 import ksh.tryptobackend.trading.domain.vo.RuleViolationRef;
-import ksh.tryptobackend.wallet.adapter.out.entity.QWalletJpaEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +20,9 @@ public class RuleViolationQueryAdapter implements RuleViolationQueryPort {
 
     private static final QRuleViolationJpaEntity violation = QRuleViolationJpaEntity.ruleViolationJpaEntity;
     private static final QOrderJpaEntity order = QOrderJpaEntity.orderJpaEntity;
-    private static final QWalletJpaEntity wallet = QWalletJpaEntity.walletJpaEntity;
 
     @Override
-    public List<RuleViolationRef> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId) {
+    public List<RuleViolationRef> findByRuleIdsAndWalletIds(List<Long> ruleIds, List<Long> walletIds) {
         if (ruleIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -37,10 +35,9 @@ public class RuleViolationQueryAdapter implements RuleViolationQueryPort {
                 violation.createdAt))
             .from(violation)
             .leftJoin(order).on(violation.orderId.eq(order.id))
-            .leftJoin(wallet).on(order.walletId.eq(wallet.id))
             .where(
                 violation.ruleId.in(ruleIds),
-                wallet.exchangeId.eq(exchangeId)
+                order.walletId.in(walletIds)
                     .or(violation.orderId.isNull())
             )
             .fetch();

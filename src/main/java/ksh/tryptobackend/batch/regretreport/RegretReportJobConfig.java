@@ -1,7 +1,7 @@
 package ksh.tryptobackend.batch.regretreport;
 
 import ksh.tryptobackend.batch.common.LoggingSkipListener;
-import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -38,7 +38,7 @@ public class RegretReportJobConfig {
                                  SkipPolicy batchSkipPolicy,
                                  LoggingSkipListener<Object, Object> batchSkipListener) {
         return new StepBuilder("regret-report-step", jobRepository)
-            .<RegretReportInput, RegretReport>chunk(CHUNK_SIZE)
+            .<RegretReportInput, GeneratedRegretReportResult>chunk(CHUNK_SIZE)
             .transactionManager(transactionManager)
             .reader(reader)
             .processor(processor)
