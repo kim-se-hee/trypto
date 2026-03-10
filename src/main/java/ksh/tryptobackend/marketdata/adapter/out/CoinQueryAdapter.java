@@ -28,7 +28,7 @@ public class CoinQueryAdapter implements CoinQueryPort {
     }
 
     @Override
-    public List<CoinInfo> findInfoByIds(Set<Long> coinIds) {
+    public List<CoinInfo> findByIds(Set<Long> coinIds) {
         if (coinIds.isEmpty()) {
             return List.of();
         }

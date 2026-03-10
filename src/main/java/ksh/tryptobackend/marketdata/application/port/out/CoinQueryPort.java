@@ -10,6 +10,6 @@ public interface CoinQueryPort {
 
     Map<Long, String> findSymbolsByIds(Set<Long> coinIds);
 
-    List<CoinInfo> findInfoByIds(Set<Long> coinIds);
+    List<CoinInfo> findByIds(Set<Long> coinIds);
 
 }
