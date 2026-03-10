@@ -22,4 +22,7 @@ public class CoinJpaEntity {
 
     @Column(name = "symbol", nullable = false)
     private String symbol;
+
+    @Column(name = "name", nullable = false)
+    private String name;
 }
