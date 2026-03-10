@@ -18,6 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -44,6 +49,26 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
             throw new CustomException(ErrorCode.PRICE_NOT_AVAILABLE);
         }
         return parseLastPrice(json);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> getCurrentPrices(Set<Long> exchangeCoinIds) {
+        List<Long> ids = new ArrayList<>(exchangeCoinIds);
+        List<String> keys = ids.stream()
+                .map(id -> redisKeyCache.computeIfAbsent(id, this::buildRedisKey))
+                .toList();
+
+        List<String> jsons = redisTemplate.opsForValue().multiGet(keys);
+
+        Map<Long, BigDecimal> result = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) {
+            String json = jsons.get(i);
+            if (json == null) {
+                throw new CustomException(ErrorCode.PRICE_NOT_AVAILABLE);
+            }
+            result.put(ids.get(i), parseLastPrice(json));
+        }
+        return result;
     }
 
     private String buildRedisKey(Long exchangeCoinId) {
