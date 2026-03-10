@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 
 @Component
 @RequiredArgsConstructor
-public class LivePriceRedisAdapter implements LivePriceQueryPort {
+public class LivePriceQueryAdapter implements LivePriceQueryPort {
 
     private static final String TICKER_KEY_PREFIX = "ticker:";
 
