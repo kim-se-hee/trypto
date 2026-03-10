@@ -1,6 +1,6 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.trading.application.port.out.LivePriceQueryPort;
+import ksh.tryptobackend.marketdata.application.port.out.LivePriceQueryPort;
 
 import java.math.BigDecimal;
 import java.util.Map;

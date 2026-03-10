@@ -8,7 +8,7 @@ import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCas
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
 import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
-import ksh.tryptobackend.trading.application.port.out.LivePriceQueryPort;
+import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PriceChangeRateQueryPort;
 import ksh.tryptobackend.trading.application.strategy.OrderPlacementStrategy;
@@ -40,7 +40,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final OrderCommandPort orderCommandPort;
     private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
     private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
-    private final LivePriceQueryPort livePriceQueryPort;
+    private final GetLivePriceUseCase getLivePriceUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
     private final HoldingCommandPort holdingCommandPort;
@@ -61,7 +61,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         ListedCoinRef listedCoin = getListedCoin(command.exchangeCoinId());
         TradingVenue venue = getTradingVenue(listedCoin.exchangeId());
         OrderPlacementStrategy strategy = resolveStrategy(command.orderType(), command.side());
-        BigDecimal currentPrice = livePriceQueryPort.getCurrentPrice(command.exchangeCoinId());
+        BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(command.exchangeCoinId());
 
         Order order = strategy.createOrder(command, venue, currentPrice, LocalDateTime.now(clock));
         validateBalance(strategy, order, command.walletId(), venue, listedCoin.coinId());

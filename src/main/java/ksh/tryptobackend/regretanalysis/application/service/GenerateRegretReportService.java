@@ -20,7 +20,7 @@ import ksh.tryptobackend.regretanalysis.domain.vo.TradeSide;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext.SoldPortion;
 import ksh.tryptobackend.trading.application.port.in.FindFilledOrdersUseCase;
 import ksh.tryptobackend.trading.application.port.in.FindViolationsUseCase;
-import ksh.tryptobackend.trading.application.port.in.GetLivePriceUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
 import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
 import lombok.RequiredArgsConstructor;

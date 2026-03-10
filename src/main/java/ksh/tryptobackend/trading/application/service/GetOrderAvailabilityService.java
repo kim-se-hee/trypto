@@ -7,7 +7,7 @@ import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCas
 import ksh.tryptobackend.trading.application.port.in.GetOrderAvailabilityUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.query.GetOrderAvailabilityQuery;
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
-import ksh.tryptobackend.trading.application.port.out.LivePriceQueryPort;
+import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.trading.domain.vo.ListedCoinRef;
 import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.Side;
@@ -24,7 +24,7 @@ import java.math.BigDecimal;
 public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase {
 
     private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
-    private final LivePriceQueryPort livePriceQueryPort;
+    private final GetLivePriceUseCase getLivePriceUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
 
@@ -35,7 +35,7 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
         TradingVenue venue = getTradingVenue(listedCoin.exchangeId());
 
         BigDecimal available = getAvailableBalance(query.walletId(), query.side(), venue, listedCoin);
-        BigDecimal currentPrice = livePriceQueryPort.getCurrentPrice(query.exchangeCoinId());
+        BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(query.exchangeCoinId());
 
         return new OrderAvailabilityResult(available, currentPrice);
     }

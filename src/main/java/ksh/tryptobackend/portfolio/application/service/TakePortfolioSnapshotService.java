@@ -16,7 +16,7 @@ import ksh.tryptobackend.portfolio.domain.model.SnapshotDetail;
 import ksh.tryptobackend.portfolio.domain.vo.ExchangeSnapshot;
 import ksh.tryptobackend.portfolio.domain.vo.KrwConversionRate;
 import ksh.tryptobackend.trading.application.port.in.FindActiveHoldingsUseCase;
-import ksh.tryptobackend.trading.application.port.in.GetLivePriceUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.result.HoldingInfoResult;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import lombok.RequiredArgsConstructor;
