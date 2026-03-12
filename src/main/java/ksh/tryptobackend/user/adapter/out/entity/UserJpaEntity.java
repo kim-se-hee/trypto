@@ -30,9 +30,6 @@ public class UserJpaEntity {
     @Column(name = "nickname", nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
-
     @Column(name = "portfolio_public", nullable = false)
     private boolean portfolioPublic;
 
