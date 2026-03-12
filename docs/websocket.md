@@ -85,4 +85,4 @@ app:
 
 | 토픽 | 전파 수단 | 기능 문서 |
 |------|----------|----------|
-| `/topic/prices.{exchangeId}` | Redis Pub/Sub | [live-price-streaming.md](market-data/live-price-streaming.md) |
+| `/topic/prices.{exchangeId}` | Redis Pub/Sub | [live-price-streaming.md](marketdata/live-price-streaming.md) |
