@@ -22,8 +22,8 @@ public class ChangeNicknameService implements ChangeNicknameUseCase {
     @Transactional
     public User changeNickname(ChangeNicknameCommand command) {
         User user = getUser(command.userId());
-        validateNicknameUniqueness(command.nickname());
         user.changeNickname(command.nickname());
+        validateNicknameUniqueness(command.nickname());
         return userCommandPort.save(user);
     }
 
