@@ -53,6 +53,16 @@ class HexagonalLayerDependencyTest {
     }
 
     @ArchTest
+    void adapter_in_should_not_depend_on_port_out(JavaClasses classes) {
+        noClasses()
+            .that().resideInAnyPackage(allContextPackages(ADAPTER_IN))
+            .should().dependOnClassesThat()
+            .resideInAnyPackage(allContextPackages(".application.port.out.."))
+            .as("Adapter in should not depend on port out")
+            .check(classes);
+    }
+
+    @ArchTest
     void adapter_out_should_not_depend_on_adapter_in(JavaClasses classes) {
         noClasses()
             .that().resideInAnyPackage(allContextPackages(ADAPTER_OUT))

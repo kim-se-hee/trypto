@@ -1,5 +1,6 @@
 package ksh.tryptobackend.acceptance;
 
+import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -12,5 +13,11 @@ public class TestContainerConfiguration {
     @ServiceConnection
     static MySQLContainer<?> mysqlContainer() {
         return new MySQLContainer<>("mysql:8.0.30");
+    }
+
+    @Bean
+    @ServiceConnection
+    static RedisContainer redisContainer() {
+        return new RedisContainer("redis:7.4");
     }
 }

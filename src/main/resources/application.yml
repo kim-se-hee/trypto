@@ -16,6 +16,10 @@ spring:
       initialize-schema: always
     job:
       enabled: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
       ddl-auto: create
@@ -23,3 +27,9 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+
+app:
+  websocket:
+    endpoint: /ws
+    heartbeat-send: 10000
+    heartbeat-receive: 10000
