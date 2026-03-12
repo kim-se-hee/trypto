@@ -4,7 +4,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
-import ksh.tryptobackend.ranking.adapter.out.entity.QRankingUserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.entity.QUserJpaEntity;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
@@ -24,7 +24,7 @@ public class RankingQueryAdapter implements RankingQueryPort {
     private final JPAQueryFactory queryFactory;
 
     private static final QRankingJpaEntity ranking = QRankingJpaEntity.rankingJpaEntity;
-    private static final QRankingUserJpaEntity user = QRankingUserJpaEntity.rankingUserJpaEntity;
+    private static final QUserJpaEntity user = QUserJpaEntity.userJpaEntity;
 
     @Override
     public Optional<LocalDate> findLatestReferenceDate(RankingPeriod period) {
