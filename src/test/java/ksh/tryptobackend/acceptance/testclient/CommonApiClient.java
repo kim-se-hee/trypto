@@ -33,6 +33,14 @@ public class CommonApiClient {
         return lastResponse;
     }
 
+    public <T> RestTestClient.ResponseSpec put(String path, T body) {
+        lastResponse = restTestClient.put().uri(path)
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .body(body)
+            .exchange();
+        return lastResponse;
+    }
+
     public RestTestClient.ResponseSpec getLastResponse() {
         return lastResponse;
     }
