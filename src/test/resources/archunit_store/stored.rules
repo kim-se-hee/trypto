@@ -1,0 +1,4 @@
+#
+#Sat Mar 14 03:26:37 KST 2026
+Output\ Port\ should\ not\ depend\ on\ port.out.dto\ \u2014\ return\ domain\ model/VO\ instead=4f0332f9-0d04-4bf3-be26-2c0bd28f1b5f
+Service\ should\ not\ depend\ on\ port.out.dto\ \u2014\ use\ domain\ model/VO\ instead=e0acc953-23b6-4453-88e6-9fa9c0a42902

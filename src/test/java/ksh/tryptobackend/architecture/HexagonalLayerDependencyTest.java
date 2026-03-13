@@ -4,6 +4,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.library.freeze.FreezingArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
@@ -70,6 +71,28 @@ class HexagonalLayerDependencyTest {
             .resideInAnyPackage(allContextPackages(ADAPTER_IN))
             .as("Adapter out should not depend on adapter in")
             .check(classes);
+    }
+
+    @ArchTest
+    void output_port_should_not_depend_on_port_out_dto(JavaClasses classes) {
+        FreezingArchRule.freeze(
+            noClasses()
+                .that().resideInAnyPackage(allContextPackages(PORT_OUT))
+                .should().dependOnClassesThat()
+                .resideInAnyPackage(allContextPackages(".application.port.out.dto.."))
+                .as("Output Port should not depend on port.out.dto — return domain model/VO instead")
+        ).check(classes);
+    }
+
+    @ArchTest
+    void service_should_not_depend_on_port_out_dto(JavaClasses classes) {
+        FreezingArchRule.freeze(
+            noClasses()
+                .that().resideInAnyPackage(allContextPackages(SERVICE))
+                .should().dependOnClassesThat()
+                .resideInAnyPackage(allContextPackages(".application.port.out.dto.."))
+                .as("Service should not depend on port.out.dto — use domain model/VO instead")
+        ).check(classes);
     }
 
     private static String[] merge(String[]... arrays) {
