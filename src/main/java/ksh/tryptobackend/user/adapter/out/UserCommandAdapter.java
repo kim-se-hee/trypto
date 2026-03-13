@@ -1,5 +1,7 @@
 package ksh.tryptobackend.user.adapter.out;
 
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
 import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
@@ -15,7 +17,9 @@ public class UserCommandAdapter implements UserCommandPort {
 
     @Override
     public User save(User user) {
-        UserJpaEntity saved = userJpaRepository.save(UserJpaEntity.fromDomain(user));
-        return saved.toDomain();
+        UserJpaEntity entity = userJpaRepository.findById(user.getUserId())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        entity.updateFromDomain(user);
+        return entity.toDomain();
     }
 }

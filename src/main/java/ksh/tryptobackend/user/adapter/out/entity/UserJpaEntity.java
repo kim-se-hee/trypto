@@ -50,6 +50,11 @@ public class UserJpaEntity {
         return entity;
     }
 
+    public void updateFromDomain(User user) {
+        this.nickname = user.getNickname();
+        this.portfolioPublic = user.isPortfolioPublic();
+    }
+
     public User toDomain() {
         return User.reconstitute(id, email, nickname, portfolioPublic, createdAt, updatedAt);
     }
