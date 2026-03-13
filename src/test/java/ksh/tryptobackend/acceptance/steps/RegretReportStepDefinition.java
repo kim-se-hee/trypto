@@ -146,8 +146,8 @@ public class RegretReportStepDefinition {
     }
 
     private void insertCoins() {
-        jdbcTemplate.update("INSERT INTO `coin` (`coin_id`, `symbol`) VALUES (?, ?)", KRW_COIN_ID, "KRW");
-        jdbcTemplate.update("INSERT INTO `coin` (`coin_id`, `symbol`) VALUES (?, ?)", BTC_COIN_ID, "BTC");
+        jdbcTemplate.update("INSERT INTO `coin` (`coin_id`, `symbol`, `name`) VALUES (?, ?, ?)", KRW_COIN_ID, "KRW", "Korean Won");
+        jdbcTemplate.update("INSERT INTO `coin` (`coin_id`, `symbol`, `name`) VALUES (?, ?, ?)", BTC_COIN_ID, "BTC", "Bitcoin");
     }
 
     private void insertExchanges() {

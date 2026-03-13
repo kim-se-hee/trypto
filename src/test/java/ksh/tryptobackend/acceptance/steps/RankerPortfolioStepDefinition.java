@@ -57,17 +57,20 @@ public class RankerPortfolioStepDefinition {
     }
 
     private void insertUsers() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
-            + "(1, '트레이더1', true), "
-            + "(2, '트레이더2', false), "
-            + "(3, '트레이더3', true)");
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(
+            "INSERT IGNORE INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at) VALUES "
+                + "(1, 'trader1@test.com', '트레이더1', true, ?, ?), "
+                + "(2, 'trader2@test.com', '트레이더2', false, ?, ?), "
+                + "(3, 'trader3@test.com', '트레이더3', true, ?, ?)",
+            now, now, now, now, now, now);
     }
 
     private void insertExchangeAndCoins() {
         jdbcTemplate.execute("INSERT IGNORE INTO exchange_market (exchange_id, name, market_type, base_currency_coin_id) VALUES "
             + "(1, 'UPBIT', 'DOMESTIC', 1)");
-        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol) VALUES "
-            + "(1, 'BTC'), (2, 'ETH')");
+        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
+            + "(1, 'BTC', 'Bitcoin'), (2, 'ETH', 'Ethereum')");
     }
 
     private void insertRankings() {
