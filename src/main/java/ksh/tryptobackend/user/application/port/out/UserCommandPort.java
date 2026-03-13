@@ -6,7 +6,5 @@ public interface UserCommandPort {
 
     User save(User user);
 
-    boolean existsByNickname(String nickname);
-
     void updatePortfolioVisibility(Long userId, boolean portfolioPublic);
 }
