@@ -48,6 +48,11 @@ public class ExchangeQueryAdapter implements ExchangeQueryPort {
             .collect(Collectors.toMap(ExchangeJpaEntity::getId, ExchangeJpaEntity::getName));
     }
 
+    @Override
+    public boolean existsById(Long exchangeId) {
+        return repository.existsById(exchangeId);
+    }
+
     private ExchangeSummary toExchangeSummary(ExchangeJpaEntity entity) {
         String baseCurrencySymbol = coinJpaRepository.findById(entity.getBaseCurrencyCoinId())
             .map(CoinJpaEntity::getSymbol)
