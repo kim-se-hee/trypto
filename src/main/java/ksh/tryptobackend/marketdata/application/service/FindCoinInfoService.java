@@ -3,7 +3,7 @@ package ksh.tryptobackend.marketdata.application.service;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinInfoUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
 import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
-import ksh.tryptobackend.marketdata.application.port.out.dto.CoinInfo;
+import ksh.tryptobackend.marketdata.domain.model.Coin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +22,10 @@ public class FindCoinInfoService implements FindCoinInfoUseCase {
     @Transactional(readOnly = true)
     public Map<Long, CoinInfoResult> findByIds(Set<Long> coinIds) {
         return coinQueryPort.findByIds(coinIds).stream()
-            .collect(Collectors.toMap(CoinInfo::coinId, this::toCoinInfoResult));
+            .collect(Collectors.toMap(Coin::coinId, this::toCoinInfoResult));
     }
 
-    private CoinInfoResult toCoinInfoResult(CoinInfo info) {
-        return new CoinInfoResult(info.symbol(), info.name());
+    private CoinInfoResult toCoinInfoResult(Coin coin) {
+        return new CoinInfoResult(coin.symbol(), coin.name());
     }
 }

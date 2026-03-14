@@ -6,7 +6,7 @@ import ksh.tryptobackend.ranking.application.port.in.GetRankingStatsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingStatsQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
+import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class GetRankingStatsService implements GetRankingStatsUseCase {
     }
 
     private RankingStatsResult buildStats(GetRankingStatsQuery query, LocalDate latestDate) {
-        RankingStatsProjection stats = rankingQueryPort.getRankingStats(query.period(), latestDate);
+        RankingStats stats = rankingQueryPort.getRankingStats(query.period(), latestDate);
         return new RankingStatsResult(
             stats.totalParticipants(),
             stats.maxProfitRate(),

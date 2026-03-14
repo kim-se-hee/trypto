@@ -10,6 +10,7 @@ import ksh.tryptobackend.wallet.application.port.out.DepositAddressCommandPort;
 import ksh.tryptobackend.wallet.application.port.out.DepositAddressQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.DepositAddress;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 import ksh.tryptobackend.wallet.domain.vo.DepositTargetExchange;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,7 +39,7 @@ public class IssueDepositAddressService implements IssueDepositAddressUseCase {
 
     private Long getExchangeIdByWalletId(Long walletId) {
         return walletQueryPort.findById(walletId)
-            .map(wallet -> wallet.exchangeId())
+            .map(Wallet::getExchangeId)
             .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 

@@ -18,6 +18,6 @@ public class FindExchangeCoinChainService implements FindExchangeCoinChainUseCas
     public Optional<ExchangeCoinChainResult> findByExchangeIdAndCoinIdAndChain(
         Long exchangeId, Long coinId, String chain) {
         return exchangeCoinChainQueryPort.findByExchangeIdAndCoinIdAndChain(exchangeId, coinId, chain)
-            .map(info -> new ExchangeCoinChainResult(info.tagRequired()));
+            .map(ecc -> new ExchangeCoinChainResult(ecc.isTagRequired()));
     }
 }

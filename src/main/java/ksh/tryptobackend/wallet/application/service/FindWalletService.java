@@ -3,7 +3,7 @@ package ksh.tryptobackend.wallet.application.service;
 import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
-import ksh.tryptobackend.wallet.application.port.out.dto.WalletInfo;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +41,7 @@ public class FindWalletService implements FindWalletUseCase {
         return walletQueryPort.findByExchangeId(exchangeId).stream().map(this::toResult).toList();
     }
 
-    private WalletResult toResult(WalletInfo info) {
-        return new WalletResult(info.walletId(), info.roundId(), info.exchangeId(), info.seedAmount());
+    private WalletResult toResult(Wallet wallet) {
+        return new WalletResult(wallet.getWalletId(), wallet.getRoundId(), wallet.getExchangeId(), wallet.getSeedAmount());
     }
 }

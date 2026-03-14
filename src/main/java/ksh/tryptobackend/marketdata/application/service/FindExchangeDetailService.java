@@ -17,7 +17,7 @@ public class FindExchangeDetailService implements FindExchangeDetailUseCase {
     @Override
     public Optional<ExchangeDetailResult> findExchangeDetail(Long exchangeId) {
         return exchangeQueryPort.findExchangeDetailById(exchangeId)
-            .map(detail -> new ExchangeDetailResult(
-                detail.name(), detail.baseCurrencyCoinId(), detail.domestic(), detail.feeRate()));
+            .map(exchange -> new ExchangeDetailResult(
+                exchange.getName(), exchange.getBaseCurrencyCoinId(), exchange.isDomestic(), exchange.getFeeRate()));
     }
 }

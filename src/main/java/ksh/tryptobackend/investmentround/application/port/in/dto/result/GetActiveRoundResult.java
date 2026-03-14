@@ -1,6 +1,6 @@
 package ksh.tryptobackend.investmentround.application.port.in.dto.result;
 
-import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRoundInfo;
+import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 
@@ -21,7 +21,7 @@ public record GetActiveRoundResult(
     List<GetActiveRoundRuleResult> rules
 ) {
 
-    public static GetActiveRoundResult from(InvestmentRoundInfo round, List<RuleSetting> rules) {
+    public static GetActiveRoundResult from(RoundOverview round, List<RuleSetting> rules) {
         List<GetActiveRoundRuleResult> ruleResults = rules.stream()
             .map(GetActiveRoundRuleResult::from)
             .toList();

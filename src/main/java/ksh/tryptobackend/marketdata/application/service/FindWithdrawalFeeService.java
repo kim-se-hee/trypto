@@ -18,6 +18,6 @@ public class FindWithdrawalFeeService implements FindWithdrawalFeeUseCase {
     public Optional<WithdrawalFeeResult> findByExchangeIdAndCoinIdAndChain(
         Long exchangeId, Long coinId, String chain) {
         return withdrawalFeeQueryPort.findByExchangeIdAndCoinIdAndChain(exchangeId, coinId, chain)
-            .map(info -> new WithdrawalFeeResult(info.fee(), info.minWithdrawal()));
+            .map(fee -> new WithdrawalFeeResult(fee.getFee(), fee.getMinWithdrawal()));
     }
 }
