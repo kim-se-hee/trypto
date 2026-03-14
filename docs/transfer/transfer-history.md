@@ -116,14 +116,14 @@
 
 | 컴포넌트 | 책임 |
 |----------|------|
-| GetTransferHistoryUseCase | 송금 내역 조회 유스케이스 |
-| GetTransferHistoryService | 조회 오케스트레이션 |
+| FindTransferHistoryUseCase | 송금 내역 조회 유스케이스 |
+| FindTransferHistoryService | 조회 오케스트레이션 |
 
 ## Output Port (transfer 컨텍스트)
 
 | 컴포넌트 | 책임 |
 |----------|------|
-| TransferPersistencePort | 지갑 ID와 type으로 송금 내역 커서 기반 조회 |
+| TransferQueryPort | 지갑 ID와 type으로 송금 내역 커서 기반 조회 |
 
 ## 크로스 컨텍스트 포트
 
@@ -140,7 +140,7 @@ sequenceDiagram
     participant Controller as TransferHistoryController
     participant Service as FindTransferHistoryService
     participant WalletUseCase as GetWalletOwnerIdUseCase
-    participant TransferAdapter as TransferPersistenceAdapter
+    participant TransferAdapter as TransferQueryAdapter
     participant CoinUseCase as FindCoinSymbolsUseCase
     participant MySQL
 
