@@ -26,15 +26,15 @@
 1. GetWalletOwnerIdUseCase로 지갑 소유권을 검증한다
 2. 지갑을 조회한다
 3. 거래소 정보를 조회하여 기축통화를 확인한다
-4. 지갑의 기축통화(KRW 또는 USDT) 잔고를 조회한다
+4. 지갑의 기축통화(KRW 또는 USDT) 총 잔고(available + frozen)를 조회한다
 5. FindEvaluatedHoldingsUseCase로 보유 코인 목록을 조회한다 (현재가 포함)
 6. 각 코인의 심볼·이름을 조회한다
 7. 결과를 조합하여 반환한다
 
 ## 정렬
 
-- 서버는 정렬하지 않는다
-- 클라이언트에서 코인명, 보유수량, 평균매수가, 현재가, 평가금액, 평가손익, 수익률 기준 정렬을 지원한다 (프론트엔드 정렬)
+- 서버는 정렬하지 않는다 — 정렬 기준이 실시간 시세에 의존하므로 서버 정렬은 WebSocket 수신 시 즉시 무효화된다
+- 클라이언트에서 코인명, 보유수량, 평균매수가, 현재가, 평가금액, 평가손익, 수익률 기준 정렬을 지원한다
 
 # 크로스 도메인 의존
 
@@ -43,7 +43,7 @@
 | Portfolio → Wallet | GetWalletOwnerIdUseCase | 지갑 소유자 확인 |
 | Portfolio → Wallet | FindWalletUseCase | 지갑 조회 |
 | Portfolio → MarketData | FindExchangeDetailUseCase | 거래소 기축통화(baseCurrencyCoinId) 조회 |
-| Portfolio → Wallet | GetAvailableBalanceUseCase | 기축통화 잔고 조회 |
+| Portfolio → Wallet | GetBalanceUseCase | 기축통화 총 잔고(available + frozen) 조회 |
 | Portfolio → Trading | FindEvaluatedHoldingsUseCase | 평가된 보유 자산 조회 (현재가 포함) |
 | Portfolio → MarketData | FindCoinInfoUseCase | 코인 심볼·이름 조회 |
 
@@ -106,7 +106,7 @@
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | exchangeId | Long | 거래소 ID — WebSocket 구독 토픽(`/topic/tickers.{exchangeId}`)에 사용 |
-| baseCurrencyBalance | BigDecimal | 기축통화(KRW/USDT) 잔고 |
+| baseCurrencyBalance | BigDecimal | 기축통화(KRW/USDT) 총 잔고 (available + frozen) |
 | baseCurrencySymbol | String | 기축통화 심볼 |
 
 **holdings[]**
@@ -137,7 +137,7 @@ sequenceDiagram
     participant GetOwnerId as GetWalletOwnerIdUseCase
     participant FindWallet as FindWalletUseCase
     participant FindExchange as FindExchangeDetailUseCase
-    participant GetBalance as GetAvailableBalanceUseCase
+    participant GetBalance as GetBalanceUseCase
     participant FindEvaluated as FindEvaluatedHoldingsUseCase
     participant FindCoinInfo as FindCoinInfoUseCase
     participant MySQL
@@ -170,9 +170,9 @@ sequenceDiagram
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 04 기축통화 잔고 조회
     end
-    Service->>GetBalance: getAvailableBalance(walletId, baseCurrencyCoinId)
-    GetBalance->>MySQL: SELECT available
-    GetBalance-->>Service: baseCurrencyBalance
+    Service->>GetBalance: getBalance(walletId, baseCurrencyCoinId)
+    GetBalance->>MySQL: SELECT available + frozen
+    GetBalance-->>Service: baseCurrencyBalance (총 잔고)
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 05 평가된 보유 자산 조회
