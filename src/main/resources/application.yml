@@ -28,6 +28,12 @@ spring:
         format_sql: true
     open-in-view: false
 
+influxdb:
+  url: ${INFLUXDB_URL:http://localhost:8086}
+  token: ${INFLUXDB_TOKEN:}
+  org: ${INFLUXDB_ORG:trypto}
+  bucket: ${INFLUXDB_BUCKET:candles}
+
 app:
   websocket:
     endpoint: /ws

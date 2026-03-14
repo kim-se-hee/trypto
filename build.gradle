@@ -32,6 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'com.influxdb:influxdb-client-java:7.2.0'
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
     compileOnly 'org.projectlombok:lombok'

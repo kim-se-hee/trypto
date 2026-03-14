@@ -55,6 +55,10 @@ public enum ErrorCode {
     WITHDRAWAL_FEE_NOT_FOUND(404, "withdrawal.fee.not.found"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
+
+    INVALID_CANDLE_INTERVAL(400, "invalid.candle.interval"),
+    INVALID_EXCHANGE_NAME(400, "invalid.exchange.name"),
+    INVALID_COIN_SYMBOL(400, "invalid.coin.symbol"),
     ;
 
     private final int status;
