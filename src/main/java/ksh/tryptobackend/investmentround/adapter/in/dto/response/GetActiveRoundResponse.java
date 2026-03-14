@@ -3,6 +3,7 @@ package ksh.tryptobackend.investmentround.adapter.in.dto.response;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundRuleResult;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundWalletResult;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 
 import java.math.BigDecimal;
@@ -19,7 +20,8 @@ public record GetActiveRoundResponse(
     int emergencyChargeCount,
     LocalDateTime startedAt,
     LocalDateTime endedAt,
-    List<RuleResponse> rules
+    List<RuleResponse> rules,
+    List<WalletResponse> wallets
 ) {
 
     public static GetActiveRoundResponse from(GetActiveRoundResult result) {
@@ -33,7 +35,8 @@ public record GetActiveRoundResponse(
             result.emergencyChargeCount(),
             result.startedAt(),
             result.endedAt(),
-            result.rules().stream().map(RuleResponse::from).toList()
+            result.rules().stream().map(RuleResponse::from).toList(),
+            result.wallets().stream().map(WalletResponse::from).toList()
         );
     }
 
@@ -41,6 +44,13 @@ public record GetActiveRoundResponse(
 
         public static RuleResponse from(GetActiveRoundRuleResult result) {
             return new RuleResponse(result.ruleId(), result.ruleType(), result.thresholdValue());
+        }
+    }
+
+    public record WalletResponse(Long walletId, Long exchangeId) {
+
+        public static WalletResponse from(GetActiveRoundWalletResult result) {
+            return new WalletResponse(result.walletId(), result.exchangeId());
         }
     }
 }
