@@ -37,6 +37,10 @@ const MIN_VISIBLE_COUNT = 12;
 const CHART_WIDTH = 960;
 const CHART_HEIGHT = 440;
 const PADDING = { top: 20, right: 88, bottom: 42, left: 20 };
+const TOOLTIP_WIDTH = 220;
+const TOOLTIP_HEIGHT = 138;
+const TOOLTIP_OFFSET_X = 10;
+const TOOLTIP_OFFSET_Y = 10;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -204,6 +208,7 @@ export function CandleChartPanel({
   const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE_COUNT["1d"]);
   const [endIndex, setEndIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
 
   const dragStateRef = useRef<{
     startX: number;
@@ -254,6 +259,7 @@ export function CandleChartPanel({
     setVisibleCount(defaultCount);
     setEndIndex(candles.length);
     setHoveredIndex(null);
+    setPointerPosition(null);
   }, [candles, interval]);
 
   const visibleStartIndex = useMemo(() => {
@@ -304,6 +310,10 @@ export function CandleChartPanel({
     const hoverPoints = visibleCandles.map((candle, index) => ({
       ...candle,
       x: getX(index),
+      highY: getY(candle.high),
+      lowY: getY(candle.low),
+      openY: getY(candle.open),
+      closeY: getY(candle.close),
       chartIndex: index,
     }));
 
@@ -323,6 +333,21 @@ export function CandleChartPanel({
 
   const hoveredCandle =
     chartData && hoveredIndex !== null ? chartData.hoverPoints[hoveredIndex] : null;
+
+  const tooltipLeft = hoveredCandle && pointerPosition
+    ? clamp(
+        pointerPosition.x + TOOLTIP_OFFSET_X,
+        8,
+        (chartContainerRef.current?.clientWidth ?? CHART_WIDTH) - TOOLTIP_WIDTH - 8,
+      )
+    : 12;
+  const tooltipTop = hoveredCandle && pointerPosition
+    ? clamp(
+        pointerPosition.y + TOOLTIP_OFFSET_Y,
+        8,
+        (chartContainerRef.current?.clientHeight ?? CHART_HEIGHT) - TOOLTIP_HEIGHT - 8,
+      )
+    : 8;
 
   function moveViewport(nextEndIndex: number) {
     const safeVisibleCount = Math.min(visibleCount, candles.length);
@@ -365,8 +390,12 @@ export function CandleChartPanel({
   function handlePointerMove(event: React.PointerEvent<SVGSVGElement>) {
     if (!chartData) return;
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * CHART_WIDTH;
+    const svgRect = event.currentTarget.getBoundingClientRect();
+    const containerRect = chartContainerRef.current?.getBoundingClientRect() ?? svgRect;
+    const x = ((event.clientX - svgRect.left) / svgRect.width) * CHART_WIDTH;
+    const y = ((event.clientY - svgRect.top) / svgRect.height) * CHART_HEIGHT;
+    const localX = event.clientX - containerRect.left;
+    const localY = event.clientY - containerRect.top;
 
     if (dragStateRef.current) {
       const deltaX = event.clientX - dragStateRef.current.startX;
@@ -375,18 +404,55 @@ export function CandleChartPanel({
       return;
     }
 
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
+    const isOutsidePlot =
+      x < PADDING.left ||
+      x > CHART_WIDTH - PADDING.right ||
+      y < PADDING.top ||
+      y > CHART_HEIGHT - PADDING.bottom;
+    if (isOutsidePlot) {
+      setHoveredIndex(null);
+      setPointerPosition(null);
+      return;
+    }
+
+    let nextHoveredIndex: number | null = null;
 
     chartData.hoverPoints.forEach((candle, index) => {
-      const distance = Math.abs(candle.x - x);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
+      const horizontalDistance = Math.abs(candle.x - x);
+      if (horizontalDistance > chartData.candleWidth) {
+        return;
       }
+
+      const upperY = Math.min(candle.highY, candle.lowY) - 10;
+      const lowerY = Math.max(candle.highY, candle.lowY) + 10;
+      if (y < upperY || y > lowerY) {
+        return;
+      }
+
+      nextHoveredIndex = index;
     });
 
-    setHoveredIndex(closestIndex);
+    setHoveredIndex(nextHoveredIndex);
+    if (nextHoveredIndex === null) {
+      setPointerPosition(null);
+      return;
+    }
+
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+    const nextLeft =
+      localX + TOOLTIP_OFFSET_X + TOOLTIP_WIDTH > containerWidth - 8
+        ? localX - TOOLTIP_WIDTH - TOOLTIP_OFFSET_X
+        : localX + TOOLTIP_OFFSET_X;
+    const nextTop =
+      localY + TOOLTIP_OFFSET_Y + TOOLTIP_HEIGHT > containerHeight - 8
+        ? localY - TOOLTIP_HEIGHT - TOOLTIP_OFFSET_Y
+        : localY + TOOLTIP_OFFSET_Y;
+
+    setPointerPosition({
+      x: clamp(nextLeft, 8, containerWidth - TOOLTIP_WIDTH - 8),
+      y: clamp(nextTop, 8, containerHeight - TOOLTIP_HEIGHT - 8),
+    });
   }
 
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
@@ -473,17 +539,17 @@ export function CandleChartPanel({
             <div className="flex flex-wrap items-center gap-3">
               <p className="font-mono text-4xl font-extrabold tabular-nums">
                 {getCurrencySymbol(baseCurrency)}
-                {formatPrice(chartData.latest.close, baseCurrency)}
+                {formatPrice(coin.currentPrice, baseCurrency)}
               </p>
               <span
                 className={cn(
                   "rounded-full px-3 py-1.5 text-sm font-bold",
-                  chartData.changeRate > 0 && "bg-positive/15 text-positive",
-                  chartData.changeRate < 0 && "bg-negative/15 text-negative",
-                  chartData.changeRate === 0 && "bg-secondary text-muted-foreground",
+                  coin.changeRate > 0 && "bg-positive/15 text-positive",
+                  coin.changeRate < 0 && "bg-negative/15 text-negative",
+                  coin.changeRate === 0 && "bg-secondary text-muted-foreground",
                 )}
               >
-                {formatChangeRate(chartData.changeRate)}
+                {formatChangeRate(coin.changeRate)}
               </span>
             </div>
           </div>
@@ -527,6 +593,7 @@ export function CandleChartPanel({
             onPointerLeave={() => {
               dragStateRef.current = null;
               setHoveredIndex(null);
+              setPointerPosition(null);
             }}
           >
             {chartData.yTicks.map((tick) => (
@@ -627,20 +694,31 @@ export function CandleChartPanel({
 
           {hoveredCandle && (
             <div
-              className="pointer-events-none absolute top-4 z-10 rounded-2xl bg-foreground/92 px-4 py-3 text-sm text-white shadow-xl"
+              className="pointer-events-none absolute z-10 w-[220px] rounded-2xl bg-foreground/92 px-3 py-2.5 text-sm text-white shadow-xl"
               style={{
-                left: `${(hoveredCandle.x / CHART_WIDTH) * 100}%`,
-                transform:
-                  hoveredCandle.x > CHART_WIDTH * 0.72
-                    ? "translateX(calc(-100% - 12px))"
-                    : "translateX(12px)",
+                left: `${tooltipLeft}px`,
+                top: `${tooltipTop}px`,
               }}
             >
               <p className="font-semibold">{formatTooltipTime(hoveredCandle.time, interval)}</p>
-              <p className="mt-2 font-mono">시가 {formatAxisLabel(hoveredCandle.open, baseCurrency)}</p>
-              <p className="font-mono">고가 {formatAxisLabel(hoveredCandle.high, baseCurrency)}</p>
-              <p className="font-mono">저가 {formatAxisLabel(hoveredCandle.low, baseCurrency)}</p>
-              <p className="font-mono">종가 {formatAxisLabel(hoveredCandle.close, baseCurrency)}</p>
+              <div className="mt-2 space-y-0.5 font-mono">
+                <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2">
+                  <span className="text-white/70">시가</span>
+                  <span className="text-right">{formatAxisLabel(hoveredCandle.open, baseCurrency)}</span>
+                </div>
+                <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2">
+                  <span className="text-white/70">고가</span>
+                  <span className="text-right">{formatAxisLabel(hoveredCandle.high, baseCurrency)}</span>
+                </div>
+                <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2">
+                  <span className="text-white/70">저가</span>
+                  <span className="text-right">{formatAxisLabel(hoveredCandle.low, baseCurrency)}</span>
+                </div>
+                <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2">
+                  <span className="text-white/70">종가</span>
+                  <span className="text-right">{formatAxisLabel(hoveredCandle.close, baseCurrency)}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
