@@ -137,6 +137,7 @@ sequenceDiagram
     participant Service as StartRoundService
     participant RoundAdapter as RoundPersistenceAdapter
     participant RuleAdapter as RulePersistenceAdapter
+    participant WalletUseCase as FindWalletUseCase
     participant WalletAdapter as WalletPersistenceAdapter
     participant MySQL
 
@@ -170,6 +171,12 @@ sequenceDiagram
     Service->>WalletAdapter: createWalletsWithBalance(roundId, seeds)
     WalletAdapter->>MySQL: INSERT wallet + wallet_balance
 
-    Service-->>Controller: InvestmentRound
+    rect rgb(60, 60, 60)
+        Note over Service,WalletUseCase: STEP 05 지갑 목록 조회 (크로스 컨텍스트)
+    end
+    Service->>WalletUseCase: findByRoundId(roundId)
+    WalletUseCase-->>Service: List<WalletResult>
+
+    Service-->>Controller: StartRoundResult
     Controller-->>Client: 201 Created
 ```

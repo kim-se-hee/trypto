@@ -78,6 +78,7 @@ GET /api/rounds/active?userId=1
 | `GetActiveRoundUseCase` | 활성 라운드 조회 유스케이스 | 신규 |
 | `InvestmentRoundQueryPort` | 활성 라운드 조회 | 기존 |
 | `InvestmentRuleQueryPort` | 라운드 규칙 목록 조회 | 기존 |
+| `FindWalletUseCase` | 라운드별 지갑 목록 조회 (크로스 컨텍스트) | 기존 |
 
 # 시퀀스 다이어그램
 ```mermaid
@@ -87,6 +88,7 @@ sequenceDiagram
     participant Service as GetActiveRoundService
     participant RoundAdapter as InvestmentRoundQueryAdapter
     participant RuleAdapter as InvestmentRuleQueryAdapter
+    participant WalletUseCase as FindWalletUseCase
     participant MySQL
 
     Client->>Controller: GET /api/rounds/active?userId=1
@@ -106,6 +108,12 @@ sequenceDiagram
     RuleAdapter->>MySQL: SELECT investment_rule WHERE round_id=?
     RuleAdapter-->>Service: rules
 
-    Service-->>Controller: ActiveRoundResult
+    rect rgb(60, 60, 60)
+        Note over Service,WalletUseCase: STEP 03 지갑 목록 조회 (크로스 컨텍스트)
+    end
+    Service->>WalletUseCase: findByRoundId(roundId)
+    WalletUseCase-->>Service: List<WalletResult>
+
+    Service-->>Controller: GetActiveRoundResult
     Controller-->>Client: 200 OK
 ```
