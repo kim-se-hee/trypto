@@ -9,6 +9,8 @@ import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQue
 import ksh.tryptobackend.investmentround.application.port.out.RuleSettingQueryPort;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
+import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +24,16 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
     private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final RuleSettingQueryPort ruleSettingQueryPort;
 
+    private final FindWalletUseCase findWalletUseCase;
+
     @Override
     @Transactional(readOnly = true)
     public GetActiveRoundResult getActiveRound(GetActiveRoundQuery query) {
         RoundOverview round = getActiveRound(query.userId());
         List<RuleSetting> rules = ruleSettingQueryPort.findByRoundId(round.roundId());
+        List<WalletResult> wallets = findWalletUseCase.findByRoundId(round.roundId());
 
-        return GetActiveRoundResult.from(round, rules);
+        return GetActiveRoundResult.from(round, rules, wallets);
     }
 
     private RoundOverview getActiveRound(Long userId) {

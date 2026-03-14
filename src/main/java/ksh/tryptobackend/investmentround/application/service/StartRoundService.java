@@ -17,7 +17,9 @@ import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
 import ksh.tryptobackend.wallet.application.port.in.CreateWalletWithBalanceUseCase;
+import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.CreateWalletWithBalanceCommand;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +34,11 @@ import java.util.List;
 public class StartRoundService implements StartRoundUseCase {
 
     private final InvestmentRoundCommandPort investmentRoundCommandPort;
+
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final CreateWalletWithBalanceUseCase createWalletWithBalanceUseCase;
+    private final FindWalletUseCase findWalletUseCase;
+
     private final Clock clock;
 
     @Override
@@ -49,8 +54,9 @@ public class StartRoundService implements StartRoundUseCase {
 
         InvestmentRound savedRound = investmentRoundCommandPort.save(round);
         initializeWallets(savedRound.getRoundId(), seedAllocations);
+        List<WalletResult> wallets = findWalletUseCase.findByRoundId(savedRound.getRoundId());
 
-        return StartRoundResult.from(savedRound);
+        return StartRoundResult.from(savedRound, wallets);
     }
 
     private void validateActiveRound(Long userId) {
