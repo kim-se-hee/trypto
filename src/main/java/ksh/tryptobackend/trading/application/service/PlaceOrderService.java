@@ -4,7 +4,6 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.CheckRuleViolationsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.CheckRuleViolationsQuery;
-import ksh.tryptobackend.investmentround.application.port.in.dto.query.HoldingState;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
@@ -112,9 +111,6 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             .findByWalletIdAndCoinId(command.walletId(), mapping.coinId())
             .orElseGet(() -> Holding.empty(command.walletId(), mapping.coinId()));
 
-        HoldingState holdingState = new HoldingState(
-            holding.getAvgBuyPrice(), holding.getTotalQuantity(), holding.getAveragingDownCount());
-
         BigDecimal changeRate = priceChangeRatePort.getChangeRate(command.exchangeCoinId());
 
         LocalDate today = LocalDate.now(clock);
@@ -123,7 +119,8 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
         return new CheckRuleViolationsQuery(
             command.walletId(), order.isBuyOrder(), changeRate,
-            holdingState, currentPrice, todayOrderCount, LocalDateTime.now(clock));
+            holding.getAvgBuyPrice(), holding.getTotalQuantity(), holding.getAveragingDownCount(),
+            currentPrice, todayOrderCount, LocalDateTime.now(clock));
     }
 
     private void applyBalanceChanges(OrderMode mode, Order order,

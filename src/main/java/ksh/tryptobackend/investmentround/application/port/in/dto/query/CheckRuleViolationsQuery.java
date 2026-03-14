@@ -7,7 +7,9 @@ public record CheckRuleViolationsQuery(
     Long walletId,
     boolean buyOrder,
     BigDecimal changeRate,
-    HoldingState holdingState,
+    BigDecimal avgBuyPrice,
+    BigDecimal totalQuantity,
+    int averagingDownCount,
     BigDecimal currentPrice,
     long todayOrderCount,
     LocalDateTime now
