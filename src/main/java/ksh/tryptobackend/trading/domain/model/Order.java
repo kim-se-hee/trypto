@@ -87,6 +87,20 @@ public class Order {
             Side.SELL, OrderType.LIMIT, filledAmount, new Quantity(sellQuantity), limitPrice, limitPrice, fee, now);
     }
 
+    public static Order create(OrderType orderType, Side side,
+                               String idempotencyKey, Long walletId, Long exchangeCoinId,
+                               BigDecimal amount, BigDecimal price,
+                               TradingVenue venue, BigDecimal currentPrice, LocalDateTime now) {
+        return switch (orderType) {
+            case MARKET -> side == Side.BUY
+                ? createMarketBuyOrder(idempotencyKey, walletId, exchangeCoinId, amount, currentPrice, venue, now)
+                : createMarketSellOrder(idempotencyKey, walletId, exchangeCoinId, amount, currentPrice, venue, now);
+            case LIMIT -> side == Side.BUY
+                ? createLimitBuyOrder(idempotencyKey, walletId, exchangeCoinId, amount, price, venue, now)
+                : createLimitSellOrder(idempotencyKey, walletId, exchangeCoinId, amount, price, venue, now);
+        };
+    }
+
     public static Order reconstitute(Long id, String idempotencyKey, Long walletId, Long exchangeCoinId,
                                      Side side, OrderType orderType, BigDecimal amount, Quantity quantity,
                                      BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,

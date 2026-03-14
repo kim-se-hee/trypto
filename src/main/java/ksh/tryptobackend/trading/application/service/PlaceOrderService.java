@@ -13,13 +13,12 @@ import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PriceChangeRateQueryPort;
-import ksh.tryptobackend.trading.application.strategy.OrderPlacementStrategies;
-import ksh.tryptobackend.trading.application.strategy.OrderPlacementStrategy;
 import ksh.tryptobackend.trading.domain.model.Holding;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
+import ksh.tryptobackend.trading.domain.vo.OrderMode;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
@@ -47,7 +46,6 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final HoldingCommandPort holdingCommandPort;
     private final CheckRuleViolationsUseCase checkRuleViolationsUseCase;
     private final PriceChangeRateQueryPort priceChangeRatePort;
-    private final OrderPlacementStrategies strategies;
     private final Clock clock;
 
     @Override
@@ -60,17 +58,19 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private Order executeOrder(PlaceOrderCommand command) {
         ExchangeCoinMappingResult mapping = getExchangeCoinMapping(command.exchangeCoinId());
         TradingVenue venue = getTradingVenue(mapping.exchangeId());
-        OrderPlacementStrategy strategy = strategies.resolve(command.orderType(), command.side());
+        OrderMode mode = OrderMode.of(command.orderType(), command.side());
         BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(command.exchangeCoinId());
 
-        Order order = strategy.createOrder(command, venue, currentPrice, LocalDateTime.now(clock));
-        validateBalance(strategy, order, command.walletId(), venue, mapping.coinId());
+        Order order = Order.create(command.orderType(), command.side(),
+            command.idempotencyKey(), command.walletId(), command.exchangeCoinId(),
+            command.amount(), command.price(), venue, currentPrice, LocalDateTime.now(clock));
+        validateBalance(mode, order, command.walletId(), venue, mapping.coinId());
 
         List<RuleViolation> violations = checkOrderViolations(
             order, command.walletId(), command.exchangeCoinId(), mapping.coinId(), currentPrice);
         order.addViolations(violations);
 
-        applyBalanceChanges(strategy, order, command.walletId(), venue, mapping.coinId());
+        applyBalanceChanges(mode, order, command.walletId(), venue, mapping.coinId());
 
         Order savedOrder = orderCommandPort.save(order);
         updateHoldingIfMarketOrder(order, command.walletId(), mapping.coinId(), currentPrice);
@@ -89,9 +89,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 
-    private void validateBalance(OrderPlacementStrategy strategy, Order order,
+    private void validateBalance(OrderMode mode, Order order,
                                   Long walletId, TradingVenue venue, Long coinId) {
-        Long balanceCoinId = strategy.resolveBalanceCoinId(venue, coinId);
+        Long balanceCoinId = mode.resolveBalanceCoinId(venue, coinId);
         BigDecimal available = getAvailableBalanceUseCase.getAvailableBalance(walletId, balanceCoinId);
         order.validateSufficientBalance(available);
     }
@@ -127,9 +127,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             holdingState, currentPrice, todayOrderCount, LocalDateTime.now(clock));
     }
 
-    private void applyBalanceChanges(OrderPlacementStrategy strategy, Order order,
+    private void applyBalanceChanges(OrderMode mode, Order order,
                                       Long walletId, TradingVenue venue, Long coinId) {
-        for (BalanceChange change : strategy.planBalanceChanges(order, venue, coinId)) {
+        for (BalanceChange change : mode.planBalanceChanges(order, venue, coinId)) {
             applyBalanceChange(walletId, change);
         }
     }
