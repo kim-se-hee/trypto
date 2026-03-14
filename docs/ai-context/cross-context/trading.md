@@ -7,6 +7,9 @@
 ### FindActiveHoldingsUseCase
 - `findActiveHoldings(Long walletId) → List<HoldingInfoResult>`
 
+### FindEvaluatedHoldingsUseCase
+- `findEvaluatedHoldings(Long walletId, Long exchangeId) → List<EvaluatedHoldingResult>`
+
 ### CountFilledOrdersUseCase
 - `existsByWalletId(Long walletId) → boolean`
 - `countByWalletId(Long walletId) → int`
@@ -24,5 +27,6 @@
 | DTO | 필드 |
 |-----|------|
 | HoldingInfoResult | coinId: Long, avgBuyPrice: BigDecimal, totalQuantity: BigDecimal |
+| EvaluatedHoldingResult | coinId: Long, avgBuyPrice: BigDecimal, totalQuantity: BigDecimal, currentPrice: BigDecimal |
 | FilledOrderResult | orderId: Long, walletId: Long, exchangeCoinId: Long, side: String, amount: BigDecimal, quantity: BigDecimal, filledPrice: BigDecimal, filledAt: LocalDateTime |
 | ViolationResult | violationId: Long, orderId: Long, ruleId: Long, createdAt: LocalDateTime |

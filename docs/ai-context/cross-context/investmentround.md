@@ -18,6 +18,9 @@
 - `sumByRoundId(Long roundId) → BigDecimal`
 - `sumByRoundIdAndExchangeId(Long roundId, Long exchangeId) → BigDecimal`
 
+### CheckRuleViolationsUseCase
+- `checkViolations(CheckRuleViolationsQuery query) → List<RuleViolationResult>`
+
 ## Result DTO
 
 | DTO | 필드 |
@@ -25,6 +28,7 @@
 | RoundInfoResult | roundId: Long, userId: Long, roundNumber: long, initialSeed: BigDecimal, emergencyFundingLimit: BigDecimal, emergencyChargeCount: int, status: String, startedAt: LocalDateTime, endedAt: LocalDateTime |
 | ActiveRoundResult | roundId: Long, userId: Long, startedAt: LocalDateTime |
 | InvestmentRuleResult | ruleId: Long, ruleType: RuleType, thresholdValue: BigDecimal |
+| RuleViolationResult | ruleId: Long, violationReason: String, createdAt: LocalDateTime |
 
 ## 참조 Enum
 

@@ -34,12 +34,14 @@
 최상위는 바운디드 컨텍스트 기준으로 분리한다. 각 도메인 내부는 헥사고날 아키텍처의 계층별로 나눈다.
 
 ```
-com.project/
-├── identity/          # 인증, 회원
+ksh.tryptobackend/
+├── user/              # 회원, 프로필
 ├── trading/           # 주문 (시장가/지정가), 스왑
-├── wallet/            # 지갑, 잔고, 송금
-├── ranking/           # 랭킹, 포트폴리오 스냅샷
-├── marketdata/        # 시세, 캔들
+├── wallet/            # 지갑, 잔고, 입금 주소
+├── transfer/          # 거래소 간 송금
+├── portfolio/         # 포트폴리오 스냅샷, 보유 자산 조회
+├── ranking/           # 수익률 랭킹
+├── marketdata/        # 시세, 거래소·코인 정보
 ├── regretanalysis/    # 후회 그래프, 투자 원칙 위반 분석
 ├── investmentround/   # 투자 라운드, 투자 원칙
 └── common/            # 공통 설정, 예외, DTO
@@ -55,6 +57,8 @@ trading/
 │   │       ├── request/   # Request DTO
 │   │       └── response/  # Response DTO
 │   └── out/           # JpaPersistenceAdapter, ApiAdapter — 아웃바운드 어댑터
+│       ├── entity/    # JPA 엔티티 클래스
+│       └── repository/ # Spring Data JPA 리포지토리 인터페이스
 ├── application/
 │   ├── port/
 │   │   ├── in/        # UseCase 인터페이스 — 인바운드 포트
@@ -66,7 +70,8 @@ trading/
 │   └── service/       # UseCase 구현체
 └── domain/
     ├── model/         # Entity, Aggregate Root
-    └── vo/            # Value Object
+    ├── vo/            # Value Object
+    └── strategy/      # 도메인 전략 (선택, 필요 시)
 ```
 
 common 패키지는 공통 설정, 예외, DTO를 관리한다.

@@ -10,6 +10,9 @@
 ### FindExchangeSummaryUseCase
 - `findExchangeSummary(Long exchangeId) → Optional<ExchangeSummaryResult>`
 
+### FindExchangeNamesUseCase
+- `findExchangeNames(Set<Long> exchangeIds) → Map<Long, String>`
+
 ### FindCoinInfoUseCase
 - `findByIds(Set<Long> coinIds) → Map<Long, CoinInfoResult>`
 

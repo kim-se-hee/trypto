@@ -238,16 +238,17 @@ sequenceDiagram
     participant Client
     participant Controller as OrderController
     participant Service as PlaceOrderService
-    participant ExchangeCoinAdapter
-    participant TradingVenueAdapter
-    participant RedisAdapter as LivePriceAdapter
-    participant WalletAdapter as WalletBalanceAdapter
-    participant PrincipleAdapter as InvestmentPrincipleAdapter
-    participant OrderAdapter as OrderPersistenceAdapter
+    participant FindMapping as FindExchangeCoinMappingUseCase
+    participant FindExchange as FindExchangeDetailUseCase
+    participant LivePrice as GetLivePriceUseCase
+    participant GetBalance as GetAvailableBalanceUseCase
+    participant ManageBalance as ManageWalletBalanceUseCase
+    participant CheckViolations as CheckRuleViolationsUseCase
+    participant OrderPort as OrderCommandPort
+    participant HoldingPort as HoldingCommandPort
     participant Redis
     participant MySQL
     participant Order
-    participant InvestmentPrinciple
 
     Client->>Controller: POST /api/orders
     Controller->>Service: placeOrder(command)
@@ -255,61 +256,65 @@ sequenceDiagram
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 01 멱등성 검사
     end
-    Service->>OrderAdapter: findByIdempotencyKey(key)
-    OrderAdapter->>MySQL: SELECT by idempotency_key
+    Service->>OrderPort: findByIdempotencyKey(key)
+    OrderPort->>MySQL: SELECT by idempotency_key
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 02 거래소·코인 정보 조회
     end
-    Service->>ExchangeCoinAdapter: findById(exchangeCoinId)
-    ExchangeCoinAdapter->>MySQL: SELECT exchange_coin
-    Service->>TradingVenueAdapter: findByExchangeId(exchangeId)
-    TradingVenueAdapter->>MySQL: SELECT trading_venue
+    Service->>FindMapping: findById(exchangeCoinId)
+    FindMapping->>MySQL: SELECT exchange_coin
+    Service->>FindExchange: findExchangeDetail(exchangeId)
+    FindExchange->>MySQL: SELECT exchange
+    Note over Service: TradingVenue.of(feeRate, baseCurrencyCoinId, domestic)
 
-    Note over Service: 전략 결정 (OrderType × Side)
+    Note over Service: OrderMode 결정 (OrderType × Side)
 
     rect rgb(60, 60, 60)
-        Note over Service,Redis: STEP 03 시세 조회 (시장가만)
+        Note over Service,Redis: STEP 03 시세 조회
     end
-    Service->>RedisAdapter: getCurrentPrice(exchangeCoinId)
-    RedisAdapter->>Redis: GET coin_price
+    Service->>LivePrice: getCurrentPrice(exchangeCoinId)
+    LivePrice->>Redis: GET coin_price
 
     rect rgb(60, 60, 60)
         Note over Service,Order: STEP 04 주문 생성
     end
-    Service->>Order: createMarketBuyOrder(amount, currentPrice, venue)
+    Service->>Order: create(orderType, side, ..., venue, currentPrice)
     Note over Order: 금액 제한 검증 + 체결 수량·수수료 계산
     Order-->>Service: order
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 05 잔고 검증
     end
-    Service->>WalletAdapter: getAvailableBalance(walletId, baseCurrencyCoinId)
-    WalletAdapter->>MySQL: SELECT available
+    Service->>GetBalance: getAvailableBalance(walletId, balanceCoinId)
+    GetBalance->>MySQL: SELECT available
     Service->>Order: validateSufficientBalance(available)
 
     rect rgb(60, 60, 60)
-        Note over Service,InvestmentPrinciple: STEP 06 투자 원칙 검증
+        Note over Service,MySQL: STEP 06 투자 원칙 위반 검증 (크로스 컨텍스트)
     end
-    Service->>PrincipleAdapter: findByRoundId(roundId)
-    PrincipleAdapter->>MySQL: SELECT principles
-    Service->>InvestmentPrinciple: checkViolation(order)
-    InvestmentPrinciple-->>Service: violations
+    Service->>CheckViolations: checkViolations(query)
+    Note over CheckViolations: InvestmentRound 컨텍스트에서 위반 검사
+    CheckViolations-->>Service: List<RuleViolationResult>
+    Note over Service: RuleViolationResult → RuleViolation 변환
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 07 잔고 변경
     end
-    Service->>WalletAdapter: deductBalance(walletId, KRW, settlementDebit)
-    Service->>WalletAdapter: addBalance(walletId, BTC, quantity)
-    WalletAdapter->>MySQL: UPDATE wallet_balance
+    Service->>ManageBalance: deductBalance / addBalance / lockBalance
+    ManageBalance->>MySQL: UPDATE wallet_balance
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 08 주문·위반 기록 저장
     end
-    Service->>OrderAdapter: save(order)
-    OrderAdapter->>MySQL: INSERT order
-    Service->>PrincipleAdapter: saveViolations(orderId, violations)
-    PrincipleAdapter->>MySQL: INSERT violation_record
+    Service->>OrderPort: save(order)
+    OrderPort->>MySQL: INSERT order + violations
+
+    rect rgb(60, 60, 60)
+        Note over Service,MySQL: STEP 09 보유 코인 갱신 (시장가만)
+    end
+    Service->>HoldingPort: findByWalletIdAndCoinId / save
+    HoldingPort->>MySQL: SELECT + UPDATE holding
 
     Service-->>Controller: Order
     Controller-->>Client: 201 Created

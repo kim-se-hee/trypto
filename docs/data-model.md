@@ -4,14 +4,16 @@
 
 | 도메인 | Aggregate Root | Entity | Value Object |
 |--------|---------------|--------|--------------|
+| User | User | — | — |
 | Wallet | Wallet | WalletBalance, DepositAddress | DepositTargetExchange |
 | Transfer | Transfer | — | TransferStatus, TransferType, TransferFailureReason, TransferBalanceChange, TransferDestination, TransferDestinationChain, TransferSourceExchange, WithdrawalCondition, TransferWallet, TransferDepositAddress |
-| Trading | Order, Holding | RuleViolation | Side, OrderType, OrderStatus, Fee, Quantity, BalanceChange, OrderAmountPolicy, TradingVenue, ListedCoinRef, RuleViolationRef, ViolationRule, ViolationRules, ViolationCheckContext |
-| MarketData | Exchange | ExchangeCoinChain, WithdrawalFee | ExchangeMarketType |
-| Portfolio | PortfolioSnapshot | SnapshotDetail, EvaluatedHolding | ActiveRound, ExchangeSnapshot, KrwConversionRate, WalletSnapshot, EvaluatedHoldings, PortfolioHolding, PortfolioHoldings |
-| Ranking | Ranking | — | RankingPeriod, RoundKey, RankingCandidate, RankingCandidates, EligibleRound, EligibleRounds, SnapshotSummary, SnapshotSummaries, RankerHolding |
-| InvestmentRound | InvestmentRound | RuleSetting, EmergencyFunding | RoundStatus, SeedAmountPolicy, SeedAllocation, SeedAllocations, SeedFundingSpec |
-| RegretAnalysis | RegretReport | RuleImpact, ViolationDetail, AssetSnapshot, ViolatedOrder, ViolationDetails | ImpactGap, ThresholdUnit, AssetTimeline, BtcBenchmark, BtcDailyPrice, CumulativeLossTimeline, ViolationMarkers, ViolationLossStrategy, ViolationLossContext, AnalysisRound, AnalysisRoundStatus, AnalysisRule, AnalysisRules, AnalysisExchange, ActiveRoundExchange, TradeSide, OrderExecution, RuleBreach |
+| Trading | Order, Holding | RuleViolation | Side, OrderType, OrderStatus, OrderMode, Fee, Quantity, BalanceChange, OrderAmountPolicy, TradingVenue, RuleViolationRef, FilledOrder, FilledOrderCounts, CoinExchangeMapping |
+| MarketData | Exchange, Coin, ExchangeCoin | ExchangeCoinChain, WithdrawalFee | ExchangeMarketType, CoinSymbols, DailyClosePrice, ExchangeCoinIdMap, ExchangeSummary, LivePrices |
+| Portfolio | PortfolioSnapshot | SnapshotDetail, EvaluatedHolding | ActiveRound, ActiveRounds, ExchangeSnapshot, KrwConversionRate, WalletSnapshot, WalletSnapshots, EvaluatedHoldings, PortfolioHolding, PortfolioHoldings, CoinSnapshot, CoinSnapshotMap, HoldingSnapshot, HoldingSummary, SnapshotOverview, UserSnapshotSummary |
+| Ranking | Ranking | — | RankingPeriod, RoundKey, RankingCandidate, RankingCandidates, EligibleRound, EligibleRounds, SnapshotSummary, SnapshotSummaries, RoundTradeCounts, ExchangeNames, CoinSymbols, RankingSummary, RankingStats |
+| InvestmentRound | InvestmentRound | RuleSetting, EmergencyFunding, DetectedViolation | RoundStatus, SeedAmountPolicy, SeedAllocation, SeedAllocations, SeedFundingSpec, RoundOverview, ViolationCheckContext, ViolationRule (sealed), ViolationRules |
+| RegretAnalysis | RegretReport | RuleImpact, ViolationDetail, ViolationDetails, AssetSnapshot, ViolatedOrder, ViolatedOrders | ImpactGap, ThresholdUnit, AssetTimeline, BtcBenchmark, BtcDailyPrice, BtcDailyPrices, CumulativeLossTimeline, ViolationMarkers, ViolationLossContext, AnalysisRound, AnalysisRoundStatus, AnalysisRule, AnalysisRules, AnalysisExchange, ActiveRoundExchange, TradeSide, OrderExecution, OrderExecutions, CurrentPrices, RuleBreach |
+| RegretAnalysis (Strategy) | — | — | ViolationLossStrategy (enum) |
 | Common (Shared Kernel) | — | — | RuleType, ProfitRate |
 
 **소유 관계:**
@@ -20,10 +22,12 @@
 - TradingVenue → OrderAmountPolicy
 - Order → RuleViolation
 - ViolationRules → ViolationRule
-- Exchange → ExchangeCoinChain, WithdrawalFee
 - PortfolioSnapshot → SnapshotDetail
 - EvaluatedHoldings → EvaluatedHolding
 - PortfolioHoldings → PortfolioHolding
+- ActiveRounds → ActiveRound
+- WalletSnapshots → WalletSnapshot
+- CoinSnapshotMap → CoinSnapshot
 - RankingCandidates → RankingCandidate
 - EligibleRounds → EligibleRound
 - SnapshotSummaries → SnapshotSummary
@@ -33,12 +37,15 @@
 - RuleImpact → ImpactGap
 - RegretReport → RuleImpact, ViolationDetails
 - ViolationDetails → ViolationDetail
+- ViolatedOrders → ViolatedOrder
 - ViolatedOrder → ViolationLossStrategy, ViolationLossContext
 - AssetTimeline → AssetSnapshot
-- CumulativeLossTimeline → DailyLoss
-- ViolationMarkers → ViolationMarker
+- CumulativeLossTimeline → DailyLoss (inner record)
+- ViolationMarkers → ViolationMarker (inner record)
 - BtcBenchmark → BtcDailyPrice
+- BtcDailyPrices → BtcDailyPrice
 - AnalysisRules → AnalysisRule
+- OrderExecutions → OrderExecution
 
 ## 모듈 간 의존
 
@@ -51,17 +58,17 @@
 | InvestmentRound → Wallet | CreateWalletWithBalanceUseCase, FindWalletUseCase, ManageWalletBalanceUseCase | 지갑 생성, 긴급 충전 시 지갑 조회·잔고 반영 |
 | Trading → Wallet | GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindWalletUseCase | 잔고 검증·반영, walletId→roundId 조회 |
 | Trading → MarketData | GetLivePriceUseCase, FindExchangeDetailUseCase, FindExchangeCoinMappingUseCase | 시세 조회, 거래소-코인 매핑·수수료율 조회 |
-| Trading → InvestmentRound | FindInvestmentRulesUseCase | 투자 원칙 위반 검증 |
-| Transfer → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindDepositAddressUseCase | 잔고 차감/추가/잠금, 입금 주소 역조회 |
+| Trading → InvestmentRound | CheckRuleViolationsUseCase | 투자 원칙 위반 검증 |
+| Transfer → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindDepositAddressUseCase, ResolveTransferDestinationUseCase, GetWalletOwnerIdUseCase | 잔고 차감/추가/잠금, 입금 주소 역조회, 송금 목적지 확인, 지갑 소유자 확인 |
 | Transfer → MarketData | FindWithdrawalFeeUseCase, FindExchangeCoinChainUseCase, FindExchangeDetailUseCase | 출금 수수료·체인 지원 확인 |
 | Transfer → InvestmentRound | FindRoundInfoUseCase | 송금 내역 조회 시 라운드 정보 |
 | Portfolio → InvestmentRound | FindRoundInfoUseCase, SumEmergencyFundingUseCase, FindActiveRoundsUseCase | 라운드 정보 조회, 긴급 충전 합산, 스냅샷 대상 라운드 조회 |
-| Portfolio → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase | 라운드별 지갑·잔고 조회 |
+| Portfolio → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, GetWalletOwnerIdUseCase | 라운드별 지갑·잔고 조회, 지갑 소유자 확인 |
 | Portfolio → MarketData | FindExchangeDetailUseCase, FindCoinInfoUseCase, FindExchangeCoinMappingUseCase, GetLivePriceUseCase, GetLivePricesUseCase | 거래소·코인 정보, 실시간 시세 조회 |
-| Portfolio → Trading | FindActiveHoldingsUseCase | 보유 자산 조회 |
+| Portfolio → Trading | FindActiveHoldingsUseCase, FindEvaluatedHoldingsUseCase | 보유 자산 조회, 평가된 보유 자산 조회 |
 | Ranking → InvestmentRound | FindRoundInfoUseCase, FindActiveRoundsUseCase | 라운드 정보·활성 라운드 조회 |
 | Ranking → Portfolio | FindSnapshotDetailsUseCase, FindSnapshotSummariesUseCase | 스냅샷 상세·요약 조회 |
-| Ranking → MarketData | FindCoinSymbolsUseCase, FindExchangeSummaryUseCase | 코인 심볼·거래소 정보 조회 |
+| Ranking → MarketData | FindCoinSymbolsUseCase, FindExchangeSummaryUseCase, FindExchangeNamesUseCase | 코인 심볼·거래소 정보·거래소 이름 조회 |
 | Ranking → Wallet | FindWalletUseCase | 지갑 목록 조회 |
 | Ranking → Trading | CountFilledOrdersUseCase | 체결 주문 수 조회 |
 | RegretAnalysis → InvestmentRound | FindInvestmentRulesUseCase, FindActiveRoundsUseCase, FindRoundInfoUseCase | 투자 원칙·활성 라운드·라운드 정보 조회 |
