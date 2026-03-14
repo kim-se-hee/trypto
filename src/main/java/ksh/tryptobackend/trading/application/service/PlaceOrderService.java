@@ -4,6 +4,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.CheckRuleViolationsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.CheckRuleViolationsQuery;
+import ksh.tryptobackend.investmentround.application.port.in.dto.query.HoldingState;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
@@ -112,25 +113,18 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             .findByWalletIdAndCoinId(walletId, coinId)
             .orElseGet(() -> Holding.empty(walletId, coinId));
 
-        BigDecimal changeRate = order.isBuyOrder()
-            ? priceChangeRatePort.getChangeRate(exchangeCoinId)
-            : BigDecimal.ZERO;
+        HoldingState holdingState = new HoldingState(
+            holding.getAvgBuyPrice(), holding.getTotalQuantity(), holding.getAveragingDownCount());
+
+        BigDecimal changeRate = priceChangeRatePort.getChangeRate(exchangeCoinId);
 
         LocalDate today = LocalDate.now(clock);
         long todayOrderCount = orderCommandPort.countByWalletIdAndCreatedAtBetween(
             walletId, today.atStartOfDay(), today.atTime(LocalTime.MAX));
 
         return new CheckRuleViolationsQuery(
-            walletId,
-            order.isBuyOrder(),
-            changeRate,
-            holding.getAvgBuyPrice(),
-            holding.getTotalQuantity(),
-            holding.getAveragingDownCount(),
-            currentPrice,
-            todayOrderCount,
-            LocalDateTime.now(clock)
-        );
+            walletId, order.isBuyOrder(), changeRate,
+            holdingState, currentPrice, todayOrderCount, LocalDateTime.now(clock));
     }
 
     private void applyBalanceChanges(OrderPlacementStrategy strategy, Order order,

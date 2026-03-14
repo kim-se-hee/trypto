@@ -46,9 +46,9 @@ public class CheckRuleViolationsService implements CheckRuleViolationsUseCase {
         return new ViolationCheckContext(
             query.buyOrder(),
             query.changeRate(),
-            query.avgBuyPrice(),
-            query.totalQuantity(),
-            query.averagingDownCount(),
+            query.holdingState().avgBuyPrice(),
+            query.holdingState().totalQuantity(),
+            query.holdingState().averagingDownCount(),
             query.currentPrice(),
             query.todayOrderCount(),
             query.now()
