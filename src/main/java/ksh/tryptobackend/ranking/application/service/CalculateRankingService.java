@@ -3,7 +3,6 @@ package ksh.tryptobackend.ranking.application.service;
 import ksh.tryptobackend.investmentround.application.port.in.FindActiveRoundsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.ActiveRoundResult;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotSummariesUseCase;
-import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotSummaryResult;
 import ksh.tryptobackend.ranking.application.port.in.CalculateRankingUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.command.CalculateRankingCommand;
 import ksh.tryptobackend.ranking.application.port.out.RankingCommandPort;
@@ -84,7 +83,6 @@ public class CalculateRankingService implements CalculateRankingUseCase {
         List<SnapshotSummary> summaries = findSnapshotSummariesUseCase.findLatestSummaries(date).stream()
             .map(r -> new SnapshotSummary(r.userId(), r.roundId(), r.totalAssetKrw(), r.totalInvestmentKrw()))
             .toList();
-
-        return new SnapshotSummaries(SnapshotSummary.toTotalAssetMap(summaries));
+        return new SnapshotSummaries(summaries);
     }
 }

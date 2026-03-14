@@ -1,7 +1,7 @@
 package ksh.tryptobackend.ranking.application.port.out;
 
+import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingStatsProjection;
-import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 
 import java.time.LocalDate;
@@ -12,9 +12,9 @@ public interface RankingQueryPort {
 
     Optional<LocalDate> findLatestReferenceDate(RankingPeriod period);
 
-    List<RankingWithUserProjection> findRankings(RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size);
+    List<RankingSummary> findRankings(RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size);
 
-    Optional<RankingWithUserProjection> findByUserIdAndPeriodAndReferenceDate(Long userId, RankingPeriod period, LocalDate referenceDate);
+    Optional<RankingSummary> findByUserIdAndPeriodAndReferenceDate(Long userId, RankingPeriod period, LocalDate referenceDate);
 
     RankingStatsProjection getRankingStats(RankingPeriod period, LocalDate referenceDate);
 }

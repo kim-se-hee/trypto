@@ -12,17 +12,18 @@ import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankerPortfoli
 import ksh.tryptobackend.ranking.application.port.in.dto.result.PortfolioHoldingResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioResult;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
-import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
+import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
+import ksh.tryptobackend.ranking.domain.vo.CoinSymbols;
 import ksh.tryptobackend.ranking.domain.vo.ExchangeNames;
-import ksh.tryptobackend.ranking.domain.vo.RankerHolding;
+import ksh.tryptobackend.user.application.port.in.FindUserPublicInfoUseCase;
+import ksh.tryptobackend.user.application.port.in.dto.result.UserPublicInfoResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,17 +36,19 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     private final FindSnapshotDetailsUseCase findSnapshotDetailsUseCase;
     private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
     private final FindExchangeNamesUseCase findExchangeNamesUseCase;
+    private final FindUserPublicInfoUseCase findUserPublicInfoUseCase;
 
     @Override
     @Transactional(readOnly = true)
     public RankerPortfolioResult getRankerPortfolio(GetRankerPortfolioQuery query) {
         LocalDate latestDate = findLatestReferenceDate(query);
-        RankingWithUserProjection ranking = findRanking(query, latestDate);
+        RankingSummary ranking = findRanking(query, latestDate);
         validateTop100(ranking);
-        validatePortfolioPublic(ranking);
+        UserPublicInfoResult userInfo = getUserInfo(query.userId());
+        validatePortfolioPublic(userInfo);
         Long roundId = findActiveRoundId(query.userId());
         List<PortfolioHoldingResult> holdings = findHoldings(query.userId(), roundId);
-        return buildResult(ranking, holdings);
+        return buildResult(ranking, userInfo, holdings);
     }
 
     private LocalDate findLatestReferenceDate(GetRankerPortfolioQuery query) {
@@ -53,20 +56,25 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
             .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 
-    private RankingWithUserProjection findRanking(GetRankerPortfolioQuery query, LocalDate latestDate) {
+    private RankingSummary findRanking(GetRankerPortfolioQuery query, LocalDate latestDate) {
         return rankingQueryPort.findByUserIdAndPeriodAndReferenceDate(
                 query.userId(), query.period(), latestDate)
             .orElseThrow(() -> new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED));
     }
 
-    private void validateTop100(RankingWithUserProjection ranking) {
+    private void validateTop100(RankingSummary ranking) {
         if (!Ranking.isTop100(ranking.rank())) {
             throw new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED);
         }
     }
 
-    private void validatePortfolioPublic(RankingWithUserProjection ranking) {
-        if (!ranking.portfolioPublic()) {
+    private UserPublicInfoResult getUserInfo(Long userId) {
+        return findUserPublicInfoUseCase.findByUserId(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private void validatePortfolioPublic(UserPublicInfoResult userInfo) {
+        if (!userInfo.portfolioPublic()) {
             throw new CustomException(ErrorCode.PORTFOLIO_PRIVATE);
         }
     }
@@ -80,20 +88,19 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     private List<PortfolioHoldingResult> findHoldings(Long userId, Long roundId) {
         List<SnapshotDetailResult> details = findSnapshotDetailsUseCase.findLatestSnapshotDetails(userId, roundId);
 
-        Map<Long, String> coinSymbols = resolveCoinSymbols(details);
+        CoinSymbols coinSymbols = resolveCoinSymbols(details);
         ExchangeNames exchangeNames = resolveExchangeNames(details);
 
         return details.stream()
-            .map(detail -> toRankerHolding(detail, coinSymbols, exchangeNames))
-            .map(this::toResult)
+            .map(detail -> toHoldingResult(detail, coinSymbols, exchangeNames))
             .toList();
     }
 
-    private Map<Long, String> resolveCoinSymbols(List<SnapshotDetailResult> details) {
+    private CoinSymbols resolveCoinSymbols(List<SnapshotDetailResult> details) {
         Set<Long> coinIds = details.stream()
             .map(SnapshotDetailResult::coinId)
             .collect(Collectors.toSet());
-        return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
+        return new CoinSymbols(findCoinSymbolsUseCase.findSymbolsByIds(coinIds));
     }
 
     private ExchangeNames resolveExchangeNames(List<SnapshotDetailResult> details) {
@@ -103,29 +110,23 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         return new ExchangeNames(findExchangeNamesUseCase.findExchangeNames(exchangeIds));
     }
 
-    private RankerHolding toRankerHolding(SnapshotDetailResult detail,
-                                          Map<Long, String> coinSymbols,
-                                          ExchangeNames exchangeNames) {
-        return new RankerHolding(
-            coinSymbols.getOrDefault(detail.coinId(), ""),
+    private PortfolioHoldingResult toHoldingResult(SnapshotDetailResult detail,
+                                                    CoinSymbols coinSymbols,
+                                                    ExchangeNames exchangeNames) {
+        return new PortfolioHoldingResult(
+            coinSymbols.getSymbol(detail.coinId()),
             exchangeNames.getName(detail.exchangeId()),
             detail.assetRatio(),
             detail.profitRate()
         );
     }
 
-    private PortfolioHoldingResult toResult(RankerHolding holding) {
-        return new PortfolioHoldingResult(
-            holding.coinSymbol(), holding.exchangeName(),
-            holding.assetRatio(), holding.profitRate()
-        );
-    }
-
-    private RankerPortfolioResult buildResult(RankingWithUserProjection ranking,
+    private RankerPortfolioResult buildResult(RankingSummary ranking,
+                                               UserPublicInfoResult userInfo,
                                                List<PortfolioHoldingResult> holdings) {
         return new RankerPortfolioResult(
             ranking.userId(),
-            ranking.nickname(),
+            userInfo.nickname(),
             ranking.rank(),
             ranking.profitRate(),
             holdings
