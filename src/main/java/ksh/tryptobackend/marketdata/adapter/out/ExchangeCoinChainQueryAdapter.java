@@ -9,6 +9,7 @@ import ksh.tryptobackend.marketdata.domain.model.ExchangeCoinChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -35,5 +36,23 @@ public class ExchangeCoinChainQueryAdapter implements ExchangeCoinChainQueryPort
 
         return Optional.ofNullable(entity)
             .map(ExchangeCoinChainJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<ExchangeCoinChain> findByExchangeIdAndCoinId(Long exchangeId, Long coinId) {
+        QExchangeCoinChainJpaEntity ecc = QExchangeCoinChainJpaEntity.exchangeCoinChainJpaEntity;
+        QExchangeCoinJpaEntity ec = QExchangeCoinJpaEntity.exchangeCoinJpaEntity;
+
+        return queryFactory
+            .selectFrom(ecc)
+            .join(ec).on(ecc.exchangeCoinId.eq(ec.id))
+            .where(
+                ec.exchangeId.eq(exchangeId),
+                ec.coinId.eq(coinId)
+            )
+            .fetch()
+            .stream()
+            .map(ExchangeCoinChainJpaEntity::toDomain)
+            .toList();
     }
 }
