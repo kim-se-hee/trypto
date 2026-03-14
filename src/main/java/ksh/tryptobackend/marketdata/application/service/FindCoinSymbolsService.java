@@ -16,6 +16,6 @@ public class FindCoinSymbolsService implements FindCoinSymbolsUseCase {
 
     @Override
     public Map<Long, String> findSymbolsByIds(Set<Long> coinIds) {
-        return coinQueryPort.findSymbolsByIds(coinIds);
+        return coinQueryPort.findSymbolsByIds(coinIds).toMap();
     }
 }

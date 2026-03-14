@@ -2,13 +2,12 @@ package ksh.tryptobackend.transfer.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.transfer.application.port.in.FindTransferHistoryUseCase;
 import ksh.tryptobackend.transfer.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.transfer.application.port.in.dto.result.TransferHistoryCursorResult;
 import ksh.tryptobackend.transfer.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
+import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
-    private final FindWalletUseCase findWalletUseCase;
-    private final FindRoundInfoUseCase findRoundInfoUseCase;
+    private final GetWalletOwnerIdUseCase getWalletOwnerIdUseCase;
     private final TransferQueryPort transferQueryPort;
 
     @Override
@@ -36,20 +34,10 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
     }
 
     private void validateWalletOwnership(Long walletId, Long userId) {
-        Long ownerUserId = getOwnerUserId(walletId);
+        Long ownerUserId = getWalletOwnerIdUseCase.getWalletOwnerId(walletId);
         if (!ownerUserId.equals(userId)) {
             throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
         }
-    }
-
-    private Long getOwnerUserId(Long walletId) {
-        Long roundId = findWalletUseCase.findById(walletId)
-            .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND))
-            .roundId();
-
-        return findRoundInfoUseCase.findById(roundId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND))
-            .userId();
     }
 
     private List<Transfer> fetchTransfersWithOverflow(FindTransferHistoryQuery query) {

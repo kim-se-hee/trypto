@@ -1,5 +1,7 @@
 package ksh.tryptobackend.investmentround.application.port.in.dto.result;
 
+import ksh.tryptobackend.investmentround.application.port.out.dto.InvestmentRoundInfo;
+import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 
 import java.math.BigDecimal;
@@ -18,4 +20,23 @@ public record GetActiveRoundResult(
     LocalDateTime endedAt,
     List<GetActiveRoundRuleResult> rules
 ) {
+
+    public static GetActiveRoundResult from(InvestmentRoundInfo round, List<RuleSetting> rules) {
+        List<GetActiveRoundRuleResult> ruleResults = rules.stream()
+            .map(GetActiveRoundRuleResult::from)
+            .toList();
+
+        return new GetActiveRoundResult(
+            round.roundId(),
+            round.userId(),
+            round.roundNumber(),
+            round.status(),
+            round.initialSeed(),
+            round.emergencyFundingLimit(),
+            round.emergencyChargeCount(),
+            round.startedAt(),
+            round.endedAt(),
+            ruleResults
+        );
+    }
 }

@@ -3,7 +3,6 @@ package ksh.tryptobackend.portfolio.application.service;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.SumEmergencyFundingUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
 import ksh.tryptobackend.portfolio.application.port.in.TakePortfolioSnapshotUseCase;
@@ -15,16 +14,14 @@ import ksh.tryptobackend.portfolio.domain.model.PortfolioSnapshot;
 import ksh.tryptobackend.portfolio.domain.model.SnapshotDetail;
 import ksh.tryptobackend.portfolio.domain.vo.ExchangeSnapshot;
 import ksh.tryptobackend.portfolio.domain.vo.KrwConversionRate;
-import ksh.tryptobackend.trading.application.port.in.FindActiveHoldingsUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
-import ksh.tryptobackend.trading.application.port.in.dto.result.HoldingInfoResult;
+import ksh.tryptobackend.trading.application.port.in.FindEvaluatedHoldingsUseCase;
+import ksh.tryptobackend.trading.application.port.in.dto.result.EvaluatedHoldingResult;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -33,9 +30,7 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
     private final SumEmergencyFundingUseCase sumEmergencyFundingUseCase;
-    private final FindActiveHoldingsUseCase findActiveHoldingsUseCase;
-    private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
-    private final GetLivePriceUseCase getLivePriceUseCase;
+    private final FindEvaluatedHoldingsUseCase findEvaluatedHoldingsUseCase;
 
     @Override
     public SnapshotResult takeSnapshot(TakeSnapshotCommand command) {
@@ -62,23 +57,13 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
     }
 
     private EvaluatedHoldings buildEvaluatedHoldings(Long walletId, Long exchangeId) {
-        List<HoldingInfoResult> holdings = findActiveHoldingsUseCase.findActiveHoldings(walletId);
-        if (holdings.isEmpty()) {
-            return new EvaluatedHoldings(List.of());
-        }
+        List<EvaluatedHoldingResult> results = findEvaluatedHoldingsUseCase.findEvaluatedHoldings(walletId, exchangeId);
 
-        List<Long> coinIds = holdings.stream().map(HoldingInfoResult::coinId).toList();
-        Map<Long, Long> exchangeCoinIdMap = findExchangeCoinMappingUseCase.findExchangeCoinIdMap(exchangeId, coinIds);
-
-        List<EvaluatedHolding> evaluatedHoldings = holdings.stream()
-            .map(holding -> {
-                Long exchangeCoinId = exchangeCoinIdMap.get(holding.coinId());
-                BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(exchangeCoinId);
-                return EvaluatedHolding.create(holding.coinId(), holding.avgBuyPrice(), holding.totalQuantity(), currentPrice);
-            })
+        List<EvaluatedHolding> holdings = results.stream()
+            .map(r -> EvaluatedHolding.create(r.coinId(), r.avgBuyPrice(), r.totalQuantity(), r.currentPrice()))
             .toList();
 
-        return new EvaluatedHoldings(evaluatedHoldings);
+        return new EvaluatedHoldings(holdings);
     }
 
     private BigDecimal calculateTotalAsset(TakeSnapshotCommand command, ExchangeSnapshot exchangeSnapshot,

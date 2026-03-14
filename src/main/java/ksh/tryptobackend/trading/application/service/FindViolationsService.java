@@ -24,7 +24,7 @@ public class FindViolationsService implements FindViolationsUseCase {
             .toList();
 
         return ruleViolationQueryPort.findByRuleIdsAndWalletIds(ruleIds, walletIds).stream()
-            .map(v -> new ViolationResult(v.violationId(), v.orderId(), v.ruleId(), v.createdAt()))
+            .map(ViolationResult::from)
             .toList();
     }
 }

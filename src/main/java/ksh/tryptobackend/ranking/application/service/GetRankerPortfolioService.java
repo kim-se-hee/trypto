@@ -4,8 +4,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.FindExchangeSummaryUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeSummaryResult;
+import ksh.tryptobackend.marketdata.application.port.in.FindExchangeNamesUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotDetailsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotDetailResult;
 import ksh.tryptobackend.ranking.application.port.in.GetRankerPortfolioUseCase;
@@ -15,6 +14,7 @@ import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioR
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.application.port.out.dto.RankingWithUserProjection;
 import ksh.tryptobackend.ranking.domain.model.Ranking;
+import ksh.tryptobackend.ranking.domain.vo.ExchangeNames;
 import ksh.tryptobackend.ranking.domain.vo.RankerHolding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     private final FindRoundInfoUseCase findRoundInfoUseCase;
     private final FindSnapshotDetailsUseCase findSnapshotDetailsUseCase;
     private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
-    private final FindExchangeSummaryUseCase findExchangeSummaryUseCase;
+    private final FindExchangeNamesUseCase findExchangeNamesUseCase;
 
     @Override
     @Transactional(readOnly = true)
@@ -81,7 +81,7 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         List<SnapshotDetailResult> details = findSnapshotDetailsUseCase.findLatestSnapshotDetails(userId, roundId);
 
         Map<Long, String> coinSymbols = resolveCoinSymbols(details);
-        Map<Long, String> exchangeNames = resolveExchangeNames(details);
+        ExchangeNames exchangeNames = resolveExchangeNames(details);
 
         return details.stream()
             .map(detail -> toRankerHolding(detail, coinSymbols, exchangeNames))
@@ -96,25 +96,19 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
     }
 
-    private Map<Long, String> resolveExchangeNames(List<SnapshotDetailResult> details) {
+    private ExchangeNames resolveExchangeNames(List<SnapshotDetailResult> details) {
         Set<Long> exchangeIds = details.stream()
             .map(SnapshotDetailResult::exchangeId)
             .collect(Collectors.toSet());
-        return exchangeIds.stream()
-            .collect(Collectors.toMap(
-                id -> id,
-                id -> findExchangeSummaryUseCase.findExchangeSummary(id)
-                    .map(ExchangeSummaryResult::name)
-                    .orElse("")
-            ));
+        return new ExchangeNames(findExchangeNamesUseCase.findExchangeNames(exchangeIds));
     }
 
     private RankerHolding toRankerHolding(SnapshotDetailResult detail,
                                           Map<Long, String> coinSymbols,
-                                          Map<Long, String> exchangeNames) {
+                                          ExchangeNames exchangeNames) {
         return new RankerHolding(
             coinSymbols.getOrDefault(detail.coinId(), ""),
-            exchangeNames.getOrDefault(detail.exchangeId(), ""),
+            exchangeNames.getName(detail.exchangeId()),
             detail.assetRatio(),
             detail.profitRate()
         );

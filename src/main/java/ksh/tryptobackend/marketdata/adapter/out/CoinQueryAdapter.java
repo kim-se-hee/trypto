@@ -4,6 +4,7 @@ import ksh.tryptobackend.marketdata.adapter.out.entity.CoinJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.CoinJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.dto.CoinInfo;
+import ksh.tryptobackend.marketdata.domain.vo.CoinSymbols;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,13 @@ public class CoinQueryAdapter implements CoinQueryPort {
     private final CoinJpaRepository coinJpaRepository;
 
     @Override
-    public Map<Long, String> findSymbolsByIds(Set<Long> coinIds) {
+    public CoinSymbols findSymbolsByIds(Set<Long> coinIds) {
         if (coinIds.isEmpty()) {
-            return Map.of();
+            return new CoinSymbols(Map.of());
         }
-        return coinJpaRepository.findByIdIn(coinIds).stream()
+        Map<Long, String> symbolMap = coinJpaRepository.findByIdIn(coinIds).stream()
             .collect(Collectors.toMap(CoinJpaEntity::getId, CoinJpaEntity::getSymbol));
+        return new CoinSymbols(symbolMap);
     }
 
     @Override

@@ -18,14 +18,7 @@ public class FindSnapshotDetailsService implements FindSnapshotDetailsUseCase {
     @Override
     public List<SnapshotDetailResult> findLatestSnapshotDetails(Long userId, Long roundId) {
         return portfolioSnapshotQueryPort.findLatestSnapshotDetails(userId, roundId).stream()
-            .map(this::toResult)
+            .map(SnapshotDetailProjection::toResult)
             .toList();
-    }
-
-    private SnapshotDetailResult toResult(SnapshotDetailProjection projection) {
-        return new SnapshotDetailResult(
-            projection.coinId(), projection.exchangeId(),
-            projection.assetRatio(), projection.profitRate()
-        );
     }
 }

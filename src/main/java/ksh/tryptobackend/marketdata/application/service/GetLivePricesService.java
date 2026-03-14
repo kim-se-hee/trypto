@@ -17,6 +17,6 @@ public class GetLivePricesService implements GetLivePricesUseCase {
 
     @Override
     public Map<Long, BigDecimal> getCurrentPrices(Set<Long> exchangeCoinIds) {
-        return livePriceQueryPort.getCurrentPrices(exchangeCoinIds);
+        return livePriceQueryPort.getCurrentPrices(exchangeCoinIds).toMap();
     }
 }

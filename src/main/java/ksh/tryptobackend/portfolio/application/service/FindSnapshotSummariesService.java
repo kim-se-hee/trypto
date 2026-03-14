@@ -19,14 +19,7 @@ public class FindSnapshotSummariesService implements FindSnapshotSummariesUseCas
     @Override
     public List<SnapshotSummaryResult> findLatestSummaries(LocalDate snapshotDate) {
         return portfolioSnapshotQueryPort.findLatestSummaries(snapshotDate).stream()
-            .map(this::toResult)
+            .map(UserSnapshotSummary::toResult)
             .toList();
-    }
-
-    private SnapshotSummaryResult toResult(UserSnapshotSummary summary) {
-        return new SnapshotSummaryResult(
-            summary.userId(), summary.roundId(),
-            summary.totalAssetKrw(), summary.totalInvestmentKrw()
-        );
     }
 }

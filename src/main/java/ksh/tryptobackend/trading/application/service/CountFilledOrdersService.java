@@ -26,6 +26,6 @@ public class CountFilledOrdersService implements CountFilledOrdersUseCase {
 
     @Override
     public Map<Long, Integer> countGroupByWalletIds(List<Long> walletIds) {
-        return orderQueryPort.countFilledGroupByWalletId(walletIds);
+        return orderQueryPort.countFilledGroupByWalletId(walletIds).toMap();
     }
 }

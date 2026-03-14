@@ -19,7 +19,7 @@ public class FindActiveHoldingsService implements FindActiveHoldingsUseCase {
     public List<HoldingInfoResult> findActiveHoldings(Long walletId) {
         return holdingQueryPort.findAllByWalletId(walletId).stream()
             .filter(Holding::isHolding)
-            .map(h -> new HoldingInfoResult(h.getCoinId(), h.getAvgBuyPrice(), h.getTotalQuantity()))
+            .map(HoldingInfoResult::from)
             .toList();
     }
 }

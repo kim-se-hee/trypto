@@ -7,7 +7,6 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRo
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRoundRuleCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRoundSeedCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundRuleResult;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
@@ -51,7 +50,7 @@ public class StartRoundService implements StartRoundUseCase {
         InvestmentRound savedRound = investmentRoundCommandPort.save(round);
         initializeWallets(savedRound.getRoundId(), seedAllocations);
 
-        return toResult(savedRound);
+        return StartRoundResult.from(savedRound);
     }
 
     private void validateActiveRound(Long userId) {
@@ -117,20 +116,4 @@ public class StartRoundService implements StartRoundUseCase {
         }
     }
 
-    private StartRoundResult toResult(InvestmentRound round) {
-        List<StartRoundRuleResult> ruleResults = round.getRules().stream()
-            .map(rule -> new StartRoundRuleResult(rule.getRuleId(), rule.getRuleType(), rule.getThresholdValue()))
-            .toList();
-
-        return new StartRoundResult(
-            round.getRoundId(),
-            round.getRoundNumber(),
-            round.getStatus(),
-            round.getInitialSeed(),
-            round.getEmergencyFundingLimit(),
-            round.getEmergencyChargeCount(),
-            ruleResults,
-            round.getStartedAt()
-        );
-    }
 }

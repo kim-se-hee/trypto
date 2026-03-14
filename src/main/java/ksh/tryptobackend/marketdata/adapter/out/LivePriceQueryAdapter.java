@@ -12,6 +12,7 @@ import ksh.tryptobackend.marketdata.adapter.out.repository.CoinJpaRepository;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeCoinJpaRepository;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.LivePriceQueryPort;
+import ksh.tryptobackend.marketdata.domain.vo.LivePrices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -52,7 +53,7 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
     }
 
     @Override
-    public Map<Long, BigDecimal> getCurrentPrices(Set<Long> exchangeCoinIds) {
+    public LivePrices getCurrentPrices(Set<Long> exchangeCoinIds) {
         List<Long> ids = new ArrayList<>(exchangeCoinIds);
         List<String> keys = ids.stream()
                 .map(id -> redisKeyCache.computeIfAbsent(id, this::buildRedisKey))
@@ -68,7 +69,7 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
             }
             result.put(ids.get(i), parseLastPrice(json));
         }
-        return result;
+        return new LivePrices(result);
     }
 
     private String buildRedisKey(Long exchangeCoinId) {

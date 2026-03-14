@@ -2,8 +2,6 @@ package ksh.tryptobackend.regretanalysis.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.application.port.in.FindInvestmentRulesUseCase;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.InvestmentRuleResult;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInfoResult;
 import ksh.tryptobackend.regretanalysis.application.port.in.GenerateRegretReportUseCase;
@@ -14,15 +12,14 @@ import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolatedOrder;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetails;
-import ksh.tryptobackend.regretanalysis.domain.vo.OrderExecution;
-import ksh.tryptobackend.regretanalysis.domain.vo.RuleBreach;
+import ksh.tryptobackend.regretanalysis.domain.vo.CurrentPrices;
 import ksh.tryptobackend.regretanalysis.domain.vo.TradeSide;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext.SoldPortion;
-import ksh.tryptobackend.trading.application.port.in.FindFilledOrdersUseCase;
-import ksh.tryptobackend.trading.application.port.in.FindViolationsUseCase;
+import ksh.tryptobackend.trading.application.port.in.FindViolatedOrdersUseCase;
+import ksh.tryptobackend.trading.application.port.in.dto.query.FindViolatedOrdersQuery;
+import ksh.tryptobackend.trading.application.port.in.dto.result.SoldPortionResult;
+import ksh.tryptobackend.trading.application.port.in.dto.result.ViolatedOrderResult;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
-import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
-import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +27,6 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,9 +36,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GenerateRegretReportService implements GenerateRegretReportUseCase {
 
-    private final FindInvestmentRulesUseCase findInvestmentRulesUseCase;
-    private final FindViolationsUseCase findViolationsUseCase;
-    private final FindFilledOrdersUseCase findFilledOrdersUseCase;
+    private final FindViolatedOrdersUseCase findViolatedOrdersUseCase;
     private final GetLivePriceUseCase getLivePriceUseCase;
     private final FindSnapshotsUseCase findSnapshotsUseCase;
     private final Clock clock;
@@ -68,79 +62,32 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
     }
 
     private List<ViolatedOrder> findViolations(GenerateRegretReportCommand command) {
-        List<InvestmentRuleResult> rules = findInvestmentRulesUseCase.findByRoundId(command.roundId());
-        if (rules.isEmpty()) {
-            return Collections.emptyList();
-        }
+        FindViolatedOrdersQuery query = new FindViolatedOrdersQuery(
+            command.roundId(), command.exchangeId(), command.walletId());
 
-        List<Long> ruleIds = rules.stream().map(InvestmentRuleResult::ruleId).toList();
-        Map<Long, InvestmentRuleResult> ruleMap = rules.stream()
-            .collect(Collectors.toMap(InvestmentRuleResult::ruleId, r -> r));
-
-        List<RuleBreach> breaches = findBreaches(ruleIds, command.exchangeId());
-        if (breaches.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> orderIds = breaches.stream().map(RuleBreach::orderId).toList();
-        Map<Long, OrderExecution> executionMap = findOrderExecutions(orderIds);
-
-        return breaches.stream()
-            .filter(breach -> executionMap.containsKey(breach.orderId()))
-            .map(breach -> buildViolatedOrder(breach, ruleMap, executionMap, command.walletId()))
+        return findViolatedOrdersUseCase.findViolatedOrders(query).stream()
+            .map(this::toViolatedOrder)
             .toList();
     }
 
-    private List<RuleBreach> findBreaches(List<Long> ruleIds, Long exchangeId) {
-        return findViolationsUseCase.findByRuleIdsAndExchangeId(ruleIds, exchangeId).stream()
-            .map(r -> new RuleBreach(r.violationId(), r.orderId(), r.ruleId(), r.createdAt()))
+    private ViolatedOrder toViolatedOrder(ViolatedOrderResult result) {
+        List<SoldPortion> soldPortions = result.soldPortions().stream()
+            .map(sp -> new SoldPortion(sp.filledPrice(), sp.quantity()))
             .toList();
-    }
-
-    private Map<Long, OrderExecution> findOrderExecutions(List<Long> orderIds) {
-        return findFilledOrdersUseCase.findByOrderIds(orderIds).stream()
-            .map(this::toOrderExecution)
-            .collect(Collectors.toMap(OrderExecution::orderId, e -> e));
-    }
-
-    private OrderExecution toOrderExecution(FilledOrderResult result) {
-        return new OrderExecution(
-            result.orderId(), result.walletId(), result.exchangeCoinId(),
-            TradeSide.valueOf(result.side()),
-            result.amount(), result.quantity(), result.filledPrice(), result.filledAt());
-    }
-
-    private ViolatedOrder buildViolatedOrder(RuleBreach breach,
-                                              Map<Long, InvestmentRuleResult> ruleMap,
-                                              Map<Long, OrderExecution> executionMap,
-                                              Long walletId) {
-        InvestmentRuleResult rule = ruleMap.get(breach.ruleId());
-        OrderExecution execution = executionMap.get(breach.orderId());
-        List<SoldPortion> soldPortions = resolveSoldPortions(execution, walletId);
 
         return ViolatedOrder.create(
-            execution.orderId(), rule.ruleId(), rule.ruleType(),
-            execution.side(), execution.filledPrice(),
-            execution.quantity(), execution.amount(),
-            execution.exchangeCoinId(), breach.createdAt(),
+            result.orderId(), result.ruleId(), result.ruleType(),
+            TradeSide.valueOf(result.side()), result.filledPrice(),
+            result.quantity(), result.amount(),
+            result.exchangeCoinId(), result.violatedAt(),
             soldPortions);
     }
 
-    private List<SoldPortion> resolveSoldPortions(OrderExecution execution, Long walletId) {
-        if (execution.isSell()) {
-            return Collections.emptyList();
-        }
-        return findFilledOrdersUseCase.findSellOrders(
-                walletId, execution.exchangeCoinId(), execution.filledAt()).stream()
-            .map(sell -> new SoldPortion(sell.filledPrice(), sell.quantity()))
-            .toList();
-    }
-
     private List<ViolationDetail> calculateViolationDetails(List<ViolatedOrder> violations) {
-        Map<Long, BigDecimal> currentPrices = resolveCurrentPrices(violations);
+        CurrentPrices currentPrices = resolveCurrentPrices(violations);
         return violations.stream()
             .map(v -> {
-                BigDecimal lossAmount = v.calculateLoss(currentPrices.get(v.getExchangeCoinId()));
+                BigDecimal lossAmount = v.calculateLoss(currentPrices.getPrice(v.getExchangeCoinId()));
                 return ViolationDetail.create(
                     v.getOrderId(), v.getRuleId(), v.getExchangeCoinId(),
                     lossAmount, lossAmount, v.getViolatedAt());
@@ -148,11 +95,12 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
             .toList();
     }
 
-    private Map<Long, BigDecimal> resolveCurrentPrices(List<ViolatedOrder> violations) {
-        return violations.stream()
+    private CurrentPrices resolveCurrentPrices(List<ViolatedOrder> violations) {
+        Map<Long, BigDecimal> priceMap = violations.stream()
             .map(ViolatedOrder::getExchangeCoinId)
             .distinct()
             .collect(Collectors.toMap(id -> id, getLivePriceUseCase::getCurrentPrice));
+        return new CurrentPrices(priceMap);
     }
 
     private AssetSnapshot getLatestSnapshot(GenerateRegretReportCommand command) {

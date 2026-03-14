@@ -17,7 +17,7 @@ public class FindInvestmentRulesService implements FindInvestmentRulesUseCase {
     @Override
     public List<InvestmentRuleResult> findByRoundId(Long roundId) {
         return ruleSettingQueryPort.findByRoundId(roundId).stream()
-            .map(rule -> new InvestmentRuleResult(rule.getRuleId(), rule.getRuleType(), rule.getThresholdValue()))
+            .map(InvestmentRuleResult::from)
             .toList();
     }
 }

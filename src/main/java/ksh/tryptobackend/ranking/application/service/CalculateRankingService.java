@@ -12,30 +12,25 @@ import ksh.tryptobackend.ranking.domain.vo.EligibleRound;
 import ksh.tryptobackend.ranking.domain.vo.EligibleRounds;
 import ksh.tryptobackend.ranking.domain.vo.RankingCandidates;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
-import ksh.tryptobackend.ranking.domain.vo.RoundKey;
+import ksh.tryptobackend.ranking.domain.vo.RoundTradeCounts;
 import ksh.tryptobackend.ranking.domain.vo.SnapshotSummaries;
 import ksh.tryptobackend.ranking.domain.vo.SnapshotSummary;
-import ksh.tryptobackend.trading.application.port.in.CountFilledOrdersUseCase;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
-import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
+import ksh.tryptobackend.trading.application.port.in.CountTradesByRoundIdsUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CalculateRankingService implements CalculateRankingUseCase {
 
     private final FindActiveRoundsUseCase findActiveRoundsUseCase;
-    private final FindWalletUseCase findWalletUseCase;
-    private final CountFilledOrdersUseCase countFilledOrdersUseCase;
+    private final CountTradesByRoundIdsUseCase countTradesByRoundIdsUseCase;
     private final FindSnapshotSummariesUseCase findSnapshotSummariesUseCase;
     private final RankingCommandPort rankingCommandPort;
     private final Clock clock;
@@ -61,33 +56,28 @@ public class CalculateRankingService implements CalculateRankingUseCase {
 
     private EligibleRounds findEligibleRounds(LocalDate snapshotDate) {
         List<ActiveRoundResult> activeRounds = findActiveRoundsUseCase.findAllActiveRounds();
-        List<Long> roundIds = activeRounds.stream()
-            .map(ActiveRoundResult::roundId)
-            .toList();
+        List<Long> roundIds = activeRounds.stream().map(ActiveRoundResult::roundId).toList();
 
-        List<WalletResult> wallets = findWalletUseCase.findByRoundIds(roundIds);
-        List<Long> walletIds = wallets.stream()
-            .map(WalletResult::walletId)
-            .toList();
-
-        Map<Long, Integer> tradeCountByWalletId = countFilledOrdersUseCase.countGroupByWalletIds(walletIds);
-
-        Map<Long, Integer> tradeCountByRoundId = wallets.stream()
-            .collect(Collectors.groupingBy(
-                WalletResult::roundId,
-                Collectors.summingInt(w -> tradeCountByWalletId.getOrDefault(w.walletId(), 0))
-            ));
+        RoundTradeCounts roundTradeCounts = toRoundTradeCounts(roundIds);
 
         List<EligibleRound> eligibleRoundList = activeRounds.stream()
-            .map(round -> new EligibleRound(
-                round.userId(),
-                round.roundId(),
-                tradeCountByRoundId.getOrDefault(round.roundId(), 0),
-                round.startedAt()
-            ))
+            .map(round -> toEligibleRound(round, roundTradeCounts))
             .toList();
 
         return EligibleRounds.of(eligibleRoundList, snapshotDate);
+    }
+
+    private RoundTradeCounts toRoundTradeCounts(List<Long> roundIds) {
+        Map<Long, Integer> countByRoundId = countTradesByRoundIdsUseCase.countTradesByRoundIds(roundIds);
+        return new RoundTradeCounts(countByRoundId);
+    }
+
+    private EligibleRound toEligibleRound(ActiveRoundResult round, RoundTradeCounts roundTradeCounts) {
+        return new EligibleRound(
+            round.userId(), round.roundId(),
+            roundTradeCounts.getCount(round.roundId()),
+            round.startedAt()
+        );
     }
 
     private SnapshotSummaries loadSummariesOf(LocalDate date) {
@@ -95,9 +85,6 @@ public class CalculateRankingService implements CalculateRankingUseCase {
             .map(r -> new SnapshotSummary(r.userId(), r.roundId(), r.totalAssetKrw(), r.totalInvestmentKrw()))
             .toList();
 
-        Map<RoundKey, BigDecimal> totalAssetMap = summaries.stream()
-            .collect(Collectors.toMap(SnapshotSummary::roundKey, SnapshotSummary::totalAssetKrw));
-
-        return new SnapshotSummaries(totalAssetMap);
+        return new SnapshotSummaries(SnapshotSummary.toTotalAssetMap(summaries));
     }
 }

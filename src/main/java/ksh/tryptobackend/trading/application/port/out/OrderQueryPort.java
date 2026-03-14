@@ -5,9 +5,10 @@ import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
+import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 public interface OrderQueryPort {
 
@@ -22,5 +23,5 @@ public interface OrderQueryPort {
 
     int countFilledByWalletId(Long walletId);
 
-    Map<Long, Integer> countFilledGroupByWalletId(List<Long> walletIds);
+    FilledOrderCounts countFilledGroupByWalletId(List<Long> walletIds);
 }

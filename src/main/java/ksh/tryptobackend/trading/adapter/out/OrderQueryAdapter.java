@@ -9,6 +9,7 @@ import ksh.tryptobackend.trading.adapter.out.entity.QOrderJpaEntity;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.application.port.out.dto.OrderInfo;
 import ksh.tryptobackend.trading.domain.model.Order;
+import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
@@ -89,9 +90,9 @@ public class OrderQueryAdapter implements OrderQueryPort {
     }
 
     @Override
-    public Map<Long, Integer> countFilledGroupByWalletId(List<Long> walletIds) {
+    public FilledOrderCounts countFilledGroupByWalletId(List<Long> walletIds) {
         if (walletIds.isEmpty()) {
-            return Collections.emptyMap();
+            return new FilledOrderCounts(Collections.emptyMap());
         }
 
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
@@ -105,11 +106,12 @@ public class OrderQueryAdapter implements OrderQueryPort {
             .groupBy(o.walletId)
             .fetch();
 
-        return results.stream()
+        Map<Long, Integer> countMap = results.stream()
             .collect(Collectors.toMap(
                 tuple -> tuple.get(o.walletId),
                 tuple -> tuple.get(o.walletId.count()).intValue()
             ));
+        return new FilledOrderCounts(countMap);
     }
 
     @Override

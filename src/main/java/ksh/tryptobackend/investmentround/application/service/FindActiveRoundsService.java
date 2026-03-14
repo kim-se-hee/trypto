@@ -17,7 +17,7 @@ public class FindActiveRoundsService implements FindActiveRoundsUseCase {
     @Override
     public List<ActiveRoundResult> findAllActiveRounds() {
         return investmentRoundQueryPort.findAllActiveRounds().stream()
-            .map(info -> new ActiveRoundResult(info.roundId(), info.userId(), info.startedAt()))
+            .map(ActiveRoundResult::from)
             .toList();
     }
 }

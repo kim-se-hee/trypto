@@ -1,5 +1,7 @@
 package ksh.tryptobackend.portfolio.application.port.out.dto;
 
+import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInfoResult;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -12,4 +14,11 @@ public record SnapshotInfo(
     BigDecimal totalProfitRate,
     LocalDate snapshotDate
 ) {
+
+    public SnapshotInfoResult toResult() {
+        return new SnapshotInfoResult(
+            snapshotId, roundId, exchangeId,
+            totalAsset, totalInvestment, totalProfitRate, snapshotDate
+        );
+    }
 }
