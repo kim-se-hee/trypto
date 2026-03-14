@@ -1,4 +1,4 @@
-package ksh.tryptobackend.trading.application.port.out;
+package ksh.tryptobackend.marketdata.application.port.out;
 
 import java.math.BigDecimal;
 

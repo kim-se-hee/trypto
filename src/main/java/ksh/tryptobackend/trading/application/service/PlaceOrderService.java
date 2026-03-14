@@ -10,8 +10,8 @@ import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
 import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetPriceChangeRateUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
-import ksh.tryptobackend.trading.application.port.out.PriceChangeRateQueryPort;
 import ksh.tryptobackend.trading.domain.model.Holding;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
@@ -38,9 +38,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
     private final OrderCommandPort orderCommandPort;
     private final HoldingCommandPort holdingCommandPort;
-    private final PriceChangeRateQueryPort priceChangeRatePort;
 
     private final GetLivePriceUseCase getLivePriceUseCase;
+    private final GetPriceChangeRateUseCase getPriceChangeRateUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
 
@@ -115,7 +115,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             .findByWalletIdAndCoinId(command.walletId(), mapping.coinId())
             .orElseGet(() -> Holding.empty(command.walletId(), mapping.coinId()));
 
-        BigDecimal changeRate = priceChangeRatePort.getChangeRate(command.exchangeCoinId());
+        BigDecimal changeRate = getPriceChangeRateUseCase.getChangeRate(command.exchangeCoinId());
 
         LocalDate today = LocalDate.now(clock);
         long todayOrderCount = orderCommandPort.countByWalletIdAndCreatedAtBetween(
