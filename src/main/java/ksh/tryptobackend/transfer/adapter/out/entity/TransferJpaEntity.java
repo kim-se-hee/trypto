@@ -71,6 +71,9 @@ public class TransferJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     public static TransferJpaEntity fromDomain(Transfer transfer) {
         TransferJpaEntity entity = new TransferJpaEntity();
         entity.id = transfer.getTransferId();
@@ -87,6 +90,7 @@ public class TransferJpaEntity {
         entity.failureReason = transfer.getFailureReason();
         entity.frozenUntil = transfer.getFrozenUntil();
         entity.createdAt = transfer.getCreatedAt();
+        entity.completedAt = transfer.getCompletedAt();
         return entity;
     }
 
@@ -106,6 +110,7 @@ public class TransferJpaEntity {
             .failureReason(failureReason)
             .frozenUntil(frozenUntil)
             .createdAt(createdAt)
+            .completedAt(completedAt)
             .build();
     }
 }

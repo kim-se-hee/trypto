@@ -33,6 +33,7 @@ public class Transfer {
     private final TransferFailureReason failureReason;
     private final LocalDateTime frozenUntil;
     private final LocalDateTime createdAt;
+    private LocalDateTime completedAt;
 
     public static Transfer create(UUID idempotencyKey, Long fromWalletId,
                                    Long coinId, String chain, String toAddress, String toTag,
@@ -48,8 +49,9 @@ public class Transfer {
         };
     }
 
-    public void refund() {
+    public void refund(LocalDateTime refundedAt) {
         this.status = TransferStatus.REFUNDED;
+        this.completedAt = refundedAt;
     }
 
     public BigDecimal getTotalDeduction() {
@@ -85,6 +87,7 @@ public class Transfer {
             .fee(fee)
             .status(TransferStatus.SUCCESS)
             .createdAt(createdAt)
+            .completedAt(createdAt)
             .build();
     }
 
