@@ -5,7 +5,7 @@
 | 도메인 | Aggregate Root | Entity | Value Object |
 |--------|---------------|--------|--------------|
 | User | User | — | — |
-| Wallet | Wallet | WalletBalance, DepositAddress | DepositTargetExchange |
+| Wallet | Wallet | WalletBalance, DepositAddress | DepositTargetExchange, WalletBalances |
 | Transfer | Transfer | — | TransferStatus, TransferType, TransferFailureReason, TransferBalanceChange, TransferDestination, TransferDestinationChain, TransferSourceExchange, WithdrawalCondition, TransferWallet, TransferDepositAddress |
 | Trading | Order, Holding | RuleViolation | Side, OrderType, OrderStatus, OrderMode, Fee, Quantity, BalanceChange, OrderAmountPolicy, TradingVenue, RuleViolationRef, FilledOrder, FilledOrderCounts, CoinExchangeMapping |
 | MarketData | Exchange, Coin, ExchangeCoin | ExchangeCoinChain, WithdrawalFee | ExchangeMarketType, CoinSymbols, DailyClosePrice, ExchangeCoinIdMap, ExchangeSummary, LivePrices |
@@ -18,6 +18,7 @@
 
 **소유 관계:**
 - Wallet → WalletBalance, DepositAddress
+- WalletBalances → WalletBalance
 - Transfer → TransferBalanceChange, TransferDestination
 - TradingVenue → OrderAmountPolicy
 - Order → RuleViolation
@@ -53,7 +54,8 @@
 
 | From → To | UseCase | 용도 |
 |-----------|---------|------|
-| Wallet → MarketData | FindExchangeDetailUseCase, FindExchangeCoinChainUseCase | 입금 주소 발급 시 거래소·체인 확인 |
+| Wallet → MarketData | FindExchangeDetailUseCase, FindExchangeCoinChainUseCase, FindCoinInfoUseCase | 입금 주소 발급 시 거래소·체인 확인, 잔고 조회 시 기축통화 심볼 조회 |
+| Wallet → InvestmentRound | FindRoundInfoUseCase | 잔고 조회 시 소유권 검증 |
 | InvestmentRound → MarketData | FindExchangeDetailUseCase | 거래소 기축통화 확인 |
 | InvestmentRound → Wallet | CreateWalletWithBalanceUseCase, FindWalletUseCase, ManageWalletBalanceUseCase | 지갑 생성, 긴급 충전 시 지갑 조회·잔고 반영 |
 | Trading → Wallet | GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindWalletUseCase | 잔고 검증·반영, walletId→roundId 조회 |
