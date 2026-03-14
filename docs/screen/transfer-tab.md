@@ -19,7 +19,7 @@
 |--------|------|----------|------|
 | walletId ↔ exchangeId 매핑 | 활성 라운드 API | 라운드 시작 시 1회 | O |
 | 거래소 상장 코인 목록 | 거래소 코인 목록 API | 앱 로딩 시 1회 | O (마켓탭과 공유) |
-| 잔고 (available, locked) | 잔고 조회 API | 탭 진입 시 / 이벤트 수신 시 fresh fetch | X |
+| 잔고 (available, locked) | 잔고 조회 API | 탭 진입·이벤트 수신 시 fresh fetch, 송금 후 로컬 갱신 | X |
 | 체인 목록 (exchangeCoinChain) | 체인 목록 API | 코인 선택 시 | O (exchangeId + coinId 키) |
 | 출금 수수료 (fee, minWithdrawal) | 출금 수수료 API | 네트워크 선택 시 | O (exchangeId+coinId+chain 키) |
 | 입금 주소 (address, tag) | 입금 주소 API | 네트워크 선택 시 | O (한 번 발급되면 불변) |
