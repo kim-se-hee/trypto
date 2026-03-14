@@ -9,7 +9,6 @@ import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderComm
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
-import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
@@ -64,10 +63,7 @@ public class CancelOrderService implements CancelOrderUseCase {
 
     private TradingVenue getTradingVenue(Long exchangeId) {
         return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .map(detail -> new TradingVenue(
-                detail.feeRate(),
-                detail.baseCurrencyCoinId(),
-                detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS))
+            .map(detail -> TradingVenue.of(detail.feeRate(), detail.baseCurrencyCoinId(), detail.domestic()))
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 }

@@ -9,7 +9,6 @@ import ksh.tryptobackend.trading.application.port.in.dto.query.GetOrderAvailabil
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
-import ksh.tryptobackend.trading.domain.vo.OrderAmountPolicy;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
@@ -47,10 +46,7 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
 
     private TradingVenue getTradingVenue(Long exchangeId) {
         return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .map(detail -> new TradingVenue(
-                detail.feeRate(),
-                detail.baseCurrencyCoinId(),
-                detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS))
+            .map(detail -> TradingVenue.of(detail.feeRate(), detail.baseCurrencyCoinId(), detail.domestic()))
             .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 

@@ -15,6 +15,11 @@ public class TradingVenue {
         this.orderAmountPolicy = orderAmountPolicy;
     }
 
+    public static TradingVenue of(BigDecimal feeRate, Long baseCurrencyCoinId, boolean domestic) {
+        OrderAmountPolicy policy = domestic ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
+        return new TradingVenue(feeRate, baseCurrencyCoinId, policy);
+    }
+
     public Fee calculateFee(BigDecimal filledAmount) {
         return Fee.calculate(filledAmount, feeRate);
     }
