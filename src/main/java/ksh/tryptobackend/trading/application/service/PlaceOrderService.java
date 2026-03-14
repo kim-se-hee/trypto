@@ -110,7 +110,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                                                           BigDecimal currentPrice) {
         Holding holding = holdingCommandPort
             .findByWalletIdAndCoinId(walletId, coinId)
-            .orElse(null);
+            .orElseGet(() -> Holding.empty(walletId, coinId));
 
         BigDecimal changeRate = order.isBuyOrder()
             ? priceChangeRatePort.getChangeRate(exchangeCoinId)
@@ -124,9 +124,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             walletId,
             order.isBuyOrder(),
             changeRate,
-            holding != null ? holding.getAvgBuyPrice() : null,
-            holding != null ? holding.getTotalQuantity() : null,
-            holding != null ? holding.getAveragingDownCount() : 0,
+            holding.getAvgBuyPrice(),
+            holding.getTotalQuantity(),
+            holding.getAveragingDownCount(),
             currentPrice,
             todayOrderCount,
             LocalDateTime.now(clock)
