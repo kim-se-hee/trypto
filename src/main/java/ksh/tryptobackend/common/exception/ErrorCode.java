@@ -57,7 +57,8 @@ public enum ErrorCode {
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 
     INVALID_CANDLE_INTERVAL(400, "invalid.candle.interval"),
-    INVALID_CANDLE_LIMIT(400, "invalid.candle.limit"),
+    INVALID_EXCHANGE_NAME(400, "invalid.exchange.name"),
+    INVALID_COIN_SYMBOL(400, "invalid.coin.symbol"),
     ;
 
     private final int status;
