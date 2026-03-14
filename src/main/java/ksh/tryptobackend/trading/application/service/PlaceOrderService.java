@@ -37,14 +37,18 @@ import java.util.List;
 public class PlaceOrderService implements PlaceOrderUseCase {
 
     private final OrderCommandPort orderCommandPort;
-    private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
-    private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
+    private final HoldingCommandPort holdingCommandPort;
+    private final PriceChangeRateQueryPort priceChangeRatePort;
+
     private final GetLivePriceUseCase getLivePriceUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
-    private final HoldingCommandPort holdingCommandPort;
+
+    private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
+    private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
+
     private final CheckRuleViolationsUseCase checkRuleViolationsUseCase;
-    private final PriceChangeRateQueryPort priceChangeRatePort;
+
     private final Clock clock;
 
     @Override
