@@ -11,7 +11,7 @@
 | 자산 요약 카드 | 총 보유자산(보유 기축통화 + 코인 평가금액 합계), 총매수(전체 코인 매수금액 합계), 총평가(전체 코인 평가금액 합계), 평가손익(총평가 − 총매수), 수익률(평가손익 / 총매수 × 100) |
 | 보유 코인 목록 | 코인명, 보유수량, 평균매수가, 현재가, 평가금액, 평가손익, 수익률 |
 | 자산 구성 | 도넛 차트 — 코인별 평가금액 비중(%), 중앙에 총평가 표시 |
-| 정렬 | 코인명, 보유수량, 평균매수가, 현재가, 평가금액, 평가손익, 수익률 — 클라이언트 정렬 |
+
 
 ## 잔고 용어 정의
 
@@ -113,10 +113,21 @@ STOMP user destination: `/user/queue/events`
 
 | eventType | 발생 시점 | 프론트 동작 |
 |-----------|----------|-----------|
-| `ORDER_FILLED` | 지정가 주문 체결  | 포트폴리오 API refetch (holdings + 잔고 변동) |
+| `ORDER_FILLED` | 지정가 주문 체결  | 해당 holding만 로컬 갱신 + 자산요약 재계산 (refetch 없음) |
 
-- 메시지 형식: `{eventType, walletId, orderId}`
-- 현재 walletId와 일치할 때만 refetch 트리거
+- 메시지 형식: `{eventType, walletId, orderId, coinId, side, quantity, price, fee}`
+- 현재 walletId와 일치할 때만 로컬 갱신 트리거
+- 매수 체결: holding의 qty 증가 + avgBuyPrice 재계산 + baseCurrencyBalance 차감 (price × qty + fee)
+- 매도 체결: holding의 qty 감소 (전량 매도 시 목록에서 제거) + baseCurrencyBalance 증가 (price × qty - fee)
+
+## 송금 후 갱신 (동기)
+
+송금은 사용자가 직접 트리거하는 동기 API 호출이므로 WebSocket 이벤트 없이 API 응답으로 갱신한다.
+
+- 송금 API 응답의 `status`, `fee`를 확인한다
+- SUCCESS: `baseCurrencyBalance -= amount + fee` (프론트가 요청 시 보낸 amount + 응답의 fee로 계산)
+- FROZEN: `baseCurrencyBalance`는 변경 없음 (동결은 총 잔고에 포함)
+- 목적지 거래소 잔고는 탭 전환 시 fresh fetch로 반영된다
 
 # 현재가 실시간 갱신 전략
 
@@ -128,23 +139,9 @@ STOMP user destination: `/user/queue/events`
 
 이 방식으로 포트폴리오 API를 반복 호출하지 않고도 실시간 평가금액 갱신이 가능하다.
 
-# 정렬
-
-모두 클라이언트에서 수행한다. 정렬 기준(평가금액, 평가손익, 수익률 등)이 실시간 시세에 의존하므로 서버가 정렬해도 WebSocket 수신 시 즉시 무효화된다.
-
-| 정렬 기준 | 설명 |
-|-----------|------|
-| 코인명 | coinName 가나다순 |
-| 보유수량 | quantity DESC |
-| 평균매수가 | avgBuyPrice DESC |
-| 현재가 | currentPrice DESC |
-| 평가금액 | quantity × currentPrice DESC |
-| 평가손익 | (currentPrice - avgBuyPrice) × quantity DESC |
-| 수익률 | (currentPrice - avgBuyPrice) / avgBuyPrice DESC |
-
 # 미결 사항
 
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| 주문 체결 후 자동 갱신 | 설계 완료 | `/user/queue/events`의 `ORDER_FILLED` 이벤트로 refetch 트리거 |
+| 주문 체결 후 자동 갱신 | 설계 완료 | `/user/queue/events`의 `ORDER_FILLED` 이벤트로 해당 holding만 로컬 갱신 (refetch 없음) |
 | coinSymbol/coinName 제공 방식 | 미결정 | **현재**: 포트폴리오 API가 서버에서 FindCoinInfoUseCase를 호출하여 응답에 포함 (자기완결적 API). **대안**: API는 coinId만 반환하고, 프론트가 거래소 코인 목록 캐시(`coinMap`)로 매핑 (크로스 컨텍스트 의존 1개 제거). 성능 차이는 무의미하고, API 자기완결성 vs 크로스 컨텍스트 커플링 감소의 트레이드오프 |
