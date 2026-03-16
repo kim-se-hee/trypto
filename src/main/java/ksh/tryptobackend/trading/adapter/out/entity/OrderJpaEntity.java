@@ -64,6 +64,10 @@ public class OrderJpaEntity {
     @Column(name = "status", nullable = false, length = 10)
     private OrderStatus status;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -89,6 +93,7 @@ public class OrderJpaEntity {
         entity.fee = order.getFee() != null ? order.getFee().amount() : null;
         entity.feeRate = order.getFee() != null ? order.getFee().rate() : null;
         entity.status = order.getStatus();
+        entity.version = order.getVersion();
         entity.createdAt = order.getCreatedAt();
         entity.filledAt = order.getFilledAt();
         entity.violations = order.getViolations().stream()
@@ -108,7 +113,7 @@ public class OrderJpaEntity {
             id, idempotencyKey, walletId, exchangeCoinId,
             side, orderType, amount, new Quantity(quantity),
             price, filledPrice, domainFee, status,
-            createdAt, filledAt, domainViolations
+            version, createdAt, filledAt, domainViolations
         );
     }
 }
