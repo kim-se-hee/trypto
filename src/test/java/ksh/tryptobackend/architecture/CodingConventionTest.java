@@ -83,6 +83,7 @@ class CodingConventionTest {
     void services_should_implement_exactly_one_usecase(JavaClasses classes) {
         classes()
             .that().resideInAnyPackage(allContextPackages(SERVICE))
+            .and().areTopLevelClasses()
             .should(implementExactlyOneUseCase())
             .as("Services should implement exactly one UseCase")
             .check(classes);

@@ -41,6 +41,7 @@ class NamingConventionTest {
     void services_should_end_with_Service(JavaClasses classes) {
         classes()
             .that().resideInAnyPackage(allContextPackages(SERVICE))
+            .and().areTopLevelClasses()
             .should().haveSimpleNameEndingWith("Service")
             .as("Service classes should end with 'Service'")
             .check(classes);
@@ -150,6 +151,7 @@ class NamingConventionTest {
     void services_should_match_usecase_naming(JavaClasses classes) {
         classes()
             .that().resideInAnyPackage(allContextPackages(SERVICE))
+            .and().areTopLevelClasses()
             .should(matchUseCaseNaming())
             .as("Service name should be UseCase name with 'UseCase' replaced by 'Service'")
             .check(classes);

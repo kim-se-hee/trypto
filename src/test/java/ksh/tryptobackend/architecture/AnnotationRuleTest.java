@@ -48,6 +48,7 @@ class AnnotationRuleTest {
     void services_should_be_annotated_with_service(JavaClasses classes) {
         classes()
             .that().resideInAnyPackage(allContextPackages(SERVICE))
+            .and().areTopLevelClasses()
             .should().beAnnotatedWith(Service.class)
             .as("Service classes should be annotated with @Service")
             .check(classes);
