@@ -11,4 +11,8 @@ public record ExchangeSymbolKey(
         Objects.requireNonNull(exchange);
         Objects.requireNonNull(symbol);
     }
+
+    public static ExchangeSymbolKey of(String exchange, String coinSymbol, String baseCurrencySymbol) {
+        return new ExchangeSymbolKey(exchange, coinSymbol + "/" + baseCurrencySymbol);
+    }
 }

@@ -14,13 +14,12 @@ public class ExchangeCoinMappingCacheCommandAdapter implements ExchangeCoinMappi
     private final ConcurrentHashMap<ExchangeSymbolKey, Long> cache = new ConcurrentHashMap<>();
 
     @Override
-    public Optional<Long> resolve(String exchange, String symbol) {
-        return Optional.ofNullable(cache.get(new ExchangeSymbolKey(exchange, symbol)));
-    }
-
-    @Override
     public void loadAll(Map<ExchangeSymbolKey, Long> mappings) {
         cache.clear();
         cache.putAll(mappings);
+    }
+
+    Optional<Long> resolve(String exchange, String symbol) {
+        return Optional.ofNullable(cache.get(new ExchangeSymbolKey(exchange, symbol)));
     }
 }

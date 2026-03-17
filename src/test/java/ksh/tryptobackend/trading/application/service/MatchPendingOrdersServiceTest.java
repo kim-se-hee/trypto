@@ -1,9 +1,10 @@
 package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.trading.application.port.in.FillPendingOrderUseCase;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheCommandPort;
+import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderFillFailureCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheCommandPort;
+import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheQueryPort;
 import ksh.tryptobackend.trading.domain.vo.PendingOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,8 @@ import static org.mockito.Mockito.when;
 class MatchPendingOrdersServiceTest {
 
     @Mock private PendingOrderCacheCommandPort pendingOrderCacheCommandPort;
-    @Mock private ExchangeCoinMappingCacheCommandPort exchangeCoinMappingCacheCommandPort;
+    @Mock private PendingOrderCacheQueryPort pendingOrderCacheQueryPort;
+    @Mock private ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
     @Mock private OrderFillFailureCommandPort orderFillFailureCommandPort;
     @Mock private FillPendingOrderUseCase fillPendingOrderUseCase;
 
@@ -51,8 +53,9 @@ class MatchPendingOrdersServiceTest {
     @BeforeEach
     void setUp() {
         sut = new MatchPendingOrdersService(
-            pendingOrderCacheCommandPort, exchangeCoinMappingCacheCommandPort,
-            orderFillFailureCommandPort, fillPendingOrderUseCase, clock
+            pendingOrderCacheCommandPort, pendingOrderCacheQueryPort,
+            exchangeCoinMappingCacheQueryPort, orderFillFailureCommandPort,
+            fillPendingOrderUseCase, clock
         );
     }
 
@@ -64,14 +67,14 @@ class MatchPendingOrdersServiceTest {
         @DisplayName("매핑이 없으면 매칭 없이 종료")
         void matchOrders_noMapping_skips() {
             // Given
-            when(exchangeCoinMappingCacheCommandPort.resolve(EXCHANGE, SYMBOL))
+            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.empty());
 
             // When
             sut.matchOrders(EXCHANGE, SYMBOL, CURRENT_PRICE);
 
             // Then
-            verify(pendingOrderCacheCommandPort, never()).findMatchedOrders(any(), any());
+            verify(pendingOrderCacheQueryPort, never()).findMatchedOrders(any(), any());
         }
     }
 
@@ -83,9 +86,9 @@ class MatchPendingOrdersServiceTest {
         @DisplayName("매칭 대상이 없으면 체결 없이 종료")
         void matchOrders_noMatchedOrders_skips() {
             // Given
-            when(exchangeCoinMappingCacheCommandPort.resolve(EXCHANGE, SYMBOL))
+            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
-            when(pendingOrderCacheCommandPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
+            when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(Collections.emptyList());
 
             // When
@@ -101,9 +104,9 @@ class MatchPendingOrdersServiceTest {
             // Given
             PendingOrder order1 = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
             PendingOrder order2 = new PendingOrder(2L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("52000000"));
-            when(exchangeCoinMappingCacheCommandPort.resolve(EXCHANGE, SYMBOL))
+            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
-            when(pendingOrderCacheCommandPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
+            when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order1, order2));
 
             // When
@@ -126,9 +129,9 @@ class MatchPendingOrdersServiceTest {
         void matchOrders_optimisticLockFailure_skipsWithoutReAdd() {
             // Given
             PendingOrder order = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
-            when(exchangeCoinMappingCacheCommandPort.resolve(EXCHANGE, SYMBOL))
+            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
-            when(pendingOrderCacheCommandPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
+            when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order));
             doThrow(new OptimisticLockingFailureException("version conflict"))
                 .when(fillPendingOrderUseCase).fillOrder(1L, CURRENT_PRICE);
@@ -146,9 +149,9 @@ class MatchPendingOrdersServiceTest {
         void matchOrders_retryExhausted_reAddsAndRecordsFailure() {
             // Given
             PendingOrder order = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
-            when(exchangeCoinMappingCacheCommandPort.resolve(EXCHANGE, SYMBOL))
+            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
-            when(pendingOrderCacheCommandPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
+            when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order));
             doThrow(new RuntimeException("DB connection timeout"))
                 .when(fillPendingOrderUseCase).fillOrder(1L, CURRENT_PRICE);

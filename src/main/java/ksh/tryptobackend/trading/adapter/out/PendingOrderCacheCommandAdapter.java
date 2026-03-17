@@ -31,7 +31,13 @@ public class PendingOrderCacheCommandAdapter implements PendingOrderCacheCommand
     }
 
     @Override
-    public List<PendingOrder> findMatchedOrders(Long exchangeCoinId, BigDecimal currentPrice) {
+    public void addAll(List<PendingOrder> pendingOrders) {
+        for (PendingOrder order : pendingOrders) {
+            add(order);
+        }
+    }
+
+    List<PendingOrder> findMatchedOrders(Long exchangeCoinId, BigDecimal currentPrice) {
         CopyOnWriteArrayList<PendingOrder> orders = cache.get(exchangeCoinId);
         if (orders == null) {
             return Collections.emptyList();
@@ -39,12 +45,5 @@ public class PendingOrderCacheCommandAdapter implements PendingOrderCacheCommand
         return orders.stream()
             .filter(o -> o.matches(currentPrice))
             .toList();
-    }
-
-    @Override
-    public void addAll(List<PendingOrder> pendingOrders) {
-        for (PendingOrder order : pendingOrders) {
-            add(order);
-        }
     }
 }

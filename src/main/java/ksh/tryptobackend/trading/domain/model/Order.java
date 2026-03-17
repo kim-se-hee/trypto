@@ -133,7 +133,7 @@ public class Order {
     }
 
     public void fill(LocalDateTime now) {
-        if (this.status != OrderStatus.PENDING) {
+        if (!isPending()) {
             throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
         }
         this.status = OrderStatus.FILLED;

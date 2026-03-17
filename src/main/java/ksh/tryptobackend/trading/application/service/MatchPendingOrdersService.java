@@ -2,9 +2,10 @@ package ksh.tryptobackend.trading.application.service;
 
 import ksh.tryptobackend.trading.application.port.in.FillPendingOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.MatchPendingOrdersUseCase;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheCommandPort;
+import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderFillFailureCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheCommandPort;
+import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheQueryPort;
 import ksh.tryptobackend.trading.domain.model.OrderFillFailure;
 import ksh.tryptobackend.trading.domain.vo.PendingOrder;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,8 @@ public class MatchPendingOrdersService implements MatchPendingOrdersUseCase {
     private static final long[] RETRY_BACKOFF_MS = {50, 100};
 
     private final PendingOrderCacheCommandPort pendingOrderCacheCommandPort;
-    private final ExchangeCoinMappingCacheCommandPort exchangeCoinMappingCacheCommandPort;
+    private final PendingOrderCacheQueryPort pendingOrderCacheQueryPort;
+    private final ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
     private final OrderFillFailureCommandPort orderFillFailureCommandPort;
 
     private final FillPendingOrderUseCase fillPendingOrderUseCase;
@@ -40,7 +42,7 @@ public class MatchPendingOrdersService implements MatchPendingOrdersUseCase {
             return;
         }
 
-        List<PendingOrder> matchedOrders = pendingOrderCacheCommandPort
+        List<PendingOrder> matchedOrders = pendingOrderCacheQueryPort
             .findMatchedOrders(exchangeCoinId, currentPrice);
         if (matchedOrders.isEmpty()) {
             return;
@@ -53,7 +55,7 @@ public class MatchPendingOrdersService implements MatchPendingOrdersUseCase {
     }
 
     private Long resolveExchangeCoinId(String exchange, String symbol) {
-        return exchangeCoinMappingCacheCommandPort.resolve(exchange, symbol)
+        return exchangeCoinMappingCacheQueryPort.resolve(exchange, symbol)
             .orElseGet(() -> {
                 log.warn("매핑 변환 실패: exchange={}, symbol={}", exchange, symbol);
                 return null;
