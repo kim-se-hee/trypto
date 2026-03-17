@@ -141,8 +141,8 @@ class NamingConventionTest {
         classes()
             .that().resideInAnyPackage(allContextDirectPackages(PORT_OUT))
             .and().areInterfaces()
-            .should(endWithQueryPortOrCommandPort())
-            .as("Output Port interfaces should end with 'QueryPort' or 'CommandPort'")
+            .should(endWithQueryPortOrCommandPortOrEventPort())
+            .as("Output Port interfaces should end with 'QueryPort', 'CommandPort', or 'EventPort'")
             .check(classes);
     }
 
@@ -166,14 +166,14 @@ class NamingConventionTest {
             .check(classes);
     }
 
-    private static ArchCondition<JavaClass> endWithQueryPortOrCommandPort() {
-        return new ArchCondition<>("end with 'QueryPort' or 'CommandPort'") {
+    private static ArchCondition<JavaClass> endWithQueryPortOrCommandPortOrEventPort() {
+        return new ArchCondition<>("end with 'QueryPort', 'CommandPort', or 'EventPort'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 String name = javaClass.getSimpleName();
-                if (!name.endsWith("QueryPort") && !name.endsWith("CommandPort")) {
+                if (!name.endsWith("QueryPort") && !name.endsWith("CommandPort") && !name.endsWith("EventPort")) {
                     events.add(SimpleConditionEvent.violated(javaClass,
-                        name + " should end with 'QueryPort' or 'CommandPort'"));
+                        name + " should end with 'QueryPort', 'CommandPort', or 'EventPort'"));
                 }
             }
         };

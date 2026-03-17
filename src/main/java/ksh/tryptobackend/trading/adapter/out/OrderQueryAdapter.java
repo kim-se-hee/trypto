@@ -11,6 +11,7 @@ import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
+import ksh.tryptobackend.trading.domain.vo.PendingOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,17 @@ import java.util.stream.Collectors;
 public class OrderQueryAdapter implements OrderQueryPort {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<PendingOrder> findAllPendingOrders() {
+        QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
+        return queryFactory
+            .select(Projections.constructor(PendingOrder.class,
+                o.id, o.exchangeCoinId, o.side, o.price))
+            .from(o)
+            .where(o.status.eq(OrderStatus.PENDING))
+            .fetch();
+    }
 
     @Override
     public List<Order> findByCursor(Long walletId, Long exchangeCoinId, Side side,

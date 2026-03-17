@@ -161,6 +161,15 @@ erDiagram
         datetime created_at "위반 시각"
     }
 
+    ORDER_FILL_FAILURE {
+        id order_fill_failure_id PK "주 식별자"
+        id order_id FK "주문 ID"
+        number attempted_price "체결 시도 가격"
+        datetime failed_at "실패 시각"
+        string reason "실패 사유"
+        boolean resolved "해결 여부"
+    }
+
     SWAP {
         id swap_id PK "주 식별자"
         id wallet_id FK "지갑 ID"
@@ -278,6 +287,7 @@ erDiagram
     COIN ||--o{ HOLDING : ""
     WALLET ||--o{ ORDERS : ""
     EXCHANGE_COIN ||--o{ ORDERS : ""
+    ORDERS ||--o{ ORDER_FILL_FAILURE : ""
     ORDERS ||--o{ RULE_VIOLATION : ""
     SWAP ||--o{ RULE_VIOLATION : ""
     INVESTMENT_RULE ||--o{ RULE_VIOLATION : ""

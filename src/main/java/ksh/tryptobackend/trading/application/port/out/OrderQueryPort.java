@@ -6,10 +6,14 @@ import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
+import ksh.tryptobackend.trading.domain.vo.PendingOrder;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderQueryPort {
+
+    List<PendingOrder> findAllPendingOrders();
 
     List<Order> findByCursor(Long walletId, Long exchangeCoinId, Side side,
                              OrderStatus status, Long cursorOrderId, int size);

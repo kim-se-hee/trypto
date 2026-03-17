@@ -12,12 +12,14 @@ import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.GetPriceChangeRateUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
+import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheCommandPort;
 import ksh.tryptobackend.trading.domain.model.Holding;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.OrderMode;
+import ksh.tryptobackend.trading.domain.vo.PendingOrder;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
@@ -38,6 +40,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
     private final OrderCommandPort orderCommandPort;
     private final HoldingCommandPort holdingCommandPort;
+    private final PendingOrderCacheCommandPort pendingOrderCacheCommandPort;
 
     private final GetLivePriceUseCase getLivePriceUseCase;
     private final GetPriceChangeRateUseCase getPriceChangeRateUseCase;
@@ -76,6 +79,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
         Order savedOrder = orderCommandPort.save(order);
         updateHoldingIfMarketOrder(order, command, mapping, currentPrice);
+        addToPendingCacheIfLimitOrder(savedOrder);
 
         return savedOrder;
     }
@@ -141,6 +145,15 @@ public class PlaceOrderService implements PlaceOrderUseCase {
             case BalanceChange.Add a -> manageWalletBalanceUseCase.addBalance(walletId, a.coinId(), a.amount());
             case BalanceChange.Lock l -> manageWalletBalanceUseCase.lockBalance(walletId, l.coinId(), l.amount());
         }
+    }
+
+    private void addToPendingCacheIfLimitOrder(Order savedOrder) {
+        if (savedOrder.isMarketOrder()) {
+            return;
+        }
+        pendingOrderCacheCommandPort.add(new PendingOrder(
+            savedOrder.getId(), savedOrder.getExchangeCoinId(),
+            savedOrder.getSide(), savedOrder.getPrice()));
     }
 
     private void updateHoldingIfMarketOrder(Order order, PlaceOrderCommand command,

@@ -150,6 +150,103 @@ class OrderTest {
     }
 
     @Nested
+    @DisplayName("주문 체결")
+    class FillTest {
+
+        @Test
+        @DisplayName("PENDING 주문 체결 성공 - 상태가 FILLED로 변경되고 filledAt이 설정된다")
+        void fill_pendingOrder_filledSuccessfully() {
+            // Given
+            Order order = Order.createLimitBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+            LocalDateTime fillTime = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
+
+            // When
+            order.fill(fillTime);
+
+            // Then
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.FILLED);
+            assertThat(order.getFilledAt()).isEqualTo(fillTime);
+        }
+
+        @Test
+        @DisplayName("FILLED 주문에 fill 시도 - 예외 발생")
+        void fill_filledOrder_throwsException() {
+            // Given
+            Order order = Order.createMarketBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("100000"), new BigDecimal("100274000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+
+            // When & Then
+            assertThatThrownBy(() -> order.fill(LocalDateTime.now()))
+                .isInstanceOf(CustomException.class);
+        }
+
+        @Test
+        @DisplayName("CANCELLED 주문에 fill 시도 - 예외 발생")
+        void fill_cancelledOrder_throwsException() {
+            // Given
+            Order order = Order.createLimitBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+            order.cancel();
+
+            // When & Then
+            assertThatThrownBy(() -> order.fill(LocalDateTime.now()))
+                .isInstanceOf(CustomException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("isPending 판별")
+    class IsPendingTest {
+
+        @Test
+        @DisplayName("지정가 주문 생성 직후 - isPending이 true")
+        void isPending_limitOrder_true() {
+            // Given
+            Order order = Order.createLimitBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+
+            // When & Then
+            assertThat(order.isPending()).isTrue();
+        }
+
+        @Test
+        @DisplayName("시장가 주문 생성 직후 - isPending이 false")
+        void isPending_marketOrder_false() {
+            // Given
+            Order order = Order.createMarketBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("100000"), new BigDecimal("100274000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+
+            // When & Then
+            assertThat(order.isPending()).isFalse();
+        }
+
+        @Test
+        @DisplayName("체결된 주문 - isPending이 false")
+        void isPending_filledOrder_false() {
+            // Given
+            Order order = Order.createLimitBuyOrder(
+                UUID.randomUUID().toString(), 1L, 1L,
+                new BigDecimal("500000"), new BigDecimal("100000000"),
+                DOMESTIC_VENUE, LocalDateTime.now());
+            order.fill(LocalDateTime.now());
+
+            // When & Then
+            assertThat(order.isPending()).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("주문 취소")
     class CancelTest {
 

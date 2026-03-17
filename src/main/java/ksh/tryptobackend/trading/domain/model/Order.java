@@ -132,6 +132,18 @@ public class Order {
         this.violations.addAll(newViolations);
     }
 
+    public void fill(LocalDateTime now) {
+        if (!isPending()) {
+            throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
+        }
+        this.status = OrderStatus.FILLED;
+        this.filledAt = now;
+    }
+
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
+
     public void cancel() {
         if (this.status == OrderStatus.CANCELLED) {
             return;

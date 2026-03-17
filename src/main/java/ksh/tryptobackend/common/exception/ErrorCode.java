@@ -17,6 +17,7 @@ public enum ErrorCode {
     PRICE_REQUIRED_FOR_LIMIT(400, "price.required.for.limit"),
     UNSUPPORTED_BASE_CURRENCY(400, "unsupported.base.currency"),
     ORDER_NOT_CANCELLABLE(400, "order.not.cancellable"),
+    ORDER_NOT_FILLABLE(400, "order.not.fillable"),
     UNSUPPORTED_CHAIN(400, "unsupported.chain"),
     BASE_CURRENCY_NOT_TRANSFERABLE(400, "base.currency.not.transferable"),
     BELOW_MIN_WITHDRAWAL(400, "below.min.withdrawal"),

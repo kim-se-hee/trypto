@@ -5,6 +5,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.RabbitMQContainer;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestContainerConfiguration {
@@ -19,5 +20,11 @@ public class TestContainerConfiguration {
     @ServiceConnection
     static RedisContainer redisContainer() {
         return new RedisContainer("redis:7.4");
+    }
+
+    @Bean
+    @ServiceConnection
+    static RabbitMQContainer rabbitMQContainer() {
+        return new RabbitMQContainer("rabbitmq:3.13-management");
     }
 }
