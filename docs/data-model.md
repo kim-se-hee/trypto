@@ -6,7 +6,7 @@
 |--------|---------------|--------|--------------|
 | User | User | — | — |
 | Wallet | Wallet | WalletBalance, DepositAddress | DepositTargetExchange, WalletBalances |
-| Transfer | Transfer | — | TransferStatus, TransferType, TransferFailureReason, TransferBalanceChange, TransferDestination, TransferDestinationChain, TransferSourceExchange, WithdrawalCondition, TransferWallet, TransferDepositAddress |
+| Transfer | Transfer | — | TransferStatus, TransferType, TransferBalanceChange, TransferWallet |
 | Trading | Order, Holding, OrderFillFailure | RuleViolation | Side, OrderType, OrderStatus, OrderMode, Fee, Quantity, BalanceChange, OrderAmountPolicy, TradingVenue, RuleViolationRef, FilledOrder, FilledOrderCounts, CoinExchangeMapping, PendingOrder, ExchangeSymbolKey, OrderFilledEvent |
 | MarketData | Exchange, Coin, ExchangeCoin | ExchangeCoinChain, WithdrawalFee | ExchangeMarketType, CoinSymbols, DailyClosePrice, ExchangeCoinIdMap, ExchangeSummary, LivePrices |
 | Portfolio | PortfolioSnapshot | SnapshotDetail, EvaluatedHolding | ActiveRound, ActiveRounds, ExchangeSnapshot, KrwConversionRate, WalletSnapshot, WalletSnapshots, EvaluatedHoldings, PortfolioHolding, PortfolioHoldings, CoinSnapshot, CoinSnapshotMap, HoldingSnapshot, HoldingSummary, SnapshotOverview, UserSnapshotSummary |
@@ -19,7 +19,7 @@
 **소유 관계:**
 - Wallet → WalletBalance, DepositAddress
 - WalletBalances → WalletBalance
-- Transfer → TransferBalanceChange, TransferDestination
+- Transfer → TransferBalanceChange
 - TradingVenue → OrderAmountPolicy
 - Order → RuleViolation
 - ViolationRules → ViolationRule
@@ -61,8 +61,7 @@
 | Trading → Wallet | GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindWalletUseCase | 잔고 검증·반영, walletId→roundId 조회 |
 | Trading → MarketData | GetLivePriceUseCase, FindExchangeDetailUseCase, FindExchangeCoinMappingUseCase | 시세 조회, 거래소-코인 매핑·수수료율 조회 |
 | Trading → InvestmentRound | CheckRuleViolationsUseCase | 투자 원칙 위반 검증 |
-| Transfer → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, FindDepositAddressUseCase, ResolveTransferDestinationUseCase, GetWalletOwnerIdUseCase | 잔고 차감/추가/잠금, 입금 주소 역조회, 송금 목적지 확인, 지갑 소유자 확인 |
-| Transfer → MarketData | FindWithdrawalFeeUseCase, FindExchangeCoinChainUseCase, FindExchangeDetailUseCase | 출금 수수료·체인 지원 확인 |
+| Transfer → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, ManageWalletBalanceUseCase, GetWalletOwnerIdUseCase | 잔고 차감/추가, 지갑 소유자 확인 |
 | Transfer → InvestmentRound | FindRoundInfoUseCase | 송금 내역 조회 시 라운드 정보 |
 | Portfolio → InvestmentRound | FindRoundInfoUseCase, SumEmergencyFundingUseCase, FindActiveRoundsUseCase | 라운드 정보 조회, 긴급 충전 합산, 스냅샷 대상 라운드 조회 |
 | Portfolio → Wallet | FindWalletUseCase, GetAvailableBalanceUseCase, GetWalletOwnerIdUseCase | 라운드별 지갑·잔고 조회, 지갑 소유자 확인 |

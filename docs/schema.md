@@ -110,17 +110,12 @@ erDiagram
         id transfer_id PK "주 식별자"
         uuid idempotency_key UK "멱등 키"
         id from_wallet_id FK "출발 지갑 ID"
-        id to_wallet_id FK "도착 지갑 ID (nullable)"
+        id to_wallet_id FK "도착 지갑 ID"
         id coin_id FK "송금 코인 ID"
-        string chain "사용 체인"
-        string to_address "입력한 도착 주소"
-        string to_tag "입력한 태그"
         number amount "송금 수량"
-        number fee "송금 수수료 (적용된 결과)"
-        string status "SUCCESS FROZEN REFUNDED"
-        string failure_reason "WRONG_ADDRESS WRONG_CHAIN MISSING_TAG (nullable)"
-        datetime frozen_until "동결 해제 시각 (nullable)"
+        string status "SUCCESS"
         datetime created_at "송금 시각"
+        datetime completed_at "완료 시각"
     }
 
     HOLDING {
