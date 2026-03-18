@@ -7,6 +7,4 @@ public sealed interface TransferBalanceChange {
     record Deduct(Long walletId, Long coinId, BigDecimal amount) implements TransferBalanceChange {}
 
     record Add(Long walletId, Long coinId, BigDecimal amount) implements TransferBalanceChange {}
-
-    record Lock(Long walletId, Long coinId, BigDecimal amount) implements TransferBalanceChange {}
 }

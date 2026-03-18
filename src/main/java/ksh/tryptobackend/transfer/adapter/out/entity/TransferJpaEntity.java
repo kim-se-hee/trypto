@@ -9,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
-import ksh.tryptobackend.transfer.domain.vo.TransferFailureReason;
 import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,37 +35,18 @@ public class TransferJpaEntity {
     @Column(name = "from_wallet_id", nullable = false)
     private Long fromWalletId;
 
-    @Column(name = "to_wallet_id")
+    @Column(name = "to_wallet_id", nullable = false)
     private Long toWalletId;
 
     @Column(name = "coin_id", nullable = false)
     private Long coinId;
 
-    @Column(name = "chain", nullable = false, length = 50)
-    private String chain;
-
-    @Column(name = "to_address", nullable = false, length = 255)
-    private String toAddress;
-
-    @Column(name = "to_tag", length = 255)
-    private String toTag;
-
     @Column(name = "amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal amount;
-
-    @Column(name = "fee", nullable = false, precision = 30, scale = 8)
-    private BigDecimal fee;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 10)
     private TransferStatus status;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "failure_reason", length = 20)
-    private TransferFailureReason failureReason;
-
-    @Column(name = "frozen_until")
-    private LocalDateTime frozenUntil;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -81,14 +61,8 @@ public class TransferJpaEntity {
         entity.fromWalletId = transfer.getFromWalletId();
         entity.toWalletId = transfer.getToWalletId();
         entity.coinId = transfer.getCoinId();
-        entity.chain = transfer.getChain();
-        entity.toAddress = transfer.getToAddress();
-        entity.toTag = transfer.getToTag();
         entity.amount = transfer.getAmount();
-        entity.fee = transfer.getFee();
         entity.status = transfer.getStatus();
-        entity.failureReason = transfer.getFailureReason();
-        entity.frozenUntil = transfer.getFrozenUntil();
         entity.createdAt = transfer.getCreatedAt();
         entity.completedAt = transfer.getCompletedAt();
         return entity;
@@ -101,14 +75,8 @@ public class TransferJpaEntity {
             .fromWalletId(fromWalletId)
             .toWalletId(toWalletId)
             .coinId(coinId)
-            .chain(chain)
-            .toAddress(toAddress)
-            .toTag(toTag)
             .amount(amount)
-            .fee(fee)
             .status(status)
-            .failureReason(failureReason)
-            .frozenUntil(frozenUntil)
             .createdAt(createdAt)
             .completedAt(completedAt)
             .build();

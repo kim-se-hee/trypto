@@ -1,8 +1,8 @@
 package ksh.tryptobackend.transfer.domain.model;
 
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.transfer.domain.vo.TransferBalanceChange;
-import ksh.tryptobackend.transfer.domain.vo.TransferDestination;
-import ksh.tryptobackend.transfer.domain.vo.TransferFailureReason;
 import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
 import ksh.tryptobackend.transfer.domain.vo.TransferType;
 import lombok.Builder;
@@ -17,105 +17,49 @@ import java.util.UUID;
 @Builder
 public class Transfer {
 
-    private static final long FROZEN_HOURS = 24;
-
     private final Long transferId;
     private final UUID idempotencyKey;
     private final Long fromWalletId;
     private final Long toWalletId;
     private final Long coinId;
-    private final String chain;
-    private final String toAddress;
-    private final String toTag;
     private final BigDecimal amount;
-    private final BigDecimal fee;
-    private TransferStatus status;
-    private final TransferFailureReason failureReason;
-    private final LocalDateTime frozenUntil;
+    private final TransferStatus status;
     private final LocalDateTime createdAt;
-    private LocalDateTime completedAt;
+    private final LocalDateTime completedAt;
 
-    public static Transfer create(UUID idempotencyKey, Long fromWalletId,
-                                   Long coinId, String chain, String toAddress, String toTag,
-                                   BigDecimal amount, BigDecimal fee,
-                                   TransferDestination destination, LocalDateTime createdAt) {
-        return switch (destination) {
-            case TransferDestination.Resolved r ->
-                success(idempotencyKey, fromWalletId, r.walletId(),
-                    coinId, chain, toAddress, toTag, amount, fee, createdAt);
-            case TransferDestination.Failed f ->
-                frozen(idempotencyKey, fromWalletId,
-                    coinId, chain, toAddress, toTag, amount, fee, f.reason(), createdAt);
-        };
-    }
-
-    public void refund(LocalDateTime refundedAt) {
-        this.status = TransferStatus.REFUNDED;
-        this.completedAt = refundedAt;
-    }
-
-    public BigDecimal getTotalDeduction() {
-        return amount.add(fee);
-    }
-
-    public List<TransferBalanceChange> planBalanceChanges() {
-        BigDecimal totalDeduction = getTotalDeduction();
-        return switch (status) {
-            case SUCCESS -> List.of(
-                new TransferBalanceChange.Deduct(fromWalletId, coinId, totalDeduction),
-                new TransferBalanceChange.Add(toWalletId, coinId, amount)
-            );
-            case FROZEN -> List.of(
-                new TransferBalanceChange.Lock(fromWalletId, coinId, totalDeduction)
-            );
-            default -> throw new IllegalStateException("지원하지 않는 송금 상태: " + status);
-        };
-    }
-
-    private static Transfer success(UUID idempotencyKey, Long fromWalletId, Long toWalletId,
-                                     Long coinId, String chain, String toAddress, String toTag,
-                                     BigDecimal amount, BigDecimal fee, LocalDateTime createdAt) {
+    public static Transfer create(UUID idempotencyKey, Long fromWalletId, Long toWalletId,
+                                   Long coinId, BigDecimal amount, LocalDateTime createdAt) {
+        validateDifferentWallet(fromWalletId, toWalletId);
         return Transfer.builder()
             .idempotencyKey(idempotencyKey)
             .fromWalletId(fromWalletId)
             .toWalletId(toWalletId)
             .coinId(coinId)
-            .chain(chain)
-            .toAddress(toAddress)
-            .toTag(toTag)
             .amount(amount)
-            .fee(fee)
             .status(TransferStatus.SUCCESS)
             .createdAt(createdAt)
             .completedAt(createdAt)
             .build();
     }
 
-    private static Transfer frozen(UUID idempotencyKey, Long fromWalletId,
-                                    Long coinId, String chain, String toAddress, String toTag,
-                                    BigDecimal amount, BigDecimal fee,
-                                    TransferFailureReason failureReason, LocalDateTime createdAt) {
-        return Transfer.builder()
-            .idempotencyKey(idempotencyKey)
-            .fromWalletId(fromWalletId)
-            .coinId(coinId)
-            .chain(chain)
-            .toAddress(toAddress)
-            .toTag(toTag)
-            .amount(amount)
-            .fee(fee)
-            .status(TransferStatus.FROZEN)
-            .failureReason(failureReason)
-            .frozenUntil(createdAt.plusHours(FROZEN_HOURS))
-            .createdAt(createdAt)
-            .build();
+    public BigDecimal getTotalDeduction() {
+        return amount;
+    }
+
+    public List<TransferBalanceChange> planBalanceChanges() {
+        return List.of(
+            new TransferBalanceChange.Deduct(fromWalletId, coinId, amount),
+            new TransferBalanceChange.Add(toWalletId, coinId, amount)
+        );
     }
 
     public TransferType resolveType(Long viewerWalletId) {
         return fromWalletId.equals(viewerWalletId) ? TransferType.WITHDRAW : TransferType.DEPOSIT;
     }
 
-    public BigDecimal resolveVisibleFee(Long viewerWalletId) {
-        return resolveType(viewerWalletId) == TransferType.WITHDRAW ? fee : BigDecimal.ZERO;
+    private static void validateDifferentWallet(Long fromWalletId, Long toWalletId) {
+        if (fromWalletId.equals(toWalletId)) {
+            throw new CustomException(ErrorCode.SAME_WALLET_TRANSFER);
+        }
     }
 }

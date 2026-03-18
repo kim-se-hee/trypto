@@ -6,10 +6,8 @@ import java.util.UUID;
 public record TransferCoinCommand(
     UUID idempotencyKey,
     Long fromWalletId,
+    Long toWalletId,
     Long coinId,
-    String chain,
-    String toAddress,
-    String toTag,
     BigDecimal amount
 ) {
 }
