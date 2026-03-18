@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
+import { changeNickname, changePortfolioVisibility } from "@/lib/api/user-api";
+import { endRound } from "@/lib/api/round-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,26 +56,49 @@ function formatDate(iso: string): string {
 
 export function MyPage() {
   const { user, updateUser } = useAuth();
-  const { activeRound, clearRound } = useRound();
+  const { activeRound, clearRound, refreshActiveRound } = useRound();
   const navigate = useNavigate();
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState(user?.nickname ?? "");
   const [endDialogOpen, setEndDialogOpen] = useState(false);
 
-  function handleNicknameSave() {
+  const handleNicknameSave = useCallback(async () => {
     const trimmed = nicknameInput.trim();
-    if (trimmed && trimmed !== user?.nickname) {
+    if (!trimmed || trimmed === user?.nickname || !user) {
+      setEditingNickname(false);
+      return;
+    }
+    try {
+      await changeNickname(user.userId, trimmed);
       updateUser({ nickname: trimmed });
+    } catch (error) {
+      console.error("Failed to change nickname", error);
     }
     setEditingNickname(false);
-  }
+  }, [nicknameInput, user, updateUser]);
 
-  function handleEndRound() {
-    clearRound();
-    setEndDialogOpen(false);
-    navigate("/round/new", { replace: true });
-  }
+  const handlePortfolioToggle = useCallback(async (checked: boolean) => {
+    if (!user) return;
+    try {
+      await changePortfolioVisibility(user.userId, checked);
+      updateUser({ portfolioPublic: checked });
+    } catch (error) {
+      console.error("Failed to change portfolio visibility", error);
+    }
+  }, [user, updateUser]);
+
+  const handleEndRound = useCallback(async () => {
+    if (!activeRound || !user) return;
+    try {
+      await endRound(activeRound.roundId, user.userId);
+      clearRound();
+      setEndDialogOpen(false);
+      navigate("/round/new", { replace: true });
+    } catch (error) {
+      console.error("Failed to end round", error);
+    }
+  }, [activeRound, user, clearRound, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,7 +176,7 @@ export function MyPage() {
                   </span>
                   <Switch
                     checked={user?.portfolioPublic ?? false}
-                    onCheckedChange={(checked) => updateUser({ portfolioPublic: checked })}
+                    onCheckedChange={handlePortfolioToggle}
                   />
                 </div>
               </div>
