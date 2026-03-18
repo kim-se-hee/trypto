@@ -8,7 +8,6 @@ import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.transfer.adapter.out.entity.TransferJpaEntity;
 import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
-import ksh.tryptobackend.transfer.domain.vo.TransferFailureReason;
 import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -72,10 +71,7 @@ public class TransferHistoryStepDefinition {
             .fromWalletId(WALLET_ID)
             .toWalletId(OTHER_WALLET_ID)
             .coinId(COIN_ID)
-            .chain("ERC-20")
-            .toAddress("0xabc123")
             .amount(new BigDecimal("0.01"))
-            .fee(new BigDecimal("0.0005"))
             .status(TransferStatus.SUCCESS)
             .createdAt(withdrawCreatedAt)
             .completedAt(withdrawCreatedAt)
@@ -88,28 +84,10 @@ public class TransferHistoryStepDefinition {
             .fromWalletId(OTHER_WALLET_ID)
             .toWalletId(WALLET_ID)
             .coinId(COIN_ID)
-            .chain("Bitcoin")
-            .toAddress("bc1qxyz")
             .amount(new BigDecimal("0.005"))
-            .fee(new BigDecimal("0.0003"))
             .status(TransferStatus.SUCCESS)
             .createdAt(depositCreatedAt)
             .completedAt(depositCreatedAt)
-            .build());
-
-        // WITHDRAW: WALLET_ID -> (FROZEN)
-        saveTransfer(Transfer.builder()
-            .idempotencyKey(UUID.randomUUID())
-            .fromWalletId(WALLET_ID)
-            .coinId(COIN_ID)
-            .chain("ERC-20")
-            .toAddress("0xinvalid")
-            .amount(new BigDecimal("0.008"))
-            .fee(new BigDecimal("0.0005"))
-            .status(TransferStatus.FROZEN)
-            .failureReason(TransferFailureReason.WRONG_ADDRESS)
-            .frozenUntil(now.minusHours(1).plusHours(24))
-            .createdAt(now.minusHours(1))
             .build());
 
         walletId = WALLET_ID;
@@ -187,19 +165,6 @@ public class TransferHistoryStepDefinition {
         assertThat(successTransfers).isNotEmpty();
         successTransfers.forEach(t ->
             assertThat(t.get("completedAt")).isNotNull().isEqualTo(t.get("createdAt")));
-    }
-
-    @Then("FROZEN 송금의 completedAt이 null이다")
-    public void FROZEN_송금의_completedAt이_null이다() {
-        byte[] body = apiClient.getLastResponse()
-            .expectBody().returnResult().getResponseBody();
-        List<Map<String, Object>> content = com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*]");
-        List<Map<String, Object>> frozenTransfers = content.stream()
-            .filter(t -> "FROZEN".equals(t.get("status")))
-            .toList();
-        assertThat(frozenTransfers).isNotEmpty();
-        frozenTransfers.forEach(t ->
-            assertThat(t.get("completedAt")).isNull());
     }
 
     private void createWalletWithOwner(Long walletIdToCreate, Long userId) {

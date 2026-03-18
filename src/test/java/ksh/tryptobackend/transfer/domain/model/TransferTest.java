@@ -1,8 +1,8 @@
 package ksh.tryptobackend.transfer.domain.model;
 
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.transfer.domain.vo.TransferBalanceChange;
-import ksh.tryptobackend.transfer.domain.vo.TransferDestination;
-import ksh.tryptobackend.transfer.domain.vo.TransferFailureReason;
 import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,180 +21,82 @@ class TransferTest {
     private static final Long FROM_WALLET_ID = 1L;
     private static final Long TO_WALLET_ID = 2L;
     private static final Long COIN_ID = 10L;
+    private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 3, 10, 14, 0, 0);
+
+    @Nested
+    @DisplayName("송금 생성 (create)")
+    class CreateTest {
+
+        @Test
+        @DisplayName("정상 생성 — SUCCESS 상태, completedAt이 createdAt과 동일")
+        void create_success() {
+            Transfer transfer = Transfer.create(
+                UUID.randomUUID(), FROM_WALLET_ID, TO_WALLET_ID,
+                COIN_ID, new BigDecimal("1.5"), CREATED_AT);
+
+            assertThat(transfer.getStatus()).isEqualTo(TransferStatus.SUCCESS);
+            assertThat(transfer.getCompletedAt()).isEqualTo(CREATED_AT);
+            assertThat(transfer.getAmount()).isEqualByComparingTo(new BigDecimal("1.5"));
+        }
+
+        @Test
+        @DisplayName("같은 지갑 송금 — SAME_WALLET_TRANSFER 예외")
+        void create_sameWallet_throwsException() {
+            assertThatThrownBy(() -> Transfer.create(
+                UUID.randomUUID(), FROM_WALLET_ID, FROM_WALLET_ID,
+                COIN_ID, new BigDecimal("1.0"), CREATED_AT))
+                .isInstanceOf(CustomException.class)
+                .satisfies(e -> assertThat(((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.SAME_WALLET_TRANSFER));
+        }
+    }
 
     @Nested
     @DisplayName("잔고 변동 계획 (planBalanceChanges)")
     class PlanBalanceChangesTest {
 
         @Test
-        @DisplayName("SUCCESS 상태 — Deduct(수수료 포함)와 Add(수수료 미포함) 2건 반환")
-        void planBalanceChanges_success_returnsDeductAndAdd() {
-            // given
+        @DisplayName("Deduct와 Add 2건 반환, 금액은 amount 그대로")
+        void planBalanceChanges_returnsDeductAndAdd() {
             BigDecimal amount = new BigDecimal("1.5");
-            BigDecimal fee = new BigDecimal("0.001");
-            Transfer transfer = createTransfer(amount, fee, TransferStatus.SUCCESS);
+            Transfer transfer = createTransfer(amount);
 
-            // when
             List<TransferBalanceChange> changes = transfer.planBalanceChanges();
 
-            // then
             assertThat(changes).hasSize(2);
 
             TransferBalanceChange.Deduct deduct = (TransferBalanceChange.Deduct) changes.get(0);
             assertThat(deduct.walletId()).isEqualTo(FROM_WALLET_ID);
             assertThat(deduct.coinId()).isEqualTo(COIN_ID);
-            assertThat(deduct.amount()).isEqualByComparingTo(new BigDecimal("1.501"));
+            assertThat(deduct.amount()).isEqualByComparingTo(new BigDecimal("1.5"));
 
             TransferBalanceChange.Add add = (TransferBalanceChange.Add) changes.get(1);
             assertThat(add.walletId()).isEqualTo(TO_WALLET_ID);
             assertThat(add.coinId()).isEqualTo(COIN_ID);
             assertThat(add.amount()).isEqualByComparingTo(new BigDecimal("1.5"));
         }
-
-        @Test
-        @DisplayName("SUCCESS 상태 — 수수료가 0인 경우 Deduct 금액은 amount와 동일")
-        void planBalanceChanges_successZeroFee_deductEqualsAmount() {
-            // given
-            BigDecimal amount = new BigDecimal("10");
-            BigDecimal fee = BigDecimal.ZERO;
-            Transfer transfer = createTransfer(amount, fee, TransferStatus.SUCCESS);
-
-            // when
-            List<TransferBalanceChange> changes = transfer.planBalanceChanges();
-
-            // then
-            TransferBalanceChange.Deduct deduct = (TransferBalanceChange.Deduct) changes.get(0);
-            assertThat(deduct.amount()).isEqualByComparingTo(new BigDecimal("10"));
-
-            TransferBalanceChange.Add add = (TransferBalanceChange.Add) changes.get(1);
-            assertThat(add.amount()).isEqualByComparingTo(new BigDecimal("10"));
-        }
-
-        @Test
-        @DisplayName("FROZEN 상태 — Lock(수수료 포함) 1건만 반환")
-        void planBalanceChanges_frozen_returnsLockOnly() {
-            // given
-            BigDecimal amount = new BigDecimal("1.5");
-            BigDecimal fee = new BigDecimal("0.001");
-            Transfer transfer = createTransfer(amount, fee, TransferStatus.FROZEN);
-
-            // when
-            List<TransferBalanceChange> changes = transfer.planBalanceChanges();
-
-            // then
-            assertThat(changes).hasSize(1);
-
-            TransferBalanceChange.Lock lock = (TransferBalanceChange.Lock) changes.get(0);
-            assertThat(lock.walletId()).isEqualTo(FROM_WALLET_ID);
-            assertThat(lock.coinId()).isEqualTo(COIN_ID);
-            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("1.501"));
-        }
-
-        @Test
-        @DisplayName("FROZEN 상태 — toWalletId 쪽에는 아무 변동이 없다")
-        void planBalanceChanges_frozen_noChangeForToWallet() {
-            // given
-            Transfer transfer = createTransfer(
-                    new BigDecimal("5"), new BigDecimal("0.01"), TransferStatus.FROZEN);
-
-            // when
-            List<TransferBalanceChange> changes = transfer.planBalanceChanges();
-
-            // then
-            boolean hasToWalletChange = changes.stream()
-                    .anyMatch(change -> switch (change) {
-                        case TransferBalanceChange.Deduct d -> d.walletId().equals(TO_WALLET_ID);
-                        case TransferBalanceChange.Add a -> a.walletId().equals(TO_WALLET_ID);
-                        case TransferBalanceChange.Lock l -> l.walletId().equals(TO_WALLET_ID);
-                    });
-            assertThat(hasToWalletChange).isFalse();
-        }
-
-        @Test
-        @DisplayName("REFUNDED 상태 — IllegalStateException 발생")
-        void planBalanceChanges_refunded_throwsIllegalStateException() {
-            // given
-            Transfer transfer = createTransfer(
-                    new BigDecimal("1"), new BigDecimal("0.001"), TransferStatus.REFUNDED);
-
-            // when & then
-            assertThatThrownBy(transfer::planBalanceChanges)
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("REFUNDED");
-        }
     }
 
     @Nested
-    @DisplayName("완료 시각 (completedAt)")
-    class CompletedAtTest {
-
-        private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 3, 10, 14, 0, 0);
+    @DisplayName("총 차감액 (getTotalDeduction)")
+    class GetTotalDeductionTest {
 
         @Test
-        @DisplayName("SUCCESS 송금 — completedAt이 createdAt과 동일하게 설정된다")
-        void create_success_completedAtEqualsCreatedAt() {
-            // given
-            TransferDestination destination = new TransferDestination.Resolved(TO_WALLET_ID);
+        @DisplayName("수수료 없이 amount 그대로 반환")
+        void getTotalDeduction_returnsAmount() {
+            Transfer transfer = createTransfer(new BigDecimal("10"));
 
-            // when
-            Transfer transfer = Transfer.create(
-                UUID.randomUUID(), FROM_WALLET_ID,
-                COIN_ID, "ERC-20", "0xabc", null,
-                new BigDecimal("1.0"), new BigDecimal("0.001"),
-                destination, CREATED_AT);
-
-            // then
-            assertThat(transfer.getCompletedAt()).isEqualTo(CREATED_AT);
-            assertThat(transfer.getStatus()).isEqualTo(TransferStatus.SUCCESS);
-        }
-
-        @Test
-        @DisplayName("FROZEN 송금 — completedAt이 null이다")
-        void create_frozen_completedAtIsNull() {
-            // given
-            TransferDestination destination = new TransferDestination.Failed(TransferFailureReason.WRONG_ADDRESS);
-
-            // when
-            Transfer transfer = Transfer.create(
-                UUID.randomUUID(), FROM_WALLET_ID,
-                COIN_ID, "ERC-20", "0xinvalid", null,
-                new BigDecimal("1.0"), new BigDecimal("0.001"),
-                destination, CREATED_AT);
-
-            // then
-            assertThat(transfer.getCompletedAt()).isNull();
-            assertThat(transfer.getStatus()).isEqualTo(TransferStatus.FROZEN);
-        }
-
-        @Test
-        @DisplayName("FROZEN 송금 반환 — completedAt이 반환 시각으로 설정된다")
-        void refund_frozenTransfer_completedAtEqualsRefundedAt() {
-            // given
-            TransferDestination destination = new TransferDestination.Failed(TransferFailureReason.WRONG_CHAIN);
-            Transfer transfer = Transfer.create(
-                UUID.randomUUID(), FROM_WALLET_ID,
-                COIN_ID, "ERC-20", "0xinvalid", null,
-                new BigDecimal("1.0"), new BigDecimal("0.001"),
-                destination, CREATED_AT);
-            LocalDateTime refundedAt = CREATED_AT.plusHours(24);
-
-            // when
-            transfer.refund(refundedAt);
-
-            // then
-            assertThat(transfer.getCompletedAt()).isEqualTo(refundedAt);
-            assertThat(transfer.getStatus()).isEqualTo(TransferStatus.REFUNDED);
+            assertThat(transfer.getTotalDeduction()).isEqualByComparingTo(new BigDecimal("10"));
         }
     }
 
-    private Transfer createTransfer(BigDecimal amount, BigDecimal fee, TransferStatus status) {
+    private Transfer createTransfer(BigDecimal amount) {
         return Transfer.builder()
-                .fromWalletId(FROM_WALLET_ID)
-                .toWalletId(TO_WALLET_ID)
-                .coinId(COIN_ID)
-                .amount(amount)
-                .fee(fee)
-                .status(status)
-                .build();
+            .fromWalletId(FROM_WALLET_ID)
+            .toWalletId(TO_WALLET_ID)
+            .coinId(COIN_ID)
+            .amount(amount)
+            .status(TransferStatus.SUCCESS)
+            .build();
     }
 }
