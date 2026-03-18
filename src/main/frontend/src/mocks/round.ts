@@ -1,30 +1,6 @@
-export type RoundStatus = "ACTIVE" | "BANKRUPT" | "ENDED";
+import type { InvestmentRound, RuleType } from "@/lib/types/round";
 
-export type RuleType =
-  | "STOP_LOSS"
-  | "TAKE_PROFIT"
-  | "NO_CHASE_BUY"
-  | "AVERAGING_LIMIT"
-  | "OVERTRADE_LIMIT";
-
-export interface InvestmentRule {
-  ruleId: number;
-  ruleType: RuleType;
-  thresholdValue: number;
-}
-
-export interface InvestmentRound {
-  roundId: number;
-  userId: number;
-  roundNumber: number;
-  initialSeed: number;
-  emergencyFundingLimit: number;
-  emergencyChargeCount: number;
-  status: RoundStatus;
-  rules: InvestmentRule[];
-  startedAt: string;
-  endedAt: string | null;
-}
+export type { RoundStatus, RuleType, InvestmentRule, InvestmentRound, RoundWallet } from "@/lib/types/round";
 
 /** DEV_SKIP_AUTH와 함께 사용 — 기본 라운드를 미리 생성 */
 export let mockActiveRound: InvestmentRound | null = null;
@@ -51,6 +27,7 @@ export function createMockRound(
       ruleType: r.ruleType,
       thresholdValue: r.thresholdValue,
     })),
+    wallets: [],
     startedAt: new Date().toISOString(),
     endedAt: null,
   };

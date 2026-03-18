@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
-import type { HoldingData } from "@/mocks/portfolio";
+import type { HoldingData } from "@/lib/types/portfolio";
 
 interface AssetSummaryCardProps {
   availableCash: number;

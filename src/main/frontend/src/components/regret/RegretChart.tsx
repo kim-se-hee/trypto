@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import type { RegretSummary, AssetSnapshot, ViolationMarker } from "@/mocks/regret";
-import { getTickInterval } from "@/mocks/regret";
+import type { RegretSummary, AssetSnapshot, ViolationMarker } from "@/lib/types/regret";
+import { getTickInterval } from "@/lib/types/regret";
 
 interface RegretChartProps {
   summary: RegretSummary;

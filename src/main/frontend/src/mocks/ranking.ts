@@ -1,3 +1,7 @@
+export type { RankingPeriod } from "@/lib/types/ranking";
+
+import type { RankingPeriod } from "@/lib/types/ranking";
+
 export interface PortfolioItem {
   coinSymbol: string;
   coinName: string;
@@ -13,8 +17,6 @@ export interface RankingEntry {
   portfolioPublic: boolean;
   portfolio: PortfolioItem[];
 }
-
-export type RankingPeriod = "daily" | "weekly" | "monthly";
 
 const NICKNAMES = [
   "코인킹", "비트사냥꾼", "고래잡이", "흑우탈출", "무빙파도",
@@ -65,10 +67,9 @@ function seededRandom(seed: number): () => number {
 }
 
 function generatePortfolio(rand: () => number): PortfolioItem[] {
-  const count = Math.floor(rand() * 5) + 2; // 2~6개 코인
+  const count = Math.floor(rand() * 5) + 2;
   const shuffled = [...COINS_POOL].sort(() => rand() - 0.5).slice(0, count);
 
-  // 비중 생성
   const rawWeights = shuffled.map(() => rand() * 10 + 1);
   const totalWeight = rawWeights.reduce((s, w) => s + w, 0);
   const ratios = rawWeights.map((w) => w / totalWeight);
@@ -88,9 +89,6 @@ function generateRanking(period: string): RankingEntry[] {
   const shuffledNames = [...NICKNAMES].sort(() => rand() - 0.5);
 
   for (let i = 0; i < 100; i++) {
-    // Top ~40%, crosses 0 around rank 60, bottom 40 users are negative
-    // Linear decay: rank 1 ~= +45%, rank 60 ~= 0%, rank 100 ~= -20%
-    // Add noise with (rand() - 0.5) * 8 for variety
     const baseProfit = 48 - i * 0.82 + (rand() - 0.5) * 8;
     const profitRate = Math.round(baseProfit * 100) / 100;
 
@@ -105,10 +103,6 @@ function generateRanking(period: string): RankingEntry[] {
     });
   }
 
-  // Tiebreaker sorting per business rules:
-  // 1. profit rate DESC
-  // 2. trade count ASC (fewer trades = more efficient = higher rank)
-  // 3. original order preserved (stable sort) for remaining ties
   entries.sort((a, b) => {
     if (b.profitRate !== a.profitRate) return b.profitRate - a.profitRate;
     return a.tradeCount - b.tradeCount;

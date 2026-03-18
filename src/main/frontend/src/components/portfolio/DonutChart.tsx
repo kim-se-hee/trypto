@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatCurrency } from "@/lib/formatters";
-import { getCoinColor } from "@/mocks/coins";
-import type { HoldingData } from "@/mocks/portfolio";
+import { getCoinColor } from "@/lib/types/coins";
+import type { HoldingData } from "@/lib/types/portfolio";
 
 interface DonutChartProps {
   holdings: HoldingData[];

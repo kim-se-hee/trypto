@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface WalletSummaryProps {
   balances: WalletCoinBalance[];

@@ -2,7 +2,7 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoinIcon } from "./CoinIcon";
 import { Sparkline } from "./Sparkline";
-import type { CoinData } from "@/mocks/coins";
+import type { CoinData } from "@/lib/types/coins";
 
 interface MarketOverviewCardsProps {
   coins: CoinData[];

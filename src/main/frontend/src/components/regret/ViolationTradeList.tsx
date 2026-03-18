@@ -12,14 +12,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { CoinIcon } from "@/components/market/CoinIcon";
+import { violationTrades } from "@/mocks/regret";
 import {
-  violationTrades,
   RULE_LABELS,
   RULE_COLORS,
   EMOTION_STYLES,
-} from "@/mocks/regret";
-import type { ViolationFilter, ViolationEmotion } from "@/mocks/regret";
-import type { RuleType } from "@/mocks/round";
+} from "@/lib/types/regret";
+import type { ViolationFilter, ViolationEmotion } from "@/lib/types/regret";
+import type { RuleType } from "@/lib/types/round";
 import { cn } from "@/lib/utils";
 
 const RULE_ICON_MAP: Record<RuleType, LucideIcon> = {

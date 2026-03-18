@@ -9,7 +9,7 @@ import { TransferModal } from "@/components/wallet/TransferModal";
 import { DepositModal } from "@/components/wallet/DepositModal";
 import { TransferHistoryPanel } from "@/components/wallet/TransferHistoryPanel";
 import { walletData, transferHistory } from "@/mocks/wallet";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 const exchangeTabItems = walletData.map((w) => ({
   id: w.exchangeId,

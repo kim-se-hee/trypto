@@ -12,6 +12,7 @@ import { OrderPanel } from "@/components/market/OrderPanel";
 import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { cexExchanges, dexExchanges } from "@/mocks/coins";
+// TODO: Phase 6-1에서 EXCHANGES 상수 + getExchangeCoins() API + useLivePrices()로 전환
 import { getBackendExchangeId, resolveOrderTargetIds } from "@/lib/api/id-mapping";
 import type { MarketType } from "@/components/market/MarketTypeTabs";
 import type { FilterType } from "@/components/market/FilterChips";

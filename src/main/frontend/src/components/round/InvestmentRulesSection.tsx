@@ -1,5 +1,5 @@
 import { InvestmentRuleCard } from "./InvestmentRuleCard";
-import type { RuleType } from "@/mocks/round";
+import type { RuleType } from "@/lib/types/round";
 
 export interface RuleState {
   enabled: boolean;

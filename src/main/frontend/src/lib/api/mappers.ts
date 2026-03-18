@@ -1,5 +1,5 @@
-﻿import type { RankingPeriod } from "@/mocks/ranking";
-import type { RuleType } from "@/mocks/round";
+﻿import type { RankingPeriod } from "@/lib/types/ranking";
+import type { RuleType } from "@/lib/types/round";
 
 export type BackendRuleType =
   | "LOSS_CUT"

@@ -4,8 +4,9 @@ import { BarChart3 } from "lucide-react";
 import { RegretChart } from "@/components/regret/RegretChart";
 import { MeVsMe } from "@/components/regret/MeVsMe";
 import { ViolationTradeList } from "@/components/regret/ViolationTradeList";
-import { regretData, computeSimulationLine } from "@/mocks/regret";
-import type { RuleType } from "@/mocks/round";
+import { regretData } from "@/mocks/regret";
+import { computeSimulationLine } from "@/lib/types/regret";
+import type { RuleType } from "@/lib/types/round";
 
 export function RegretPage() {
   const [enabledRules, setEnabledRules] = useState<Set<RuleType>>(

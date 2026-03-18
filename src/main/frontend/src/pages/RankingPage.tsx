@@ -15,7 +15,7 @@ import {
   type RankingStats,
 } from "@/lib/api/ranking-api";
 import { cn } from "@/lib/utils";
-import type { RankingPeriod } from "@/mocks/ranking";
+import type { RankingPeriod } from "@/lib/types/ranking";
 
 const PERIOD_TABS: { key: RankingPeriod; label: string }[] = [
   { key: "daily", label: "일간" },

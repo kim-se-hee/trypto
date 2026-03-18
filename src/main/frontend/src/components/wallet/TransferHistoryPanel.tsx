@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { CoinIcon } from "@/components/market/CoinIcon";
 import { cn } from "@/lib/utils";
 import { formatQuantity } from "@/lib/formatters";
-import type { TransferRecord, WalletData } from "@/mocks/wallet";
+import type { TransferRecord, WalletData } from "@/lib/types/wallet";
 
 interface TransferHistoryPanelProps {
   exchangeId: string;

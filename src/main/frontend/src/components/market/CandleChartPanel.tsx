@@ -8,7 +8,7 @@ import {
   type CandleInterval,
   type CandleItem,
 } from "@/lib/api/candle-api";
-import type { CoinData } from "@/mocks/coins";
+import type { CoinData } from "@/lib/types/coins";
 
 interface CandleChartPanelProps {
   exchangeKey: string;

@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { RuleType } from "@/mocks/round";
+import type { RuleType } from "@/lib/types/round";
 
 const RULE_LABEL: Record<RuleType, { label: string; unit: string }> = {
   STOP_LOSS: { label: "손절", unit: "%" },

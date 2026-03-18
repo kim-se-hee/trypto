@@ -1,11 +1,6 @@
-export interface MockUser {
-  userId: number;
-  email: string;
-  nickname: string;
-  password: string;
-  portfolioPublic: boolean;
-  createdAt: string;
-}
+import type { MockUser } from "@/lib/types/user";
+
+export type { MockUser } from "@/lib/types/user";
 
 export const MOCK_USERS: MockUser[] = [
   {

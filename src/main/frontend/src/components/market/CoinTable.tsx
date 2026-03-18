@@ -6,7 +6,7 @@ import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
 import { CoinIcon } from "./CoinIcon";
 import { Sparkline } from "./Sparkline";
-import type { CoinData } from "@/mocks/coins";
+import type { CoinData } from "@/lib/types/coins";
 
 interface CoinTableProps {
   coins: CoinData[];

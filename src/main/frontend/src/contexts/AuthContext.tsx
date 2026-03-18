@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { type MockUser, MOCK_USERS } from "@/mocks/auth";
+import type { MockUser } from "@/lib/types/user";
+import { MOCK_USERS } from "@/mocks/auth";
 
 /** true로 바꾸면 로그인 없이 바로 메인 진입 */
 const DEV_SKIP_AUTH = true;

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ruleToggles, benchmarks } from "@/mocks/regret";
-import type { RuleType } from "@/mocks/round";
+import type { RuleType } from "@/lib/types/round";
 
 const RULE_ICON_MAP: Record<RuleType, LucideIcon> = {
   STOP_LOSS: TrendingDown,

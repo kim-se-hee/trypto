@@ -15,7 +15,7 @@ import {
 import { PresetButtons } from "@/components/round/PresetButtons";
 import { formatKRW } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import type { InvestmentRound } from "@/mocks/round";
+import type { InvestmentRound } from "@/lib/types/round";
 
 interface EmergencyFundingCardProps {
   round: InvestmentRound;

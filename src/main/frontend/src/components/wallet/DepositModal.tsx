@@ -21,7 +21,7 @@ import {
   tagRequiredCoins,
   depositAddresses,
 } from "@/mocks/wallet";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface DepositModalProps {
   isOpen: boolean;

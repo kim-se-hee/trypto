@@ -10,7 +10,7 @@ import {
   getDefaultRules,
   type RulesMap,
 } from "@/components/round/InvestmentRulesSection";
-import type { RuleType } from "@/mocks/round";
+import type { RuleType } from "@/lib/types/round";
 
 export function RoundCreatePage() {
   const { user } = useAuth();

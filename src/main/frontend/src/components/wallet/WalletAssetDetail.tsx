@@ -2,7 +2,7 @@ import { X, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity, formatFiatEstimate } from "@/lib/formatters";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface WalletAssetDetailProps {
   coin: WalletCoinBalance;

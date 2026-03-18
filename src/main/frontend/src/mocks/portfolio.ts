@@ -1,18 +1,6 @@
-export interface HoldingData {
-  coinSymbol: string;
-  coinName: string;
-  quantity: number;
-  avgBuyPrice: number;
-  currentPrice: number;
-}
+export type { HoldingData, PortfolioSummary } from "@/lib/types/portfolio";
 
-export interface PortfolioSummary {
-  exchangeName: string;
-  exchangeId: string;
-  baseCurrency: string;
-  availableCash: number;
-  holdings: HoldingData[];
-}
+import type { PortfolioSummary } from "@/lib/types/portfolio";
 
 export const portfolioData: PortfolioSummary[] = [
   {

@@ -1,4 +1,4 @@
-﻿import type { RankingPeriod } from "@/mocks/ranking";
+﻿import type { RankingPeriod } from "@/lib/types/ranking";
 import { apiGet } from "./client";
 import { toBackendRankingPeriod } from "./mappers";
 import type { CursorPageResponseDto } from "./types";

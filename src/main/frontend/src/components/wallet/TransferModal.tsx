@@ -23,7 +23,7 @@ import {
   tagRequiredCoins,
   withdrawalFees,
 } from "@/mocks/wallet";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface TransferModalProps {
   isOpen: boolean;

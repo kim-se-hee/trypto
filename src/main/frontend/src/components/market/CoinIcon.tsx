@@ -1,4 +1,4 @@
-import { getCoinColor } from "@/mocks/coins";
+import { getCoinColor } from "@/lib/types/coins";
 
 interface CoinIconProps {
   symbol: string;

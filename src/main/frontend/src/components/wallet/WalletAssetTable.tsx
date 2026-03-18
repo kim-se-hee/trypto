@@ -6,7 +6,7 @@ import { formatQuantity, formatCurrencyCompact, SMALL_AMOUNT_THRESHOLD } from "@
 import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
-import type { WalletCoinBalance } from "@/mocks/wallet";
+import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface WalletAssetTableProps {
   balances: WalletCoinBalance[];

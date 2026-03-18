@@ -5,7 +5,7 @@ import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
 import { CoinIcon } from "@/components/market/CoinIcon";
-import type { HoldingData } from "@/mocks/portfolio";
+import type { HoldingData } from "@/lib/types/portfolio";
 
 interface HoldingsTableProps {
   holdings: HoldingData[];
