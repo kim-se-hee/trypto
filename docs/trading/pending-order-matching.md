@@ -5,7 +5,7 @@
 # 선행 구현 사항
 
 - 지정가 주문 생성 (cex-order.md) — PENDING 상태 주문 생성, 잔고 lock 처리
-- 실시간 시세 수집 (realtime-ticker.md) — 외부 시세 수집기가 Redis에 적재, RabbitMQ로 시세 변경 이벤트 발행
+- 실시간 시세 수집 (realtime-ticker.md) — 외부 시세 수집기가 Redis에 적재하고 RabbitMQ fanout exchange로 시세 이벤트 발행
 
 # 전체 흐름
 
@@ -88,14 +88,18 @@ ConcurrentHashMap<Long, CopyOnWriteArrayList<PendingOrder>>
     ▼
 [Fanout Exchange: ticker.exchange]
     │
-    ├─→ Queue: ticker.matching.server-1  →  Server 1
-    ├─→ Queue: ticker.matching.server-2  →  Server 2
-    └─→ Queue: ticker.matching.server-3  →  Server 3
+    ├─→ Queue: ticker.marketdata.{uuid}  →  LiveTickerEventListener (WebSocket 브로드캐스트)
+    │
+    ├─→ Queue: ticker.trading.{uuid}  →  TickerEventListener (미체결 주문 매칭)
+    │       ├─→ Server 1
+    │       ├─→ Server 2
+    │       └─→ Server 3
+    ...
 ```
 
 - **Fanout Exchange**: 모든 서버가 동일한 시세 이벤트를 수신해야 하므로 Fanout 사용
-- **서버별 전용 큐**: 각 서버가 자기만의 큐를 가지며, 서버가 내려가면 큐에 메시지가 쌓이고 서버 복구 시 처리
-- 기존 Redis Pub/Sub 기반 클라이언트 스트리밍 채널과는 별도의 경로
+- **서버별 전용 큐**: 각 서버가 컨텍스트별로 자기만의 anonymous 큐(exclusive, auto-delete)를 가진다
+- **2큐 구조**: marketdata(`ticker.marketdata.{uuid}`)와 trading(`ticker.trading.{uuid}`)이 동일 fanout exchange에서 독립적으로 소비한다
 
 ### 메시지 신뢰성
 
@@ -112,36 +116,27 @@ ConcurrentHashMap<Long, CopyOnWriteArrayList<PendingOrder>>
 
 ## 시세 변경 이벤트 메시지
 
-| 필드 | 타입 | 설명                              |
-|------|------|---------------------------------|
+| 필드 | 타입 | 설명 |
+|------|------|------|
 | exchange | String | 거래소 명 (UPBIT, BITHUMB, BINANCE) |
-| symbol | String | 거래 페어 (BTC/KRW, ETH/USDT)       |
-| currentPrice | BigDecimal | 변경된 현재가                         |
-| timestamp | Long | 시세 수신 시각 (epoch ms)             |
+| symbol | String | 거래 페어 (BTC/KRW, ETH/USDT) |
+| currentPrice | BigDecimal | 변경된 현재가 |
+| changeRate | BigDecimal | 등락률 (비율) |
+| quoteTurnover | BigDecimal | 24시간 누적 거래대금 |
+| timestamp | Long | 시세 수신 시각 (epoch ms) |
 
+- `TickerMessage`는 `common/dto`에 위치한다 (메시지 스키마 소유자는 외부 수집기이므로 shared kernel)
 - 시세 수집기는 별도 서버이므로 트레이딩 서버의 DB 스키마(`exchangeCoinId`)를 알지 못한다. 시세 수집기가 아는 정보(거래소, 심볼)만 메시지에 포함한다
-- 이벤트 수신 서버(트레이딩 서버)에서 `exchange + symbol → exchangeCoinId` 매핑을 로컬 캐시로 변환한 후 매칭에 사용한다
+- trading 리스너는 `exchange`, `symbol`, `currentPrice`만 사용하고, marketdata 리스너는 전체 필드를 사용한다
+- 이벤트 수신 서버에서 `exchange + symbol → exchangeCoinId` 매핑을 변환한 후 매칭에 사용한다
 
-## 거래소-코인 매핑 캐시
+## 거래소-코인 매핑 (marketdata 컨텍스트 소유)
 
-시세 이벤트의 `exchange + symbol`을 로컬 캐시 키인 `exchangeCoinId`로 변환하기 위한 로컬 캐시.
+시세 이벤트의 `exchange + symbol`을 `exchangeCoinId`로 변환하는 매핑 캐시는 marketdata 컨텍스트가 소유한다. trading은 `ResolveExchangeCoinMappingUseCase`를 크로스 컨텍스트로 주입받아 사용한다.
 
-### 자료구조
-
-```
-ConcurrentHashMap<ExchangeSymbolKey, Long>
-    (exchange, symbol) → exchangeCoinId
-```
-
-### 생명주기
-
-| 이벤트 | 동작 |
-|--------|------|
-| 서버 시작 | DB에서 전체 거래소-코인 매핑 로딩 |
-| 코인 상장/상폐 | 캐시 갱신 |
-
+- `ResolveExchangeCoinMappingUseCase.resolve(exchange, symbol) → Optional<Long>` (exchangeCoinId)
+- marketdata 서버 시작 시 `WarmupExchangeCoinMappingUseCase.warmup()`으로 캐시를 로딩한다
 - 거의 변하지 않는 정적 데이터이므로 서버 시작 시 전체 로딩 후 인메모리로 유지한다
-- 매 시세 이벤트마다 조회하므로 네트워크 I/O가 없는 로컬 캐시를 사용한다
 
 # 매칭 로직
 
@@ -241,13 +236,18 @@ ConcurrentHashMap<ExchangeSymbolKey, Long>
 
 ## 워밍업 순서
 
-1. 서버 시작
-2. 거래소-코인 매핑 캐시 로딩 (DB에서 전체 매핑 조회)
-3. 미체결 주문 캐시 로딩 (DB에서 PENDING 주문 조회)
-4. RabbitMQ 리스너 활성화 → 시세 이벤트 소비 시작
+각 컨텍스트가 독립적으로 워밍업하고 자기 RabbitMQ 리스너를 시작한다.
 
-- 매핑 캐시를 먼저 로딩해야 시세 이벤트 수신 시 `exchange + symbol → exchangeCoinId` 변환이 가능하다
-- 워밍업 중 들어온 시세 이벤트는 큐에 쌓여있다가 리스너 활성화 후 소비된다. 워밍업 전에 체결 조건에 도달했던 주문도 다음 시세 이벤트에서 매칭된다
+**marketdata (MarketdataWarmupInitializer)**
+1. `WarmupExchangeCoinMappingUseCase.warmup()` — exchange+symbol → ExchangeCoinMapping 캐시 로딩
+2. `tickerMarketdataListener` 시작 → WebSocket 브로드캐스트 시작
+
+**trading (PendingOrderMatchingWarmupInitializer)**
+1. `WarmupPendingOrderMatchingUseCase.warmup()` — DB에서 PENDING 주문 캐시 로딩
+2. `tickerTradingListener` 시작 → 미체결 주문 매칭 시작
+
+- 두 컨텍스트 사이에 워밍업 순서 의존이 없다. trading의 pending order 캐시는 DB에서 직접 로드하며, 매핑 resolve는 marketdata의 `ResolveExchangeCoinMappingUseCase`를 호출한다
+- 워밍업 중 들어온 시세 이벤트는 큐에 쌓여있다가 리스너 활성화 후 소비된다
 
 ## 미체결 주문 워밍업 쿼리
 
@@ -298,6 +298,7 @@ WHERE status = 'PENDING'
 
 | UseCase | 용도 |
 |---------|------|
+| `ResolveExchangeCoinMappingUseCase` | exchange + symbol → exchangeCoinId 변환 (매칭 대상 조회에 필요) |
 | `ManageWalletBalanceUseCase` | unlock + deduct + add 잔고 반영 |
 | `FindExchangeCoinMappingUseCase` | exchangeCoinId → coinId 매핑 (Holding 갱신에 필요) |
 | `FindExchangeDetailUseCase` | baseCurrencyCoinId 조회 (잔고 반영 대상 코인 식별) |
@@ -311,7 +312,7 @@ sequenceDiagram
     participant RabbitMQ
     participant Listener as TickerEventListener
     participant Service as MatchPendingOrdersService
-    participant MappingPort as ExchangeCoinMappingCachePort
+    participant MappingUseCase as ResolveExchangeCoinMappingUseCase
     participant Cache as PendingOrderCachePort
     participant OrderPort as OrderCommandPort
     participant Balance as ManageWalletBalanceUseCase
@@ -326,10 +327,10 @@ sequenceDiagram
     Listener->>Service: matchOrders(exchange, symbol, currentPrice)
 
     rect rgb(60, 60, 60)
-        Note over Service,MappingPort: STEP 00 exchange + symbol → exchangeCoinId 변환
+        Note over Service,MappingUseCase: STEP 00 exchange + symbol → exchangeCoinId 변환
     end
-    Service->>MappingPort: resolve(exchange, symbol)
-    MappingPort-->>Service: exchangeCoinId
+    Service->>MappingUseCase: resolve(exchange, symbol)
+    MappingUseCase-->>Service: Optional&lt;exchangeCoinId&gt;
 
     alt 매핑 없음
         Note over Service: 종료 (알 수 없는 코인)

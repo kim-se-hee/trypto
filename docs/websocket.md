@@ -14,12 +14,11 @@
 
 ### 크로스 서버 전파 수단
 
-토픽의 성격에 따라 서버 간 메시지 전파 수단을 다르게 선택한다.
+RabbitMQ fanout exchange를 사용한다. 각 서버가 anonymous 큐를 바인딩하여 모든 메시지를 수신한다.
 
 | 수단 | 특성 | 적합한 토픽 |
 |------|------|-----------|
-| Redis Pub/Sub | fire-and-forget, 메시지 유실 가능, 낮은 지연 | 시세 등 연속 스트리밍 (한 틱 누락 허용) |
-| RabbitMQ | 메시지 보장, 큐 기반 | 주문 체결 알림 등 유실 불가 이벤트 |
+| RabbitMQ fanout | 모든 서버에 브로드캐스트, 큐 기반 | 시세 스트리밍, 주문 체결 알림 등 |
 
 각 토픽의 전파 수단 선택과 상세는 해당 기능 문서를 참조한다.
 
@@ -68,12 +67,6 @@ ws://{host}/ws
 
 ```yaml
 # application.yml
-spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
 app:
   websocket:
     endpoint: /ws
@@ -85,4 +78,4 @@ app:
 
 | 토픽 | 전파 수단 | 기능 문서 |
 |------|----------|----------|
-| `/topic/tickers.{exchangeId}` | Redis Pub/Sub | [live-ticker-streaming.md](marketdata/live-ticker-streaming.md) |
+| `/topic/prices.{exchangeId}` | RabbitMQ fanout | [live-ticker-streaming.md](marketdata/live-ticker-streaming.md) |

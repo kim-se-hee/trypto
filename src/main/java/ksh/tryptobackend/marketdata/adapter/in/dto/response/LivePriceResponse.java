@@ -7,5 +7,6 @@ public record LivePriceResponse(
         String symbol,
         BigDecimal price,
         BigDecimal changeRate,
+        BigDecimal quoteTurnover,
         Long timestamp
 ) {}

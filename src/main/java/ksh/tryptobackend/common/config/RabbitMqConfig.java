@@ -15,6 +15,9 @@ import java.util.UUID;
 @Configuration
 public class RabbitMqConfig {
 
+    public static final String TICKER_TRADING_LISTENER_ID = "tickerTradingListener";
+    public static final String TICKER_MARKETDATA_LISTENER_ID = "tickerMarketdataListener";
+
     @Value("${app.rabbitmq.ticker-exchange:ticker.exchange}")
     private String tickerExchangeName;
 
@@ -24,14 +27,25 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue tickerMatchingQueue() {
-        String queueName = "ticker.matching." + UUID.randomUUID().toString().substring(0, 8);
+    public Queue tickerTradingQueue() {
+        String queueName = "ticker.trading." + UUID.randomUUID().toString().substring(0, 8);
         return new Queue(queueName, false, true, true);
     }
 
     @Bean
-    public Binding tickerMatchingBinding(Queue tickerMatchingQueue, FanoutExchange tickerFanoutExchange) {
-        return BindingBuilder.bind(tickerMatchingQueue).to(tickerFanoutExchange);
+    public Binding tickerTradingBinding(Queue tickerTradingQueue, FanoutExchange tickerFanoutExchange) {
+        return BindingBuilder.bind(tickerTradingQueue).to(tickerFanoutExchange);
+    }
+
+    @Bean
+    public Queue tickerMarketdataQueue() {
+        String queueName = "ticker.marketdata." + UUID.randomUUID().toString().substring(0, 8);
+        return new Queue(queueName, false, true, true);
+    }
+
+    @Bean
+    public Binding tickerMarketdataBinding(Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
+        return BindingBuilder.bind(tickerMarketdataQueue).to(tickerFanoutExchange);
     }
 
     @Bean

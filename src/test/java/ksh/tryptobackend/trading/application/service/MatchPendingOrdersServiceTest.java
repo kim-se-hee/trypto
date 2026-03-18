@@ -1,7 +1,7 @@
 package ksh.tryptobackend.trading.application.service;
 
+import ksh.tryptobackend.marketdata.application.port.in.ResolveExchangeCoinMappingUseCase;
 import ksh.tryptobackend.trading.application.port.in.FillPendingOrderUseCase;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderFillFailureCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheQueryPort;
@@ -37,9 +37,9 @@ class MatchPendingOrdersServiceTest {
 
     @Mock private PendingOrderCacheCommandPort pendingOrderCacheCommandPort;
     @Mock private PendingOrderCacheQueryPort pendingOrderCacheQueryPort;
-    @Mock private ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
     @Mock private OrderFillFailureCommandPort orderFillFailureCommandPort;
     @Mock private FillPendingOrderUseCase fillPendingOrderUseCase;
+    @Mock private ResolveExchangeCoinMappingUseCase resolveExchangeCoinMappingUseCase;
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-03-17T12:00:00Z"), ZoneId.of("UTC"));
 
@@ -54,8 +54,8 @@ class MatchPendingOrdersServiceTest {
     void setUp() {
         sut = new MatchPendingOrdersService(
             pendingOrderCacheCommandPort, pendingOrderCacheQueryPort,
-            exchangeCoinMappingCacheQueryPort, orderFillFailureCommandPort,
-            fillPendingOrderUseCase, clock
+            orderFillFailureCommandPort, fillPendingOrderUseCase,
+            resolveExchangeCoinMappingUseCase, clock
         );
     }
 
@@ -67,7 +67,7 @@ class MatchPendingOrdersServiceTest {
         @DisplayName("매핑이 없으면 매칭 없이 종료")
         void matchOrders_noMapping_skips() {
             // Given
-            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
+            when(resolveExchangeCoinMappingUseCase.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.empty());
 
             // When
@@ -86,7 +86,7 @@ class MatchPendingOrdersServiceTest {
         @DisplayName("매칭 대상이 없으면 체결 없이 종료")
         void matchOrders_noMatchedOrders_skips() {
             // Given
-            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
+            when(resolveExchangeCoinMappingUseCase.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
             when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(Collections.emptyList());
@@ -104,7 +104,7 @@ class MatchPendingOrdersServiceTest {
             // Given
             PendingOrder order1 = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
             PendingOrder order2 = new PendingOrder(2L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("52000000"));
-            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
+            when(resolveExchangeCoinMappingUseCase.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
             when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order1, order2));
@@ -129,7 +129,7 @@ class MatchPendingOrdersServiceTest {
         void matchOrders_optimisticLockFailure_skipsWithoutReAdd() {
             // Given
             PendingOrder order = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
-            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
+            when(resolveExchangeCoinMappingUseCase.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
             when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order));
@@ -149,7 +149,7 @@ class MatchPendingOrdersServiceTest {
         void matchOrders_retryExhausted_reAddsAndRecordsFailure() {
             // Given
             PendingOrder order = new PendingOrder(1L, EXCHANGE_COIN_ID, Side.BUY, new BigDecimal("51000000"));
-            when(exchangeCoinMappingCacheQueryPort.resolve(EXCHANGE, SYMBOL))
+            when(resolveExchangeCoinMappingUseCase.resolve(EXCHANGE, SYMBOL))
                 .thenReturn(Optional.of(EXCHANGE_COIN_ID));
             when(pendingOrderCacheQueryPort.findMatchedOrders(EXCHANGE_COIN_ID, CURRENT_PRICE))
                 .thenReturn(List.of(order));

@@ -9,9 +9,9 @@
 | Port | 어댑터 | 용도 |
 |------|--------|------|
 | REST Input Port | REST Controllers | HTTP 요청 → 도메인 |
-| WebSocket Input Port | WebSocket Controllers | 클라이언트에게 실시간 시세 push |
+| RabbitMQ Listener (marketdata) | LiveTickerEventListener | 시세 이벤트 수신 → WebSocket 브로드캐스트 |
+| RabbitMQ Listener (trading) | TickerEventListener | 시세 이벤트 수신 → 지정가 매칭 |
 | Batch Job Input Port | Batch Scheduler | 랭킹 집계 등 배치 작업 |
-| Matching Job Input Port | RabbitMQ Listener | 시세 이벤트 수신 → 지정가 매칭 |
 
 **Output Ports (아웃바운드)**
 
@@ -20,7 +20,7 @@
 | Persistence Output Port | UserJpaPersistenceAdapter, WalletJpaPersistenceAdapter 등 | MySQL 읽기/쓰기 |
 | Leaderboard Output Port | LeaderboardJpaPersistenceAdapter | 랭킹 집계 테이블 읽기/쓰기 |
 | DEX Swap Output Port | JupiterApiAdapter, PancakeswapApiAdapter | 외부 DEX API 호출 |
-| Live Price Output Port | LivePriceRedisAdapter | 코인 현재가 조회 |
+| Live Price Output Port | LivePriceQueryAdapter | 코인 현재가 조회 (Redis) |
 | Candle Data Output Port | CandleInfluxDataAdapter | 캔들 데이터 조회 |
 
 - **Persistence Output Port:** 도메인별로 각각 존재하는 영속성 포트. User, Wallet, Order 등 도메인마다 별도의 포트와 어댑터가 있다.

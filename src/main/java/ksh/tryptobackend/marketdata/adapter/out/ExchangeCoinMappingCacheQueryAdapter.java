@@ -1,6 +1,7 @@
-package ksh.tryptobackend.trading.adapter.out;
+package ksh.tryptobackend.marketdata.adapter.out;
 
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheQueryPort;
+import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinMappingCacheQueryPort;
+import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -15,7 +16,7 @@ public class ExchangeCoinMappingCacheQueryAdapter implements ExchangeCoinMapping
     }
 
     @Override
-    public Optional<Long> resolve(String exchange, String symbol) {
+    public Optional<ExchangeCoinMapping> resolve(String exchange, String symbol) {
         return cacheStore.resolve(exchange, symbol);
     }
 }

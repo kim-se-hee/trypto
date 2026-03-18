@@ -1,12 +1,13 @@
 # 개요
 
-외부 시세 수집기가 업비트/빗썸/바이낸스 WebSocket에서 수신한 티커를 정규화하여 Redis에 적재한다.
-우리 서버는 Redis에 저장된 티커를 읽기만 하며, 두 가지 방식으로 소비한다.
+외부 시세 수집기가 업비트/빗썸/바이낸스 WebSocket에서 수신한 티커를 정규화하여 Redis에 적재하고, RabbitMQ fanout exchange로 발행한다.
+우리 서버는 세 가지 방식으로 시세를 소비한다.
 
 | 소비 방식 | 용도 | 메커니즘 |
 |----------|------|---------|
 | **캐시 조회** | 주문 체결, 포트폴리오 평가 등 서버 내부 로직 | Redis GET/MGET |
-| **실시간 스트리밍** | 클라이언트에 시세 push | Redis Pub/Sub → STOMP WebSocket |
+| **실시간 스트리밍** | 클라이언트에 시세 push | RabbitMQ fanout → STOMP WebSocket |
+| **미체결 주문 매칭** | 지정가 주문 체결 | RabbitMQ fanout → 로컬 캐시 매칭 |
 
 # Redis 내 티커 저장 구조
 
@@ -95,31 +96,35 @@ exchangeCoinId
 
 ## 실시간 스트리밍 — 클라이언트에 시세 push
 
-시세 수집기가 Redis PUBLISH로 전파한 티커를 서버가 수신하여 STOMP WebSocket으로 클라이언트에 전달한다.
+시세 수집기가 RabbitMQ fanout exchange(`ticker.exchange`)로 발행한 `TickerMessage`를 marketdata 리스너가 소비하여 STOMP WebSocket으로 클라이언트에 전달한다. 상세는 [live-ticker-streaming.md](marketdata/live-ticker-streaming.md)를 참조한다.
 
 ### 메시지 흐름
 
 ```
-시세 수집기 → Redis PUBLISH (tickers.{exchangeId})
+시세 수집기 → RabbitMQ Fanout Exchange (ticker.exchange)
                   │
-            서버 Redis SUBSCRIBE (LivePriceRedisListener)
+            ticker.marketdata.{uuid} 큐
                   │
-            SimpMessagingTemplate.convertAndSend()
+            LiveTickerEventListener
                   │
-            SimpleBroker → /topic/tickers.{exchangeId}
+            ResolveLiveTickerUseCase.resolve() → LiveTickerResult
+                  │
+            LivePriceResponse 변환 + SimpMessagingTemplate.convertAndSend()
+                  │
+            SimpleBroker → /topic/prices.{exchangeId}
                   │
             WebSocket 클라이언트
 ```
 
-### 채널/토픽 매핑
+### STOMP 토픽
 
-| Redis Pub/Sub 채널 | STOMP 토픽 |
-|-------------------|-----------|
-| `tickers.{exchangeId}` | `/topic/tickers.{exchangeId}` |
+| STOMP 토픽 | 전파 수단 |
+|-----------|----------|
+| `/topic/prices.{exchangeId}` | RabbitMQ fanout |
 
 클라이언트는 현재 보고 있는 거래소 토픽 1개만 구독하고, 거래소 탭 전환 시 기존 구독 해제 + 새 거래소 구독한다.
 
-### 메시지 포맷
+### 메시지 포맷 (LivePriceResponse)
 
 ```json
 {
@@ -137,15 +142,6 @@ exchangeCoinId
 | `coinId` | Long | 코인 ID |
 | `symbol` | String | 코인 심볼 |
 | `price` | BigDecimal | 현재가 (거래소 기축통화 단위) |
-| `changeRate` | BigDecimal | 등락률 (비율) |
-| `quoteTurnover` | BigDecimal | 24시간 누적 거래대금 |
+| `changeRate` | BigDecimal | 등락률 (비율) — 업비트/빗썸: 전일종가 대비, 바이낸스: 24h 대비. +1.23%면 0.0123 |
+| `quoteTurnover` | BigDecimal | 24시간 누적 거래대금 (기축통화 단위) |
 | `timestamp` | Long | 시세 수신 시각 (epoch ms) |
-
-
-## 미반영 사항
-
-| 항목 | 현재 코드 | 비고 |
-|------|----------|------|
-| Redis Pub/Sub 채널 | `prices.{exchangeId}` | `tickers.{exchangeId}`로 변경 필요 |
-| STOMP 토픽 | `/topic/prices.{exchangeId}` | `/topic/tickers.{exchangeId}`로 변경 필요 |
-| `quoteTurnover` 필드 | `LivePriceMessage`, `LivePriceResponse`에 없음 | DTO에 필드 추가 필요 |

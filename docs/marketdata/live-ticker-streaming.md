@@ -2,72 +2,61 @@
 
 ## 개요
 
-거래소별 실시간 티커(현재가, 등락률, 거래대금)를 WebSocket으로 클라이언트에 push한다. 크로스 서버 전파에 Redis Pub/Sub을 사용한다.
+거래소별 실시간 티커(현재가, 등락률, 거래대금)를 WebSocket으로 클라이언트에 push한다. RabbitMQ fanout exchange를 통해 시세 이벤트를 수신한다.
 
-시세 수집기가 거래소 WebSocket에서 수신한 정규화 티커를 Redis에 캐싱하고, 동시에 Redis PUBLISH로 각 서버에 전파한다. 각 서버는 이를 STOMP 토픽으로 클라이언트에 전달한다.
+시세 수집기가 거래소 WebSocket에서 수신한 정규화 티커를 Redis에 캐싱하고, 동시에 RabbitMQ fanout exchange로 발행한다. 각 서버는 자기 anonymous 큐에서 메시지를 소비하여 STOMP 토픽으로 클라이언트에 전달한다.
 
 마켓 탭, 포트폴리오 탭, 입출금 탭 등 실시간 시세가 필요한 모든 화면이 이 토픽을 구독한다. 각 화면은 필요한 필드만 선택적으로 사용한다.
 
-## 크로스 서버 전파: Redis Pub/Sub 선택 이유
+## 메시징 인프라: RabbitMQ fanout
 
-RabbitMQ는 주문 체결 등 다른 이벤트 처리에 활용하지만, 시세 스트리밍에는 Redis Pub/Sub이 더 적합하다:
+시세 이벤트는 RabbitMQ `ticker.exchange` fanout exchange를 통해 전파된다. 두 컨텍스트가 독립적으로 소비한다:
 
-- 시세 수집기가 거래소 WebSocket에서 실시간(ms 단위)으로 티커를 수신한다
-- 시세 수집기가 Redis SET(캐시)과 Redis PUBLISH(실시간 전파)를 동시에 수행한다
-- 각 서버가 Redis SUBSCRIBE로 메시지를 수신하고 자기 클라이언트에게 전달한다
+- **marketdata**: `ticker.marketdata.{uuid}` 큐 → WebSocket 브로드캐스트
+- **trading**: `ticker.trading.{uuid}` 큐 → 미체결 주문 매칭
 
-Redis Pub/Sub이 크로스 서버 메시지 전파를 담당하므로, 각 서버는 SimpleBroker만으로 로컬 클라이언트에게 전달할 수 있다.
+각 큐는 anonymous(exclusive, auto-delete)로 생성되어 서버 재시작 시 자동 정리된다.
 
-**한 틱 누락 허용:** Redis Pub/Sub은 fire-and-forget이라 서버 일시 단절 시 메시지가 유실될 수 있다. 그러나 시세는 연속적으로 흐르므로 한 틱을 놓쳐도 다음 틱이 즉시 도착한다. 모의투자 플랫폼에서 이는 문제가 되지 않는다.
-
-## 스케일 아웃 아키텍처
-
-```
-거래소 WebSocket → 시세 수집기 → Redis PUBLISH (Pub/Sub)
-                                       │
-                        ┌──────────────┼──────────────┐
-                        ↓              ↓              ↓
-                   Server A        Server B       Server C
-                 (SUBSCRIBE)     (SUBSCRIBE)    (SUBSCRIBE)
-                       ↓              ↓              ↓
-                 SimpleBroker   SimpleBroker   SimpleBroker
-                       ↓              ↓              ↓
-                WS Clients A   WS Clients B   WS Clients C
-```
-
-### 메시지 흐름
+## 메시지 흐름
 
 1. 시세 수집기가 거래소 WebSocket에서 티커를 수신한다
-2. Redis PUBLISH로 티커 변경을 알린다
-3. 각 서버가 Redis SUBSCRIBE로 메시지를 수신한다
-4. 서버가 `SimpMessagingTemplate`으로 SimpleBroker에 전달한다
-5. SimpleBroker가 해당 토픽을 구독 중인 WebSocket 클라이언트에게 전달한다
+2. RabbitMQ fanout exchange로 `TickerMessage`를 발행한다
+3. marketdata `LiveTickerEventListener`가 `ticker.marketdata.{uuid}` 큐에서 메시지를 소비한다
+4. `ResolveLiveTickerService`가 매핑 캐시에서 exchange+symbol → ExchangeCoinMapping을 조회하여 `LiveTickerResult`를 반환한다
+5. `LiveTickerEventListener`가 `LivePriceResponse`로 변환하여 `/topic/prices.{exchangeId}`로 전송한다
 
-## Redis Pub/Sub 채널
+## 워밍업
 
-```
-PUBLISH tickers.{exchangeId} {message}
-```
-
-각 서버는 `SUBSCRIBE tickers.{exchangeId}`로 구독하고, 수신한 메시지를 SimpleBroker를 통해 WebSocket 클라이언트에게 전달한다.
+`MarketdataWarmupInitializer`가 `ApplicationReadyEvent`에서:
+1. `WarmupExchangeCoinMappingUseCase.warmup()`으로 exchange+symbol → ExchangeCoinMapping 캐시를 로딩한다
+2. `tickerMarketdataListener` RabbitMQ 리스너를 시작한다
 
 ## STOMP 토픽
 
 ```
-/topic/tickers.{exchangeId}
+/topic/prices.{exchangeId}
 ```
 
 - 거래소별 토픽으로, 해당 거래소의 모든 코인 티커 업데이트가 개별 메시지로 전달된다
 - 클라이언트는 현재 보고 있는 거래소 토픽 1개만 구독한다
 - 거래소 탭 전환 시 기존 구독 해제 + 새 거래소 구독
 
-**Redis Pub/Sub 채널 → STOMP 토픽 매핑**
-
-| Redis 채널 | STOMP 토픽 | 설명 |
-|-----------|-----------|------|
-| `tickers.{exchangeId}` | `/topic/tickers.{exchangeId}` | 서버가 Redis 메시지를 수신하여 STOMP 토픽으로 전달 |
-
 ## 메시지 포맷
+
+### TickerMessage (RabbitMQ 수신)
+
+```json
+{
+  "exchange": "Upbit",
+  "symbol": "BTC/KRW",
+  "currentPrice": 143250000,
+  "changeRate": 0.0234,
+  "quoteTurnover": 892400000000,
+  "timestamp": 1709913600000
+}
+```
+
+### LivePriceResponse (WebSocket 전송)
 
 ```json
 {
@@ -89,17 +78,9 @@ PUBLISH tickers.{exchangeId} {message}
 | quoteTurnover | BigDecimal | 24시간 누적 거래대금 (기축통화 단위) |
 | timestamp | Long | 시세 수신 시각 (epoch ms) |
 
-## Redis Pub/Sub 리스너 구성
-
-```
-RedisMessageListenerContainer
-  → MessageListener (tickers.{exchangeId} 채널 구독)
-    → SimpMessagingTemplate.convertAndSend("/topic/tickers.{exchangeId}", message)
-```
-
 ## 소비 화면
 
-클라이언트가 `/topic/tickers.{exchangeId}`를 구독하면, 아래 화면들이 수신된 메시지에서 필요한 필드를 선택적으로 사용한다.
+클라이언트가 `/topic/prices.{exchangeId}`를 구독하면, 아래 화면들이 수신된 메시지에서 필요한 필드를 선택적으로 사용한다.
 
 | 화면 | 사용 필드 | 용도 |
 |------|----------|------|

@@ -1,4 +1,4 @@
-package ksh.tryptobackend.trading.domain.vo;
+package ksh.tryptobackend.marketdata.domain.vo;
 
 import java.util.Objects;
 

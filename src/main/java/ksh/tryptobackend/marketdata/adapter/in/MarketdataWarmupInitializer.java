@@ -1,7 +1,7 @@
-package ksh.tryptobackend.trading.adapter.in;
+package ksh.tryptobackend.marketdata.adapter.in;
 
 import ksh.tryptobackend.common.config.RabbitMqConfig;
-import ksh.tryptobackend.trading.application.port.in.WarmupPendingOrderMatchingUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.WarmupExchangeCoinMappingUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
@@ -12,23 +12,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PendingOrderMatchingWarmupInitializer {
+public class MarketdataWarmupInitializer {
 
-    private final WarmupPendingOrderMatchingUseCase warmupPendingOrderMatchingUseCase;
+    private final WarmupExchangeCoinMappingUseCase warmupExchangeCoinMappingUseCase;
     private final RabbitListenerEndpointRegistry rabbitListenerEndpointRegistry;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        log.info("미체결 주문 매칭 워밍업 시작");
+        log.info("marketdata 워밍업 시작");
 
-        warmupPendingOrderMatchingUseCase.warmup();
+        warmupExchangeCoinMappingUseCase.warmup();
         startTickerListener();
 
-        log.info("미체결 주문 매칭 워밍업 완료");
+        log.info("marketdata 워밍업 완료");
     }
 
     private void startTickerListener() {
-        rabbitListenerEndpointRegistry.getListenerContainer(RabbitMqConfig.TICKER_TRADING_LISTENER_ID).start();
-        log.info("RabbitMQ 시세 리스너 활성화");
+        rabbitListenerEndpointRegistry.getListenerContainer(RabbitMqConfig.TICKER_MARKETDATA_LISTENER_ID).start();
+        log.info("marketdata RabbitMQ 시세 리스너 활성화");
     }
 }

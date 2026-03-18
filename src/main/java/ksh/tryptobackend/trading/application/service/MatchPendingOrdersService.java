@@ -1,8 +1,8 @@
 package ksh.tryptobackend.trading.application.service;
 
+import ksh.tryptobackend.marketdata.application.port.in.ResolveExchangeCoinMappingUseCase;
 import ksh.tryptobackend.trading.application.port.in.FillPendingOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.MatchPendingOrdersUseCase;
-import ksh.tryptobackend.trading.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderFillFailureCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PendingOrderCacheQueryPort;
@@ -28,10 +28,11 @@ public class MatchPendingOrdersService implements MatchPendingOrdersUseCase {
 
     private final PendingOrderCacheCommandPort pendingOrderCacheCommandPort;
     private final PendingOrderCacheQueryPort pendingOrderCacheQueryPort;
-    private final ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
     private final OrderFillFailureCommandPort orderFillFailureCommandPort;
 
     private final FillPendingOrderUseCase fillPendingOrderUseCase;
+
+    private final ResolveExchangeCoinMappingUseCase resolveExchangeCoinMappingUseCase;
 
     private final Clock clock;
 
@@ -55,7 +56,7 @@ public class MatchPendingOrdersService implements MatchPendingOrdersUseCase {
     }
 
     private Long resolveExchangeCoinId(String exchange, String symbol) {
-        return exchangeCoinMappingCacheQueryPort.resolve(exchange, symbol)
+        return resolveExchangeCoinMappingUseCase.resolve(exchange, symbol)
             .orElseGet(() -> {
                 log.warn("매핑 변환 실패: exchange={}, symbol={}", exchange, symbol);
                 return null;

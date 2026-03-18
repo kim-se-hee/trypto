@@ -35,6 +35,15 @@
 ### GetLivePricesUseCase
 - `getCurrentPrices(Set<Long> exchangeCoinIds) → Map<Long, BigDecimal>`
 
+### ResolveExchangeCoinMappingUseCase
+- `resolve(String exchange, String symbol) → Optional<Long>` (exchangeCoinId)
+
+### WarmupExchangeCoinMappingUseCase
+- `warmup()` — 거래소-코인 매핑 캐시 워밍업 (내부 사용, 크로스 컨텍스트 호출 없음)
+
+### ResolveLiveTickerUseCase
+- `resolve(String exchange, String symbol, BigDecimal currentPrice, BigDecimal changeRate, BigDecimal quoteTurnover, Long timestamp) → Optional<LiveTickerResult>` — 내부 사용, 크로스 컨텍스트 호출 없음
+
 ## Result DTO
 
 | DTO | 필드 |
@@ -45,3 +54,4 @@
 | ExchangeCoinMappingResult | exchangeCoinId: Long, exchangeId: Long, coinId: Long |
 | ExchangeCoinChainResult | tagRequired: boolean |
 | WithdrawalFeeResult | fee: BigDecimal, minWithdrawal: BigDecimal |
+| LiveTickerResult | exchangeId: Long, coinId: Long, symbol: String, price: BigDecimal, changeRate: BigDecimal, quoteTurnover: BigDecimal, timestamp: Long |
