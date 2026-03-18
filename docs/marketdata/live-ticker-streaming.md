@@ -21,9 +21,9 @@
 
 1. 시세 수집기가 거래소 WebSocket에서 티커를 수신한다
 2. RabbitMQ fanout exchange로 `TickerMessage`를 발행한다
-3. marketdata `TickerEventListener`가 `ticker.marketdata.{uuid}` 큐에서 메시지를 소비한다
-4. `BroadcastLiveTickerService`가 매핑 캐시에서 exchange+symbol → ExchangeCoinMapping을 조회한다
-5. `LivePriceMessagePort`(STOMP)를 통해 `/topic/prices.{exchangeId}`로 `LivePriceResponse`를 전송한다
+3. marketdata `LiveTickerEventListener`가 `ticker.marketdata.{uuid}` 큐에서 메시지를 소비한다
+4. `ResolveLiveTickerService`가 매핑 캐시에서 exchange+symbol → ExchangeCoinMapping을 조회하여 `LiveTickerResult`를 반환한다
+5. `LiveTickerEventListener`가 `LivePriceResponse`로 변환하여 `/topic/prices.{exchangeId}`로 전송한다
 
 ## 워밍업
 
