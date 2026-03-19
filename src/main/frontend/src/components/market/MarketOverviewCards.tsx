@@ -77,7 +77,7 @@ export function MarketOverviewCards({ coins, baseCurrency, highlightSymbols }: M
                     coin.changeRate === 0 && "bg-muted text-muted-foreground",
                   )}
                 >
-                  {isUp ? "+" : ""}{coin.changeRate.toFixed(2)}%
+                  {isUp ? "+" : ""}{(coin.changeRate * 100).toFixed(2)}%
                 </span>
               ) : (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">-</span>

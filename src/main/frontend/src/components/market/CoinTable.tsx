@@ -16,7 +16,7 @@ interface CoinTableProps {
 
 type SortKey = "name" | "price" | "change" | "volume";
 
-const GRID_COLS = "grid-cols-[2fr_minmax(100px,140px)_minmax(80px,100px)_minmax(90px,120px)]";
+const GRID_COLS = "grid-cols-[2fr_minmax(100px,140px)_minmax(80px,100px)_minmax(160px,1fr)]";
 
 export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: CoinTableProps) {
   const comparator = useCallback((key: SortKey, dir: SortDir) => {

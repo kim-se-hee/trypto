@@ -86,27 +86,20 @@ export function formatPrice(price: number, baseCurrency: string): string {
 
 export function formatVolume(volume: number, baseCurrency: string): string {
   if (baseCurrency === "SOL") {
-    if (volume >= 1_000_000_000) return `◎${(volume / 1_000_000_000).toFixed(1)}B`;
-    if (volume >= 1_000_000) return `◎${(volume / 1_000_000).toFixed(1)}M`;
-    if (volume >= 1_000) return `◎${(volume / 1_000).toFixed(0)}K`;
     return `◎${volume.toLocaleString("en-US")}`;
   }
   if (baseCurrency === "USDT") {
-    if (volume >= 1_000_000_000) return `$${(volume / 1_000_000_000).toFixed(1)}B`;
-    if (volume >= 1_000_000) return `$${(volume / 1_000_000).toFixed(0)}M`;
     return `$${volume.toLocaleString("en-US")}`;
   }
-  if (volume >= 1_0000_0000_0000) return `${(volume / 1_0000_0000_0000).toFixed(1)}조`;
-  if (volume >= 1_0000_0000) return `${Math.floor(volume / 1_0000_0000).toLocaleString("ko-KR")}억`;
-  if (volume >= 1_0000) return `${Math.floor(volume / 1_0000).toLocaleString("ko-KR")}만`;
   return volume.toLocaleString("ko-KR");
 }
 
 // ── 변동률 포맷 ──────────────────────────────────────────
 
 export function formatChangeRate(rate: number): string {
-  const sign = rate > 0 ? "+" : "";
-  return `${sign}${rate.toFixed(2)}%`;
+  const percent = rate * 100;
+  const sign = percent > 0 ? "+" : "";
+  return `${sign}${percent.toFixed(2)}%`;
 }
 
 // ── 통화 기호 ──────────────────────────────────────────
