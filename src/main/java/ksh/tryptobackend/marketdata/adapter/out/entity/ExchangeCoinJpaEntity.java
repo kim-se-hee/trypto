@@ -28,12 +28,16 @@ public class ExchangeCoinJpaEntity {
     @Column(name = "coin_id", nullable = false)
     private Long coinId;
 
-    public ExchangeCoinJpaEntity(Long exchangeId, Long coinId) {
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
+
+    public ExchangeCoinJpaEntity(Long exchangeId, Long coinId, String displayName) {
         this.exchangeId = exchangeId;
         this.coinId = coinId;
+        this.displayName = displayName;
     }
 
     public ExchangeCoin toDomain() {
-        return new ExchangeCoin(id, exchangeId, coinId);
+        return new ExchangeCoin(id, exchangeId, coinId, displayName);
     }
 }

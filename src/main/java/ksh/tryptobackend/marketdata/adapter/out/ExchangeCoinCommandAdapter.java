@@ -14,8 +14,8 @@ public class ExchangeCoinCommandAdapter implements ExchangeCoinCommandPort {
     private final ExchangeCoinJpaRepository repository;
 
     @Override
-    public ExchangeCoin save(Long exchangeId, Long coinId) {
-        ExchangeCoinJpaEntity entity = new ExchangeCoinJpaEntity(exchangeId, coinId);
+    public ExchangeCoin save(Long exchangeId, Long coinId, String displayName) {
+        ExchangeCoinJpaEntity entity = new ExchangeCoinJpaEntity(exchangeId, coinId, displayName);
         ExchangeCoinJpaEntity saved = repository.save(entity);
         return saved.toDomain();
     }
