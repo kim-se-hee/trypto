@@ -44,8 +44,8 @@ export function RegretPage() {
     setLoading(true);
     try {
       const [reportData, chartData] = await Promise.all([
-        getRegretReport(activeRound.roundId, firstWallet.exchangeId),
-        getRegretChart(activeRound.roundId, firstWallet.exchangeId),
+        getRegretReport(activeRound.roundId, firstWallet.exchangeId, user.userId),
+        getRegretChart(activeRound.roundId, firstWallet.exchangeId, user.userId),
       ]);
 
       setSummary(reportData.summary);

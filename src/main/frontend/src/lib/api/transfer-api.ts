@@ -47,6 +47,7 @@ export function createTransfer(params: CreateTransferRequest): Promise<TransferC
 
 export function getTransferHistory(
   walletId: number,
+  userId: number,
   params?: {
     type?: "DEPOSIT" | "WITHDRAW";
     cursor?: string;
@@ -56,6 +57,7 @@ export function getTransferHistory(
   return apiGet<CursorPageResponse<TransferHistoryItem>>(
     `/api/wallets/${walletId}/transfers`,
     {
+      userId,
       type: params?.type,
       cursor: params?.cursor,
       size: params?.size,

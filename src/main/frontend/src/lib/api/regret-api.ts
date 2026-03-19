@@ -89,10 +89,11 @@ function formatDateLabel(dateStr: string, totalDays: number): string {
 export async function getRegretReport(
   roundId: number,
   exchangeId: number,
+  userId: number,
 ): Promise<RegretReportData> {
   const data = await apiGet<BackendRegretReportResponse>(
     `/api/rounds/${roundId}/regret`,
-    { exchangeId },
+    { exchangeId, userId },
   );
 
   const summary: RegretSummary = {
@@ -147,10 +148,11 @@ export async function getRegretReport(
 export async function getRegretChart(
   roundId: number,
   exchangeId: number,
+  userId: number,
 ): Promise<RegretChartData> {
   const data = await apiGet<BackendRegretChartResponse>(
     `/api/rounds/${roundId}/regret/chart`,
-    { exchangeId },
+    { exchangeId, userId },
   );
 
   const totalDays = data.assetHistory.length;

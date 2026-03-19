@@ -75,7 +75,7 @@ export function WalletPage() {
       const [balancesData, exchangeCoins, transferData] = await Promise.all([
         getWalletBalances(user.userId, walletEntry.walletId),
         getExchangeCoins(exchange.id),
-        getTransferHistory(walletEntry.walletId, { size: 50 }),
+        getTransferHistory(walletEntry.walletId, user.userId, { size: 50 }),
       ]);
 
       const coinMap = new Map<number, ExchangeCoinResponse>();
