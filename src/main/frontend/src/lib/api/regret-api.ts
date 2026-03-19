@@ -19,9 +19,10 @@ interface BackendRuleImpact {
 }
 
 interface BackendViolationDetail {
-  violationId: number;
+  violationDetailId: number;
+  orderId: number;
   coinSymbol: string;
-  ruleType: BackendRuleType;
+  violatedRules: BackendRuleType[];
   profitLoss: number;
   occurredAt: string;
 }
@@ -45,9 +46,8 @@ interface BackendAssetHistoryItem {
 interface BackendRegretChartResponse {
   assetHistory: BackendAssetHistoryItem[];
   violationMarkers: Array<{
-    date: string;
-    value: number;
-    type: "loss" | "gain";
+    snapshotDate: string;
+    assetValue: number;
   }>;
 }
 
@@ -115,34 +115,18 @@ export async function getRegretReport(
     };
   });
 
-  // 동일 coinSymbol + 동일 시각의 위반을 그룹핑
-  const violationMap = new Map<string, ViolationTrade>();
-  for (const detail of data.violationDetails) {
-    const key = `${detail.coinSymbol}-${detail.occurredAt}`;
-    const existing = violationMap.get(key);
-    const ruleType = toFrontRuleType(detail.ruleType);
+  const violationTrades: ViolationTrade[] = data.violationDetails.map((detail) => {
+    const d = new Date(detail.occurredAt);
+    return {
+      id: detail.violationDetailId,
+      coinSymbol: detail.coinSymbol,
+      date: `${d.getMonth() + 1}/${d.getDate()}`,
+      violatedRules: detail.violatedRules.map(toFrontRuleType),
+      profitLoss: Number(detail.profitLoss),
+    };
+  });
 
-    if (existing) {
-      if (!existing.violatedRules.includes(ruleType)) {
-        existing.violatedRules.push(ruleType);
-      }
-    } else {
-      const d = new Date(detail.occurredAt);
-      violationMap.set(key, {
-        id: detail.violationId,
-        coinSymbol: detail.coinSymbol,
-        date: `${d.getMonth() + 1}/${d.getDate()}`,
-        violatedRules: [ruleType],
-        profitLoss: Number(detail.profitLoss),
-      });
-    }
-  }
-
-  return {
-    summary,
-    ruleToggles,
-    violationTrades: Array.from(violationMap.values()),
-  };
+  return { summary, ruleToggles, violationTrades };
 }
 
 export async function getRegretChart(
@@ -167,9 +151,9 @@ export async function getRegretChart(
   const btcHoldValues = data.assetHistory.map((item) => Number(item.btcHoldAsset));
 
   const markers: ViolationMarker[] = (data.violationMarkers ?? []).map((m) => ({
-    date: formatDateLabel(m.date, totalDays),
-    value: Number(m.value),
-    type: m.type,
+    date: formatDateLabel(m.snapshotDate, totalDays),
+    value: Number(m.assetValue),
+    type: "loss" as const,
   }));
 
   return { snapshots, btcHoldValues, markers, totalDays };
