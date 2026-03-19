@@ -19,4 +19,6 @@ public interface ExchangeQueryPort {
     Map<Long, String> findNamesByIds(Set<Long> exchangeIds);
 
     boolean existsById(Long exchangeId);
+
+    Optional<ExchangeSummary> findExchangeSummaryByName(String name);
 }

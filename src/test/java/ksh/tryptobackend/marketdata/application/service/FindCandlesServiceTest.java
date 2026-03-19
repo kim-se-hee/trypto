@@ -4,9 +4,11 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.dto.query.FindCandlesQuery;
 import ksh.tryptobackend.marketdata.application.port.out.CandleQueryPort;
+import ksh.tryptobackend.marketdata.application.port.out.ExchangeQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.Candle;
 import ksh.tryptobackend.marketdata.domain.model.CandleFilter;
 import ksh.tryptobackend.marketdata.domain.model.CandleInterval;
+import ksh.tryptobackend.marketdata.domain.vo.ExchangeSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,12 +33,20 @@ import static org.mockito.Mockito.when;
 class FindCandlesServiceTest {
 
     private CandleQueryPort candleQueryPort;
+    private ExchangeQueryPort exchangeQueryPort;
     private FindCandlesService findCandlesService;
+
+    private static final ExchangeSummary UPBIT_SUMMARY = new ExchangeSummary(1L, "UPBIT", "KRW");
+    private static final ExchangeSummary BINANCE_SUMMARY = new ExchangeSummary(3L, "BINANCE", "USDT");
 
     @BeforeEach
     void setUp() {
         candleQueryPort = mock(CandleQueryPort.class);
-        findCandlesService = new FindCandlesService(candleQueryPort);
+        exchangeQueryPort = mock(ExchangeQueryPort.class);
+        findCandlesService = new FindCandlesService(candleQueryPort, exchangeQueryPort);
+
+        when(exchangeQueryPort.findExchangeSummaryByName("UPBIT")).thenReturn(Optional.of(UPBIT_SUMMARY));
+        when(exchangeQueryPort.findExchangeSummaryByName("BINANCE")).thenReturn(Optional.of(BINANCE_SUMMARY));
     }
 
     @Nested
@@ -57,19 +68,18 @@ class FindCandlesServiceTest {
                 .isEqualTo(ErrorCode.INVALID_EXCHANGE_NAME);
         }
 
-        @ParameterizedTest
-        @ValueSource(strings = {"UPBIT", "BITHUMB", "BINANCE", "test_exchange", "exchange-1"})
-        @DisplayName("유효한 exchange 식별자이면 검증을 통과한다")
-        void findCandles_validExchange_passes(String exchange) {
+        @Test
+        @DisplayName("존재하지 않는 거래소 이름이면 EXCHANGE_NOT_FOUND 예외가 발생한다")
+        void findCandles_unknownExchange_throwsException() {
             // Given
-            FindCandlesQuery query = new FindCandlesQuery(exchange, "BTC", "1d", 60, null);
-            when(candleQueryPort.findByFilter(any())).thenReturn(List.of());
+            FindCandlesQuery query = new FindCandlesQuery("UNKNOWN", "BTC", "1d", 60, null);
+            when(exchangeQueryPort.findExchangeSummaryByName("UNKNOWN")).thenReturn(Optional.empty());
 
-            // When
-            findCandlesService.findCandles(query);
-
-            // Then
-            verify(candleQueryPort).findByFilter(any());
+            // When & Then
+            assertThatThrownBy(() -> findCandlesService.findCandles(query))
+                .isInstanceOf(CustomException.class)
+                .extracting(ex -> ((CustomException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.EXCHANGE_NOT_FOUND);
         }
     }
 
@@ -90,6 +100,43 @@ class FindCandlesServiceTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_COIN_SYMBOL);
+        }
+    }
+
+    @Nested
+    @DisplayName("InfluxDB 코인 심볼 조합")
+    class CoinSymbolResolution {
+
+        @Test
+        @DisplayName("국내 거래소(UPBIT)이면 coin/KRW 형태로 조합된다")
+        void findCandles_domesticExchange_combinesCoinWithKRW() {
+            // Given
+            FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of());
+            ArgumentCaptor<CandleFilter> captor = ArgumentCaptor.forClass(CandleFilter.class);
+
+            // When
+            findCandlesService.findCandles(query);
+
+            // Then
+            verify(candleQueryPort).findByFilter(captor.capture());
+            assertThat(captor.getValue().coin()).isEqualTo("BTC/KRW");
+        }
+
+        @Test
+        @DisplayName("해외 거래소(BINANCE)이면 coin/USDT 형태로 조합된다")
+        void findCandles_foreignExchange_combinesCoinWithUSDT() {
+            // Given
+            FindCandlesQuery query = new FindCandlesQuery("BINANCE", "ETH", "1d", 60, null);
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of());
+            ArgumentCaptor<CandleFilter> captor = ArgumentCaptor.forClass(CandleFilter.class);
+
+            // When
+            findCandlesService.findCandles(query);
+
+            // Then
+            verify(candleQueryPort).findByFilter(captor.capture());
+            assertThat(captor.getValue().coin()).isEqualTo("ETH/USDT");
         }
     }
 
