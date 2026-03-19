@@ -5,6 +5,9 @@ export interface ExchangeCoinResponse {
   coinId: number;
   coinSymbol: string;
   coinName: string;
+  price: number;
+  changeRate: number;
+  volume: number;
 }
 
 export interface CoinChainResponse {
