@@ -35,11 +35,10 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
 
     @Override
     @Transactional
-    public void sync() {
+    public boolean sync() {
         Map<String, List<MarketMetaEntry>> marketMetaMap = marketMetaQueryPort.findAll();
         if (marketMetaMap.isEmpty()) {
-            log.warn("market-meta 데이터가 없어 동기화를 건너뜁니다");
-            return;
+            return false;
         }
 
         List<ExchangeConfig> exchangeConfigs = exchangeConfigQueryPort.findAll();
@@ -47,6 +46,7 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
         Map<String, Long> coinIdBySymbol = syncCoins(marketMetaMap, exchangeConfigs);
         Map<String, Long> exchangeIdByName = syncExchanges(exchangeConfigs, coinIdBySymbol);
         syncExchangeCoins(marketMetaMap, coinIdBySymbol, exchangeIdByName);
+        return true;
     }
 
     private Map<String, Long> syncCoins(Map<String, List<MarketMetaEntry>> marketMetaMap,

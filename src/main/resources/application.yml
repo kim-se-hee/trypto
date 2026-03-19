@@ -1,6 +1,10 @@
 spring:
   application:
     name: trypto-backend
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   datasource:
     url: jdbc:h2:mem:trypto;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -37,13 +41,16 @@ influxdb:
   url: ${INFLUXDB_URL:http://localhost:8086}
   token: ${INFLUXDB_TOKEN:}
   org: ${INFLUXDB_ORG:trypto}
-  bucket: ${INFLUXDB_BUCKET:candles}
+  bucket: ${INFLUXDB_BUCKET:candle}
 
 app:
   websocket:
     endpoint: /ws
     heartbeat-send: 10000
     heartbeat-receive: 10000
+  market-meta-sync:
+    max-retries: 30
+    retry-interval-seconds: 5
   exchanges:
     - name: UPBIT
       market-type: DOMESTIC

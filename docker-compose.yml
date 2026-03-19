@@ -16,18 +16,5 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
-    container_name: trypto-app
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/trypto
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
-    depends_on:
-      mysql:
-        condition: service_healthy
-
 volumes:
   trypto-mysql-data:
