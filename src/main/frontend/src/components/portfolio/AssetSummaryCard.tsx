@@ -33,7 +33,7 @@ export function AssetSummaryCard({ availableCash, holdings, baseCurrency }: Asse
   ];
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4">
         <p className="text-xs font-medium text-muted-foreground">
           보유 {baseCurrency}
@@ -45,7 +45,7 @@ export function AssetSummaryCard({ availableCash, holdings, baseCurrency }: Asse
 
       <div className="mb-5">
         <p className="text-xs font-medium text-muted-foreground">총 보유자산</p>
-        <p className="mt-0.5 whitespace-nowrap font-mono text-2xl font-extrabold tabular-nums tracking-tight">
+        <p className="mt-0.5 whitespace-nowrap font-mono text-2xl font-bold tabular-nums tracking-tight">
           {formatCurrency(totalAsset, baseCurrency)}
         </p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">

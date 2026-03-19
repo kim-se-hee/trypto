@@ -65,7 +65,7 @@ export function HoldingsTable({ holdings, baseCurrency }: HoldingsTableProps) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card shadow-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="overflow-x-auto">
         {/* Header */}
         <div className={cn("grid min-w-[700px] items-center bg-secondary/30 px-5 py-3.5", GRID_COLS)}>

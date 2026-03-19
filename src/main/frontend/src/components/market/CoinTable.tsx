@@ -51,7 +51,7 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card shadow-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       {/* Table header */}
       <div className={cn("grid items-center bg-secondary/30 px-5 py-3.5", GRID_COLS)}>
         {columns.map((col) => (

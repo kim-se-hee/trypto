@@ -38,7 +38,7 @@ export function MeVsMe({
   benchmarks,
 }: MeVsMeProps) {
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 헤더 */}
       <div className="mb-5">
         <h2 className="flex items-center gap-2 text-lg font-bold">

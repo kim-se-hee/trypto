@@ -23,7 +23,7 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onDeposit, onTr
   const isBase = coin.coinSymbol === baseCurrency;
 
   return (
-    <div className="flex h-full flex-col rounded-2xl bg-card shadow-card">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-card">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/30 px-5 py-4">
         <div className="flex items-center gap-3">
@@ -44,7 +44,7 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onDeposit, onTr
 
       {/* Balance */}
       <div className="border-b border-border/30 px-5 py-5">
-        <p className="font-mono text-2xl font-extrabold tabular-nums tracking-tight">
+        <p className="font-mono text-2xl font-bold tabular-nums tracking-tight">
           {formatDisplay(total, coin.coinSymbol, baseCurrency)}
         </p>
         {!isBase && (

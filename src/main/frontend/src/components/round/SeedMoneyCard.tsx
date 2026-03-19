@@ -33,7 +33,7 @@ export function SeedMoneyCard({
   return (
     <div className="flex flex-col gap-5">
       {/* 시드머니 */}
-      <div className="group relative overflow-hidden rounded-2xl bg-card p-5 shadow-card">
+      <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5">
         <div className={cn(
           "pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent",
           "opacity-0 transition-opacity duration-200 group-hover:opacity-100",
@@ -53,7 +53,7 @@ export function SeedMoneyCard({
           {/* 금액 표시 */}
           <div className="mb-3 rounded-xl bg-secondary/40 px-4 py-3">
             <p className={cn(
-              "font-mono text-2xl font-extrabold tabular-nums tracking-tight",
+              "font-mono text-2xl font-bold tabular-nums tracking-tight",
               seed > 0 ? "text-foreground" : "text-muted-foreground/40",
             )}>
               {seed > 0 ? `₩${seed.toLocaleString("ko-KR")}` : "₩0"}
@@ -81,7 +81,7 @@ export function SeedMoneyCard({
       </div>
 
       {/* 긴급 자금 */}
-      <div className="group relative overflow-hidden rounded-2xl bg-card p-5 shadow-card">
+      <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5">
         <div className={cn(
           "pointer-events-none absolute inset-0 bg-gradient-to-br from-chart-4/5 to-transparent",
           "opacity-0 transition-opacity duration-200 group-hover:opacity-100",
@@ -100,7 +100,7 @@ export function SeedMoneyCard({
 
           <div className="mb-3 rounded-xl bg-secondary/40 px-4 py-3">
             <p className={cn(
-              "font-mono text-2xl font-extrabold tabular-nums tracking-tight",
+              "font-mono text-2xl font-bold tabular-nums tracking-tight",
               emergencyLimit > 0 ? "text-foreground" : "text-muted-foreground/40",
             )}>
               {emergencyLimit > 0 ? `₩${emergencyLimit.toLocaleString("ko-KR")}` : "₩0"}

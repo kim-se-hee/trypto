@@ -124,11 +124,11 @@ export function RegretChart({
   );
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 상단 요약 */}
       <div className="mb-5">
         <p className="text-xs font-medium text-muted-foreground">놓친 수익</p>
-        <p className="mt-1 font-mono text-3xl font-extrabold tabular-nums text-negative">
+        <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-negative">
           {summary.missedProfit.toLocaleString("ko-KR")}
           <span className="ml-2 text-base font-bold text-muted-foreground">KRW</span>
         </p>
@@ -139,7 +139,7 @@ export function RegretChart({
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">실제</p>
           <p className={cn(
-            "mt-1 font-mono text-lg font-extrabold tabular-nums",
+            "mt-1 font-mono text-lg font-bold tabular-nums",
             summary.actualProfitRate >= 0 ? "text-positive" : "text-negative",
           )}>
             {summary.actualProfitRate >= 0 ? "+" : ""}{summary.actualProfitRate}%
@@ -148,7 +148,7 @@ export function RegretChart({
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">규칙 준수 시</p>
           <p className={cn(
-            "mt-1 font-mono text-lg font-extrabold tabular-nums",
+            "mt-1 font-mono text-lg font-bold tabular-nums",
             summary.ruleFollowedProfitRate >= 0 ? "text-positive" : "text-negative",
           )}>
             {summary.ruleFollowedProfitRate >= 0 ? "+" : ""}{summary.ruleFollowedProfitRate}%
@@ -156,7 +156,7 @@ export function RegretChart({
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">위반</p>
-          <p className="mt-1 font-mono text-lg font-extrabold tabular-nums">
+          <p className="mt-1 font-mono text-lg font-bold tabular-nums">
             {summary.totalViolations}<span className="text-sm font-bold">건</span>
           </p>
         </div>

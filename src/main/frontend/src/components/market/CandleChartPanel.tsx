@@ -511,12 +511,12 @@ export function CandleChartPanel({
   }
 
   return (
-    <section className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-card">
+    <section className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="border-b border-border/50 px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-2">
             <div className="flex flex-wrap items-end gap-2">
-              <h2 className="text-4xl font-extrabold tracking-tight">
+              <h2 className="text-4xl font-bold tracking-tight">
                 {coin.symbol}
                 <span className="ml-2 text-2xl font-semibold text-muted-foreground">
                   / {baseCurrency}
@@ -528,7 +528,7 @@ export function CandleChartPanel({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className="font-mono text-4xl font-extrabold tabular-nums">
+              <p className="font-mono text-4xl font-bold tabular-nums">
                 {getCurrencySymbol(baseCurrency)}
                 {formatPrice(coin.currentPrice, baseCurrency)}
               </p>
@@ -685,7 +685,7 @@ export function CandleChartPanel({
 
           {hoveredCandle && (
             <div
-              className="pointer-events-none absolute z-10 w-[220px] rounded-2xl bg-foreground/92 px-3 py-2.5 text-sm text-white shadow-xl"
+              className="pointer-events-none absolute z-10 w-[220px] rounded-xl bg-foreground/92 px-3 py-2.5 text-sm text-white shadow-xl"
               style={{
                 left: `${tooltipLeft}px`,
                 top: `${tooltipTop}px`,

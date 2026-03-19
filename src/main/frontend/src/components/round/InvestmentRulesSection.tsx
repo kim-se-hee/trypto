@@ -95,7 +95,7 @@ export function InvestmentRulesSection({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-extrabold tracking-tight">투자 원칙</h2>
+          <h2 className="text-lg font-bold tracking-tight">투자 원칙</h2>
           <p className="mt-0.5 text-xs font-medium text-muted-foreground">
             나만의 투자 규칙을 설정하세요
           </p>

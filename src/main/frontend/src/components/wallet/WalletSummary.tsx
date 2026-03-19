@@ -26,7 +26,7 @@ export function WalletSummary({ balances, baseCurrency, exchangeName }: WalletSu
   const baseLocked = baseCoin ? baseCoin.locked : 0;
 
   return (
-    <div className="rounded-2xl bg-card p-6 shadow-card">
+    <div className="rounded-xl border border-border bg-card p-6">
       <div>
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-muted-foreground">
@@ -41,7 +41,7 @@ export function WalletSummary({ balances, baseCurrency, exchangeName }: WalletSu
           </button>
         </div>
 
-        <p className="mt-1 font-mono text-3xl font-extrabold tabular-nums tracking-tight">
+        <p className="mt-1 font-mono text-3xl font-bold tabular-nums tracking-tight">
           {visible ? formatCurrency(totalAsset, baseCurrency) : HIDDEN}
         </p>
 

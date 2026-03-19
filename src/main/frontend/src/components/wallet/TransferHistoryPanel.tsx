@@ -103,7 +103,7 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
   }, [records, exchangeId, typeFilter, statusFilter, assetFilter]);
 
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl bg-card shadow-card">
+    <section className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
       <div className="border-b border-border/30 px-6 py-5">
         <h3 className="text-lg font-bold">입출금 내역</h3>
       </div>

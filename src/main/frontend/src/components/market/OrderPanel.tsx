@@ -343,12 +343,11 @@ export function OrderPanel({
 
   return (
     <div className="sticky top-24 space-y-4">
-      <div className="rounded-3xl border border-primary/10 bg-gradient-to-br from-white via-white to-primary/5 p-[1px] shadow-card">
-        <div className="rounded-[22px] bg-card/95 p-5 backdrop-blur">
+      <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold text-muted-foreground">주문 패널</p>
-              <h2 className="mt-1 text-lg font-extrabold tracking-tight">
+              <h2 className="mt-1 text-lg font-bold tracking-tight">
                 {coinSymbol} <span className="text-muted-foreground">/ {baseCurrency}</span>
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -363,7 +362,7 @@ export function OrderPanel({
             </div>
           )}
 
-          <div className="mt-5 rounded-2xl bg-secondary/60 p-1">
+          <div className="mt-5 rounded-xl bg-secondary/60 p-1">
             <div className="grid grid-cols-3 gap-1">
               {ORDER_TABS.map((tab) => (
                 <button
@@ -417,7 +416,7 @@ export function OrderPanel({
                 return (
                   <div
                     key={item.orderId}
-                    className="rounded-2xl border border-border/60 bg-white px-4 py-3 shadow-sm transition hover:shadow-card-hover"
+                    className="rounded-xl border border-border/60 bg-white px-4 py-3 shadow-sm transition hover:shadow-card-hover"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -473,13 +472,13 @@ export function OrderPanel({
               })}
 
               {historyLoading && (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/30 px-4 py-3 text-center text-sm text-muted-foreground">
+                <div className="rounded-xl border border-dashed border-border/70 bg-secondary/30 px-4 py-3 text-center text-sm text-muted-foreground">
                   거래 내역을 불러오는 중입니다...
                 </div>
               )}
 
               {!historyLoading && historyItems.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/30 px-4 py-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-xl border border-dashed border-border/70 bg-secondary/30 px-4 py-6 text-center text-sm text-muted-foreground">
                   {historyFilter === "filled" ? "체결 내역이 없습니다." : "미체결 주문이 없습니다."}
                 </div>
               )}
@@ -623,7 +622,7 @@ export function OrderPanel({
               <div className="mt-5 grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
-                  className="h-11 rounded-2xl text-sm font-semibold"
+                  className="h-11 rounded-xl text-sm font-semibold"
                   onClick={() => {
                     setPrice("");
                     setQuantity("");
@@ -635,7 +634,7 @@ export function OrderPanel({
                 </Button>
                 <Button
                   className={cn(
-                    "h-11 rounded-2xl text-sm font-semibold",
+                    "h-11 rounded-xl text-sm font-semibold",
                     isBuy ? "bg-primary text-primary-foreground" : "bg-destructive text-white",
                   )}
                   onClick={() => void handleSubmitOrder()}
@@ -646,7 +645,6 @@ export function OrderPanel({
               </div>
             </>
           )}
-        </div>
       </div>
     </div>
   );

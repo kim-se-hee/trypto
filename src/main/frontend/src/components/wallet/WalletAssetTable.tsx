@@ -88,7 +88,7 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card shadow-card">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/30 px-5 py-4">
         <h3 className="text-lg font-bold">보유 자산</h3>

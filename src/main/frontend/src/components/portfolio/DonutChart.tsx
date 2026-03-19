@@ -60,7 +60,7 @@ export function DonutChart({ holdings, baseCurrency }: DonutChartProps) {
   let accumulated = 0;
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card">
+    <div className="rounded-xl border border-border bg-card p-5">
       <p className="mb-4 text-xs font-medium text-muted-foreground">자산 구성</p>
 
       <div className="flex justify-center">

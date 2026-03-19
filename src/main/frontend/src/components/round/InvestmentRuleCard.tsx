@@ -31,8 +31,8 @@ export function InvestmentRuleCard({
   return (
     <div
       className={cn(
-        "rounded-xl px-4 py-3.5 transition-all duration-200",
-        enabled ? "bg-card shadow-card" : "bg-secondary/30",
+        "rounded-xl border px-4 py-3.5 transition-all duration-200",
+        enabled ? "border-border bg-card" : "border-transparent bg-secondary/30",
       )}
     >
       <div className="flex items-center justify-between gap-3">

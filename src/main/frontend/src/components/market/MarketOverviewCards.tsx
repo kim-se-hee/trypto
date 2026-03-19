@@ -57,7 +57,7 @@ export function MarketOverviewCards({ coins, baseCurrency, highlightSymbols }: M
         return (
           <div
             key={coin.symbol}
-            className="group relative overflow-hidden rounded-2xl bg-card p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+            className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
           >
             {/* Gradient overlay */}
             <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-200 group-hover:opacity-100", getCoinGradient(coin.symbol))} />

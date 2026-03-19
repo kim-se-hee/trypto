@@ -62,7 +62,7 @@ export function ViolationTradeList({ trades }: ViolationTradeListProps) {
   }, [trades]);
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 헤더 */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="flex items-center gap-2 text-lg font-bold">

@@ -56,7 +56,7 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
   }
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-secondary/20 p-4">
+    <div className="rounded-xl border border-border/40 bg-secondary/20 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-chart-4/10">
@@ -103,7 +103,7 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
           <div className="space-y-3">
             <div className="rounded-xl bg-secondary/40 px-4 py-3">
               <p className={cn(
-                "font-mono text-2xl font-extrabold tabular-nums tracking-tight",
+                "font-mono text-2xl font-bold tabular-nums tracking-tight",
                 amount > 0 ? "text-foreground" : "text-muted-foreground/40",
               )}>
                 {amount > 0 ? `₩${amount.toLocaleString("ko-KR")}` : "₩0"}
