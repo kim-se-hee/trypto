@@ -53,6 +53,12 @@ public class ExchangeQueryAdapter implements ExchangeQueryPort {
         return repository.existsById(exchangeId);
     }
 
+    @Override
+    public Optional<ExchangeSummary> findExchangeSummaryByName(String name) {
+        return repository.findByName(name)
+            .map(this::toExchangeSummary);
+    }
+
     private ExchangeSummary toExchangeSummary(ExchangeJpaEntity entity) {
         String baseCurrencySymbol = coinJpaRepository.findById(entity.getBaseCurrencyCoinId())
             .map(CoinJpaEntity::getSymbol)
