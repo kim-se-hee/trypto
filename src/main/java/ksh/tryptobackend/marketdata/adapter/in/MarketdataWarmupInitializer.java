@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -19,6 +20,7 @@ public class MarketdataWarmupInitializer {
     private final WarmupExchangeCoinMappingUseCase warmupExchangeCoinMappingUseCase;
     private final RabbitListenerEndpointRegistry rabbitListenerEndpointRegistry;
 
+    @Order(1)
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("marketdata 초기화 시작");
