@@ -61,6 +61,7 @@ erDiagram
         id exchange_coin_id PK "주 식별자"
         id exchange_id FK "거래소 ID"
         id coin_id FK "코인 ID"
+        string display_name "거래소별 표시명"
     }
 
     EXCHANGE_COIN_CHAIN {
