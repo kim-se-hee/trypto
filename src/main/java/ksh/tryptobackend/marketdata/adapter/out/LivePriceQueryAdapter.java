@@ -94,7 +94,7 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
     private BigDecimal parseLastPrice(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            JsonNode lastPriceNode = node.get("last_price");
+            JsonNode lastPriceNode = node.get("lastPrice");
             if (lastPriceNode == null) {
                 throw new CustomException(ErrorCode.PRICE_NOT_AVAILABLE);
             }

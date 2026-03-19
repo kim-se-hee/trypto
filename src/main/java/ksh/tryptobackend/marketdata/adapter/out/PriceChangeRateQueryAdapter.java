@@ -68,7 +68,7 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
     private BigDecimal parseChangeRate(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            JsonNode changeRateNode = node.get("change_rate");
+            JsonNode changeRateNode = node.get("changeRate");
             if (changeRateNode == null) {
                 return BigDecimal.ZERO;
             }
