@@ -44,3 +44,16 @@ app:
     endpoint: /ws
     heartbeat-send: 10000
     heartbeat-receive: 10000
+  exchanges:
+    - name: UPBIT
+      market-type: DOMESTIC
+      base-currency-symbol: KRW
+      fee-rate: 0.0005
+    - name: BITHUMB
+      market-type: DOMESTIC
+      base-currency-symbol: KRW
+      fee-rate: 0.0025
+    - name: BINANCE
+      market-type: OVERSEAS
+      base-currency-symbol: USDT
+      fee-rate: 0.001
