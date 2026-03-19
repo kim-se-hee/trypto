@@ -44,48 +44,49 @@
     --color-positive: var(--positive);
     --color-negative: var(--negative);
     --color-warning: var(--warning);
-    --font-sans: 'Nunito', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-    --shadow-card: 0 2px 12px rgba(40, 13, 95, 0.06);
-    --shadow-card-hover: 0 3px 16px rgba(40, 13, 95, 0.09);
-    --shadow-card-active: 0 4px 20px rgba(40, 13, 95, 0.10);
+    --font-sans: 'Pretendard Variable', 'Pretendard', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Noto Serif KR', Georgia, 'Times New Roman', serif;
+    --shadow-card: 0 0 0 1px var(--border);
+    --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--border);
+    --shadow-card-active: 0 4px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border);
 }
 
 :root {
-    --radius: 0.75rem;
-    --background: #FAF9FA;
-    --foreground: #280D5F;
+    --radius: 0.625rem;
+    --background: #F8F7F4;
+    --foreground: #1A1A2E;
     --card: #FFFFFF;
-    --card-foreground: #280D5F;
+    --card-foreground: #1A1A2E;
     --popover: #FFFFFF;
-    --popover-foreground: #280D5F;
-    --primary: #7645D9;
+    --popover-foreground: #1A1A2E;
+    --primary: #6C5CE7;
     --primary-foreground: #FFFFFF;
-    --secondary: #EFF4F5;
-    --secondary-foreground: #280D5F;
-    --muted: #EFF4F5;
-    --muted-foreground: #7A6EAA;
-    --accent: #EFF4F5;
-    --accent-foreground: #280D5F;
-    --destructive: #ED4B9E;
-    --border: #E7E3EB;
-    --input: #EFF4F5;
-    --ring: #7645D9;
-    --chart-1: #7645D9;
-    --chart-2: #1FC7D4;
-    --chart-3: #ED4B9E;
-    --chart-4: #FFB237;
-    --chart-5: #31D0AA;
-    --warning: #FFB237;
-    --sidebar: #FAF9FA;
-    --sidebar-foreground: #280D5F;
-    --sidebar-primary: #7645D9;
+    --secondary: #F0EEEB;
+    --secondary-foreground: #1A1A2E;
+    --muted: #F0EEEB;
+    --muted-foreground: #7C7C8A;
+    --accent: #F0EEEB;
+    --accent-foreground: #1A1A2E;
+    --destructive: #E85D75;
+    --border: #E8E6E1;
+    --input: #F0EEEB;
+    --ring: #6C5CE7;
+    --chart-1: #6C5CE7;
+    --chart-2: #0ABFBC;
+    --chart-3: #E85D75;
+    --chart-4: #F0A030;
+    --chart-5: #2ECC87;
+    --warning: #F0A030;
+    --sidebar: #F8F7F4;
+    --sidebar-foreground: #1A1A2E;
+    --sidebar-primary: #6C5CE7;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #EFF4F5;
-    --sidebar-accent-foreground: #280D5F;
-    --sidebar-border: #E7E3EB;
-    --sidebar-ring: #7645D9;
-    --positive: #31D0AA;
-    --negative: #ED4B9E;
+    --sidebar-accent: #F0EEEB;
+    --sidebar-accent-foreground: #1A1A2E;
+    --sidebar-border: #E8E6E1;
+    --sidebar-ring: #6C5CE7;
+    --positive: #2ECC87;
+    --negative: #E85D75;
 }
 
 @layer base {
@@ -94,9 +95,56 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-weight: 500;
+    font-weight: 400;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.01em;
   }
+}
+
+/* Serif utility */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* ── Page enter animation ── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-enter {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-enter-delay-1 {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.animate-enter-delay-2 {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+.animate-enter-delay-3 {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.animate-enter-delay-4 {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both;
+}
+
+/* ── Card hover lift ── */
+.card-interactive {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
 }
 
 /* Custom scrollbar */
@@ -108,9 +156,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D7CAEC;
+  background: #D5D3CE;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8ADD2;
+  background: #B5B3AE;
 }
