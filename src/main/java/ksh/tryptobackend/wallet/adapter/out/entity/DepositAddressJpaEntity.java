@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "deposit_address",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_deposit_address_wallet_chain", columnNames = {"wallet_id", "chain"})
+        @UniqueConstraint(name = "uk_deposit_address_wallet_coin", columnNames = {"wallet_id", "coin_id"})
     }
 )
 @Getter
@@ -31,22 +31,18 @@ public class DepositAddressJpaEntity {
     @Column(name = "wallet_id", nullable = false)
     private Long walletId;
 
-    @Column(name = "chain", nullable = false, length = 50)
-    private String chain;
+    @Column(name = "coin_id", nullable = false)
+    private Long coinId;
 
     @Column(name = "address", nullable = false, length = 255)
     private String address;
-
-    @Column(name = "tag", length = 255)
-    private String tag;
 
     public static DepositAddressJpaEntity fromDomain(DepositAddress domain) {
         DepositAddressJpaEntity entity = new DepositAddressJpaEntity();
         entity.id = domain.getDepositAddressId();
         entity.walletId = domain.getWalletId();
-        entity.chain = domain.getChain();
+        entity.coinId = domain.getCoinId();
         entity.address = domain.getAddress();
-        entity.tag = domain.getTag();
         return entity;
     }
 
@@ -54,9 +50,8 @@ public class DepositAddressJpaEntity {
         return DepositAddress.builder()
             .depositAddressId(id)
             .walletId(walletId)
-            .chain(chain)
+            .coinId(coinId)
             .address(address)
-            .tag(tag)
             .build();
     }
 }
