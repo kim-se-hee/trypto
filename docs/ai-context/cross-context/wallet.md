@@ -24,10 +24,10 @@
 - `unlockBalance(Long walletId, Long coinId, BigDecimal amount) → void`
 
 ### FindDepositAddressUseCase
-- `findByRoundIdAndChainAndAddress(Long roundId, String chain, String address) → Optional<DepositAddressResult>`
+- `findByRoundIdAndAddress(Long roundId, String address) → Optional<DepositAddressResult>`
 
 ### ResolveTransferDestinationUseCase
-- `resolveDestination(Long roundId, Long coinId, String chain, String toAddress, String toTag) → TransferDestinationResult`
+- `resolveDestination(Long roundId, String toAddress) → TransferDestinationResult`
 
 ### GetWalletOwnerIdUseCase
 - `getWalletOwnerId(Long walletId) → Long`
@@ -43,5 +43,5 @@
 | DTO | 필드 |
 |-----|------|
 | WalletResult | walletId: Long, roundId: Long, exchangeId: Long, seedAmount: BigDecimal |
-| DepositAddressResult | walletId: Long, chain: String, address: String, tag: String |
+| DepositAddressResult | walletId: Long, address: String |
 | TransferDestinationResult | walletId: Long, failureReason: String |

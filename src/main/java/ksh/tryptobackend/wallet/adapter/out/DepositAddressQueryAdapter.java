@@ -20,14 +20,13 @@ public class DepositAddressQueryAdapter implements DepositAddressQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<DepositAddress> findByWalletIdAndChain(Long walletId, String chain) {
-        return repository.findByWalletIdAndChain(walletId, chain)
+    public Optional<DepositAddress> findByWalletIdAndCoinId(Long walletId, Long coinId) {
+        return repository.findByWalletIdAndCoinId(walletId, coinId)
             .map(DepositAddressJpaEntity::toDomain);
     }
 
     @Override
-    public Optional<DepositAddress> findByRoundIdAndChainAndAddress(
-        Long roundId, String chain, String address) {
+    public Optional<DepositAddress> findByRoundIdAndAddress(Long roundId, String address) {
         QDepositAddressJpaEntity da = QDepositAddressJpaEntity.depositAddressJpaEntity;
         QWalletJpaEntity w = QWalletJpaEntity.walletJpaEntity;
 
@@ -36,7 +35,6 @@ public class DepositAddressQueryAdapter implements DepositAddressQueryPort {
             .join(w).on(da.walletId.eq(w.id))
             .where(
                 w.roundId.eq(roundId),
-                da.chain.eq(chain),
                 da.address.eq(address)
             )
             .fetchOne();

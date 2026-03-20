@@ -1,0 +1,4 @@
+app:
+  market-meta-sync:
+    max-retries: 1
+    retry-interval-seconds: 0

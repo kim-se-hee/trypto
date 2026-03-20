@@ -16,20 +16,17 @@ public class DepositAddress {
 
     private final Long depositAddressId;
     private final Long walletId;
-    private final String chain;
+    private final Long coinId;
     private final String address;
-    private final String tag;
 
-    public static DepositAddress create(Long walletId, String chain, boolean tagRequired) {
-        String seed = walletId + ":" + chain;
+    public static DepositAddress create(Long walletId, Long coinId) {
+        String seed = walletId + ":" + coinId;
         String address = generateHash(seed);
-        String tag = tagRequired ? generateHash(seed + ":tag") : null;
 
         return DepositAddress.builder()
             .walletId(walletId)
-            .chain(chain)
+            .coinId(coinId)
             .address(address)
-            .tag(tag)
             .build();
     }
 

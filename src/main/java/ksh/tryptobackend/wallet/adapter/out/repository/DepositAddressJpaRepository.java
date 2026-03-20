@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface DepositAddressJpaRepository extends JpaRepository<DepositAddressJpaEntity, Long> {
 
-    Optional<DepositAddressJpaEntity> findByWalletIdAndChain(Long walletId, String chain);
+    Optional<DepositAddressJpaEntity> findByWalletIdAndCoinId(Long walletId, Long coinId);
 }

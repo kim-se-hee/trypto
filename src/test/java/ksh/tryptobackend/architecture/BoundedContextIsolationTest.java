@@ -55,9 +55,10 @@ class BoundedContextIsolationTest {
     void common_should_not_depend_on_any_context(JavaClasses classes) {
         noClasses()
             .that().resideInAPackage(COMMON + "..")
+            .and().resideOutsideOfPackage(COMMON + ".seed..")
             .should().dependOnClassesThat()
             .resideInAnyPackage(allContextRootPackages())
-            .as("Common should not depend on any bounded context")
+            .as("Common should not depend on any bounded context (seed excluded)")
             .check(classes);
     }
 

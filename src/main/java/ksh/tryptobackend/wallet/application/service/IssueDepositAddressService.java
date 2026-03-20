@@ -2,7 +2,6 @@ package ksh.tryptobackend.wallet.application.service;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinChainUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.wallet.application.port.in.IssueDepositAddressUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.IssueDepositAddressCommand;
@@ -22,10 +21,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class IssueDepositAddressService implements IssueDepositAddressUseCase {
 
     private final WalletQueryPort walletQueryPort;
-    private final FindExchangeDetailUseCase findExchangeDetailUseCase;
-    private final FindExchangeCoinChainUseCase findExchangeCoinChainUseCase;
     private final DepositAddressCommandPort depositAddressCommandPort;
     private final DepositAddressQueryPort depositAddressQueryPort;
+
+    private final FindExchangeDetailUseCase findExchangeDetailUseCase;
+
     private final TransactionTemplate transactionTemplate;
 
     @Override
@@ -33,8 +33,8 @@ public class IssueDepositAddressService implements IssueDepositAddressUseCase {
         Long exchangeId = getExchangeIdByWalletId(command.walletId());
         validateTransferable(exchangeId, command.coinId());
 
-        return depositAddressQueryPort.findByWalletIdAndChain(command.walletId(), command.chain())
-            .orElseGet(() -> createDepositAddress(exchangeId, command));
+        return depositAddressQueryPort.findByWalletIdAndCoinId(command.walletId(), command.coinId())
+            .orElseGet(() -> createDepositAddress(command));
     }
 
     private Long getExchangeIdByWalletId(Long walletId) {
@@ -50,18 +50,13 @@ public class IssueDepositAddressService implements IssueDepositAddressUseCase {
         exchange.validateTransferable(coinId);
     }
 
-    private DepositAddress createDepositAddress(Long exchangeId, IssueDepositAddressCommand command) {
-        boolean tagRequired = findExchangeCoinChainUseCase
-            .findByExchangeIdAndCoinIdAndChain(exchangeId, command.coinId(), command.chain())
-            .map(result -> result.tagRequired())
-            .orElseThrow(() -> new CustomException(ErrorCode.UNSUPPORTED_CHAIN));
-
+    private DepositAddress createDepositAddress(IssueDepositAddressCommand command) {
         try {
             return transactionTemplate.execute(status ->
                 depositAddressCommandPort.save(
-                    DepositAddress.create(command.walletId(), command.chain(), tagRequired)));
+                    DepositAddress.create(command.walletId(), command.coinId())));
         } catch (DataIntegrityViolationException e) {
-            return depositAddressQueryPort.findByWalletIdAndChain(command.walletId(), command.chain())
+            return depositAddressQueryPort.findByWalletIdAndCoinId(command.walletId(), command.coinId())
                 .orElseThrow(() -> new CustomException(ErrorCode.CONCURRENT_MODIFICATION));
         }
     }

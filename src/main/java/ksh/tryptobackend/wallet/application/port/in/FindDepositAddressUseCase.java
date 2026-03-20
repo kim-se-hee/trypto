@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface FindDepositAddressUseCase {
 
-    Optional<DepositAddressResult> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address);
+    Optional<DepositAddressResult> findByRoundIdAndAddress(Long roundId, String address);
 }

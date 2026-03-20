@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface DepositAddressQueryPort {
 
-    Optional<DepositAddress> findByWalletIdAndChain(Long walletId, String chain);
+    Optional<DepositAddress> findByWalletIdAndCoinId(Long walletId, Long coinId);
 
-    Optional<DepositAddress> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address);
+    Optional<DepositAddress> findByRoundIdAndAddress(Long roundId, String address);
 }

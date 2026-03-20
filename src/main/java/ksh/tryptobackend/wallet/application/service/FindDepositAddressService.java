@@ -15,8 +15,8 @@ public class FindDepositAddressService implements FindDepositAddressUseCase {
     private final DepositAddressQueryPort depositAddressQueryPort;
 
     @Override
-    public Optional<DepositAddressResult> findByRoundIdAndChainAndAddress(Long roundId, String chain, String address) {
-        return depositAddressQueryPort.findByRoundIdAndChainAndAddress(roundId, chain, address)
-            .map(da -> new DepositAddressResult(da.getWalletId(), da.getChain(), da.getAddress(), da.getTag()));
+    public Optional<DepositAddressResult> findByRoundIdAndAddress(Long roundId, String address) {
+        return depositAddressQueryPort.findByRoundIdAndAddress(roundId, address)
+            .map(da -> new DepositAddressResult(da.getWalletId(), da.getAddress()));
     }
 }

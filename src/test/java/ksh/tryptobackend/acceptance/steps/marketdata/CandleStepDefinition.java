@@ -7,6 +7,7 @@ import io.cucumber.java.en.Then;
 import ksh.tryptobackend.acceptance.mock.MockCandleAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.marketdata.domain.model.Candle;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,10 +17,13 @@ public class CandleStepDefinition {
 
     private final CommonApiClient apiClient;
     private final MockCandleAdapter mockCandleAdapter;
+    private final JdbcTemplate jdbcTemplate;
 
-    public CandleStepDefinition(CommonApiClient apiClient, MockCandleAdapter mockCandleAdapter) {
+    public CandleStepDefinition(CommonApiClient apiClient, MockCandleAdapter mockCandleAdapter,
+                                JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.mockCandleAdapter = mockCandleAdapter;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Before
@@ -29,6 +33,7 @@ public class CandleStepDefinition {
 
     @Given("캔들 데이터가 존재한다")
     public void 캔들_데이터가_존재한다() {
+        insertExchangeIfAbsent();
         mockCandleAdapter.setCandles(List.of(
             new Candle(Instant.parse("2026-03-10T00:00:00Z"),
                 new BigDecimal("68500000"), new BigDecimal("69200000"),
@@ -41,12 +46,14 @@ public class CandleStepDefinition {
 
     @When("캔들 조회 API를 호출한다")
     public void 캔들_조회_API를_호출한다() {
-        apiClient.get("/api/candles?exchange=UPBIT&coin=BTC&interval=1d");
+        insertExchangeIfAbsent();
+        apiClient.get("/api/candles?exchange=Upbit&coin=BTC&interval=1d");
     }
 
     @When("유효하지 않은 주기로 캔들 조회 API를 호출한다")
     public void 유효하지_않은_주기로_캔들_조회_API를_호출한다() {
-        apiClient.get("/api/candles?exchange=UPBIT&coin=BTC&interval=2h");
+        insertExchangeIfAbsent();
+        apiClient.get("/api/candles?exchange=Upbit&coin=BTC&interval=2h");
     }
 
     @When("거래소 파라미터 없이 캔들 조회 API를 호출한다")
@@ -69,6 +76,13 @@ public class CandleStepDefinition {
         apiClient.getLastResponse()
             .expectBody()
             .jsonPath("$.data.length()").isEqualTo(0);
+    }
+
+    private void insertExchangeIfAbsent() {
+        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES (1, 'KRW', '원화')");
+        jdbcTemplate.execute(
+            "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type, base_currency_coin_id, fee_rate) VALUES "
+                + "(1, 'Upbit', 'DOMESTIC', 1, 0.000500)");
     }
 
 }

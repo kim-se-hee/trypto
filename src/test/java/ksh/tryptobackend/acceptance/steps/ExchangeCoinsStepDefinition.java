@@ -97,8 +97,8 @@ public class ExchangeCoinsStepDefinition {
     }
 
     private void insertExchangeCoins() {
-        jdbcTemplate.execute("INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id) VALUES "
-            + "(10, 1, 2), "
-            + "(11, 1, 3)");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES "
+            + "(10, 1, 2, '비트코인'), "
+            + "(11, 1, 3, '이더리움')");
     }
 }

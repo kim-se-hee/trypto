@@ -4,6 +4,5 @@ import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferDestinati
 
 public interface ResolveTransferDestinationUseCase {
 
-    TransferDestinationResult resolveDestination(Long roundId, Long coinId, String chain,
-                                                  String toAddress, String toTag);
+    TransferDestinationResult resolveDestination(Long roundId, String toAddress);
 }
