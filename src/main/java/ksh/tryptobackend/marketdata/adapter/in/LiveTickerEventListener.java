@@ -2,7 +2,7 @@ package ksh.tryptobackend.marketdata.adapter.in;
 
 import ksh.tryptobackend.common.config.RabbitMqConfig;
 import ksh.tryptobackend.common.dto.TickerMessage;
-import ksh.tryptobackend.marketdata.adapter.in.dto.response.LivePriceResponse;
+import ksh.tryptobackend.marketdata.adapter.in.dto.response.TickerResponse;
 import ksh.tryptobackend.marketdata.application.port.in.ResolveLiveTickerUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LiveTickerEventListener {
 
-    private static final String TOPIC_PREFIX = "/topic/prices.";
+    private static final String TOPIC_PREFIX = "/topic/tickers.";
 
     private final ResolveLiveTickerUseCase resolveLiveTickerUseCase;
     private final SimpMessagingTemplate messagingTemplate;
@@ -35,7 +35,7 @@ public class LiveTickerEventListener {
     }
 
     private void broadcast(LiveTickerResult result) {
-        LivePriceResponse response = new LivePriceResponse(
+        TickerResponse response = new TickerResponse(
             result.coinId(), result.symbol(), result.price(),
             result.changeRate(), result.quoteTurnover(), result.timestamp());
         messagingTemplate.convertAndSend(TOPIC_PREFIX + result.exchangeId(), response);
