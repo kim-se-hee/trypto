@@ -78,10 +78,10 @@ public class CoinChainStepDefinition {
 
     private void insertExchangeCoins() {
         jdbcTemplate.execute(
-            "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id) VALUES "
-                + "(102, 1, 2), "
-                + "(103, 1, 3), "
-                + "(104, 1, 4)");
+            "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES "
+                + "(102, 1, 2, '비트코인'), "
+                + "(103, 1, 3, '리플'), "
+                + "(104, 1, 4, '이더리움')");
     }
 
     private void insertExchangeCoinChains() {

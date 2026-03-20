@@ -85,8 +85,8 @@ public class OrderStepDefinition {
     @Given("업비트에 BTC가 상장되어 있다")
     public void 업비트에_BTC가_상장되어_있다() {
         jdbcTemplate.update(
-            "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id) VALUES (?, ?, ?)",
-            EXCHANGE_COIN_ID, EXCHANGE_ID, BTC_COIN_ID);
+            "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES (?, ?, ?, ?)",
+            EXCHANGE_COIN_ID, EXCHANGE_ID, BTC_COIN_ID, "비트코인");
     }
 
     @Given("BTC 현재가는 {long}원이다")
