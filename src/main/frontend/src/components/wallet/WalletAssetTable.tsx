@@ -146,6 +146,7 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
             sorted.map((b, i) => {
               const isSelected = selectedCoin === b.coinSymbol;
               const isBase = b.coinSymbol === baseCurrency;
+              const hasBalance = isBase || b.total > 0;
               return (
                 <div
                   key={b.coinSymbol}
@@ -171,10 +172,10 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
 
                   {/* Total amount */}
                   <div className="text-right">
-                    <div className="font-mono text-sm font-semibold tabular-nums">
-                      {formatDisplayQuantity(b.total, b.coinSymbol, baseCurrency)}
+                    <div className={cn("font-mono text-sm tabular-nums", hasBalance ? "font-semibold" : "text-muted-foreground/40")}>
+                      {hasBalance ? formatDisplayQuantity(b.total, b.coinSymbol, baseCurrency) : "—"}
                     </div>
-                    {!isBase && (
+                    {!isBase && hasBalance && (
                       <div className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
                         ≈ {formatCurrencyCompact(b.totalValue, baseCurrency)}
                       </div>
@@ -182,8 +183,8 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
                   </div>
 
                   {/* Available */}
-                  <div className="text-right font-mono text-sm tabular-nums">
-                    {formatDisplayQuantity(b.available, b.coinSymbol, baseCurrency)}
+                  <div className={cn("text-right font-mono text-sm tabular-nums", !hasBalance && "text-muted-foreground/40")}>
+                    {hasBalance ? formatDisplayQuantity(b.available, b.coinSymbol, baseCurrency) : "—"}
                   </div>
 
                   {/* Locked */}

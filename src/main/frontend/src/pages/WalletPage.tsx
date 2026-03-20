@@ -78,12 +78,12 @@ export function WalletPage() {
         getTransferHistory(walletEntry.walletId, user.userId, { size: 50 }),
       ]);
 
-      const coinMap = new Map<number, ExchangeCoinResponse>();
-      for (const coin of exchangeCoins) {
-        coinMap.set(coin.coinId, coin);
+      const balanceMap = new Map<number, { available: number; locked: number }>();
+      for (const b of balancesData.balances) {
+        balanceMap.set(b.coinId, { available: Number(b.available), locked: Number(b.locked) });
       }
 
-      // 기본 화폐 잔고 + 코인 잔고
+      // 기본 화폐 잔고 + 거래소 상장 코인 전체 (잔고 없으면 0)
       const balances: WalletCoinBalance[] = [
         {
           coinSymbol: balancesData.baseCurrencySymbol,
@@ -92,13 +92,13 @@ export function WalletPage() {
           locked: Number(balancesData.baseCurrencyLocked),
           currentPrice: 1,
         },
-        ...balancesData.balances.map((b) => {
-          const coinInfo = coinMap.get(b.coinId);
+        ...exchangeCoins.map((coin) => {
+          const balance = balanceMap.get(coin.coinId);
           return {
-            coinSymbol: coinInfo?.coinSymbol ?? String(b.coinId),
-            coinName: coinInfo?.coinName ?? String(b.coinId),
-            available: Number(b.available),
-            locked: Number(b.locked),
+            coinSymbol: coin.coinSymbol,
+            coinName: coin.coinName,
+            available: balance?.available ?? 0,
+            locked: balance?.locked ?? 0,
             currentPrice: 0, // WebSocket에서 업데이트 예정
           };
         }),
