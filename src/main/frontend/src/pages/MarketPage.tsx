@@ -14,7 +14,7 @@ import { useRound } from "@/contexts/RoundContext";
 import { EXCHANGES } from "@/lib/types/coins";
 import { resolveOrderTargetIds, type OrderTargetIds } from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
-import { useLivePrices } from "@/hooks/useLivePrices";
+import { useTickers } from "@/hooks/useTickers";
 import type { MarketType } from "@/components/market/MarketTypeTabs";
 import type { FilterType } from "@/components/market/FilterChips";
 
@@ -42,8 +42,8 @@ export function MarketPage() {
   // 정적 API로 코인 목록 조회
   const { coins: staticCoins, loading } = useExchangeCoins(exchange.id);
 
-  // 실시간 가격 연동
-  const coins = useLivePrices({
+  // 실시간 티커 연동
+  const coins = useTickers({
     exchangeId: exchange.id,
     initialCoins: staticCoins,
   });

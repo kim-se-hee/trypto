@@ -1,6 +1,6 @@
 import { Client, type StompSubscription } from "@stomp/stompjs";
 
-export interface LivePrice {
+export interface Ticker {
   coinId: number;
   symbol: string;
   price: number;
@@ -75,15 +75,15 @@ export function disconnect(): void {
   client = null;
 }
 
-export function subscribePrices(
+export function subscribeTickers(
   exchangeId: number,
-  callback: (price: LivePrice) => void,
+  callback: (ticker: Ticker) => void,
 ): StompSubscription | null {
   if (!client?.active) return null;
 
-  return client.subscribe(`/topic/prices.${exchangeId}`, (message) => {
+  return client.subscribe(`/topic/tickers.${exchangeId}`, (message) => {
     try {
-      const data = JSON.parse(message.body) as LivePrice;
+      const data = JSON.parse(message.body) as Ticker;
       callback(data);
     } catch {
       // ignore parse errors

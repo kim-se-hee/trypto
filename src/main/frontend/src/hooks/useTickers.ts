@@ -1,25 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   connect,
-  subscribePrices,
+  subscribeTickers,
   isConnected,
-  type LivePrice,
+  type Ticker,
 } from "@/lib/api/websocket";
 import type { CoinData } from "@/lib/types/coins";
 
-interface UseLivePricesOptions {
+interface UseTickersOptions {
   exchangeId: number;
   initialCoins: CoinData[];
 }
 
-export function useLivePrices({ exchangeId, initialCoins }: UseLivePricesOptions): CoinData[] {
-  const [priceMap, setPriceMap] = useState<Map<string, LivePrice>>(new Map());
-  const subscriptionRef = useRef<ReturnType<typeof subscribePrices>>(null);
+export function useTickers({ exchangeId, initialCoins }: UseTickersOptions): CoinData[] {
+  const [tickerMap, setTickerMap] = useState<Map<string, Ticker>>(new Map());
+  const subscriptionRef = useRef<ReturnType<typeof subscribeTickers>>(null);
 
-  const handlePrice = useCallback((price: LivePrice) => {
-    setPriceMap((prev) => {
+  const handleTicker = useCallback((ticker: Ticker) => {
+    setTickerMap((prev) => {
       const next = new Map(prev);
-      next.set(price.symbol, price);
+      next.set(ticker.symbol, ticker);
       return next;
     });
   }, []);
@@ -31,20 +31,20 @@ export function useLivePrices({ exchangeId, initialCoins }: UseLivePricesOptions
 
     // STOMP 연결 후 구독 (약간의 지연 허용)
     const timer = setTimeout(() => {
-      subscriptionRef.current = subscribePrices(exchangeId, handlePrice);
+      subscriptionRef.current = subscribeTickers(exchangeId, handleTicker);
     }, 500);
 
     return () => {
       clearTimeout(timer);
       subscriptionRef.current?.unsubscribe();
       subscriptionRef.current = null;
-      setPriceMap(new Map());
+      setTickerMap(new Map());
     };
-  }, [exchangeId, handlePrice]);
+  }, [exchangeId, handleTicker]);
 
-  // initialCoins에 실시간 가격을 머지하여 반환
+  // initialCoins에 실시간 티커를 머지하여 반환
   return initialCoins.map((coin) => {
-    const live = priceMap.get(coin.symbol);
+    const live = tickerMap.get(coin.symbol);
     if (!live) return coin;
 
     return {
