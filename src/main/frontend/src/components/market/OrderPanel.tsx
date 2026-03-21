@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/order-api";
 import { isApiClientError } from "@/lib/api/types";
 import type { OrderTargetIds } from "@/lib/api/id-mapping";
+import type { UserEvent } from "@/lib/api/websocket";
 
 type OrderTab = "buy" | "sell" | "history";
 type OrderType = "limit" | "market";
@@ -25,6 +26,7 @@ interface OrderPanelProps {
   currentPrice: number;
   feeRate: number;
   orderTargetIds: OrderTargetIds | null;
+  orderFilledEvent: UserEvent | null;
 }
 
 const ORDER_TABS: { key: OrderTab; label: string }[] = [
@@ -95,6 +97,7 @@ export function OrderPanel({
   currentPrice,
   feeRate,
   orderTargetIds,
+  orderFilledEvent,
 }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState<OrderTab>("buy");
   const [historyFilter, setHistoryFilter] = useState<"filled" | "pending">("filled");
@@ -191,6 +194,17 @@ export function OrderPanel({
   useEffect(() => {
     void loadAvailability();
   }, [loadAvailability]);
+
+  useEffect(() => {
+    if (!orderFilledEvent) return;
+    const { side, quantity: filledQty, price: filledPrice, fee } = orderFilledEvent;
+
+    if (side === "BUY") {
+      setAvailableSell((prev) => prev + filledQty);
+    } else {
+      setAvailableBuy((prev) => prev + filledPrice * filledQty - fee);
+    }
+  }, [orderFilledEvent]);
 
   useEffect(() => {
     if (activeTab !== "history") return;

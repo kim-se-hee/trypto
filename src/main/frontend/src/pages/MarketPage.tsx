@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { MarketOverviewCards } from "@/components/market/MarketOverviewCards";
@@ -11,10 +11,13 @@ import { CandleChartPanel } from "@/components/market/CandleChartPanel";
 import { OrderPanel } from "@/components/market/OrderPanel";
 import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { EXCHANGES } from "@/lib/types/coins";
 import { resolveOrderTargetIds, type OrderTargetIds } from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
+import { useUserEvents } from "@/hooks/useUserEvents";
+import type { UserEvent } from "@/lib/api/websocket";
 import type { MarketType } from "@/components/market/MarketTypeTabs";
 import type { FilterType } from "@/components/market/FilterChips";
 
@@ -23,7 +26,14 @@ const DEX_EXCHANGES = EXCHANGES.filter((e) => e.type === "DEX");
 
 export function MarketPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const { activeRound, chargeEmergencyFunding, getWalletId } = useRound();
+
+  const [orderFilledEvent, setOrderFilledEvent] = useState<UserEvent | null>(null);
+  const handleOrderFilled = useCallback((event: UserEvent) => {
+    setOrderFilledEvent(event);
+  }, []);
+  useUserEvents({ userId: user.userId, onOrderFilled: handleOrderFilled });
 
   const marketType = (searchParams.get("type") === "dex" ? "dex" : "cex") as MarketType;
   const isCex = marketType === "cex";
@@ -78,17 +88,18 @@ export function MarketPage() {
   }, [coins, filteredCoins, selectedSymbol]);
 
   const [orderTargetIds, setOrderTargetIds] = useState<OrderTargetIds | null>(null);
+  const selectedCoinSymbol = selectedCoin?.symbol ?? null;
   useEffect(() => {
-    if (!selectedCoin) {
+    if (!selectedCoinSymbol) {
       setOrderTargetIds(null);
       return;
     }
     let cancelled = false;
-    void resolveOrderTargetIds(exchange.key, selectedCoin.symbol, getWalletId).then((ids) => {
+    void resolveOrderTargetIds(exchange.key, selectedCoinSymbol, getWalletId).then((ids) => {
       if (!cancelled) setOrderTargetIds(ids);
     });
     return () => { cancelled = true; };
-  }, [exchange.key, selectedCoin, getWalletId]);
+  }, [exchange.key, selectedCoinSymbol, getWalletId]);
 
   const handleMarketTypeChange = (type: MarketType) => {
     const newExchanges = type === "cex" ? CEX_EXCHANGES : DEX_EXCHANGES;
@@ -192,6 +203,7 @@ export function MarketPage() {
                   currentPrice={selectedCoin.currentPrice}
                   feeRate={0.0005}
                   orderTargetIds={orderTargetIds}
+                  orderFilledEvent={orderFilledEvent}
                 />
               )}
             </div>
