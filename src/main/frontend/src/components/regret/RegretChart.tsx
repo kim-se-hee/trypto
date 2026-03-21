@@ -101,6 +101,7 @@ export function RegretChart({
       x: getX(i),
       actualY: getY(s.actual),
       simY: getY(simulationLine[i]),
+      btcY: btcHoldValues ? getY(btcHoldValues[i]) : null,
       violation: markerByIndex.get(i) ?? null,
     }));
 
@@ -252,6 +253,13 @@ export function RegretChart({
                     cx={chartData.hoverPoints[hoveredIndex].x}
                     cy={chartData.hoverPoints[hoveredIndex].simY}
                     r={4} fill="var(--negative)" stroke="white" strokeWidth={2}
+                  />
+                )}
+                {chartData.hoverPoints[hoveredIndex].btcY !== null && (
+                  <circle
+                    cx={chartData.hoverPoints[hoveredIndex].x}
+                    cy={chartData.hoverPoints[hoveredIndex].btcY!}
+                    r={4} fill="#f7931a" stroke="white" strokeWidth={2}
                   />
                 )}
               </g>

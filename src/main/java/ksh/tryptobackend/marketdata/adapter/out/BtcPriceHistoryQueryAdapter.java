@@ -26,11 +26,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
 
-    private static final String MEASUREMENT = "candle_1d";
+    private static final String MEASUREMENT = "candle_1h";
     private static final String TICKER_KEY_PREFIX = "ticker:";
     private static final Map<String, BtcPriceSource> CURRENCY_SOURCE = Map.of(
-        "KRW", new BtcPriceSource("upbit", "BTC/KRW"),
-        "USD", new BtcPriceSource("binance", "BTC/USDT")
+        "KRW", new BtcPriceSource("UPBIT", "BTC/KRW"),
+        "USD", new BtcPriceSource("BINANCE", "BTC/USDT")
     );
 
     private final InfluxDBClient influxDBClient;
@@ -68,6 +68,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
             " and r.exchange == \"" + source.exchange() + "\"" +
             " and r.coin == \"" + source.coin() + "\"" +
             " and r._field == \"close\")" +
+            " |> aggregateWindow(every: 1d, fn: last, createEmpty: false, timeSrc: \"_start\")" +
             " |> sort(columns: [\"_time\"])";
     }
 
