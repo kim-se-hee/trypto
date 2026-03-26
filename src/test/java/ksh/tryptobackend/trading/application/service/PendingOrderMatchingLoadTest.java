@@ -1,9 +1,5 @@
 package ksh.tryptobackend.trading.application.service;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import ksh.tryptobackend.acceptance.MockAdapterConfiguration;
 import ksh.tryptobackend.acceptance.TestContainerConfiguration;
 import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
@@ -27,7 +23,6 @@ import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,9 +36,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -86,9 +81,6 @@ class PendingOrderMatchingLoadTest {
     @Autowired
     private MockHoldingAdapter mockHoldingAdapter;
 
-    @Autowired
-    private MeterRegistry meterRegistry;
-
     @MockitoBean
     private ResolveExchangeCoinMappingUseCase resolveExchangeCoinMappingUseCase;
 
@@ -105,32 +97,31 @@ class PendingOrderMatchingLoadTest {
 
     @BeforeAll
     void setUpOnce() {
-        setupMocks();
         setupWallets();
-    }
-
-    @BeforeEach
-    void setUp() {
-        clearMetrics();
     }
 
     @ParameterizedTest
     @ValueSource(ints = {1, 5, 10, 20, 50, 100, 150})
     @DisplayName("이벤트당 매칭 건수(N)별 처리 시간 측정")
     void measureProcessingTime(int n) {
-        int totalIterations = WARMUP_ITERATIONS + MEASURE_ITERATIONS;
+        setupMocks();
+        List<Long> measurements = new ArrayList<>();
 
-        for (int i = 0; i < totalIterations; i++) {
-            if (i == WARMUP_ITERATIONS) {
-                clearMetrics();
+        for (int i = 0; i < WARMUP_ITERATIONS + MEASURE_ITERATIONS; i++) {
+            createPendingOrdersAndCache(n);
+
+            long startNanos = System.nanoTime();
+            matchPendingOrdersUseCase.matchOrders(EXCHANGE, SYMBOL, FILL_PRICE);
+            long elapsedNanos = System.nanoTime() - startNanos;
+
+            if (i >= WARMUP_ITERATIONS) {
+                measurements.add(elapsedNanos);
             }
 
-            List<Long> orderIds = createPendingOrdersAndCache(n);
-            matchPendingOrdersUseCase.matchOrders(EXCHANGE, SYMBOL, FILL_PRICE);
-            resetBalancesForFilledOrders(orderIds);
+            resetBalances();
         }
 
-        printResult(n);
+        printResult(n, measurements);
     }
 
     private void setupMocks() {
@@ -154,20 +145,17 @@ class PendingOrderMatchingLoadTest {
         }
     }
 
-    private List<Long> createPendingOrdersAndCache(int n) {
+    private void createPendingOrdersAndCache(int n) {
         BigDecimal amount = FILL_PRICE.multiply(ORDER_QUANTITY);
         BigDecimal feeAmount = amount.multiply(FEE_RATE);
-        List<Long> orderIds = new ArrayList<>(n);
 
         for (int i = 0; i < n; i++) {
             Long walletId = walletIds.get(i % MAX_WALLETS);
             Long orderId = savePendingBuyOrder(walletId, amount, feeAmount);
-            orderIds.add(orderId);
 
             pendingOrderCacheCommandPort.add(
                 new PendingOrder(orderId, EXCHANGE_COIN_ID, Side.BUY, FILL_PRICE));
         }
-        return orderIds;
     }
 
     private Long savePendingBuyOrder(Long walletId, BigDecimal amount, BigDecimal feeAmount) {
@@ -183,10 +171,9 @@ class PendingOrderMatchingLoadTest {
         return orderJpaRepository.save(entity).getId();
     }
 
-    private void resetBalancesForFilledOrders(List<Long> orderIds) {
+    private void resetBalances() {
         BigDecimal largeBalance = new BigDecimal("1000000000");
-        for (int i = 0; i < MAX_WALLETS; i++) {
-            long walletId = i + 1;
+        for (Long walletId : walletIds) {
             walletBalanceJpaRepository.findByWalletIdAndCoinId(walletId, BASE_CURRENCY_COIN_ID)
                 .ifPresent(balance -> {
                     balance.updateFrom(
@@ -203,58 +190,33 @@ class PendingOrderMatchingLoadTest {
         mockHoldingAdapter.clear();
     }
 
-    private void clearMetrics() {
-        meterRegistry.clear();
-    }
-
-    private void printResult(int n) {
+    private void printResult(int n, List<Long> nanosMeasurements) {
         double budgetMs = 1000.0 * CONSUMER_THREADS / EVENTS_PER_SECOND;
 
-        Timer e2eTimer = meterRegistry.find("pending.order.e2e").timer();
-        Timer fillTimer = meterRegistry.find("pending.order.fill").timer();
-        Counter lockCounter = meterRegistry.find("pending.order.fill.optimistic_lock").counter();
-        Counter retryCounter = meterRegistry.find("pending.order.fill.retry_exhausted").counter();
+        Collections.sort(nanosMeasurements);
+        int size = nanosMeasurements.size();
+        double p50 = nanosToMs(nanosMeasurements.get(size / 2));
+        double p95 = nanosToMs(nanosMeasurements.get((int) (size * 0.95)));
+        double p99 = nanosToMs(nanosMeasurements.get(Math.min((int) (size * 0.99), size - 1)));
+        double min = nanosToMs(nanosMeasurements.get(0));
+        double max = nanosToMs(nanosMeasurements.get(size - 1));
+        double avg = nanosMeasurements.stream().mapToLong(Long::longValue).average().orElse(0) / 1_000_000.0;
 
-        double e2eP50 = 0, e2eP95 = 0, e2eP99 = 0;
-        double fillP50 = 0, fillP95 = 0, fillP99 = 0;
-        long totalFills = 0;
-
-        if (e2eTimer != null) {
-            ValueAtPercentile[] e2ePercentiles = e2eTimer.takeSnapshot().percentileValues();
-            for (ValueAtPercentile p : e2ePercentiles) {
-                if (p.percentile() == 0.5) e2eP50 = p.value(TimeUnit.MILLISECONDS);
-                if (p.percentile() == 0.95) e2eP95 = p.value(TimeUnit.MILLISECONDS);
-                if (p.percentile() == 0.99) e2eP99 = p.value(TimeUnit.MILLISECONDS);
-            }
-        }
-
-        if (fillTimer != null) {
-            ValueAtPercentile[] fillPercentiles = fillTimer.takeSnapshot().percentileValues();
-            for (ValueAtPercentile p : fillPercentiles) {
-                if (p.percentile() == 0.5) fillP50 = p.value(TimeUnit.MILLISECONDS);
-                if (p.percentile() == 0.95) fillP95 = p.value(TimeUnit.MILLISECONDS);
-                if (p.percentile() == 0.99) fillP99 = p.value(TimeUnit.MILLISECONDS);
-            }
-            totalFills = fillTimer.count();
-        }
-
-        double lockCount = lockCounter != null ? lockCounter.count() : 0;
-        double retryCount = retryCounter != null ? retryCounter.count() : 0;
-        double lockRate = totalFills > 0 ? lockCount / totalFills * 100 : 0;
-        double retryRate = totalFills > 0 ? retryCount / totalFills * 100 : 0;
-
-        boolean pass = e2eP95 <= budgetMs;
+        boolean pass = p95 <= budgetMs;
+        long totalFills = (long) n * size;
 
         System.out.println();
         System.out.println("============================================================");
         System.out.printf("  N=%-4d | 큐 안정 한계: %.1fms (C=%d, 241 events/s)%n", n, budgetMs, CONSUMER_THREADS);
         System.out.println("------------------------------------------------------------");
-        System.out.printf("  e2e    | p50: %7.1fms  p95: %7.1fms  p99: %7.1fms%n", e2eP50, e2eP95, e2eP99);
-        System.out.printf("  fill   | p50: %7.1fms  p95: %7.1fms  p99: %7.1fms%n", fillP50, fillP95, fillP99);
+        System.out.printf("  T_process(N)  min: %7.1fms  avg: %7.1fms  max: %7.1fms%n", min, avg, max);
+        System.out.printf("                p50: %7.1fms  p95: %7.1fms  p99: %7.1fms%n", p50, p95, p99);
         System.out.println("------------------------------------------------------------");
         System.out.printf("  체결 수: %d건  |  판정: %s%n", totalFills, pass ? "✅ PASS" : "❌ FAIL");
-        System.out.printf("  OptimisticLock 충돌: %.0f건 (%.2f%%)%n", lockCount, lockRate);
-        System.out.printf("  Retry 소진: %.0f건 (%.2f%%)%n", retryCount, retryRate);
         System.out.println("============================================================");
+    }
+
+    private double nanosToMs(long nanos) {
+        return nanos / 1_000_000.0;
     }
 }
