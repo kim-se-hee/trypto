@@ -6,9 +6,12 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.amqp.autoconfigure.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,9 +22,9 @@ public class RabbitMqConfig {
 
     public static final String TICKER_MARKETDATA_LISTENER_ID = "tickerMarketdataListener";
     public static final String MATCHED_ORDERS_LISTENER_ID = "matchedOrdersListener";
+    public static final String MATCHED_ORDERS_CONTAINER_FACTORY = "matchedOrdersContainerFactory";
 
     private static final String MATCHED_ORDERS_EXCHANGE = "matched.orders";
-    private static final String MATCHED_ORDERS_QUEUE = "matched.orders";
     private static final String MATCHED_ORDERS_DLQ = "matched.orders.dlq";
 
     @Value("${app.rabbitmq.ticker-exchange:ticker.exchange}")
@@ -44,19 +47,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public DirectExchange matchedOrdersExchange() {
-        return new DirectExchange(MATCHED_ORDERS_EXCHANGE, true, false);
-    }
-
-    @Bean
-    public Queue matchedOrdersQueue() {
-        return QueueBuilder.durable(MATCHED_ORDERS_QUEUE)
-            .deadLetterExchange(MATCHED_ORDERS_EXCHANGE + ".dlx")
-            .deadLetterRoutingKey(MATCHED_ORDERS_DLQ)
-            .build();
-    }
-
-    @Bean
     public Queue matchedOrdersDlq() {
         return QueueBuilder.durable(MATCHED_ORDERS_DLQ).build();
     }
@@ -67,11 +57,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding matchedOrdersBinding(Queue matchedOrdersQueue, DirectExchange matchedOrdersExchange) {
-        return BindingBuilder.bind(matchedOrdersQueue).to(matchedOrdersExchange).with(MATCHED_ORDERS_QUEUE);
-    }
-
-    @Bean
     public Binding matchedOrdersDlqBinding(Queue matchedOrdersDlq, DirectExchange matchedOrdersDlx) {
         return BindingBuilder.bind(matchedOrdersDlq).to(matchedOrdersDlx).with(MATCHED_ORDERS_DLQ);
     }
@@ -79,5 +64,15 @@ public class RabbitMqConfig {
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new JacksonJsonMessageConverter();
+    }
+
+    @Bean(name = MATCHED_ORDERS_CONTAINER_FACTORY)
+    public SimpleRabbitListenerContainerFactory matchedOrdersContainerFactory(
+            ConnectionFactory connectionFactory,
+            SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setMissingQueuesFatal(false);
+        return factory;
     }
 }

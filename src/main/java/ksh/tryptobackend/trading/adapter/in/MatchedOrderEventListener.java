@@ -29,7 +29,11 @@ public class MatchedOrderEventListener {
             .build();
     }
 
-    @RabbitListener(queues = "matched.orders", id = RabbitMqConfig.MATCHED_ORDERS_LISTENER_ID)
+    @RabbitListener(
+        queues = "matched.orders",
+        id = RabbitMqConfig.MATCHED_ORDERS_LISTENER_ID,
+        containerFactory = RabbitMqConfig.MATCHED_ORDERS_CONTAINER_FACTORY
+    )
     public void handleMatchedOrders(MatchedOrderMessage message) {
         for (MatchedOrderMessage.Item item : message.matched()) {
             fillWithRetry(item);
