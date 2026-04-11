@@ -39,6 +39,8 @@ import static org.mockito.Mockito.verify;
 class MatchedOrderEventListenerIntegrationTest {
 
     private static final String QUEUE_NAME = "matched.orders";
+    private static final String RETRY_QUEUE_NAME = "matched.orders.retry";
+    private static final String DLQ_NAME = "matched.orders.dlq";
     private static final String DLX_NAME = "matched.orders.dlx";
     private static final String DLQ_ROUTING_KEY = "matched.orders.dlq";
 
@@ -60,6 +62,7 @@ class MatchedOrderEventListenerIntegrationTest {
         // (백엔드는 missingQueuesFatal=false 이므로 큐가 없어도 컨텍스트는 로드된다)
         Queue queue = QueueBuilder.durable(QUEUE_NAME)
                 .quorum()
+                .withArgument("x-delivery-limit", 2)
                 .deadLetterExchange(DLX_NAME)
                 .deadLetterRoutingKey(DLQ_ROUTING_KEY)
                 .build();
@@ -67,7 +70,8 @@ class MatchedOrderEventListenerIntegrationTest {
 
         // 이전 테스트 흔적 비우기
         rabbitAdmin.purgeQueue(QUEUE_NAME);
-        rabbitAdmin.purgeQueue("matched.orders.dlq");
+        rabbitAdmin.purgeQueue(RETRY_QUEUE_NAME);
+        rabbitAdmin.purgeQueue(DLQ_NAME);
     }
 
     @Test
@@ -78,6 +82,9 @@ class MatchedOrderEventListenerIntegrationTest {
         // missingQueuesFatal=false 설정이 정상 동작함을 의미한다.
         var container = listenerRegistry.getListenerContainer("matchedOrdersListener");
         assertThat(container).isNotNull();
+
+        var retryContainer = listenerRegistry.getListenerContainer("matchedOrdersRetryListener");
+        assertThat(retryContainer).isNotNull();
     }
 
     @Test
@@ -101,8 +108,8 @@ class MatchedOrderEventListenerIntegrationTest {
     }
 
     @Test
-    @DisplayName("fillOrder가 3회 재시도 후에도 실패하면 해당 항목은 DLQ로 발행된다")
-    void failingItemIsPublishedToDlqAfterRetriesExhausted() {
+    @DisplayName("메인 재시도 소진 후 retry 큐를 거쳐 최종적으로 DLQ에 도달한다")
+    void failingItemTraversesRetryQueueAndReachesDlq() {
         willThrow(new RuntimeException("DB 오류"))
                 .given(fillPendingOrderUseCase).fillOrder(eq(2001L), any());
 
@@ -111,16 +118,17 @@ class MatchedOrderEventListenerIntegrationTest {
         ));
         rabbitTemplate.convertAndSend("", QUEUE_NAME, message);
 
-        // 재시도 3회: 1s → 3s → 9s 백오프 시나리오 (exponentialBackoff(1000, 3.0, 10000))
-        // 여유 있게 최대 25초 대기
-        await().atMost(Duration.ofSeconds(25))
-                .untilAsserted(() -> verify(fillPendingOrderUseCase, times(3))
+        // main 3회 (100ms, 500ms) + retry tier 4회 (2s, 4s, 8s)
+        // 총 fillOrder 호출 = 7회, 총 소요 ~15초
+        // 여유 있게 최대 35초 대기
+        await().atMost(Duration.ofSeconds(35))
+                .untilAsserted(() -> verify(fillPendingOrderUseCase, times(7))
                         .fillOrder(eq(2001L), any()));
 
-        // DLQ에 메시지가 쌓였는지 확인
+        // DLQ에 메시지가 최종 도달했는지 확인
         await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> {
-                    long depth = rabbitAdmin.getQueueInfo("matched.orders.dlq").getMessageCount();
+                    long depth = rabbitAdmin.getQueueInfo(DLQ_NAME).getMessageCount();
                     assertThat(depth).isGreaterThanOrEqualTo(1);
                 });
     }
@@ -138,7 +146,9 @@ class MatchedOrderEventListenerIntegrationTest {
         ));
         rabbitTemplate.convertAndSend("", QUEUE_NAME, message);
 
-        await().atMost(Duration.ofSeconds(25))
+        // 3001은 main 3회 실패 후 retry 큐로, 3002는 즉시 성공
+        // 메인 시도 3회 + retry tier 최소 1회 = 4회 이상
+        await().atMost(Duration.ofSeconds(35))
                 .untilAsserted(() -> {
                     verify(fillPendingOrderUseCase, atLeast(3)).fillOrder(eq(3001L), any());
                     verify(fillPendingOrderUseCase).fillOrder(eq(3002L), any());

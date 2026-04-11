@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.retry.support.RetryTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,15 +33,29 @@ class MatchedOrderEventListenerTest {
     private static final Long ORDER_ID_1 = 1L;
     private static final Long ORDER_ID_2 = 2L;
     private static final BigDecimal FILLED_PRICE = new BigDecimal("50000000");
+    private static final int MAIN_MAX_ATTEMPTS = 3;
+    private static final int RETRY_TIER_MAX_ATTEMPTS = 4;
 
     @BeforeEach
     void setUp() {
-        sut = new MatchedOrderEventListener(fillPendingOrderUseCase, rabbitTemplate);
+        sut = new MatchedOrderEventListener(
+            fillPendingOrderUseCase,
+            rabbitTemplate,
+            noBackoffRetryTemplate(MAIN_MAX_ATTEMPTS),
+            noBackoffRetryTemplate(RETRY_TIER_MAX_ATTEMPTS)
+        );
+    }
+
+    private static RetryTemplate noBackoffRetryTemplate(int maxAttempts) {
+        return RetryTemplate.builder()
+            .maxAttempts(maxAttempts)
+            .noBackoff()
+            .build();
     }
 
     @Nested
-    @DisplayName("정상 체결 처리")
-    class FillOrderTest {
+    @DisplayName("메인 큐 정상 체결 처리")
+    class MainQueueFillTest {
 
         @Test
         @DisplayName("매칭된 주문 목록의 각 항목에 대해 fillOrder를 호출한다")
@@ -68,12 +83,12 @@ class MatchedOrderEventListenerTest {
     }
 
     @Nested
-    @DisplayName("재시도 소진 시 DLQ 발행")
-    class DlqPublishTest {
+    @DisplayName("메인 재시도 소진 시 retry 큐 발행")
+    class MainRetryExhaustionTest {
 
         @Test
-        @DisplayName("fillOrder 재시도가 소진되면 해당 항목을 DLQ로 발행한다")
-        void publishesToDlqOnRetryExhaustion() {
+        @DisplayName("fillOrder 재시도가 소진되면 해당 항목을 retry 큐로 발행한다")
+        void publishesToRetryQueueOnMainRetryExhaustion() {
             MatchedOrderMessage.Item failItem = new MatchedOrderMessage.Item(ORDER_ID_1, FILLED_PRICE);
             MatchedOrderMessage message = new MatchedOrderMessage(List.of(failItem));
 
@@ -82,7 +97,8 @@ class MatchedOrderEventListenerTest {
 
             sut.handleMatchedOrders(message);
 
-            verify(rabbitTemplate).convertAndSend(eq("matched.orders.dlq"), eq(failItem));
+            verify(fillPendingOrderUseCase, times(MAIN_MAX_ATTEMPTS)).fillOrder(ORDER_ID_1, FILLED_PRICE);
+            verify(rabbitTemplate).convertAndSend(eq("matched.orders.retry"), eq(failItem));
         }
 
         @Test
@@ -98,8 +114,38 @@ class MatchedOrderEventListenerTest {
 
             sut.handleMatchedOrders(message);
 
-            verify(fillPendingOrderUseCase, times(3)).fillOrder(ORDER_ID_1, FILLED_PRICE);
+            verify(fillPendingOrderUseCase, times(MAIN_MAX_ATTEMPTS)).fillOrder(ORDER_ID_1, FILLED_PRICE);
             verify(fillPendingOrderUseCase).fillOrder(ORDER_ID_2, FILLED_PRICE);
+        }
+    }
+
+    @Nested
+    @DisplayName("retry 큐 재시도 처리")
+    class RetryQueueTest {
+
+        @Test
+        @DisplayName("retry 큐 아이템이 성공하면 DLQ로 가지 않는다")
+        void successfulRetryDoesNotPublishToDlq() {
+            MatchedOrderMessage.Item item = new MatchedOrderMessage.Item(ORDER_ID_1, FILLED_PRICE);
+
+            sut.handleRetry(item);
+
+            verify(fillPendingOrderUseCase).fillOrder(ORDER_ID_1, FILLED_PRICE);
+            verify(rabbitTemplate, never()).convertAndSend(eq("matched.orders.dlq"), any(MatchedOrderMessage.Item.class));
+        }
+
+        @Test
+        @DisplayName("retry 큐 재시도가 소진되면 해당 항목을 DLQ로 발행한다")
+        void publishesToDlqOnRetryTierExhaustion() {
+            MatchedOrderMessage.Item failItem = new MatchedOrderMessage.Item(ORDER_ID_1, FILLED_PRICE);
+
+            doThrow(new RuntimeException("DB 오류"))
+                .when(fillPendingOrderUseCase).fillOrder(ORDER_ID_1, FILLED_PRICE);
+
+            sut.handleRetry(failItem);
+
+            verify(fillPendingOrderUseCase, times(RETRY_TIER_MAX_ATTEMPTS)).fillOrder(ORDER_ID_1, FILLED_PRICE);
+            verify(rabbitTemplate).convertAndSend(eq("matched.orders.dlq"), eq(failItem));
         }
     }
 }
