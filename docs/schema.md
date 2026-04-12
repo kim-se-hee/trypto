@@ -101,7 +101,7 @@ erDiagram
 
     WALLET_BALANCE {
         id balance_id PK "주 식별자"
-        id wallet_id FK "지갑 ID"
+        id wallet_id FK "지갑 ID (wallet_id + coin_id 복합 유니크)"
         id coin_id FK "코인 ID"
         number available "사용 가능 잔고"
         number locked "잠금 잔고"
@@ -121,7 +121,7 @@ erDiagram
 
     HOLDING {
         id holding_id PK "주 식별자"
-        id wallet_id FK "지갑 ID"
+        id wallet_id FK "지갑 ID (wallet_id + coin_id 복합 유니크)"
         id coin_id FK "코인 ID"
         number avg_buy_price "평균 매수가"
         number total_quantity "총 보유 수량"
@@ -143,7 +143,6 @@ erDiagram
         number fee "수수료 (nullable)"
         number fee_rate "수수료율"
         string status "FILLED PENDING CANCELLED FAILED"
-        number version "낙관적 잠금 버전"
         datetime created_at "주문 시각"
         datetime filled_at "체결 시각 (nullable)"
     }
