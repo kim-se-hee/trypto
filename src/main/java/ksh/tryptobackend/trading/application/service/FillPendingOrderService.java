@@ -77,26 +77,20 @@ public class FillPendingOrderService implements FillPendingOrderUseCase {
     }
 
     private void doFillOrder(Long orderId, BigDecimal currentPrice) {
-        Order order = orderCommandPort.findById(orderId).orElse(null);
-        if (order == null) {
-            log.warn("주문 조회 실패 (삭제됨): orderId={}", orderId);
+        boolean filled = orderCommandPort.fillOrder(orderId, LocalDateTime.now(clock));
+        if (!filled) {
+            log.info("주문 CAS 실패 (이미 처리됨): orderId={}", orderId);
             return;
         }
 
-        if (!order.isPending()) {
-            log.info("주문이 이미 처리됨: orderId={}, status={}", orderId, order.getStatus());
-            return;
-        }
-
-        order.fill(LocalDateTime.now(clock));
+        Order order = orderCommandPort.findById(orderId)
+            .orElseThrow(() -> new IllegalStateException("CAS 성공 후 조회 실패: orderId=" + orderId));
 
         ExchangeCoinMappingResult mapping = findExchangeCoinMapping(order.getExchangeCoinId());
         TradingVenue venue = getTradingVenue(mapping.exchangeId());
 
         settleBalance(order, mapping, venue);
         updateHolding(order, mapping, currentPrice);
-
-        orderCommandPort.save(order);
 
         publishOrderFilledEvent(order, mapping);
     }
