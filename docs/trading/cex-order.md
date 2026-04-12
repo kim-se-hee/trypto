@@ -299,10 +299,10 @@ sequenceDiagram
     Note over Service: RuleViolationResult → RuleViolation 변환
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 07 잔고 변경
+        Note over Service,MySQL: STEP 07 잔고 변경 (CAS UPDATE)
     end
     Service->>ManageBalance: deductBalance / addBalance / lockBalance
-    ManageBalance->>MySQL: UPDATE wallet_balance
+    ManageBalance->>MySQL: CAS UPDATE wallet_balance
 
     rect rgb(60, 60, 60)
         Note over Service,MySQL: STEP 08 주문·위반 기록 저장
@@ -311,10 +311,16 @@ sequenceDiagram
     OrderPort->>MySQL: INSERT order + violations
 
     rect rgb(60, 60, 60)
-        Note over Service,MySQL: STEP 09 보유 코인 갱신 (시장가만)
+        Note over Service,MySQL: STEP 09 보유 코인 갱신 (시장가만, SELECT FOR UPDATE)
     end
-    Service->>HoldingPort: findByWalletIdAndCoinId / save
-    HoldingPort->>MySQL: SELECT + UPDATE holding
+    Service->>HoldingPort: findForUpdate + save
+    HoldingPort->>MySQL: SELECT FOR UPDATE + UPDATE holding
+
+    rect rgb(60, 60, 60)
+        Note over Service,Redis: STEP 10 Redis 미체결 주문 캐시 적재 (지정가만)
+    end
+    Service->>OrderPort: addToCache(pendingOrder)
+    OrderPort->>Redis: ZADD pending:orders:{exchange}:{symbol}:{side}
 
     Service-->>Controller: Order
     Controller-->>Client: 201 Created
