@@ -34,7 +34,6 @@ public class Order {
     private BigDecimal filledPrice;
     private Fee fee;
     private OrderStatus status;
-    private final Long version;
     private final LocalDateTime createdAt;
     private LocalDateTime filledAt;
     @Builder.Default
@@ -54,7 +53,7 @@ public class Order {
     public static Order reconstitute(Long id, String idempotencyKey, Long walletId, Long exchangeCoinId,
                                      Side side, OrderType orderType, BigDecimal amount, Quantity quantity,
                                      BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
-                                     Long version, LocalDateTime createdAt, LocalDateTime filledAt,
+                                     LocalDateTime createdAt, LocalDateTime filledAt,
                                      List<RuleViolation> violations) {
         return Order.builder()
             .id(id)
@@ -69,7 +68,6 @@ public class Order {
             .filledPrice(filledPrice)
             .fee(fee)
             .status(status)
-            .version(version)
             .createdAt(createdAt)
             .filledAt(filledAt)
             .violations(violations != null ? new ArrayList<>(violations) : new ArrayList<>())
