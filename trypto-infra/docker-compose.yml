@@ -1,0 +1,263 @@
+networks:
+  trypto-net:
+    name: trypto-net
+
+services:
+  mysql:
+    image: mysql:8.0.30
+    networks:
+      - trypto-net
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: trypto
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p1234"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+
+  redis-master:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    command:
+      - redis-server
+      - --port
+      - "6379"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-replica-1:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --replicaof
+      - redis-master
+      - "6379"
+      - --replica-announce-ip
+      - host.docker.internal
+      - --replica-announce-port
+      - "6380"
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-replica-1-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-replica-2:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --replicaof
+      - redis-master
+      - "6379"
+      - --replica-announce-ip
+      - host.docker.internal
+      - --replica-announce-port
+      - "6381"
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-replica-2-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-sentinel-1:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    ports:
+      - "26379:26379"
+    volumes:
+      - redis-sentinel-1-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /data/sentinel.conf ]; then
+          cat > /data/sentinel.conf <<'EOF'
+        port 26379
+        sentinel resolve-hostnames yes
+        sentinel announce-hostnames yes
+        sentinel announce-ip host.docker.internal
+        sentinel announce-port 26379
+        sentinel monitor mymaster host.docker.internal 6379 2
+        sentinel down-after-milliseconds mymaster 5000
+        sentinel failover-timeout mymaster 60000
+        sentinel parallel-syncs mymaster 1
+        EOF
+        fi
+        exec redis-sentinel /data/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-sentinel-2:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    ports:
+      - "26380:26380"
+    volumes:
+      - redis-sentinel-2-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /data/sentinel.conf ]; then
+          cat > /data/sentinel.conf <<'EOF'
+        port 26380
+        sentinel resolve-hostnames yes
+        sentinel announce-hostnames yes
+        sentinel announce-ip host.docker.internal
+        sentinel announce-port 26380
+        sentinel monitor mymaster host.docker.internal 6379 2
+        sentinel down-after-milliseconds mymaster 5000
+        sentinel failover-timeout mymaster 60000
+        sentinel parallel-syncs mymaster 1
+        EOF
+        fi
+        exec redis-sentinel /data/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26380", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-sentinel-3:
+    image: redis:7-alpine
+    networks:
+      - trypto-net
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    ports:
+      - "26381:26381"
+    volumes:
+      - redis-sentinel-3-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /data/sentinel.conf ]; then
+          cat > /data/sentinel.conf <<'EOF'
+        port 26381
+        sentinel resolve-hostnames yes
+        sentinel announce-hostnames yes
+        sentinel announce-ip host.docker.internal
+        sentinel announce-port 26381
+        sentinel monitor mymaster host.docker.internal 6379 2
+        sentinel down-after-milliseconds mymaster 5000
+        sentinel failover-timeout mymaster 60000
+        sentinel parallel-syncs mymaster 1
+        EOF
+        fi
+        exec redis-sentinel /data/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26381", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    networks:
+      - trypto-net
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  influxdb:
+    image: influxdb:2-alpine
+    networks:
+      - trypto-net
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - ./influxdb/init-tasks.sh:/docker-entrypoint-initdb.d/init-tasks.sh
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminpassword
+      DOCKER_INFLUXDB_INIT_ORG: trypto
+      DOCKER_INFLUXDB_INIT_BUCKET: ticker
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: trypto-collector-token
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
+  redis-master-data:
+  redis-replica-1-data:
+  redis-replica-2-data:
+  redis-sentinel-1-data:
+  redis-sentinel-2-data:
+  redis-sentinel-3-data:
+  rabbitmq-data:
+  influxdb-data:

@@ -1,0 +1,4 @@
+include:
+  - path: trypto-infra/docker-compose.yml
+  - path: trypto-collector/docker-compose.yml
+  - path: trypto-api/docker-compose.yml

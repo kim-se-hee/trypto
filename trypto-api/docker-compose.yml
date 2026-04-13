@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: .
+    image: kimsehee98/trypto-api:v1
+    networks:
+      - trypto-net
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../loadtest/loadtest.sql:/seed/loadtest.sql:ro
+    environment:
+      SQL_INIT_MODE: always
+      SQL_INIT_DATA_LOCATIONS: file:/seed/loadtest.sql
+      APP_MARKETMETASYNC_MAXRETRIES: "1"
+      APP_MARKETMETASYNC_RETRYINTERVALSECONDS: "1"
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_DATABASE: trypto
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: 1234
+      REDIS_SENTINEL_MASTER: mymaster
+      REDIS_SENTINEL_NODES: redis-sentinel-1:26379,redis-sentinel-2:26380,redis-sentinel-3:26381
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: trypto-collector-token
+    depends_on:
+      collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 240s

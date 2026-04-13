@@ -1,0 +1,66 @@
+services:
+  collector:
+    build: .
+    image: kimsehee98/trypto-collector:v1
+    networks:
+      - trypto-net
+    ports:
+      - "8081:8081"
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      COLLECTOR_EXCHANGE_STREAMS_ENABLED: "false"
+      SPRING_DATA_REDIS_SENTINEL_MASTER: mymaster
+      SPRING_DATA_REDIS_SENTINEL_NODES: redis-sentinel-1:26379,redis-sentinel-2:26380,redis-sentinel-3:26381
+      SPRING_RABBITMQ_HOST: rabbitmq
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: trypto-collector-token
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: 1234
+      MANAGEMENT_PORT: 9090
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+      redis-sentinel-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      - trypto-net
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    depends_on:
+      - collector
+
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+      - trypto-net
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:
