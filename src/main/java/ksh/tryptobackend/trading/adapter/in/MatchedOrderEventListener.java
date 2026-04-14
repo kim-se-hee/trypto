@@ -1,5 +1,6 @@
 package ksh.tryptobackend.trading.adapter.in;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import ksh.tryptobackend.common.config.RabbitMqConfig;
 import ksh.tryptobackend.trading.adapter.in.messages.MatchedOrderMessage;
 import ksh.tryptobackend.trading.application.port.in.FillPendingOrderUseCase;
@@ -9,6 +10,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -21,15 +24,18 @@ public class MatchedOrderEventListener {
     private final RabbitTemplate rabbitTemplate;
     private final RetryTemplate mainRetryTemplate;
     private final RetryTemplate retryTierRetryTemplate;
+    private final MeterRegistry meterRegistry;
 
     public MatchedOrderEventListener(FillPendingOrderUseCase fillPendingOrderUseCase,
                                      RabbitTemplate rabbitTemplate,
                                      @Qualifier(RabbitMqConfig.MATCHED_ORDERS_MAIN_RETRY_TEMPLATE) RetryTemplate mainRetryTemplate,
-                                     @Qualifier(RabbitMqConfig.MATCHED_ORDERS_RETRY_TIER_RETRY_TEMPLATE) RetryTemplate retryTierRetryTemplate) {
+                                     @Qualifier(RabbitMqConfig.MATCHED_ORDERS_RETRY_TIER_RETRY_TEMPLATE) RetryTemplate retryTierRetryTemplate,
+                                     MeterRegistry meterRegistry) {
         this.fillPendingOrderUseCase = fillPendingOrderUseCase;
         this.rabbitTemplate = rabbitTemplate;
         this.mainRetryTemplate = mainRetryTemplate;
         this.retryTierRetryTemplate = retryTierRetryTemplate;
+        this.meterRegistry = meterRegistry;
     }
 
     @RabbitListener(
@@ -38,8 +44,12 @@ public class MatchedOrderEventListener {
         containerFactory = RabbitMqConfig.MATCHED_ORDERS_CONTAINER_FACTORY
     )
     public void handleMatchedOrders(MatchedOrderMessage message) {
+        long receivedAtMs = System.currentTimeMillis();
+        meterRegistry.timer("match.queue.wait")
+                .record(receivedAtMs - message.publishedAtMs(), TimeUnit.MILLISECONDS);
+
         for (MatchedOrderMessage.Item item : message.matched()) {
-            fillWithMainRetry(item);
+            fillWithMainRetry(item, message.tickerTsMs());
         }
     }
 
@@ -52,12 +62,14 @@ public class MatchedOrderEventListener {
         fillWithRetryTierRetry(item);
     }
 
-    private void fillWithMainRetry(MatchedOrderMessage.Item item) {
+    private void fillWithMainRetry(MatchedOrderMessage.Item item, long tickerTsMs) {
         try {
             mainRetryTemplate.execute(context -> {
                 fillPendingOrderUseCase.fillOrder(item.orderId(), item.filledPrice());
                 return null;
             });
+            meterRegistry.timer("match.fill.e2e")
+                    .record(System.currentTimeMillis() - tickerTsMs, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.warn("메인 재시도 소진, retry 큐 발행: orderId={}", item.orderId(), e);
             publishToRetryQueue(item);
