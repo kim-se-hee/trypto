@@ -71,7 +71,7 @@ export const options = {
   },
   thresholds: {
     'http_req_failed{scenario:place_order}':   ['rate<0.01'],
-    'http_req_duration{scenario:place_order}': ['p(99)<500'],
+    'http_req_duration{scenario:place_order}': ['p(95)<100', 'p(99)<100'],
   },
 };
 
