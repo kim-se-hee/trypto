@@ -18,7 +18,7 @@ INSERT INTO coin (coin_id, symbol, name) VALUES
   (8,  'AVAX',  'Avalanche'),
   (9,  'DOT',   'Polkadot'),
   (10, 'LINK',  'Chainlink'),
-  (11, 'MATIC', 'Polygon');
+  (11, 'POL', 'Polygon');
 
 INSERT INTO exchange_market (exchange_id, name, market_type, base_currency_coin_id, fee_rate)
 VALUES (1, 'UPBIT', 'DOMESTIC', 1, 0.000500);
@@ -34,7 +34,7 @@ INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)
   (7,  1, 8,  'AVAX'),
   (8,  1, 9,  'DOT'),
   (9,  1, 10, 'LINK'),
-  (10, 1, 11, 'MATIC');
+  (10, 1, 11, 'POL');
 
 -- user 1~1000
 INSERT INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at)
