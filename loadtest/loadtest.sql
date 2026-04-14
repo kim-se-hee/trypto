@@ -46,15 +46,15 @@ INSERT INTO investment_round (
 );
 
 -- wallet 1~1000
-INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)
 WITH RECURSIVE seq AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000
 )
+INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)
 SELECT n, 1, 1, 10000000000.00000000, NOW() FROM seq;
 
 -- 각 wallet 의 KRW(coin_id=1) 잔고
-INSERT INTO wallet_balance (balance_id, wallet_id, coin_id, available, locked)
 WITH RECURSIVE seq AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000
 )
+INSERT INTO wallet_balance (balance_id, wallet_id, coin_id, available, locked)
 SELECT n, n, 1, 10000000000.00000000, 0.00000000 FROM seq;
