@@ -28,7 +28,8 @@ export const options = {
       preAllocatedVUs: 100,
       maxVUs: 2000,
       stages: [
-        { duration: '20m', target: 1000 },
+        { duration: '5m', target: 150 },
+        { duration: '10m', target: 150 },
       ],
       exec: 'placeOrder',
     },
