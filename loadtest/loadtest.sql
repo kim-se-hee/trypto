@@ -66,3 +66,6 @@ WITH RECURSIVE seq AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000
 )
 SELECT n, n, 1, 10000000000.00000000, 0.00000000 FROM seq;
+
+-- TradingRules.inspect() 의 일일 주문 수 조회용 인덱스
+CREATE INDEX idx_orders_wallet_created ON orders (wallet_id, created_at);
