@@ -5,13 +5,16 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-echo "[1/3] compose down -v (모든 볼륨 제거)"
+echo "[1/4] compose down -v (모든 볼륨 제거)"
 docker compose down -v
 
-echo "[2/3] compose up -d"
+echo "[2/4] compose pull (.env 의 새 이미지 태그로 Hub 에서 가져오기)"
+docker compose pull
+
+echo "[3/4] compose up -d"
 docker compose up -d
 
-echo "[3/3] 전체 healthy 대기"
+echo "[4/4] 전체 healthy 대기"
 deadline=$(( $(date +%s) + 900 ))
 while :; do
   unhealthy=$(docker compose ps --format '{{.Service}}|{{.Health}}' \
