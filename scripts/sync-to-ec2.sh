@@ -29,20 +29,13 @@ cd "$REPO_ROOT/terraform"
 SUT_IP=$(terraform output -raw sut_public_ip)
 
 cd "$REPO_ROOT"
-TMPLIST=$(mktemp)
-trap 'rm -f "$TMPLIST"' EXIT
-
 # Take everything the outer repo tracks, except local orchestration files that
 # only live on the developer machine.
-git ls-files \
-  | grep -v -E '^(scripts/|terraform/|\.claude/|\.gitignore$)' \
-  > "$TMPLIST"
+mapfile -t FILES < <(git ls-files | grep -v -E '^(scripts/|terraform/|\.claude/|\.gitignore$)')
 
-log "rsync workspace -> SUT ($SUT_IP) ($(wc -l < "$TMPLIST") files)"
-rsync -avz \
-  --rsh="ssh $SSH_OPTS" \
-  --files-from="$TMPLIST" \
-  ./ ubuntu@"$SUT_IP":/home/ubuntu/trypto/
+log "syncing workspace -> SUT ($SUT_IP) (${#FILES[@]} files)"
+tar -cz "${FILES[@]}" | \
+  ssh $SSH_OPTS ubuntu@"$SUT_IP" 'tar -xz -C /home/ubuntu/trypto'
 
 log "writing /home/ubuntu/trypto/.env (image tags)"
 ssh $SSH_OPTS ubuntu@"$SUT_IP" "cat > /home/ubuntu/trypto/.env" <<EOF
