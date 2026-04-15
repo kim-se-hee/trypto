@@ -21,25 +21,37 @@ description: Run a k6 load test end-to-end. Boots infra if down, waits for healt
 
 순서대로 실행. 각 단계 실패하면 즉시 중단하고 사용자에게 알립니다.
 
-1. **인프라 보장** — `bash scripts/ensure-infra.sh`
+스킬 안에서 1·4 단계는 출력을 파이프로 이어 한 번에 처리해도 됨:
+`bash scripts/build-images.sh | bash scripts/sync-to-ec2.sh`
+
+1. **이미지 빌드/푸시** — `bash scripts/build-images.sh`
+   - `trypto-api/`, `trypto-collector/` 각각 HEAD 해시(+dirty 접미사)로 태그 계산
+   - Docker Hub 에 이미 있으면 빌드 스킵 (수 초), 없으면 `docker buildx --platform linux/amd64 --push`
+   - stdout 으로 `API_TAG=...`, `COLLECTOR_TAG=...` 출력
+
+2. **인프라 보장** — `bash scripts/ensure-infra.sh`
    - 인스턴스 다 떠있고 SSH 22 열려있으면 skip
    - 아니면 `terraform apply` (수 분 소요 가능)
 
-2. **준비 대기** — `bash scripts/wait-ready.sh`
+3. **준비 대기** — `bash scripts/wait-ready.sh`
    - 양쪽 인스턴스 `/home/ubuntu/READY` 파일 생기길 대기
    - SUT의 `localhost:8080/actuator/health`가 `UP` 응답할 때까지 대기
    - 최대 20분 타임아웃
 
-3. **SUT 초기화** — `bash scripts/reset-sut.sh`
-   - SUT에서 `docker compose down -v && up -d` (DB/Redis/큐 전부 리셋)
+4. **워크스페이스 동기화** — `API_TAG=... COLLECTOR_TAG=... bash scripts/sync-to-ec2.sh`
+   - outer 레포가 추적하는 파일(compose/SQL/infra config/loadtest) 을 SUT 에 rsync
+   - `/home/ubuntu/trypto/.env` 에 이번 회차 이미지 태그 기록
+
+5. **SUT 초기화** — `bash scripts/reset-sut.sh`
+   - SUT에서 `docker compose down -v && pull && up -d` (DB/Redis/큐 리셋 + .env 의 새 이미지 태그 당겨오기)
    - 다시 healthy 될 때까지 대기 (스크립트 내부에서 자체 폴링)
 
-4. **k6 실행** — `bash scripts/launch-k6.sh <scenario-path>`
+6. **k6 실행** — `bash scripts/launch-k6.sh <scenario-path>`
    - 시나리오 경로는 `loadtest/k6/scenarios/<name>.js` 형태로 변환
    - loadgen에 `nohup`으로 던지고 즉시 SSH 종료
    - 이미 k6가 돌고 있으면 에러 — 사용자에게 `/loadtest-down` 안내
 
-5. **URL 출력** — terraform output에서 EIP를 읽어 사용자에게 표시:
+7. **URL 출력** — terraform output에서 EIP를 읽어 사용자에게 표시:
    ```
    k6 dashboard:  http://<loadgen-eip>:5665
    Grafana:       http://<sut-eip>:3000
