@@ -17,7 +17,6 @@ import ksh.tryptobackend.trading.domain.vo.Quantity;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -69,8 +68,7 @@ class FillPendingOrderServiceTest {
             orderCommandPort, holdingCommandPort,
             findExchangeCoinMappingUseCase, findExchangeDetailUseCase,
             manageWalletBalanceUseCase, getWalletOwnerIdUseCase,
-            orderFilledEventPort, clock,
-            new SimpleMeterRegistry()
+            orderFilledEventPort, clock
         );
     }
 
