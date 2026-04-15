@@ -1,0 +1,33 @@
+# Java sub-repos: ignore everything except the files SUT actually needs.
+# These sub-folders are independent git repos; their source is shipped via Docker images, not this repo.
+trypto-api/*
+!trypto-api/docker-compose.yml
+
+trypto-collector/*
+!trypto-collector/docker-compose.yml
+!trypto-collector/grafana
+!trypto-collector/grafana/**
+!trypto-collector/prometheus
+!trypto-collector/prometheus/**
+
+# Terraform state contains public IPs and AWS resource IDs. Do not publish.
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code runtime
+.claude/scheduled_tasks.lock
+
+# Claude Code runtime
+.claude/scheduled_tasks.lock
+
+# Logs
+*.log
