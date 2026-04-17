@@ -28,11 +28,20 @@ public class OrderJpaEntity {
     @Column(name = "idempotency_key", nullable = false, unique = true, length = 64)
     private String idempotencyKey;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "wallet_id", nullable = false)
     private Long walletId;
 
     @Column(name = "exchange_coin_id", nullable = false)
     private Long exchangeCoinId;
+
+    @Column(name = "coin_id", nullable = false)
+    private Long coinId;
+
+    @Column(name = "base_coin_id", nullable = false)
+    private Long baseCoinId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type", nullable = false, length = 10)
@@ -78,8 +87,11 @@ public class OrderJpaEntity {
         OrderJpaEntity entity = new OrderJpaEntity();
         entity.id = order.getId();
         entity.idempotencyKey = order.getIdempotencyKey();
+        entity.userId = order.getUserId();
         entity.walletId = order.getWalletId();
         entity.exchangeCoinId = order.getExchangeCoinId();
+        entity.coinId = order.getCoinId();
+        entity.baseCoinId = order.getBaseCoinId();
         entity.orderType = order.getOrderType();
         entity.side = order.getSide();
         entity.amount = order.getAmount();
@@ -105,7 +117,7 @@ public class OrderJpaEntity {
                     v.getRuleId(), v.getViolationReason(), v.getCreatedAt()))
                 .toList();
         return Order.reconstitute(
-            id, idempotencyKey, walletId, exchangeCoinId,
+            id, idempotencyKey, userId, walletId, exchangeCoinId, coinId, baseCoinId,
             side, orderType, amount, new Quantity(quantity),
             price, filledPrice, domainFee, status,
             createdAt, filledAt, domainViolations
