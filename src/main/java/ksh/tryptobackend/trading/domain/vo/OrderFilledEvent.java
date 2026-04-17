@@ -7,9 +7,11 @@ public record OrderFilledEvent(
     Long walletId,
     Long orderId,
     Long coinId,
+    Long baseCoinId,
     Side side,
     BigDecimal quantity,
     BigDecimal price,
+    BigDecimal currentPrice,
     BigDecimal fee
 ) {
 }

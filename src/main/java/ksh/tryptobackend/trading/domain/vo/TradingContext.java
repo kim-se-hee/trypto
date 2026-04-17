@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record TradingContext(
+    Long userId,
     Long coinId,
     TradingVenue venue,
     OrderMode mode,
