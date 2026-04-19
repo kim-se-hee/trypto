@@ -112,8 +112,24 @@ public class Order {
         return this.orderType == OrderType.MARKET;
     }
 
+    public boolean isLimitOrder() {
+        return this.orderType == OrderType.LIMIT;
+    }
+
     public boolean isBuyOrder() {
         return this.side == Side.BUY;
+    }
+
+    public boolean shouldForwardToEngine() {
+        return isLimitOrder() && isPending();
+    }
+
+    public Long getLockedCoinId() {
+        return isBuyOrder() ? baseCoinId : coinId;
+    }
+
+    public BigDecimal getLockedAmount() {
+        return isBuyOrder() ? getSettlementDebit() : quantity.value();
     }
 
     public boolean isOwnedBy(Long walletId) {
