@@ -165,7 +165,7 @@ class CompensateFillFailureServiceTest {
 
     private Order createOrder(OrderStatus status) {
         return Order.reconstitute(
-            ORDER_ID, "key-1", 10L, 100L,
+            ORDER_ID, "key-1", 1L, 10L, 100L, 200L, 300L,
             Side.BUY, OrderType.LIMIT, new BigDecimal("500000"),
             new Quantity(new BigDecimal("0.01")), new BigDecimal("50000000"),
             new BigDecimal("50000000"), Fee.of(new BigDecimal("250"), new BigDecimal("0.0005")),

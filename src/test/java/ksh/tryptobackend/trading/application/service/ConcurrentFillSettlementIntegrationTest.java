@@ -180,7 +180,7 @@ class ConcurrentFillSettlementIntegrationTest {
 
     private Long savePendingBuyOrder(BigDecimal quantity, BigDecimal amount, BigDecimal feeAmount) {
         Order order = Order.reconstitute(
-            null, "idempotency-" + System.nanoTime(), WALLET_ID, EXCHANGE_COIN_ID,
+            null, "idempotency-" + System.nanoTime(), USER_ID, WALLET_ID, EXCHANGE_COIN_ID, COIN_ID, BASE_CURRENCY_COIN_ID,
             Side.BUY, OrderType.LIMIT,
             amount, new Quantity(quantity),
             FILL_PRICE, FILL_PRICE,

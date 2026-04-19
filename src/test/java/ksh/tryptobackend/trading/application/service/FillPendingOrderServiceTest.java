@@ -178,7 +178,7 @@ class FillPendingOrderServiceTest {
 
     private Order createFilledBuyOrder() {
         return Order.reconstitute(
-            ORDER_ID, "key-1", WALLET_ID, EXCHANGE_COIN_ID,
+            ORDER_ID, "key-1", 1L, WALLET_ID, EXCHANGE_COIN_ID, COIN_ID, BASE_CURRENCY_COIN_ID,
             Side.BUY, OrderType.LIMIT, new BigDecimal("500000"),
             new Quantity(new BigDecimal("0.01")), new BigDecimal("50000000"),
             new BigDecimal("50000000"), Fee.of(new BigDecimal("250"), new BigDecimal("0.0005")),
@@ -188,7 +188,7 @@ class FillPendingOrderServiceTest {
 
     private Order createFilledSellOrder() {
         return Order.reconstitute(
-            ORDER_ID, "key-2", WALLET_ID, EXCHANGE_COIN_ID,
+            ORDER_ID, "key-2", 1L, WALLET_ID, EXCHANGE_COIN_ID, COIN_ID, BASE_CURRENCY_COIN_ID,
             Side.SELL, OrderType.LIMIT, new BigDecimal("500000"),
             new Quantity(new BigDecimal("0.01")), new BigDecimal("50000000"),
             new BigDecimal("50000000"), Fee.of(new BigDecimal("250"), new BigDecimal("0.0005")),

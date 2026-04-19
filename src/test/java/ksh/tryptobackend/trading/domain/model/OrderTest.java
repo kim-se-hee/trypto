@@ -35,11 +35,11 @@ class OrderTest {
     }
 
     private static TradingContext ctx(BigDecimal currentPrice) {
-        return new TradingContext(100L, DOMESTIC_VENUE, OrderMode.MARKET_BUY, currentPrice, NOW);
+        return new TradingContext(1L, 100L, DOMESTIC_VENUE, OrderMode.MARKET_BUY, currentPrice, NOW);
     }
 
     private static TradingContext ctx(OrderMode mode, BigDecimal currentPrice) {
-        return new TradingContext(100L, DOMESTIC_VENUE, mode, currentPrice, NOW);
+        return new TradingContext(1L, 100L, DOMESTIC_VENUE, mode, currentPrice, NOW);
     }
 
     @Nested
