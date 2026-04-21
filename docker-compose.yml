@@ -20,8 +20,8 @@ services:
       MYSQL_DATABASE: trypto
       MYSQL_USERNAME: root
       MYSQL_PASSWORD: 1234
-      REDIS_SENTINEL_MASTER: mymaster
-      REDIS_SENTINEL_NODES: redis-sentinel-1:26379,redis-sentinel-2:26380,redis-sentinel-3:26381
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
       INFLUXDB_URL: http://influxdb:8086
