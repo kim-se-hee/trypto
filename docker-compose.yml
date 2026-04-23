@@ -91,8 +91,8 @@ services:
 
   # ---------- app ----------
   collector:
+    build: ./collector
     image: ${COLLECTOR_IMAGE:-kimsehee98/trypto-collector:v1}
-    pull_policy: always
     networks:
       - trypto-net
     ports:
@@ -127,21 +127,15 @@ services:
       start_period: 180s
 
   backend:
+    build: ./api
     image: ${API_IMAGE:-kimsehee98/trypto-api:v1}
-    pull_policy: always
     networks:
       - trypto-net
     ports:
       - "8080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    volumes:
-      - ./loadtest/loadtest.sql:/seed/loadtest.sql:ro
     environment:
-      SQL_INIT_MODE: always
-      SQL_INIT_DATA_LOCATIONS: file:/seed/loadtest.sql
-      APP_MARKETMETASYNC_MAXRETRIES: "1"
-      APP_MARKETMETASYNC_RETRYINTERVALSECONDS: "1"
       MYSQL_HOST: mysql
       MYSQL_PORT: "3306"
       MYSQL_DATABASE: trypto
@@ -164,8 +158,8 @@ services:
       start_period: 240s
 
   engine:
+    build: ./engine
     image: ${ENGINE_IMAGE:-kimsehee98/trypto-engine:v1}
-    pull_policy: always
     networks:
       - trypto-net
     ports:
@@ -199,8 +193,8 @@ services:
       start_period: 120s
 
   scheduler:
+    build: ./scheduler
     image: ${SCHEDULER_IMAGE:-kimsehee98/trypto-scheduler:v1}
-    pull_policy: always
     networks:
       - trypto-net
     ports:
