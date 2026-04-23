@@ -6,7 +6,7 @@ plugins {
 
 group = 'ksh'
 version = '0.0.1-SNAPSHOT'
-description = 'trypto-compensation'
+description = 'compensation'
 
 java {
     toolchain {

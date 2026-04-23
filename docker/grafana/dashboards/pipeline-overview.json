@@ -1,6 +1,6 @@
 {
   "title": "Trypto Collector Pipeline",
-  "uid": "trypto-collector-pipeline",
+  "uid": "collector-pipeline",
   "timezone": "browser",
   "refresh": "5s",
   "time": {

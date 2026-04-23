@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: trypto-collector
+    name: collector
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:3306/trypto
     username: ${DB_USERNAME:readonly}

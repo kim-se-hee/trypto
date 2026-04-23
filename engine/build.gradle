@@ -7,7 +7,7 @@ plugins {
 
 group = 'ksh'
 version = '0.0.1-SNAPSHOT'
-description = 'trypto-engine'
+description = 'engine'
 
 java {
     toolchain {

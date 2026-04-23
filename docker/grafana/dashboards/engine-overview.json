@@ -1,6 +1,6 @@
 {
   "title": "Trypto Engine Overview",
-  "uid": "trypto-engine-overview",
+  "uid": "engine-overview",
   "timezone": "browser",
   "refresh": "5s",
   "time": {
@@ -32,7 +32,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "engine_queue_size{job=\"trypto-engine\"}",
+          "expr": "engine_queue_size{job=\"engine\"}",
           "legendFormat": "queue size"
         }
       ],
@@ -51,7 +51,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(engine_match_count_total{job=\"trypto-engine\"}[1m])",
+          "expr": "rate(engine_match_count_total{job=\"engine\"}[1m])",
           "legendFormat": "matches/s"
         }
       ],
@@ -70,7 +70,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(spring_rabbitmq_listener_seconds_count{job=\"trypto-engine\", result=\"success\"}[1m])",
+          "expr": "rate(spring_rabbitmq_listener_seconds_count{job=\"engine\", result=\"success\"}[1m])",
           "legendFormat": "{{queue}}"
         }
       ],
@@ -89,15 +89,15 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(spring_rabbitmq_listener_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p99"
         }
       ],
@@ -122,15 +122,15 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(engine_wal_append_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p99"
         }
       ],
@@ -149,15 +149,15 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"trypto-engine\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(engine_db_write_seconds_bucket{job=\"engine\"}[1m])))",
           "legendFormat": "p99"
         }
       ],
@@ -176,7 +176,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(engine_db_write_seconds_count{job=\"trypto-engine\"}[1m])",
+          "expr": "rate(engine_db_write_seconds_count{job=\"engine\"}[1m])",
           "legendFormat": "writes/s"
         }
       ],
@@ -201,11 +201,11 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "sum by (area) (jvm_memory_used_bytes{job=\"trypto-engine\", area=\"heap\"})",
+          "expr": "sum by (area) (jvm_memory_used_bytes{job=\"engine\", area=\"heap\"})",
           "legendFormat": "heap used"
         },
         {
-          "expr": "sum by (area) (jvm_memory_max_bytes{job=\"trypto-engine\", area=\"heap\"})",
+          "expr": "sum by (area) (jvm_memory_max_bytes{job=\"engine\", area=\"heap\"})",
           "legendFormat": "heap max"
         }
       ],
@@ -224,7 +224,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "process_cpu_usage{job=\"trypto-engine\"}",
+          "expr": "process_cpu_usage{job=\"engine\"}",
           "legendFormat": "cpu"
         }
       ],
@@ -245,7 +245,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(jvm_gc_pause_seconds_sum{job=\"trypto-engine\"}[1m])",
+          "expr": "rate(jvm_gc_pause_seconds_sum{job=\"engine\"}[1m])",
           "legendFormat": "{{action}} - {{cause}}"
         }
       ],
