@@ -60,8 +60,10 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
                 orphan.exchangeName(), orphan.marketSymbol(), from, nowInstant);
             PriceCandidates candidates = toPriceCandidates(ticks);
 
-            Optional<PriceCandidate> match = candidates.findFirstMatching(orphan);
-            return match.map(c -> orphanOrderCompensator.compensate(orphan, c)).orElse(false);
+            Optional<PriceCandidate> matchedPrice = candidates.findFirstMatching(orphan);
+            return matchedPrice
+                .map(c -> orphanOrderCompensator.compensate(orphan, c))
+                .orElse(false);
         } catch (Exception e) {
             log.error("orphan {} 보상 실패", orphan.orderId(), e);
             return false;
