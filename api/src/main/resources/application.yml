@@ -40,7 +40,8 @@ spring:
     defer-datasource-initialization: true
   sql:
     init:
-      mode: ${SQL_INIT_MODE:never}
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:/db/schema.sql
       data-locations: ${SQL_INIT_DATA_LOCATIONS:classpath:/db/no-op.sql}
       continue-on-error: false
 
@@ -61,6 +62,10 @@ management:
         match.queue.wait: true
         match.batch.e2e: true
         pending.order.fill: true
+
+compensation:
+  boundary-seconds: ${COMPENSATION_BOUNDARY_SECONDS:30}
+  interval-ms: ${COMPENSATION_INTERVAL_MS:30000}
 
 app:
   websocket:

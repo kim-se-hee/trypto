@@ -39,6 +39,8 @@ dependencies {
     implementation 'com.influxdb:influxdb-client-java:7.2.0'
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.7.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
