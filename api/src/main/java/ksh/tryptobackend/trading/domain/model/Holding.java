@@ -1,11 +1,13 @@
 package ksh.tryptobackend.trading.domain.model;
 
+import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Getter
 @Builder
@@ -37,6 +39,14 @@ public class Holding {
             applyBuy(filledPrice, quantity, currentPrice);
         } else {
             applySell(quantity);
+        }
+    }
+
+    public void replayFrom(List<FilledOrder> filledOrders) {
+        reset();
+        this.averagingDownCount = 0;
+        for (FilledOrder f : filledOrders) {
+            applyOrder(f.side(), f.filledPrice(), f.quantity(), f.filledPrice());
         }
     }
 
