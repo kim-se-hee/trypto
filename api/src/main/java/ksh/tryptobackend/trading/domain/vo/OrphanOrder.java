@@ -9,6 +9,8 @@ public record OrphanOrder(
     Long exchangeCoinId,
     Long coinId,
     Long baseCoinId,
+    String exchangeName,
+    String marketSymbol,
     Side side,
     BigDecimal price,
     BigDecimal quantity,

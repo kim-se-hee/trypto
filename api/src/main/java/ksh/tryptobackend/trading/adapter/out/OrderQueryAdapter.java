@@ -36,6 +36,7 @@ public class OrderQueryAdapter implements OrderQueryPort {
         return queryFactory
             .select(Projections.constructor(OrphanOrder.class,
                 o.id, o.walletId, o.exchangeCoinId, o.coinId, o.baseCoinId,
+                o.exchangeName, o.marketSymbol,
                 o.side, o.price, o.quantity, o.amount, o.createdAt))
             .from(o)
             .where(
