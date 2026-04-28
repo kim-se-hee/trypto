@@ -199,13 +199,6 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - 집계 쿼리(GROUP BY, COUNT, AVG)나 엔티티와 구조가 크게 다른 프로젝션은 별도 도메인 VO를 만들어 반환한다
 - 도메인 VO 이름은 유비쿼터스 언어를 사용한다. `Info`, `Detail`, `Projection` 같은 기술 접미사 대신 도메인 개념을 표현한다 (예: `FilledOrder`, `HoldingSummary`, `RankingStats`)
 
-**스케줄러**
-- `ksh.tryptobackend.scheduler.{name}` 패키지에 추가한다 (예: `scheduler.compensation`)
-- 스케줄러 클래스는 도메인 로직을 직접 다루지 않고 해당 컨텍스트의 UseCase만 호출하는 얇은 트리거로 둔다 (조회 + 분기 + 카운트 로깅 정도)
-- `@Scheduled` 메서드는 반드시 `@SchedulerLock(name, lockAtMostFor, lockAtLeastFor)`을 함께 단다. api 인스턴스를 N개 띄워도 한 노드만 실행되도록 보장한다 (락 저장소: MySQL `shedlock` 테이블)
-- 락 인프라는 `ksh.tryptobackend.scheduler.lock.SchedulerLockConfig`가 `@EnableSchedulerLock`과 `JdbcTemplateLockProvider(usingDbTime)`로 구성한다. 새 스케줄러 추가 시 별도 설정 불필요
-- 단건 처리 단위가 트랜잭션이라면 외곽 오케스트레이션 서비스와 단건 `@Transactional` 컴포넌트를 분리한다 (한 건 실패가 전체 배치를 막지 않도록)
-
 **Adapter Out**
 - `adapter/out/` 하위에 `entity/`, `repository/` 패키지로 분리한다. Adapter 클래스는 `adapter/out/`에 그대로 둔다
   - `adapter/out/entity/`: JPA 엔티티 클래스 (`{도메인}JpaEntity`)
