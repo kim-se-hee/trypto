@@ -15,17 +15,15 @@
 | `docs/` | 프로젝트 문서 |
 
 
-## 문서 인덱스
+## docs 디렉토리 인덱스
 
 작업 시작 전 관련 문서 확인. 필요한 것만 읽는다.
+docs의 하위 디렉토리를 탐색할 때 `index.md`가 있으면 **반드시** 먼저 읽고, 그 안내에 따라 개별 파일로 진입한다.
 
 **시스템 전체**
 - [docs/architecture.md](docs/architecture.md) — 4개 서비스 전체 흐름
 - [docs/db-schema.md](docs/db-schema.md) — 시스템 구성 및 모듈 간 데이터 흐름
-- [docs/contracts/](docs/contracts/) — 메세지 큐 페이로드 및 이벤트 스펙
-  - `engine-inbox.md` — engine.inbox 큐 페이로드
-  - `ticker-exchange.md` — ticker.exchange 시세 이벤트
-  - `outbox-events.md` — engine → api Outbox 이벤트
+- [docs/contracts/](docs/contracts/) — 서비스 간 메시지 큐 페이로드와 이벤트 스펙 모음
 
 **컨벤션**
 - [docs/conventions/git.md](docs/conventions/git.md) — Git 커밋/브랜치 규칙
