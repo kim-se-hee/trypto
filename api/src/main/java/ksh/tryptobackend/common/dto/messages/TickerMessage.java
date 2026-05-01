@@ -1,4 +1,4 @@
-package ksh.tryptobackend.common.dto;
+package ksh.tryptobackend.common.dto.messages;
 
 import java.math.BigDecimal;
 

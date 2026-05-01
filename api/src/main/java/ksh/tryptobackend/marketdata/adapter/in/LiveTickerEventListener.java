@@ -1,7 +1,7 @@
 package ksh.tryptobackend.marketdata.adapter.in;
 
 import ksh.tryptobackend.common.config.RabbitMqConfig;
-import ksh.tryptobackend.common.dto.TickerMessage;
+import ksh.tryptobackend.common.dto.messages.TickerMessage;
 import ksh.tryptobackend.marketdata.adapter.in.dto.response.TickerResponse;
 import ksh.tryptobackend.marketdata.application.port.in.ResolveLiveTickerUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
