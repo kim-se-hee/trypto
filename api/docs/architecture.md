@@ -1,35 +1,43 @@
-# 아키텍처
+# 모듈 개요
 
-## 헥사고날 아키텍처
+api 모듈은 **사용자 요청 처리와 모의 투자 핵심 비즈니스 로직**을 담당한다. collector가 발행하는 실시간 시세와 engine이 발행하는 매칭 결과를 받아 비즈니스 로직을 처리하며, 프론트엔드와는 REST·STOMP로 통신한다.
 
-도메인이 외부 인프라에 의존하지 않는다. 모든 외부 통신은 Port를 통한다.
 
-**Input Ports (인바운드)**
+# 아키텍쳐
 
-| Port | 어댑터 | 용도 |
-|------|--------|------|
-| REST Input Port | REST Controllers | HTTP 요청 → 도메인 |
-| RabbitMQ Listener (marketdata) | LiveTickerEventListener | 시세 이벤트 수신 → WebSocket 브로드캐스트 |
-| RabbitMQ Listener (trading) | TickerEventListener | 시세 이벤트 수신 → 지정가 매칭 |
-| Batch Job Input Port | Batch Scheduler | 랭킹 집계 등 배치 작업 |
+api 모듈은 헥사고날 아키텍처와 DDD를 따른다. 모듈은 여러 도메인으로, 각 도메인은 여러 유스케이스로 구성되며, 외부 세계와는 포트로 소통한다.
 
-**Output Ports (아웃바운드)**
+- **인바운드 포트** — 사용자 요청 수신, 실시간 시세 수신, 체결 결과 수신, 정기 배치 트리거
+- **아웃바운드 포트** — DB·메시지 큐·WebSocket 같은 인프라 호출, 외부 API 호출이
 
-| Port | 어댑터 | 용도 |
-|------|--------|------|
-| Persistence Output Port | UserJpaPersistenceAdapter, WalletJpaPersistenceAdapter 등 | MySQL 읽기/쓰기 |
-| Leaderboard Output Port | LeaderboardJpaPersistenceAdapter | 랭킹 집계 테이블 읽기/쓰기 |
-| DEX Swap Output Port | JupiterApiAdapter, PancakeswapApiAdapter | 외부 DEX API 호출 |
-| Live Price Output Port | LivePriceQueryAdapter | 코인 현재가 조회 (Redis) |
-| Candle Data Output Port | CandleInfluxDataAdapter | 캔들 데이터 조회 |
+# 외부 시스템
 
-- **Persistence Output Port:** 도메인별로 각각 존재하는 영속성 포트. User, Wallet, Order 등 도메인마다 별도의 포트와 어댑터가 있다.
-- **Leaderboard Output Port:** 랭킹 집계 데이터를 조회하기 위한 포트. 일반적인 영속성과 목적이 다르므로 분리한다.
-- **DEX Swap Output Port:** 외부 DEX API 호출을 추상화하는 포트. 새 DEX 추가 시 어댑터만 구현하면 된다.
-- **Live Price Output Port:** 시세 수집기가 적재한 코인 현재가를 조회하기 위한 포트.
-- **Candle Data Output Port:** 캔들 데이터를 조회하기 위한 포트.
+- **MySQL** — 도메인 트랜잭션 쓰기 경로 전부를 담당하는 주 저장소.
+- **Redis · InfluxDB** — 시세·캔들 저장소
+- **RabbitMQ** — 실시간 시세 수신, 주문 이벤트(접수·취소) 송출, 체결 결과 수신. 채널 스펙은 루트의 `docs/contracts/`에 존재
 
-## 패키지 구조
+# 바운디드 컨텍스트 간 상호작용
+
+| From | Depends on |
+|------|------------|
+| Wallet | MarketData, InvestmentRound |
+| InvestmentRound | MarketData, Wallet |
+| Trading | Wallet, MarketData, InvestmentRound |
+| Transfer | Wallet, InvestmentRound |
+| Portfolio | InvestmentRound, Wallet, MarketData, Trading |
+| Ranking | InvestmentRound, Portfolio, MarketData, Wallet, Trading |
+| RegretAnalysis | InvestmentRound, Trading, MarketData, Wallet, Portfolio |
+
+컨텍스트별 의존관계 상세는 `{domain}/dependency.md` 참고.
+
+# Common Shared Kernel
+
+여러 컨텍스트가 공유하는 최소 모델은 `common` 에만 둔다.
+
+- `RuleType` — 투자 원칙 종류 (LOSS_CUT, PROFIT_TAKE, CHASE_BUY_BAN, AVERAGING_DOWN_LIMIT, OVERTRADING_LIMIT)
+- `ProfitRate` — 수익률
+
+# 패키지 구조
 
 최상위는 바운디드 컨텍스트 기준으로 분리한다. 각 도메인 내부는 헥사고날 아키텍처의 계층별로 나눈다.
 
@@ -84,24 +92,6 @@ common/
 └── exception/         # ErrorCode, CustomException, GlobalControllerAdvice
 ```
 
-## 계층별 규약
+# 계층별 규약
 
-**Controller**
-- UseCase 인터페이스에만 의존한다
-- 비즈니스 로직 금지, 요청값 검증 + UseCase 위임만 수행한다
-- 모든 응답은 공통 응답 DTO로 래핑한다
-
-**UseCase**
-- 하나의 유스케이스는 하나의 비즈니스 행위를 표현한다
-
-**Service**
-- 외부 연동이 필요한 경우 Output Port 인터페이스에만 의존한다
-- 쓰기 작업에 `@Transactional`을 선언한다
-
-**Adapter**
-- Output Port 인터페이스를 구현한다
-
-**Domain**
-- 외부 의존 없이 순수 비즈니스 로직만 포함한다
-- Aggregate 내부의 Entity/VO 변경은 반드시 Aggregate Root를 통해서만 수행한다
-- Aggregate 간 참조는 ID로만 한다
+세부 작성 룰은 [conventions.md](conventions.md) 의 "레이어별 컨벤션" 섹션을 참고한다.
