@@ -1,4 +1,4 @@
-package ksh.tryptoengine.event;
+package ksh.tryptoengine.consumer;
 
 public sealed interface EngineInboundEvent
     permits OrderPlacedEvent, OrderCanceledEvent, TickReceivedEvent {

@@ -1,7 +1,7 @@
 package ksh.tryptoengine.wal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ksh.tryptoengine.engine.OrderBookRegistry;
+import ksh.tryptoengine.matching.OrderBookRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

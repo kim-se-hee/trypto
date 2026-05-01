@@ -1,4 +1,4 @@
-package ksh.tryptoengine.event;
+package ksh.tryptoengine.consumer;
 
 public record OrderCanceledEvent(
     Long orderId,

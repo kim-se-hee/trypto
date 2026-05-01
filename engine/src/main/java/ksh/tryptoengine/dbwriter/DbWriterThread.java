@@ -2,7 +2,7 @@ package ksh.tryptoengine.dbwriter;
 
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PreDestroy;
-import ksh.tryptoengine.event.FillCommand;
+import ksh.tryptoengine.dbwriter.FillCommand;
 import ksh.tryptoengine.metrics.EngineMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

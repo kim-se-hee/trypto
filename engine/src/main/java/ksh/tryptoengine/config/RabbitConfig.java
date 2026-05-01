@@ -21,7 +21,7 @@ public class RabbitConfig {
     @Value("${engine.inbox.queue}")
     private String inboxQueue;
 
-    @Value("${engine.publisher.fanout-exchange}")
+    @Value("${engine.outbox.fanout-exchange}")
     private String fanoutExchange;
 
     @Bean

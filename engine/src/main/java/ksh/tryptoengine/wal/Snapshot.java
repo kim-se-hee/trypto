@@ -1,6 +1,6 @@
 package ksh.tryptoengine.wal;
 
-import ksh.tryptoengine.engine.OrderDetail;
+import ksh.tryptoengine.matching.OrderDetail;
 
 import java.util.List;
 

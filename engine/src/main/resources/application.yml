@@ -46,7 +46,7 @@ engine:
     checkpoint-interval-events: ${ENGINE_WAL_CHECKPOINT_INTERVAL:1000}
   inbox:
     queue: engine.inbox
-  publisher:
+  outbox:
     fanout-exchange: order.filled.notification
 
 management:

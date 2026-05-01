@@ -1,13 +1,13 @@
-package ksh.tryptoengine.event;
-
-import ksh.tryptoengine.engine.OrderDetail;
+package ksh.tryptoengine.outbox;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record FillCommand(
-    OrderDetail order,
+public record OrderFilledEvent(
+    Long orderId,
+    Long userId,
     BigDecimal executedPrice,
+    BigDecimal quantity,
     LocalDateTime executedAt
 ) {
 }

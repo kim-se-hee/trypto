@@ -1,7 +1,7 @@
-package ksh.tryptoengine.publisher;
+package ksh.tryptoengine.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ksh.tryptoengine.event.OrderFilledEvent;
+import ksh.tryptoengine.outbox.OrderFilledEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,7 +28,7 @@ public class OutboxRelay {
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbit;
 
-    @Value("${engine.publisher.fanout-exchange}")
+    @Value("${engine.outbox.fanout-exchange}")
     private String fanoutExchange;
 
     public OutboxRelay(

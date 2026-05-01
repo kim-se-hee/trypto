@@ -1,4 +1,4 @@
-package ksh.tryptoengine.engine;
+package ksh.tryptoengine.matching;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

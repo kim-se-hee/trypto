@@ -1,4 +1,4 @@
-package ksh.tryptoengine.event;
+package ksh.tryptoengine.consumer;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

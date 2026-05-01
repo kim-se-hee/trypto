@@ -1,12 +1,12 @@
-package ksh.tryptoengine.ingress;
+package ksh.tryptoengine.consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ksh.tryptoengine.engine.EngineThread;
-import ksh.tryptoengine.event.EngineInboundEvent;
-import ksh.tryptoengine.event.OrderCanceledEvent;
-import ksh.tryptoengine.event.OrderPlacedEvent;
-import ksh.tryptoengine.event.TickReceivedEvent;
+import ksh.tryptoengine.matching.EngineThread;
+import ksh.tryptoengine.consumer.EngineInboundEvent;
+import ksh.tryptoengine.consumer.OrderCanceledEvent;
+import ksh.tryptoengine.consumer.OrderPlacedEvent;
+import ksh.tryptoengine.consumer.TickReceivedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RabbitIngress {
+public class RabbitConsumer {
 
     private final ObjectMapper mapper;
     private final EngineThread engine;
