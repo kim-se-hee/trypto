@@ -7,7 +7,7 @@
 # 선행 구현 사항
 
 - 지정가 주문 생성 (cex-order.md) — PENDING 상태 주문 생성, 잔고 lock 처리
-- 실시간 시세 수집 ([../../../docs/contracts/ticker-exchange.md](../../../docs/contracts/ticker-exchange.md), [../../../docs/contracts/redis-ticker.md](../../../docs/contracts/redis-ticker.md)) — 수집기가 Redis 캐싱 및 RabbitMQ fanout 으로 시세 이벤트 발행
+- 실시간 시세 수집 ([../../../docs/contracts/ticker-exchange.md](../../../docs/contracts/ticker-exchange.md), [../../../docs/contracts/redis-marketdata.md](../../../docs/contracts/redis-marketdata.md)) — 수집기가 Redis 캐싱 및 RabbitMQ fanout 으로 시세 이벤트 발행
 
 # 아키텍처 개요
 

@@ -8,5 +8,5 @@
 
 ## 공유 저장소 스키마
 
-- [redis-ticker.md](redis-ticker.md) — Redis 시세 캐시 키/값 형식 (collector 작성, api 읽기)
+- [redis-marketdata.md](redis-marketdata.md) — Redis 마켓 데이터(시세 캐시 + 마켓 메타데이터) 키/값 형식 (collector 작성, api 읽기)
 - [influx-candle.md](influx-candle.md) — InfluxDB 캔들 measurement 스키마 (collector 작성, api 읽기)
