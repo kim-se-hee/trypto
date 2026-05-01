@@ -41,16 +41,15 @@ rm -f "$HOME/.claude/implement-phase.json"
 
 구현 시작 전 아래 파일을 Read로 읽는다:
 
-1. `docs/ai-context/cross-context/{컨텍스트명}.md` — 기능 문서에서 연동하는 컨텍스트의 파일만 선택적으로 읽는다 (예: wallet, marketdata 연동이면 `wallet.md`, `marketdata.md`만)
-2. `docs/data-model.md` — 자기 컨텍스트의 엔티티·VO 구조 파악
+1. `docs/{컨텍스트명}/dependency.md` — 기능 문서에서 연동하는 컨텍스트의 파일만 선택적으로 읽는다 (예: wallet, marketdata 연동이면 `wallet/dependency.md`, `marketdata/dependency.md`만)
+2. `docs/{자기 컨텍스트명}/aggregate.md` — 자기 컨텍스트의 엔티티·VO 구조 파악
 
 단일 컨텍스트 작업(크로스 컨텍스트 연동 없음)이면 1번은 생략한다.
 
 ### 크로스 컨텍스트 경계 규칙
 
-- **구현 범위는 기능 문서의 대상 컨텍스트에 한정한다.** 다른 컨텍스트의 UseCase 구현체를 만들지 않는다
-- **다른 컨텍스트의 소스 코드를 읽지 않는다.** 시그니처와 DTO 구조는 `docs/ai-context/cross-context/` 파일만 참조한다
-- **크로스 컨텍스트 파일에 필요한 UseCase/DTO가 없으면 구현을 중단한다.** 어떤 선행 기능을 먼저 구현해야 하는지 사용자에게 알린다
+- **다른 컨텍스트의 소스 코드를 읽지 않는다.** 시그니처와 DTO 구조는 `docs/{컨텍스트명}/dependency.md` 만 참조한다
+- **`dependency.md` 에 필요한 UseCase/Query/Result 가 없으면 구현을 중단한다.** 어떤 선행 기능을 먼저 구현해야 하는지 사용자에게 알린다
 
 ---
 

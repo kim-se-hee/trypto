@@ -121,37 +121,37 @@ git rebase origin/main
 
 리모트 푸시 전에 브랜치의 변경 사항을 분석하여 관련 문서를 갱신한다. **변경이 없으면 이 단계를 건너뛴다.**
 
-#### 5-1. 데이터 모델 · 스키마 갱신
+#### 5-1. Aggregate · 스키마 갱신
 
 `git diff main`에서 도메인 모델(`domain/model/`)이나 VO(`domain/vo/`), JPA 엔티티(`adapter/out/entity/`)가 **신규 생성되거나 필드가 변경**된 경우:
 
-1. `docs/data-model.md`의 Aggregate 구조 테이블·소유 관계·모듈 간 의존을 현재 코드 기준으로 갱신한다.
+1. 변경된 도메인의 `docs/{domain}/aggregate.md`(Aggregate 구조·소유 관계)를 현재 코드 기준으로 갱신한다. 
 2. `docs/schema.md`의 ERD를 현재 JPA 엔티티 기준으로 갱신한다.
 3. 갱신한 문서를 별도 커밋한다.
 
 ```bash
-git add docs/data-model.md docs/schema.md
+git add docs/<domain>/aggregate.md docs/architecture.md docs/schema.md
 git commit -m "docs: 데이터 모델 및 스키마 문서 동기화"
 ```
 
 #### 5-2. 크로스 컨텍스트 인터페이스 동기화
 
-`git diff main`에서 **다른 컨텍스트가 소비하는 UseCase(`application/port/in/`)나 Result/Command DTO가 신규 생성되거나 시그니처가 변경**된 경우:
+`git diff main`에서 **다른 컨텍스트가 소비하라고 노출한 UseCase(`application/port/in/`) 나 Query/Result DTO가 신규 생성되거나 시그니처가 변경**된 경우, 또는 **다른 컨텍스트의 UseCase 를 새로 호출하기 시작**한 경우:
 
-1. 해당 컨텍스트의 `docs/ai-context/cross-context/{context}.md`를 현재 코드 기준으로 갱신한다.
-   - UseCase 인터페이스의 메서드 시그니처를 동기화한다.
-   - Command/Result DTO의 필드 목록을 동기화한다.
-   - 신규 UseCase/DTO는 추가하고, 삭제된 것은 제거한다.
-2. 갱신한 문서를 별도 커밋한다.
+1. 해당 컨텍스트의 `docs/{context}/dependency.md`를 현재 코드 기준으로 갱신한다.
+   - "제공" 섹션: 노출한 UseCase 의 메서드 시그니처와 Query/Result DTO 필드를 동기화한다.
+   - "의존" 섹션: 새로 호출하기 시작한 다른 컨텍스트의 UseCase 를 추가한다.
+   - 신규는 추가하고, 삭제된 것은 제거한다. 
+2. `docs/architecture.md` 의 의존 표도 함께 갱신한다.
 
 ```bash
-git add docs/ai-context/cross-context/<context>.md
-git commit -m "docs: <context> 크로스 컨텍스트 인터페이스 문서 동기화"
+git add docs/<context>/dependency.md
+git commit -m "docs: <context> 컨텍스트간 의존관계 문서 동기화"
 ```
 
 **판단 기준:**
-- `port/in/` 하위의 UseCase 인터페이스나 `port/in/dto/` 하위의 Command/Query/Result DTO가 diff에 포함되어야 한다.
-- 서비스 내부 변경만 있고 포트 시그니처가 동일하면 동기화하지 않는다.
+- 한 컨텍스트 내부에서만 쓰는 UseCase 나 Command DTO 변경은 `dependency.md` 와 무관하다.
+- 다른 컨텍스트가 실제로 주입받아 호출하는 UseCase 와 그 입출력 DTO(Query/Result)만 동기화 대상이다.
 
 ### 6. 리모트 푸시
 
