@@ -38,7 +38,7 @@
 
 작업 시작 전 관련 문서를 확인한다. 컨벤션은 작업 전 통독, 기능/도메인 문서는 필요할 때만 펼친다.
 
-**토대**
+**공통**
 - [docs/architecture.md](docs/architecture.md) — 헥사고날 포트/어댑터, 패키지 구조, 컨텍스트 의존 그래프, Common Shared Kernel
 - [docs/conventions.md](docs/conventions.md) — DTO · 에러 처리 · 공통 · 레이어별 코딩 컨벤션
 
