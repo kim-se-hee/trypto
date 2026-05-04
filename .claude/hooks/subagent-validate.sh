@@ -1,9 +1,10 @@
 #!/bin/bash
 # SubagentStop hook
 # Runs ArchUnit + unit tests in a single gradle invocation for the task-implementer
-# subagent (acceptance tests are excluded — handled separately by acceptance-test-runner).
+# and review-applier subagents (acceptance tests are excluded — handled separately
+# by acceptance-test-runner).
 # If failures found, returns block:true to trigger automatic rework.
-# Skips for non-task-implementer subagents.
+# Skips for other subagents.
 
 input=$(cat)
 
@@ -16,8 +17,11 @@ except Exception:
     pass
 " 2>/dev/null)
 
-# Only validate task-implementer subagent
-[[ "$subagent_type" != "task-implementer" ]] && exit 0
+# Only validate task-implementer and review-applier subagents
+case "$subagent_type" in
+  task-implementer|review-applier) ;;
+  *) exit 0 ;;
+esac
 
 worktree_root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 cd "$worktree_root" || exit 0

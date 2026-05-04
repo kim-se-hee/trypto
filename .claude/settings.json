@@ -36,7 +36,7 @@
     ],
     "SubagentStop": [
       {
-        "matcher": "task-implementer",
+        "matcher": "task-implementer|review-applier",
         "hooks": [
           {
             "type": "command",
