@@ -1,3 +1,5 @@
+name: trypto
+
 networks:
   trypto-net:
     name: trypto-net
@@ -194,6 +196,29 @@ services:
       retries: 40
       start_period: 120s
 
+  frontend:
+    image: node:20-alpine
+    networks:
+      - trypto-net
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    command: sh -c "npm install --silent && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_TARGET: http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
   # ---------- monitoring ----------
   prometheus:
     image: prom/prometheus:latest
@@ -252,3 +277,4 @@ volumes:
   engine-wal:
   prometheus-data:
   grafana-data:
+  frontend-node-modules:
