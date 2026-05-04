@@ -73,6 +73,10 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
     systemProperty 'cucumber.junit-platform.naming-strategy', 'long'
+    systemProperty 'cucumber.filter.tags', System.getProperty('cucumber.filter.tags', '')
+    if (System.getProperty('skipAcceptance') == 'true') {
+        exclude '**/CucumberIntegrationTest*'
+    }
 }
 
 spotless {
