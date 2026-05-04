@@ -4,14 +4,20 @@ import java.util.Arrays;
 
 public final class ArchitectureConstants {
 
-    private ArchitectureConstants() {
-    }
+    private ArchitectureConstants() {}
 
     static final String BASE = "ksh.tryptobackend";
 
     static final String[] BOUNDED_CONTEXTS = {
-        "trading", "wallet", "transfer", "investmentround",
-        "ranking", "regretanalysis", "portfolio", "marketdata", "user"
+        "trading",
+        "wallet",
+        "transfer",
+        "investmentround",
+        "ranking",
+        "regretanalysis",
+        "portfolio",
+        "marketdata",
+        "user"
     };
 
     static final String COMMON = BASE + ".common";
@@ -34,18 +40,18 @@ public final class ArchitectureConstants {
 
     static String[] allContextPackages(String layer) {
         return Arrays.stream(BOUNDED_CONTEXTS)
-            .map(ctx -> contextPkg(ctx, layer))
-            .toArray(String[]::new);
+                .map(ctx -> contextPkg(ctx, layer))
+                .toArray(String[]::new);
     }
 
     static String[] allContextDirectPackages(String layer) {
         return Arrays.stream(BOUNDED_CONTEXTS)
-            .map(ctx -> BASE + "." + ctx + layer)
-            .toArray(String[]::new);
+                .map(ctx -> BASE + "." + ctx + layer)
+                .toArray(String[]::new);
     }
 
     static String[] forbiddenPackagesOf(String context) {
-        return new String[]{
+        return new String[] {
             contextPkg(context, DOMAIN),
             contextPkg(context, ADAPTER),
             contextPkg(context, SERVICE),
@@ -56,14 +62,14 @@ public final class ArchitectureConstants {
 
     static String[] allContextForbiddenPackages() {
         return Arrays.stream(BOUNDED_CONTEXTS)
-            .flatMap(ctx -> Arrays.stream(forbiddenPackagesOf(ctx)))
-            .toArray(String[]::new);
+                .flatMap(ctx -> Arrays.stream(forbiddenPackagesOf(ctx)))
+                .toArray(String[]::new);
     }
 
     static String[] allContextRootPackages() {
         return Arrays.stream(BOUNDED_CONTEXTS)
-            .map(ctx -> BASE + "." + ctx + "..")
-            .toArray(String[]::new);
+                .map(ctx -> BASE + "." + ctx + "..")
+                .toArray(String[]::new);
     }
 
     static String[] merge(String[]... arrays) {
@@ -80,8 +86,15 @@ public final class ArchitectureConstants {
 
     static String[] otherContextPortInPackages(String context) {
         return Arrays.stream(BOUNDED_CONTEXTS)
-            .filter(ctx -> !ctx.equals(context))
-            .map(ctx -> contextPkg(ctx, ".application.port.in.."))
-            .toArray(String[]::new);
+                .filter(ctx -> !ctx.equals(context))
+                .map(ctx -> contextPkg(ctx, ".application.port.in.."))
+                .toArray(String[]::new);
+    }
+
+    static String[] otherContextPortOutPackages(String context) {
+        return Arrays.stream(BOUNDED_CONTEXTS)
+                .filter(ctx -> !ctx.equals(context))
+                .map(ctx -> contextPkg(ctx, ".application.port.out.."))
+                .toArray(String[]::new);
     }
 }

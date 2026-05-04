@@ -21,10 +21,13 @@ public class CommonApiClient {
     }
 
     public <T> RestTestClient.ResponseSpec post(String path, T body) {
-        lastResponse = restTestClient.post().uri(path)
-            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-            .body(body)
-            .exchange();
+        lastResponse =
+                restTestClient
+                        .post()
+                        .uri(path)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .exchange();
         return lastResponse;
     }
 
@@ -34,10 +37,13 @@ public class CommonApiClient {
     }
 
     public <T> RestTestClient.ResponseSpec put(String path, T body) {
-        lastResponse = restTestClient.put().uri(path)
-            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-            .body(body)
-            .exchange();
+        lastResponse =
+                restTestClient
+                        .put()
+                        .uri(path)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .exchange();
         return lastResponse;
     }
 

@@ -18,10 +18,11 @@ public class EligibleRounds {
     public static EligibleRounds of(List<EligibleRound> candidates, LocalDate snapshotDate) {
         LocalDateTime cutoff = snapshotDate.atStartOfDay().minusHours(ELIGIBILITY_HOURS);
 
-        List<EligibleRound> eligible = candidates.stream()
-            .filter(round -> round.startedAt().isBefore(cutoff))
-            .filter(round -> round.tradeCount() > 0)
-            .toList();
+        List<EligibleRound> eligible =
+                candidates.stream()
+                        .filter(round -> round.startedAt().isBefore(cutoff))
+                        .filter(round -> round.tradeCount() > 0)
+                        .toList();
 
         return new EligibleRounds(eligible);
     }
@@ -35,10 +36,15 @@ public class EligibleRounds {
 
         for (EligibleRound round : rounds) {
             today.calculateProfitRate(round.roundKey(), comparison)
-                .ifPresent(profitRate -> candidates.add(new RankingCandidate(
-                    round.userId(), round.roundId(), profitRate,
-                    round.tradeCount(), round.startedAt()
-                )));
+                    .ifPresent(
+                            profitRate ->
+                                    candidates.add(
+                                            new RankingCandidate(
+                                                    round.userId(),
+                                                    round.roundId(),
+                                                    profitRate,
+                                                    round.tradeCount(),
+                                                    round.startedAt())));
         }
 
         return new RankingCandidates(candidates);

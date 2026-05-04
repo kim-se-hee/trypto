@@ -1,5 +1,6 @@
 package ksh.tryptobackend.batch.regretreport;
 
+import java.util.ArrayList;
 import ksh.tryptobackend.regretanalysis.application.port.in.SaveRegretReportsUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 import lombok.RequiredArgsConstructor;
@@ -7,8 +8,6 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
 
 @Component
 @StepScope

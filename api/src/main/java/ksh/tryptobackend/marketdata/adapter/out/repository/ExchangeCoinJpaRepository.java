@@ -1,11 +1,10 @@
 package ksh.tryptobackend.marketdata.adapter.out.repository;
 
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpaEntity, Long> {
 
@@ -15,7 +14,8 @@ public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpa
 
     boolean existsByExchangeIdAndCoinId(Long exchangeId, Long coinId);
 
-    List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(Long exchangeId, Collection<Long> coinIds);
+    List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(
+            Long exchangeId, Collection<Long> coinIds);
 
     List<ExchangeCoinJpaEntity> findByExchangeId(Long exchangeId);
 }

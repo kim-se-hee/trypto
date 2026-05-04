@@ -1,14 +1,13 @@
 package ksh.tryptobackend.investmentround.domain.model;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
+import lombok.Getter;
 
 @Getter
 public class InvestmentRound {
@@ -31,11 +30,19 @@ public class InvestmentRound {
     private final List<RuleSetting> rules;
     private final List<EmergencyFunding> fundings;
 
-    private InvestmentRound(Long roundId, Long version, Long userId, long roundNumber,
-                            BigDecimal initialSeed, BigDecimal emergencyFundingLimit,
-                            int emergencyChargeCount, RoundStatus status,
-                            LocalDateTime startedAt, LocalDateTime endedAt,
-                            List<RuleSetting> rules, List<EmergencyFunding> fundings) {
+    private InvestmentRound(
+            Long roundId,
+            Long version,
+            Long userId,
+            long roundNumber,
+            BigDecimal initialSeed,
+            BigDecimal emergencyFundingLimit,
+            int emergencyChargeCount,
+            RoundStatus status,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            List<RuleSetting> rules,
+            List<EmergencyFunding> fundings) {
         this.roundId = roundId;
         this.version = version;
         this.userId = userId;
@@ -50,24 +57,54 @@ public class InvestmentRound {
         this.fundings = fundings != null ? new ArrayList<>(fundings) : new ArrayList<>();
     }
 
-    public static InvestmentRound start(Long userId, long previousRoundCount, BigDecimal initialSeed,
-                                        BigDecimal emergencyFundingLimit, LocalDateTime startedAt) {
+    public static InvestmentRound start(
+            Long userId,
+            long previousRoundCount,
+            BigDecimal initialSeed,
+            BigDecimal emergencyFundingLimit,
+            LocalDateTime startedAt) {
         validateEmergencyFundingLimit(emergencyFundingLimit);
         return new InvestmentRound(
-            null, null, userId, previousRoundCount + 1,
-            initialSeed, emergencyFundingLimit,
-            DEFAULT_EMERGENCY_CHARGE_COUNT, RoundStatus.ACTIVE,
-            startedAt, null, null, null);
+                null,
+                null,
+                userId,
+                previousRoundCount + 1,
+                initialSeed,
+                emergencyFundingLimit,
+                DEFAULT_EMERGENCY_CHARGE_COUNT,
+                RoundStatus.ACTIVE,
+                startedAt,
+                null,
+                null,
+                null);
     }
 
-    public static InvestmentRound reconstitute(Long roundId, Long version, Long userId, long roundNumber,
-                                                BigDecimal initialSeed, BigDecimal emergencyFundingLimit,
-                                                int emergencyChargeCount, RoundStatus status,
-                                                LocalDateTime startedAt, LocalDateTime endedAt,
-                                                List<RuleSetting> rules, List<EmergencyFunding> fundings) {
-        return new InvestmentRound(roundId, version, userId, roundNumber,
-            initialSeed, emergencyFundingLimit, emergencyChargeCount, status,
-            startedAt, endedAt, rules, fundings);
+    public static InvestmentRound reconstitute(
+            Long roundId,
+            Long version,
+            Long userId,
+            long roundNumber,
+            BigDecimal initialSeed,
+            BigDecimal emergencyFundingLimit,
+            int emergencyChargeCount,
+            RoundStatus status,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            List<RuleSetting> rules,
+            List<EmergencyFunding> fundings) {
+        return new InvestmentRound(
+                roundId,
+                version,
+                userId,
+                roundNumber,
+                initialSeed,
+                emergencyFundingLimit,
+                emergencyChargeCount,
+                status,
+                startedAt,
+                endedAt,
+                rules,
+                fundings);
     }
 
     public void end(LocalDateTime endedAt) {
@@ -106,7 +143,7 @@ public class InvestmentRound {
 
     private static void validateEmergencyFundingLimit(BigDecimal emergencyFundingLimit) {
         if (emergencyFundingLimit.compareTo(ZERO) < 0
-            || emergencyFundingLimit.compareTo(MAX_EMERGENCY_FUNDING_LIMIT) > 0) {
+                || emergencyFundingLimit.compareTo(MAX_EMERGENCY_FUNDING_LIMIT) > 0) {
             throw new CustomException(ErrorCode.INVALID_EMERGENCY_FUNDING_LIMIT);
         }
     }

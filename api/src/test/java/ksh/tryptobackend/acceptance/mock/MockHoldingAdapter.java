@@ -1,15 +1,14 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
-import ksh.tryptobackend.trading.application.port.out.HoldingQueryPort;
-import ksh.tryptobackend.trading.domain.model.Holding;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
+import ksh.tryptobackend.trading.application.port.out.HoldingQueryPort;
+import ksh.tryptobackend.trading.domain.model.Holding;
 
 public class MockHoldingAdapter implements HoldingCommandPort, HoldingQueryPort {
 
@@ -25,9 +24,7 @@ public class MockHoldingAdapter implements HoldingCommandPort, HoldingQueryPort 
 
     @Override
     public List<Holding> findAllByWalletId(Long walletId) {
-        return holdings.values().stream()
-            .filter(h -> h.getWalletId().equals(walletId))
-            .toList();
+        return holdings.values().stream().filter(h -> h.getWalletId().equals(walletId)).toList();
     }
 
     @Override
@@ -41,16 +38,22 @@ public class MockHoldingAdapter implements HoldingCommandPort, HoldingQueryPort 
         return holding;
     }
 
-    public void setHolding(Long walletId, Long coinId, BigDecimal avgBuyPrice,
-                           BigDecimal totalQuantity, int averagingDownCount) {
-        holdings.put(key(walletId, coinId), Holding.builder()
-            .walletId(walletId)
-            .coinId(coinId)
-            .avgBuyPrice(avgBuyPrice)
-            .totalQuantity(totalQuantity)
-            .totalBuyAmount(avgBuyPrice.multiply(totalQuantity))
-            .averagingDownCount(averagingDownCount)
-            .build());
+    public void setHolding(
+            Long walletId,
+            Long coinId,
+            BigDecimal avgBuyPrice,
+            BigDecimal totalQuantity,
+            int averagingDownCount) {
+        holdings.put(
+                key(walletId, coinId),
+                Holding.builder()
+                        .walletId(walletId)
+                        .coinId(coinId)
+                        .avgBuyPrice(avgBuyPrice)
+                        .totalQuantity(totalQuantity)
+                        .totalBuyAmount(avgBuyPrice.multiply(totalQuantity))
+                        .averagingDownCount(averagingDownCount)
+                        .build());
     }
 
     public void clear() {

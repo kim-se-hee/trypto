@@ -1,9 +1,8 @@
 package ksh.tryptobackend.investmentround.domain.model;
 
-import ksh.tryptobackend.common.domain.vo.RuleType;
-
 import java.math.BigDecimal;
 import java.util.Optional;
+import ksh.tryptobackend.common.domain.vo.RuleType;
 
 public sealed interface ViolationRule {
 
@@ -16,7 +15,8 @@ public sealed interface ViolationRule {
             case LOSS_CUT -> new LossCutRule(ruleId, thresholdValue);
             case PROFIT_TAKE -> new ProfitTakeRule(ruleId, thresholdValue);
             case CHASE_BUY_BAN -> new ChaseBuyBanRule(ruleId, thresholdValue);
-            case AVERAGING_DOWN_LIMIT -> new AveragingDownLimitRule(ruleId, thresholdValue.intValue());
+            case AVERAGING_DOWN_LIMIT ->
+                    new AveragingDownLimitRule(ruleId, thresholdValue.intValue());
             case OVERTRADING_LIMIT -> new OvertradingLimitRule(ruleId, thresholdValue.longValue());
         };
     }
@@ -47,7 +47,8 @@ public sealed interface ViolationRule {
             if (context.changeRate().compareTo(thresholdPercent) < 0) {
                 return Optional.empty();
             }
-            String reason = String.format("상승률 %s%% ≥ %s%%", context.changeRate(), thresholdPercent);
+            String reason =
+                    String.format("상승률 %s%% ≥ %s%%", context.changeRate(), thresholdPercent);
             return Optional.of(new DetectedViolation(ruleId, reason, context.now()));
         }
     }

@@ -28,8 +28,9 @@ public class ChangeNicknameService implements ChangeNicknameUseCase {
     }
 
     private User getUser(Long userId) {
-        return userQueryPort.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return userQueryPort
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateNicknameUniqueness(String nickname) {

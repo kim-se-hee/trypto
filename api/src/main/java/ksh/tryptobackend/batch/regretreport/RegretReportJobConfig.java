@@ -25,28 +25,27 @@ public class RegretReportJobConfig {
 
     @Bean
     public Job regretReportJob(Step regretReportStep) {
-        return new JobBuilder("regret-report-job", jobRepository)
-            .start(regretReportStep)
-            .build();
+        return new JobBuilder("regret-report-job", jobRepository).start(regretReportStep).build();
     }
 
     @Bean
-    public Step regretReportStep(RegretReportItemReader reader,
-                                 RegretReportItemProcessor processor,
-                                 RegretReportItemWriter writer,
-                                 RetryPolicy batchRetryPolicy,
-                                 SkipPolicy batchSkipPolicy,
-                                 LoggingSkipListener<Object, Object> batchSkipListener) {
+    public Step regretReportStep(
+            RegretReportItemReader reader,
+            RegretReportItemProcessor processor,
+            RegretReportItemWriter writer,
+            RetryPolicy batchRetryPolicy,
+            SkipPolicy batchSkipPolicy,
+            LoggingSkipListener<Object, Object> batchSkipListener) {
         return new StepBuilder("regret-report-step", jobRepository)
-            .<RegretReportInput, GeneratedRegretReportResult>chunk(CHUNK_SIZE)
-            .transactionManager(transactionManager)
-            .reader(reader)
-            .processor(processor)
-            .writer(writer)
-            .faultTolerant()
-            .retryPolicy(batchRetryPolicy)
-            .skipPolicy(batchSkipPolicy)
-            .listener(batchSkipListener)
-            .build();
+                .<RegretReportInput, GeneratedRegretReportResult>chunk(CHUNK_SIZE)
+                .transactionManager(transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .faultTolerant()
+                .retryPolicy(batchRetryPolicy)
+                .skipPolicy(batchSkipPolicy)
+                .listener(batchSkipListener)
+                .build();
     }
 }

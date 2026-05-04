@@ -22,8 +22,10 @@ public class UserCommandAdapter implements UserCommandPort {
 
     @Override
     public User save(User user) {
-        UserJpaEntity entity = userJpaRepository.findById(user.getUserId())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserJpaEntity entity =
+                userJpaRepository
+                        .findById(user.getUserId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         entity.updateFromDomain(user);
         return entity.toDomain();
     }
@@ -31,9 +33,9 @@ public class UserCommandAdapter implements UserCommandPort {
     @Override
     public void updatePortfolioVisibility(Long userId, boolean portfolioPublic) {
         queryFactory
-            .update(userJpaEntity)
-            .set(userJpaEntity.portfolioPublic, portfolioPublic)
-            .where(userJpaEntity.id.eq(userId))
-            .execute();
+                .update(userJpaEntity)
+                .set(userJpaEntity.portfolioPublic, portfolioPublic)
+                .where(userJpaEntity.id.eq(userId))
+                .execute();
     }
 }

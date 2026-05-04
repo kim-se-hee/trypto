@@ -6,10 +6,7 @@ import java.util.Optional;
 public record ViolationRules(List<ViolationRule> rules) {
 
     public List<DetectedViolation> check(ViolationCheckContext context) {
-        return rules.stream()
-            .map(rule -> rule.check(context))
-            .flatMap(Optional::stream)
-            .toList();
+        return rules.stream().map(rule -> rule.check(context)).flatMap(Optional::stream).toList();
     }
 
     public boolean isEmpty() {

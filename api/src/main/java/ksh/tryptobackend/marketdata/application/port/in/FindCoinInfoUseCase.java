@@ -1,9 +1,8 @@
 package ksh.tryptobackend.marketdata.application.port.in;
 
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
-
 import java.util.Map;
 import java.util.Set;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
 
 public interface FindCoinInfoUseCase {
 

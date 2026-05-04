@@ -15,13 +15,13 @@ public class OrderFilledNotificationService implements NotifyOrderFilledUseCase 
 
     @Override
     public void notifyOrderFilled(NotifyOrderFilledCommand command) {
-        OrderFilledNotification notification = new OrderFilledNotification(
-            command.orderId(),
-            command.userId(),
-            command.executedPrice(),
-            command.quantity(),
-            command.executedAt()
-        );
+        OrderFilledNotification notification =
+                new OrderFilledNotification(
+                        command.orderId(),
+                        command.userId(),
+                        command.executedPrice(),
+                        command.quantity(),
+                        command.executedAt());
         orderFilledNotificationPort.push(notification);
     }
 }

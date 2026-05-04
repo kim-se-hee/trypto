@@ -20,8 +20,7 @@ public class WalletBalanceController {
 
     @GetMapping
     public ApiResponseDto<WalletBalancesResponse> getWalletBalances(
-            @PathVariable Long userId,
-            @PathVariable Long walletId) {
+            @PathVariable Long userId, @PathVariable Long walletId) {
         GetWalletBalancesQuery query = new GetWalletBalancesQuery(userId, walletId);
         WalletBalancesResult result = getWalletBalancesUseCase.getWalletBalances(query);
         return ApiResponseDto.success("잔고를 조회했습니다.", WalletBalancesResponse.from(result));

@@ -7,21 +7,21 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Entity
 @Table(
-    name = "wallet",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_wallet_round_exchange", columnNames = {"round_id", "exchange_id"})
-    }
-)
+        name = "wallet",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_wallet_round_exchange",
+                    columnNames = {"round_id", "exchange_id"})
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WalletJpaEntity {
@@ -52,7 +52,8 @@ public class WalletJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private WalletJpaEntity(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+    private WalletJpaEntity(
+            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
         this.roundId = roundId;
         this.exchangeId = exchangeId;
         this.seedAmount = seedAmount;
@@ -60,17 +61,20 @@ public class WalletJpaEntity {
     }
 
     public static WalletJpaEntity fromDomain(Wallet wallet) {
-        return new WalletJpaEntity(wallet.getRoundId(), wallet.getExchangeId(),
-            wallet.getSeedAmount(), wallet.getCreatedAt());
+        return new WalletJpaEntity(
+                wallet.getRoundId(),
+                wallet.getExchangeId(),
+                wallet.getSeedAmount(),
+                wallet.getCreatedAt());
     }
 
     public Wallet toDomain() {
         return Wallet.builder()
-            .walletId(id)
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .seedAmount(seedAmount)
-            .createdAt(createdAt)
-            .build();
+                .walletId(id)
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .seedAmount(seedAmount)
+                .createdAt(createdAt)
+                .build();
     }
 }

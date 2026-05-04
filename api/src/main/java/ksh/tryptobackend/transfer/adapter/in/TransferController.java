@@ -23,7 +23,8 @@ public class TransferController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<TransferCoinResponse> createTransfer(@Valid @RequestBody TransferCoinRequest request) {
+    public ApiResponseDto<TransferCoinResponse> createTransfer(
+            @Valid @RequestBody TransferCoinRequest request) {
         Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand());
         return ApiResponseDto.created("송금이 요청되었습니다.", TransferCoinResponse.from(transfer));
     }

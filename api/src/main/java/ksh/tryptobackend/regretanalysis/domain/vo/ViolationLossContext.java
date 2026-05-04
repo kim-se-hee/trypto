@@ -4,13 +4,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ViolationLossContext(
-    BigDecimal filledPrice,
-    BigDecimal quantity,
-    BigDecimal tradeAmount,
-    BigDecimal currentPrice,
-    List<SoldPortion> soldPortions
-) {
+        BigDecimal filledPrice,
+        BigDecimal quantity,
+        BigDecimal tradeAmount,
+        BigDecimal currentPrice,
+        List<SoldPortion> soldPortions) {
 
-    public record SoldPortion(BigDecimal price, BigDecimal quantity) {
-    }
+    public record SoldPortion(BigDecimal price, BigDecimal quantity) {}
 }

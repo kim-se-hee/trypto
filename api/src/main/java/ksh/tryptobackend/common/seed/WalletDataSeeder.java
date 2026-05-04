@@ -1,5 +1,10 @@
 package ksh.tryptobackend.common.seed;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
@@ -9,12 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -54,7 +53,8 @@ class WalletDataSeeder {
         count += createAllExchangeWallets(ctx, "박솔라나", "BINANCE", DEFAULT_SEED, now);
 
         // 최리플 - 3개 거래소 균등 분배
-        BigDecimal splitSeed = LARGE_SEED.divide(new BigDecimal("3"), 8, java.math.RoundingMode.FLOOR);
+        BigDecimal splitSeed =
+                LARGE_SEED.divide(new BigDecimal("3"), 8, java.math.RoundingMode.FLOOR);
         count += createWallet(ctx, "최리플", "UPBIT", splitSeed, now);
         count += createWallet(ctx, "최리플", "BITHUMB", splitSeed, now);
         count += createWallet(ctx, "최리플", "BINANCE", splitSeed, now);
@@ -97,7 +97,8 @@ class WalletDataSeeder {
                 Long exchangeId = ctx.getExchangeId(exchange);
                 if (exchangeId == null) continue;
 
-                BigDecimal splitSeed = DEFAULT_SEED.divide(new BigDecimal("3"), 8, java.math.RoundingMode.FLOOR);
+                BigDecimal splitSeed =
+                        DEFAULT_SEED.divide(new BigDecimal("3"), 8, java.math.RoundingMode.FLOOR);
                 WalletJpaEntity entity = saveWallet(roundId, exchangeId, splitSeed, now);
                 ctx.addWalletId(roundId, entity.getId(), exchangeId);
                 count++;
@@ -113,8 +114,9 @@ class WalletDataSeeder {
         List<WalletBalanceJpaEntity> balances = new ArrayList<>();
         for (Map.Entry<Long, List<Long>> entry : ctx.walletIdsByRoundId.entrySet()) {
             for (Long walletId : entry.getValue()) {
-                balances.add(new WalletBalanceJpaEntity(
-                    walletId, krwCoinId, new BigDecimal("5000000"), BigDecimal.ZERO));
+                balances.add(
+                        new WalletBalanceJpaEntity(
+                                walletId, krwCoinId, new BigDecimal("5000000"), BigDecimal.ZERO));
             }
         }
 
@@ -124,8 +126,12 @@ class WalletDataSeeder {
 
     private static final String[] ALL_EXCHANGES = {"UPBIT", "BITHUMB", "BINANCE"};
 
-    private int createAllExchangeWallets(SeedContext ctx, String nickname, String primaryExchange,
-                                          BigDecimal seedAmount, LocalDateTime now) {
+    private int createAllExchangeWallets(
+            SeedContext ctx,
+            String nickname,
+            String primaryExchange,
+            BigDecimal seedAmount,
+            LocalDateTime now) {
         int count = 0;
         for (String exchange : ALL_EXCHANGES) {
             BigDecimal amount = exchange.equals(primaryExchange) ? seedAmount : BigDecimal.ZERO;
@@ -134,8 +140,12 @@ class WalletDataSeeder {
         return count;
     }
 
-    private int createWallet(SeedContext ctx, String nickname, String exchangeName,
-                             BigDecimal seedAmount, LocalDateTime now) {
+    private int createWallet(
+            SeedContext ctx,
+            String nickname,
+            String exchangeName,
+            BigDecimal seedAmount,
+            LocalDateTime now) {
         Long userId = ctx.userIdByNickname.get(nickname);
         if (userId == null) return 0;
 
@@ -150,13 +160,15 @@ class WalletDataSeeder {
         return 1;
     }
 
-    private WalletJpaEntity saveWallet(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime now) {
-        Wallet wallet = Wallet.builder()
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .seedAmount(seedAmount)
-            .createdAt(now)
-            .build();
+    private WalletJpaEntity saveWallet(
+            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime now) {
+        Wallet wallet =
+                Wallet.builder()
+                        .roundId(roundId)
+                        .exchangeId(exchangeId)
+                        .seedAmount(seedAmount)
+                        .createdAt(now)
+                        .build();
         return walletRepository.save(WalletJpaEntity.fromDomain(wallet));
     }
 }

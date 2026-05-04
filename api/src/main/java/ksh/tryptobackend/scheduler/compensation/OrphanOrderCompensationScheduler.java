@@ -19,9 +19,10 @@ public class OrphanOrderCompensationScheduler {
     private int boundarySeconds;
 
     @Scheduled(fixedDelayString = "${compensation.interval-ms}")
-    @SchedulerLock(name = "orphan-order-compensation",
-                   lockAtMostFor = "PT10M",
-                   lockAtLeastFor = "PT30S")
+    @SchedulerLock(
+            name = "orphan-order-compensation",
+            lockAtMostFor = "PT10M",
+            lockAtLeastFor = "PT30S")
     public void compensateOrphanOrders() {
         int filled = compensateOrphanOrdersUseCase.compensate(boundarySeconds);
         if (filled > 0) {

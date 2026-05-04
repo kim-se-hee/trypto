@@ -1,5 +1,9 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import ksh.tryptobackend.marketdata.application.port.out.MarketMetaQueryPort;
 import ksh.tryptobackend.marketdata.domain.vo.MarketMetaEntry;
 import lombok.RequiredArgsConstructor;
@@ -8,11 +12,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -41,8 +40,8 @@ public class MarketMetaQueryAdapter implements MarketMetaQueryPort {
             }
 
             try {
-                List<MarketMetaEntry> entries = objectMapper.readValue(
-                        json, new TypeReference<List<MarketMetaEntry>>() {});
+                List<MarketMetaEntry> entries =
+                        objectMapper.readValue(json, new TypeReference<List<MarketMetaEntry>>() {});
                 result.put(exchangeName, entries);
                 log.info("market-meta:{} 로드 완료: {}건", exchangeName, entries.size());
             } catch (Exception e) {

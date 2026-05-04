@@ -4,12 +4,11 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import org.springframework.jdbc.core.JdbcTemplate;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 public class RankingStatsStepDefinition {
 
@@ -28,21 +27,46 @@ public class RankingStatsStepDefinition {
 
     @Given("랭킹 통계 테스트 데이터가 준비되어 있다")
     public void 랭킹_통계_테스트_데이터가_준비되어_있다() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
-            + "(1, 'user1', true), (2, 'user2', true), (3, 'user3', true)");
+        jdbcTemplate.execute(
+                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
+                        + "(1, 'user1', true), (2, 'user2', true), (3, 'user3', true)");
 
         LocalDate referenceDate = LocalDate.of(2026, 3, 1);
         LocalDateTime now = LocalDateTime.now();
 
         jdbcTemplate.update(
-            "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count, reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            1L, 1L, "DAILY", 1, new BigDecimal("15.5000"), 10, referenceDate, now);
+                "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count,"
+                        + " reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                1L,
+                1L,
+                "DAILY",
+                1,
+                new BigDecimal("15.5000"),
+                10,
+                referenceDate,
+                now);
         jdbcTemplate.update(
-            "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count, reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            2L, 1L, "DAILY", 2, new BigDecimal("10.2000"), 8, referenceDate, now);
+                "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count,"
+                        + " reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                2L,
+                1L,
+                "DAILY",
+                2,
+                new BigDecimal("10.2000"),
+                8,
+                referenceDate,
+                now);
         jdbcTemplate.update(
-            "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count, reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            3L, 1L, "DAILY", 3, new BigDecimal("5.3000"), 5, referenceDate, now);
+                "INSERT INTO ranking (user_id, round_id, period, `rank`, profit_rate, trade_count,"
+                        + " reference_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                3L,
+                1L,
+                "DAILY",
+                3,
+                new BigDecimal("5.3000"),
+                5,
+                referenceDate,
+                now);
     }
 
     @When("기간 {string}로 랭킹 통계를 조회한다")
@@ -52,22 +76,20 @@ public class RankingStatsStepDefinition {
 
     @Then("참여자 수는 {int}이다")
     public void 참여자_수는_이다(int count) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.totalParticipants").isEqualTo(count);
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.totalParticipants")
+                .isEqualTo(count);
     }
 
     @Then("최고 수익률이 존재한다")
     public void 최고_수익률이_존재한다() {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.maxProfitRate").isNotEmpty();
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.maxProfitRate").isNotEmpty();
     }
 
     @Then("평균 수익률이 존재한다")
     public void 평균_수익률이_존재한다() {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.avgProfitRate").isNotEmpty();
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.avgProfitRate").isNotEmpty();
     }
 }

@@ -27,17 +27,15 @@ public class RegretController {
 
     @GetMapping
     public ApiResponseDto<RegretReportResponse> getRegretReport(
-            @PathVariable Long roundId,
-            @Valid @ModelAttribute GetRegretReportRequest request) {
-        RegretReportResult result = getRegretReportUseCase.getRegretReport(request.toQuery(roundId));
+            @PathVariable Long roundId, @Valid @ModelAttribute GetRegretReportRequest request) {
+        RegretReportResult result =
+                getRegretReportUseCase.getRegretReport(request.toQuery(roundId));
         return ApiResponseDto.success("투자 복기 리포트를 조회했습니다.", RegretReportResponse.from(result));
     }
 
     @GetMapping("/chart")
     public ApiResponseDto<RegretChartResponse> getRegretChart(
-        @PathVariable Long roundId,
-        @Valid @ModelAttribute GetRegretChartRequest request
-    ) {
+            @PathVariable Long roundId, @Valid @ModelAttribute GetRegretChartRequest request) {
         RegretChartResult result = getRegretChartUseCase.getRegretChart(request.toQuery(roundId));
         return ApiResponseDto.success("복기 그래프 데이터를 조회했습니다.", RegretChartResponse.from(result));
     }

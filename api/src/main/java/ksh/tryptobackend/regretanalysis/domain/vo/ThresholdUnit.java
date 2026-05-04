@@ -3,7 +3,6 @@ package ksh.tryptobackend.regretanalysis.domain.vo;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 
 public enum ThresholdUnit {
-
     PERCENT("%"),
     COUNT("회");
 

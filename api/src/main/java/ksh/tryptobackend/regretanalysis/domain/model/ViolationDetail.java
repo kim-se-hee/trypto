@@ -1,11 +1,10 @@
 package ksh.tryptobackend.regretanalysis.domain.model;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -20,17 +19,21 @@ public class ViolationDetail {
     private final BigDecimal profitLoss;
     private final LocalDateTime occurredAt;
 
-    public static ViolationDetail create(Long orderId, Long ruleId, Long coinId,
-                                         BigDecimal lossAmount, BigDecimal profitLoss,
-                                         LocalDateTime occurredAt) {
+    public static ViolationDetail create(
+            Long orderId,
+            Long ruleId,
+            Long coinId,
+            BigDecimal lossAmount,
+            BigDecimal profitLoss,
+            LocalDateTime occurredAt) {
         return ViolationDetail.builder()
-            .orderId(orderId)
-            .ruleId(ruleId)
-            .coinId(coinId)
-            .lossAmount(lossAmount)
-            .profitLoss(profitLoss)
-            .occurredAt(occurredAt)
-            .build();
+                .orderId(orderId)
+                .ruleId(ruleId)
+                .coinId(coinId)
+                .lossAmount(lossAmount)
+                .profitLoss(profitLoss)
+                .occurredAt(occurredAt)
+                .build();
     }
 
     public boolean isOrderViolation() {
@@ -45,18 +48,24 @@ public class ViolationDetail {
         return occurredAt.toLocalDate();
     }
 
-    public static ViolationDetail reconstitute(Long violationDetailId, Long reportId, Long orderId,
-                                               Long ruleId, Long coinId, BigDecimal lossAmount,
-                                               BigDecimal profitLoss, LocalDateTime occurredAt) {
+    public static ViolationDetail reconstitute(
+            Long violationDetailId,
+            Long reportId,
+            Long orderId,
+            Long ruleId,
+            Long coinId,
+            BigDecimal lossAmount,
+            BigDecimal profitLoss,
+            LocalDateTime occurredAt) {
         return ViolationDetail.builder()
-            .violationDetailId(violationDetailId)
-            .reportId(reportId)
-            .orderId(orderId)
-            .ruleId(ruleId)
-            .coinId(coinId)
-            .lossAmount(lossAmount)
-            .profitLoss(profitLoss)
-            .occurredAt(occurredAt)
-            .build();
+                .violationDetailId(violationDetailId)
+                .reportId(reportId)
+                .orderId(orderId)
+                .ruleId(ruleId)
+                .coinId(coinId)
+                .lossAmount(lossAmount)
+                .profitLoss(profitLoss)
+                .occurredAt(occurredAt)
+                .build();
     }
 }

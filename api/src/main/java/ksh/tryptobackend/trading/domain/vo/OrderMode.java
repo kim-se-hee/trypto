@@ -1,12 +1,9 @@
 package ksh.tryptobackend.trading.domain.vo;
 
+import java.util.List;
 import ksh.tryptobackend.trading.domain.model.Order;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 public enum OrderMode {
-
     MARKET_BUY {
         @Override
         public Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId) {
@@ -14,10 +11,12 @@ public enum OrderMode {
         }
 
         @Override
-        public List<BalanceChange> planBalanceChanges(Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planBalanceChanges(
+                Order order, TradingVenue venue, Long tradeCoinId) {
             return List.of(
-                new BalanceChange.Deduct(venue.baseCurrencyCoinId(), order.getSettlementDebit()),
-                new BalanceChange.Add(tradeCoinId, order.getQuantity().value()));
+                    new BalanceChange.Deduct(
+                            venue.baseCurrencyCoinId(), order.getSettlementDebit()),
+                    new BalanceChange.Add(tradeCoinId, order.getQuantity().value()));
         }
     },
 
@@ -28,10 +27,11 @@ public enum OrderMode {
         }
 
         @Override
-        public List<BalanceChange> planBalanceChanges(Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planBalanceChanges(
+                Order order, TradingVenue venue, Long tradeCoinId) {
             return List.of(
-                new BalanceChange.Deduct(tradeCoinId, order.getQuantity().value()),
-                new BalanceChange.Add(venue.baseCurrencyCoinId(), order.getSettlementCredit()));
+                    new BalanceChange.Deduct(tradeCoinId, order.getQuantity().value()),
+                    new BalanceChange.Add(venue.baseCurrencyCoinId(), order.getSettlementCredit()));
         }
     },
 
@@ -42,9 +42,10 @@ public enum OrderMode {
         }
 
         @Override
-        public List<BalanceChange> planBalanceChanges(Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planBalanceChanges(
+                Order order, TradingVenue venue, Long tradeCoinId) {
             return List.of(
-                new BalanceChange.Lock(venue.baseCurrencyCoinId(), order.getSettlementDebit()));
+                    new BalanceChange.Lock(venue.baseCurrencyCoinId(), order.getSettlementDebit()));
         }
     },
 
@@ -55,9 +56,9 @@ public enum OrderMode {
         }
 
         @Override
-        public List<BalanceChange> planBalanceChanges(Order order, TradingVenue venue, Long tradeCoinId) {
-            return List.of(
-                new BalanceChange.Lock(tradeCoinId, order.getQuantity().value()));
+        public List<BalanceChange> planBalanceChanges(
+                Order order, TradingVenue venue, Long tradeCoinId) {
+            return List.of(new BalanceChange.Lock(tradeCoinId, order.getQuantity().value()));
         }
     };
 
@@ -70,5 +71,6 @@ public enum OrderMode {
 
     public abstract Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId);
 
-    public abstract List<BalanceChange> planBalanceChanges(Order order, TradingVenue venue, Long tradeCoinId);
+    public abstract List<BalanceChange> planBalanceChanges(
+            Order order, TradingVenue venue, Long tradeCoinId);
 }

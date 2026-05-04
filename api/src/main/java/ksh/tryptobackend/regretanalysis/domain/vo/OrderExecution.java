@@ -4,15 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record OrderExecution(
-    Long orderId,
-    Long walletId,
-    Long exchangeCoinId,
-    TradeSide side,
-    BigDecimal amount,
-    BigDecimal quantity,
-    BigDecimal filledPrice,
-    LocalDateTime filledAt
-) {
+        Long orderId,
+        Long walletId,
+        Long exchangeCoinId,
+        TradeSide side,
+        BigDecimal amount,
+        BigDecimal quantity,
+        BigDecimal filledPrice,
+        LocalDateTime filledAt) {
 
     public boolean isBuy() {
         return side == TradeSide.BUY;

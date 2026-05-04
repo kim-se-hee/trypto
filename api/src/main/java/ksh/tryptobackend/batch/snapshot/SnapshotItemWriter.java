@@ -1,5 +1,6 @@
 package ksh.tryptobackend.batch.snapshot;
 
+import java.util.List;
 import ksh.tryptobackend.portfolio.application.port.in.SavePortfolioSnapshotsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotResult;
 import lombok.RequiredArgsConstructor;
@@ -7,8 +8,6 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @StepScope
@@ -19,9 +18,8 @@ public class SnapshotItemWriter implements ItemWriter<SnapshotResult> {
 
     @Override
     public void write(Chunk<? extends SnapshotResult> chunk) {
-        List<SnapshotResult> results = chunk.getItems().stream()
-            .map(item -> (SnapshotResult) item)
-            .toList();
+        List<SnapshotResult> results =
+                chunk.getItems().stream().map(item -> (SnapshotResult) item).toList();
         savePortfolioSnapshotsUseCase.saveAll(results);
     }
 }

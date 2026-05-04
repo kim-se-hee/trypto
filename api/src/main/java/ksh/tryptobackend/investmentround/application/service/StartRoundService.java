@@ -1,5 +1,9 @@
 package ksh.tryptobackend.investmentround.application.service;
 
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.StartRoundUseCase;
@@ -25,11 +29,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class StartRoundService implements StartRoundUseCase {
@@ -48,8 +47,8 @@ public class StartRoundService implements StartRoundUseCase {
         validateActiveRound(command.userId());
         SeedAllocations seedAllocations = resolveSeedAllocations(command.seeds());
 
-        InvestmentRound round = createRound(
-            command.userId(), command.emergencyFundingLimit(), seedAllocations);
+        InvestmentRound round =
+                createRound(command.userId(), command.emergencyFundingLimit(), seedAllocations);
 
         addRules(round, command.rules());
 
@@ -67,37 +66,39 @@ public class StartRoundService implements StartRoundUseCase {
     }
 
     private SeedAllocations resolveSeedAllocations(List<StartRoundSeedCommand> seeds) {
-        List<SeedAllocation> allocations = seeds.stream()
-            .map(this::toSeedAllocation)
-            .toList();
+        List<SeedAllocation> allocations = seeds.stream().map(this::toSeedAllocation).toList();
         return SeedAllocations.of(allocations);
     }
 
     private SeedAllocation toSeedAllocation(StartRoundSeedCommand seed) {
         SeedFundingSpec spec = getSeedFundingSpec(seed.exchangeId());
         return SeedAllocation.create(
-            seed.exchangeId(), spec.baseCurrencyCoinId(),
-            seed.amount(), spec.seedAmountPolicy());
+                seed.exchangeId(), spec.baseCurrencyCoinId(),
+                seed.amount(), spec.seedAmountPolicy());
     }
 
     private SeedFundingSpec getSeedFundingSpec(Long exchangeId) {
-        return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .map(this::toSeedFundingSpec)
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        return findExchangeDetailUseCase
+                .findExchangeDetail(exchangeId)
+                .map(this::toSeedFundingSpec)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 
     private SeedFundingSpec toSeedFundingSpec(ExchangeDetailResult detail) {
         return new SeedFundingSpec(
-            detail.baseCurrencyCoinId(),
-            detail.domestic() ? SeedAmountPolicy.DOMESTIC : SeedAmountPolicy.OVERSEAS);
+                detail.baseCurrencyCoinId(),
+                detail.domestic() ? SeedAmountPolicy.DOMESTIC : SeedAmountPolicy.OVERSEAS);
     }
 
-    private InvestmentRound createRound(Long userId, BigDecimal emergencyFundingLimit,
-                                         SeedAllocations seedAllocations) {
+    private InvestmentRound createRound(
+            Long userId, BigDecimal emergencyFundingLimit, SeedAllocations seedAllocations) {
         long previousRoundCount = investmentRoundCommandPort.countByUserId(userId);
         return InvestmentRound.start(
-            userId, previousRoundCount, seedAllocations.totalAmount(),
-            emergencyFundingLimit, LocalDateTime.now(clock));
+                userId,
+                previousRoundCount,
+                seedAllocations.totalAmount(),
+                emergencyFundingLimit,
+                LocalDateTime.now(clock));
     }
 
     private void addRules(InvestmentRound round, List<StartRoundRuleCommand> ruleCommands) {
@@ -107,9 +108,13 @@ public class StartRoundService implements StartRoundUseCase {
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
-        List<RuleSetting> rules = commands.stream()
-            .map(rule -> RuleSetting.create(null, rule.ruleType(), rule.thresholdValue(), now))
-            .toList();
+        List<RuleSetting> rules =
+                commands.stream()
+                        .map(
+                                rule ->
+                                        RuleSetting.create(
+                                                null, rule.ruleType(), rule.thresholdValue(), now))
+                        .toList();
         round.addRules(rules);
     }
 
@@ -117,16 +122,17 @@ public class StartRoundService implements StartRoundUseCase {
         LocalDateTime now = LocalDateTime.now(clock);
         for (SeedAllocation allocation : seedAllocations.getAll()) {
             createWalletWithBalanceUseCase.createWalletWithBalance(
-                new CreateWalletWithBalanceCommand(
-                    roundId, allocation.exchangeId(), allocation.baseCurrencyCoinId(),
-                    allocation.amount(), now));
+                    new CreateWalletWithBalanceCommand(
+                            roundId,
+                            allocation.exchangeId(),
+                            allocation.baseCurrencyCoinId(),
+                            allocation.amount(),
+                            now));
         }
     }
 
     private List<StartRoundWalletResult> toWalletResults(Long roundId) {
-        return findWalletUseCase.findByRoundId(roundId).stream()
-            .map(this::toWalletResult)
-            .toList();
+        return findWalletUseCase.findByRoundId(roundId).stream().map(this::toWalletResult).toList();
     }
 
     private StartRoundWalletResult toWalletResult(WalletResult walletResult) {

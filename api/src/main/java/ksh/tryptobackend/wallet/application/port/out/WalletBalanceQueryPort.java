@@ -1,8 +1,7 @@
 package ksh.tryptobackend.wallet.application.port.out;
 
-import ksh.tryptobackend.wallet.domain.model.WalletBalance;
-
 import java.util.List;
+import ksh.tryptobackend.wallet.domain.model.WalletBalance;
 
 public interface WalletBalanceQueryPort {
 

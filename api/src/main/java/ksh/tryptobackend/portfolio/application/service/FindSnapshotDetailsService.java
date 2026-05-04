@@ -1,13 +1,12 @@
 package ksh.tryptobackend.portfolio.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotDetailsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotDetailResult;
 import ksh.tryptobackend.portfolio.application.port.out.PortfolioSnapshotQueryPort;
 import ksh.tryptobackend.portfolio.domain.vo.HoldingSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,12 +17,12 @@ public class FindSnapshotDetailsService implements FindSnapshotDetailsUseCase {
     @Override
     public List<SnapshotDetailResult> findLatestSnapshotDetails(Long userId, Long roundId) {
         return portfolioSnapshotQueryPort.findLatestSnapshotDetails(userId, roundId).stream()
-            .map(this::toResult)
-            .toList();
+                .map(this::toResult)
+                .toList();
     }
 
     private SnapshotDetailResult toResult(HoldingSummary detail) {
-        return new SnapshotDetailResult(detail.coinId(), detail.exchangeId(),
-            detail.assetRatio(), detail.profitRate());
+        return new SnapshotDetailResult(
+                detail.coinId(), detail.exchangeId(), detail.assetRatio(), detail.profitRate());
     }
 }

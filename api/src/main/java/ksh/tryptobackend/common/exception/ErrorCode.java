@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
-
     INTERNAL_SERVER_ERROR(500, "internal.server.error"),
     CONCURRENT_MODIFICATION(409, "concurrent.modification"),
     DUPLICATE_REQUEST(409, "duplicate.request"),

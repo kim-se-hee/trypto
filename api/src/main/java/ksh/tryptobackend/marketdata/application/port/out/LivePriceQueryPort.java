@@ -1,9 +1,8 @@
 package ksh.tryptobackend.marketdata.application.port.out;
 
-import ksh.tryptobackend.marketdata.domain.vo.LivePrices;
-
 import java.math.BigDecimal;
 import java.util.Set;
+import ksh.tryptobackend.marketdata.domain.vo.LivePrices;
 
 public interface LivePriceQueryPort {
 

@@ -1,8 +1,7 @@
 package ksh.tryptobackend.regretanalysis.application.port.in;
 
-import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
-
 import java.util.List;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 
 public interface SaveRegretReportsUseCase {
 

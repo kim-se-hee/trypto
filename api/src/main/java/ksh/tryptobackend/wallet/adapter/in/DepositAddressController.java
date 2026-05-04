@@ -22,9 +22,9 @@ public class DepositAddressController {
 
     @GetMapping
     public ApiResponseDto<DepositAddressResponse> getDepositAddress(
-            @PathVariable Long walletId,
-            @Valid @ModelAttribute GetDepositAddressRequest request) {
-        DepositAddress depositAddress = issueDepositAddressUseCase.issueDepositAddress(request.toCommand(walletId));
+            @PathVariable Long walletId, @Valid @ModelAttribute GetDepositAddressRequest request) {
+        DepositAddress depositAddress =
+                issueDepositAddressUseCase.issueDepositAddress(request.toCommand(walletId));
         return ApiResponseDto.success("조회 성공", DepositAddressResponse.from(depositAddress));
     }
 }

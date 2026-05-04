@@ -7,11 +7,10 @@ import ksh.tryptobackend.transfer.application.port.in.dto.query.FindTransferHist
 import ksh.tryptobackend.transfer.domain.vo.TransferType;
 
 public record FindTransferHistoryRequest(
-    @NotNull Long userId,
-    TransferType type,
-    Long cursorTransferId,
-    @Min(1) @Max(50) Integer size
-) {
+        @NotNull Long userId,
+        TransferType type,
+        Long cursorTransferId,
+        @Min(1) @Max(50) Integer size) {
 
     public FindTransferHistoryQuery toQuery(Long walletId) {
         return new FindTransferHistoryQuery(walletId, userId, type, cursorTransferId, size);

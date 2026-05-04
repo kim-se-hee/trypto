@@ -11,9 +11,7 @@ public class ActiveRounds {
     }
 
     public List<Long> roundIds() {
-        return values.stream()
-            .map(ActiveRound::roundId)
-            .toList();
+        return values.stream().map(ActiveRound::roundId).toList();
     }
 
     public List<ActiveRound> values() {

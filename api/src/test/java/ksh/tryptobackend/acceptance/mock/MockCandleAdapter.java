@@ -1,11 +1,10 @@
 package ksh.tryptobackend.acceptance.mock;
 
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.marketdata.application.port.out.CandleQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.Candle;
 import ksh.tryptobackend.marketdata.domain.model.CandleFilter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MockCandleAdapter implements CandleQueryPort {
 

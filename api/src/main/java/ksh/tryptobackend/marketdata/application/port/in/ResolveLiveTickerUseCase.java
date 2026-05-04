@@ -1,12 +1,16 @@
 package ksh.tryptobackend.marketdata.application.port.in;
 
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
-
 import java.math.BigDecimal;
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
 
 public interface ResolveLiveTickerUseCase {
 
-    Optional<LiveTickerResult> resolve(String exchange, String symbol, BigDecimal currentPrice,
-                                       BigDecimal changeRate, BigDecimal quoteTurnover, Long timestamp);
+    Optional<LiveTickerResult> resolve(
+            String exchange,
+            String symbol,
+            BigDecimal currentPrice,
+            BigDecimal changeRate,
+            BigDecimal quoteTurnover,
+            Long timestamp);
 }

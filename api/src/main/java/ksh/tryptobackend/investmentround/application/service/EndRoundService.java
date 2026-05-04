@@ -1,5 +1,7 @@
 package ksh.tryptobackend.investmentround.application.service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.EndRoundUseCase;
@@ -9,9 +11,6 @@ import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +34,8 @@ public class EndRoundService implements EndRoundUseCase {
     }
 
     private InvestmentRound getRound(Long roundId) {
-        return investmentRoundCommandPort.findById(roundId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        return investmentRoundCommandPort
+                .findById(roundId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
     }
 }

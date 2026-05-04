@@ -17,13 +17,13 @@ public class EngineOrderFilledListener {
 
     @RabbitListener(queues = "#{engineOrderFilledQueue.name}")
     public void onFilled(EngineOrderFilledMessage message) {
-        NotifyOrderFilledCommand command = new NotifyOrderFilledCommand(
-            message.orderId(),
-            message.userId(),
-            message.executedPrice(),
-            message.quantity(),
-            message.executedAt()
-        );
+        NotifyOrderFilledCommand command =
+                new NotifyOrderFilledCommand(
+                        message.orderId(),
+                        message.userId(),
+                        message.executedPrice(),
+                        message.quantity(),
+                        message.executedAt());
         notifyOrderFilledUseCase.notifyOrderFilled(command);
     }
 }

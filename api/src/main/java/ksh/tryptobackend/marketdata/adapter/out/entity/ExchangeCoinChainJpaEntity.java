@@ -32,10 +32,10 @@ public class ExchangeCoinChainJpaEntity {
 
     public ExchangeCoinChain toDomain() {
         return ExchangeCoinChain.builder()
-            .exchangeCoinChainId(id)
-            .exchangeCoinId(exchangeCoinId)
-            .chain(chain)
-            .tagRequired(tagRequired)
-            .build();
+                .exchangeCoinChainId(id)
+                .exchangeCoinId(exchangeCoinId)
+                .chain(chain)
+                .tagRequired(tagRequired)
+                .build();
     }
 }

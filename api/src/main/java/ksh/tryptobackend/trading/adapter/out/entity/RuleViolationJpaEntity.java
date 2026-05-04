@@ -1,12 +1,11 @@
 package ksh.tryptobackend.trading.adapter.out.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "rule_violation")

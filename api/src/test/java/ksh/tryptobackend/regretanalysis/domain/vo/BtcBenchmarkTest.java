@@ -1,15 +1,14 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class BtcBenchmarkTest {
 
@@ -29,11 +28,11 @@ class BtcBenchmarkTest {
             BigDecimal btcPriceDay1 = new BigDecimal("50000000");
             BigDecimal btcPriceDay2 = new BigDecimal("55000000");
             BigDecimal btcPriceDay3 = new BigDecimal("45000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(
-                DAY_1, btcPriceDay1,
-                DAY_2, btcPriceDay2,
-                DAY_3, btcPriceDay3
-            );
+            Map<LocalDate, BigDecimal> priceMap =
+                    Map.of(
+                            DAY_1, btcPriceDay1,
+                            DAY_2, btcPriceDay2,
+                            DAY_3, btcPriceDay3);
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
@@ -44,9 +43,12 @@ class BtcBenchmarkTest {
             // DAY_1: 0.02 * 50000000 = 1000000
             // DAY_2: 0.02 * 55000000 = 1100000
             // DAY_3: 0.02 * 45000000 = 900000
-            assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1000000"));
-            assertThat(benchmark.getAssetValueAt(DAY_2)).isEqualByComparingTo(new BigDecimal("1100000"));
-            assertThat(benchmark.getAssetValueAt(DAY_3)).isEqualByComparingTo(new BigDecimal("900000"));
+            assertThat(benchmark.getAssetValueAt(DAY_1))
+                    .isEqualByComparingTo(new BigDecimal("1000000"));
+            assertThat(benchmark.getAssetValueAt(DAY_2))
+                    .isEqualByComparingTo(new BigDecimal("1100000"));
+            assertThat(benchmark.getAssetValueAt(DAY_3))
+                    .isEqualByComparingTo(new BigDecimal("900000"));
         }
 
         @Test
@@ -84,19 +86,21 @@ class BtcBenchmarkTest {
         void calculate_missingPriceOnDate_zeroForThatDate() {
             // Given
             BigDecimal seedMoney = new BigDecimal("1000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(
-                DAY_1, new BigDecimal("50000000"),
-                DAY_3, new BigDecimal("60000000")
-            );
+            Map<LocalDate, BigDecimal> priceMap =
+                    Map.of(
+                            DAY_1, new BigDecimal("50000000"),
+                            DAY_3, new BigDecimal("60000000"));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
             BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
 
             // Then
-            assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1000000"));
+            assertThat(benchmark.getAssetValueAt(DAY_1))
+                    .isEqualByComparingTo(new BigDecimal("1000000"));
             assertThat(benchmark.getAssetValueAt(DAY_2)).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(benchmark.getAssetValueAt(DAY_3)).isEqualByComparingTo(new BigDecimal("1200000"));
+            assertThat(benchmark.getAssetValueAt(DAY_3))
+                    .isEqualByComparingTo(new BigDecimal("1200000"));
         }
 
         @Test
@@ -105,10 +109,8 @@ class BtcBenchmarkTest {
             // Given
             BigDecimal seedMoney = new BigDecimal("1000000");
             BigDecimal btcPriceDay1 = new BigDecimal("30000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(
-                DAY_1, btcPriceDay1,
-                DAY_2, new BigDecimal("30000000")
-            );
+            Map<LocalDate, BigDecimal> priceMap =
+                    Map.of(DAY_1, btcPriceDay1, DAY_2, new BigDecimal("30000000"));
             List<LocalDate> dates = List.of(DAY_1, DAY_2);
 
             // When
@@ -134,7 +136,8 @@ class BtcBenchmarkTest {
             // Given
             BigDecimal seedMoney = new BigDecimal("1000000");
             Map<LocalDate, BigDecimal> priceMap = Map.of(DAY_1, new BigDecimal("50000000"));
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, List.of(DAY_1), DAY_1);
+            BtcBenchmark benchmark =
+                    BtcBenchmark.calculate(seedMoney, priceMap, List.of(DAY_1), DAY_1);
 
             // When
             BigDecimal value = benchmark.getAssetValueAt(DAY_3);

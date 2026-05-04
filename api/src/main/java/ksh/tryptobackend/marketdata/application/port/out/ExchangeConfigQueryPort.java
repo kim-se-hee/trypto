@@ -1,8 +1,7 @@
 package ksh.tryptobackend.marketdata.application.port.out;
 
-import ksh.tryptobackend.marketdata.domain.vo.ExchangeConfig;
-
 import java.util.List;
+import ksh.tryptobackend.marketdata.domain.vo.ExchangeConfig;
 
 public interface ExchangeConfigQueryPort {
 

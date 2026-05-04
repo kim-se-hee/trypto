@@ -1,6 +1,8 @@
 package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.regretanalysis.adapter.out.entity.QRegretReportJpaEntity;
@@ -15,9 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
 @Component
 @RequiredArgsConstructor
 public class RegretReportQueryAdapter implements RegretReportQueryPort {
@@ -25,22 +24,26 @@ public class RegretReportQueryAdapter implements RegretReportQueryPort {
     private final RegretReportJpaRepository repository;
     private final JPAQueryFactory queryFactory;
 
-    private static final QViolationDetailJpaEntity violationDetail = QViolationDetailJpaEntity.violationDetailJpaEntity;
-    private static final QRegretReportJpaEntity report = QRegretReportJpaEntity.regretReportJpaEntity;
+    private static final QViolationDetailJpaEntity violationDetail =
+            QViolationDetailJpaEntity.violationDetailJpaEntity;
+    private static final QRegretReportJpaEntity report =
+            QRegretReportJpaEntity.regretReportJpaEntity;
 
     @Override
     @Transactional(readOnly = true)
     public Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return repository.findByRoundIdAndExchangeId(roundId, exchangeId)
-            .map(RegretReportJpaEntity::toDomain);
+        return repository
+                .findByRoundIdAndExchangeId(roundId, exchangeId)
+                .map(RegretReportJpaEntity::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public RegretReport getByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return repository.findByRoundIdAndExchangeId(roundId, exchangeId)
-            .map(RegretReportJpaEntity::toDomain)
-            .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
+        return repository
+                .findByRoundIdAndExchangeId(roundId, exchangeId)
+                .map(RegretReportJpaEntity::toDomain)
+                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
     }
 
     @Override
@@ -49,18 +52,16 @@ public class RegretReportQueryAdapter implements RegretReportQueryPort {
     }
 
     @Override
-    public List<ViolationDetail> findViolationDetailsByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        List<ViolationDetailJpaEntity> entities = queryFactory
-            .selectFrom(violationDetail)
-            .join(report).on(violationDetail.reportId.eq(report.id))
-            .where(
-                report.roundId.eq(roundId),
-                report.exchangeId.eq(exchangeId)
-            )
-            .fetch();
+    public List<ViolationDetail> findViolationDetailsByRoundIdAndExchangeId(
+            Long roundId, Long exchangeId) {
+        List<ViolationDetailJpaEntity> entities =
+                queryFactory
+                        .selectFrom(violationDetail)
+                        .join(report)
+                        .on(violationDetail.reportId.eq(report.id))
+                        .where(report.roundId.eq(roundId), report.exchangeId.eq(exchangeId))
+                        .fetch();
 
-        return entities.stream()
-            .map(ViolationDetailJpaEntity::toDomain)
-            .toList();
+        return entities.stream().map(ViolationDetailJpaEntity::toDomain).toList();
     }
 }

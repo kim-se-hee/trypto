@@ -1,10 +1,9 @@
 package ksh.tryptobackend.marketdata.application.port.in;
 
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
 
 public interface FindExchangeCoinMappingUseCase {
 

@@ -1,11 +1,10 @@
 package ksh.tryptobackend.wallet.application.service;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

@@ -9,18 +9,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "regret_report")
@@ -86,31 +85,40 @@ public class RegretReportJpaEntity {
         entity.createdAt = report.getCreatedAt();
 
         if (report.getRuleImpacts() != null) {
-            report.getRuleImpacts().forEach(ri ->
-                entity.ruleImpacts.add(RuleImpactJpaEntity.fromDomain(ri)));
+            report.getRuleImpacts()
+                    .forEach(ri -> entity.ruleImpacts.add(RuleImpactJpaEntity.fromDomain(ri)));
         }
         if (report.getViolationDetails() != null) {
-            report.getViolationDetails().toList().forEach(vd ->
-                entity.violationDetails.add(ViolationDetailJpaEntity.fromDomain(vd)));
+            report.getViolationDetails()
+                    .toList()
+                    .forEach(
+                            vd ->
+                                    entity.violationDetails.add(
+                                            ViolationDetailJpaEntity.fromDomain(vd)));
         }
 
         return entity;
     }
 
     public RegretReport toDomain() {
-        List<RuleImpact> domainRuleImpacts = ruleImpacts.stream()
-            .map(RuleImpactJpaEntity::toDomain)
-            .toList();
-        List<ViolationDetail> domainViolationDetails = violationDetails.stream()
-            .map(ViolationDetailJpaEntity::toDomain)
-            .toList();
+        List<RuleImpact> domainRuleImpacts =
+                ruleImpacts.stream().map(RuleImpactJpaEntity::toDomain).toList();
+        List<ViolationDetail> domainViolationDetails =
+                violationDetails.stream().map(ViolationDetailJpaEntity::toDomain).toList();
 
         return RegretReport.reconstitute(
-            id, userId, roundId, exchangeId,
-            totalViolations, missedProfit,
-            actualProfitRate, ruleFollowedProfitRate,
-            analysisStart, analysisEnd, createdAt,
-            domainRuleImpacts, domainViolationDetails
-        );
+                id,
+                userId,
+                roundId,
+                exchangeId,
+                totalViolations,
+                missedProfit,
+                actualProfitRate,
+                ruleFollowedProfitRate,
+                analysisStart,
+                analysisEnd,
+                createdAt,
+                domainRuleImpacts,
+                domainViolationDetails);
     }
 }

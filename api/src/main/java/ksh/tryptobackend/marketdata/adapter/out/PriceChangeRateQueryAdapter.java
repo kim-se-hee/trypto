@@ -1,8 +1,8 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.core.JacksonException;
+import java.math.BigDecimal;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.adapter.out.entity.CoinJpaEntity;
@@ -16,10 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @RequiredArgsConstructor
@@ -47,11 +46,15 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
     }
 
     private String buildRedisKey(Long exchangeCoinId) {
-        ExchangeCoinJpaEntity exchangeCoin = exchangeCoinRepository.findById(exchangeCoinId)
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        ExchangeCoinJpaEntity exchangeCoin =
+                exchangeCoinRepository
+                        .findById(exchangeCoinId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
-        ExchangeJpaEntity exchange = exchangeRepository.findById(exchangeCoin.getExchangeId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeJpaEntity exchange =
+                exchangeRepository
+                        .findById(exchangeCoin.getExchangeId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         String baseSymbol = findCoinSymbol(exchangeCoin.getCoinId());
         String quoteSymbol = findCoinSymbol(exchange.getBaseCurrencyCoinId());
@@ -60,9 +63,10 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
     }
 
     private String findCoinSymbol(Long coinId) {
-        return coinRepository.findById(coinId)
-            .map(CoinJpaEntity::getSymbol)
-            .orElseThrow(() -> new CustomException(ErrorCode.COIN_NOT_FOUND));
+        return coinRepository
+                .findById(coinId)
+                .map(CoinJpaEntity::getSymbol)
+                .orElseThrow(() -> new CustomException(ErrorCode.COIN_NOT_FOUND));
     }
 
     private BigDecimal parseChangeRate(String json) {

@@ -1,13 +1,12 @@
 package ksh.tryptobackend.trading.domain.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
 
 @Getter
 @Builder
@@ -25,16 +24,17 @@ public class Holding {
 
     public static Holding empty(Long walletId, Long coinId) {
         return Holding.builder()
-            .walletId(walletId)
-            .coinId(coinId)
-            .avgBuyPrice(BigDecimal.ZERO)
-            .totalQuantity(BigDecimal.ZERO)
-            .totalBuyAmount(BigDecimal.ZERO)
-            .averagingDownCount(0)
-            .build();
+                .walletId(walletId)
+                .coinId(coinId)
+                .avgBuyPrice(BigDecimal.ZERO)
+                .totalQuantity(BigDecimal.ZERO)
+                .totalBuyAmount(BigDecimal.ZERO)
+                .averagingDownCount(0)
+                .build();
     }
 
-    public void applyOrder(Side side, BigDecimal filledPrice, BigDecimal quantity, BigDecimal currentPrice) {
+    public void applyOrder(
+            Side side, BigDecimal filledPrice, BigDecimal quantity, BigDecimal currentPrice) {
         if (side == Side.BUY) {
             applyBuy(filledPrice, quantity, currentPrice);
         } else {
@@ -50,7 +50,8 @@ public class Holding {
         }
     }
 
-    public void applyBuy(BigDecimal filledPrice, BigDecimal filledQuantity, BigDecimal currentPrice) {
+    public void applyBuy(
+            BigDecimal filledPrice, BigDecimal filledQuantity, BigDecimal currentPrice) {
         if (isHolding() && isAtLoss(currentPrice)) {
             this.averagingDownCount++;
         }

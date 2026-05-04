@@ -1,5 +1,10 @@
 package ksh.tryptobackend.batch.common;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -10,12 +15,6 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
@@ -31,15 +30,14 @@ public class BatchScheduler {
     private final TaskExecutor batchTaskExecutor;
 
     @Scheduled(cron = "0 59 23 * * *", zone = "Asia/Seoul")
-    @SchedulerLock(name = "daily-batch",
-                   lockAtMostFor = "PT4H",
-                   lockAtLeastFor = "PT5M")
+    @SchedulerLock(name = "daily-batch", lockAtMostFor = "PT4H", lockAtLeastFor = "PT5M")
     public void runDailyBatch() {
         LocalDate snapshotDate = LocalDate.now(KST);
-        JobParameters params = new JobParametersBuilder()
-            .addString("snapshotDate", snapshotDate.toString())
-            .addLong("run.id", System.currentTimeMillis())
-            .toJobParameters();
+        JobParameters params =
+                new JobParametersBuilder()
+                        .addString("snapshotDate", snapshotDate.toString())
+                        .addLong("run.id", System.currentTimeMillis())
+                        .toJobParameters();
 
         log.info("배치 시작: snapshotDate={}", snapshotDate);
 
@@ -62,13 +60,13 @@ public class BatchScheduler {
     }
 
     private void runParallelJobs(JobParameters params, LocalDate snapshotDate) {
-        CompletableFuture<String> regretFuture = CompletableFuture
-            .runAsync(() -> runJob(regretReportJob, params), batchTaskExecutor)
-            .handle((result, ex) -> handleJobResult(regretReportJob.getName(), ex));
+        CompletableFuture<String> regretFuture =
+                CompletableFuture.runAsync(() -> runJob(regretReportJob, params), batchTaskExecutor)
+                        .handle((result, ex) -> handleJobResult(regretReportJob.getName(), ex));
 
-        CompletableFuture<String> rankingFuture = CompletableFuture
-            .runAsync(() -> runJob(rankingJob, params), batchTaskExecutor)
-            .handle((result, ex) -> handleJobResult(rankingJob.getName(), ex));
+        CompletableFuture<String> rankingFuture =
+                CompletableFuture.runAsync(() -> runJob(rankingJob, params), batchTaskExecutor)
+                        .handle((result, ex) -> handleJobResult(rankingJob.getName(), ex));
 
         CompletableFuture.allOf(regretFuture, rankingFuture).join();
 

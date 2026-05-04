@@ -21,9 +21,11 @@ public record ProfitRate(BigDecimal value) implements Comparable<ProfitRate> {
         if (baseAsset.compareTo(BigDecimal.ZERO) == 0) {
             return new ProfitRate(BigDecimal.ZERO);
         }
-        BigDecimal rate = currentAsset.subtract(baseAsset)
-            .divide(baseAsset, RATE_SCALE, RoundingMode.HALF_UP)
-            .multiply(HUNDRED);
+        BigDecimal rate =
+                currentAsset
+                        .subtract(baseAsset)
+                        .divide(baseAsset, RATE_SCALE, RoundingMode.HALF_UP)
+                        .multiply(HUNDRED);
         return new ProfitRate(rate);
     }
 

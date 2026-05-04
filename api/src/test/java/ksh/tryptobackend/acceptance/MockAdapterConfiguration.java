@@ -6,7 +6,6 @@ import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
-import ksh.tryptobackend.marketdata.application.port.out.CandleQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;

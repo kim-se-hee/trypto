@@ -1,9 +1,8 @@
 package ksh.tryptobackend.investmentround.adapter.in.dto.response;
 
+import java.time.LocalDateTime;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
-
-import java.time.LocalDateTime;
 
 public record EndRoundResponse(Long roundId, RoundStatus status, LocalDateTime endedAt) {
 

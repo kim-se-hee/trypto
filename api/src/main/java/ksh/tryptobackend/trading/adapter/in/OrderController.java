@@ -34,31 +34,37 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<PlaceOrderResponse> createOrder(@Valid @RequestBody PlaceOrderRequest request) {
+    public ApiResponseDto<PlaceOrderResponse> createOrder(
+            @Valid @RequestBody PlaceOrderRequest request) {
         Order order = placeOrderUseCase.placeOrder(request.toCommand());
         String message = order.isMarketOrder() ? "주문이 체결되었습니다." : "주문이 등록되었습니다.";
         return ApiResponseDto.created(message, PlaceOrderResponse.from(order));
     }
 
     @GetMapping("/available")
-    public ApiResponseDto<OrderAvailabilityResponse> getAvailability(@Valid @ModelAttribute GetOrderAvailabilityRequest request) {
-        OrderAvailabilityResult result = getOrderAvailabilityUseCase.getAvailability(request.toQuery());
+    public ApiResponseDto<OrderAvailabilityResponse> getAvailability(
+            @Valid @ModelAttribute GetOrderAvailabilityRequest request) {
+        OrderAvailabilityResult result =
+                getOrderAvailabilityUseCase.getAvailability(request.toQuery());
         return ApiResponseDto.success("조회 성공", OrderAvailabilityResponse.from(result));
     }
 
     @GetMapping
-    public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(@Valid @ModelAttribute FindOrderHistoryRequest request) {
-        OrderHistoryCursorResult result = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
-        CursorPageResponseDto<OrderHistoryResponse> response = CursorPageResponseDto.of(
-            result.content().stream().map(OrderHistoryResponse::from).toList(),
-            result.nextCursor(),
-            result.hasNext());
+    public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(
+            @Valid @ModelAttribute FindOrderHistoryRequest request) {
+        OrderHistoryCursorResult result =
+                findOrderHistoryUseCase.findOrderHistory(request.toQuery());
+        CursorPageResponseDto<OrderHistoryResponse> response =
+                CursorPageResponseDto.of(
+                        result.content().stream().map(OrderHistoryResponse::from).toList(),
+                        result.nextCursor(),
+                        result.hasNext());
         return ApiResponseDto.success("조회 성공", response);
     }
 
     @PostMapping("/{orderId}/cancel")
-    public ApiResponseDto<CancelOrderResponse> cancelOrder(@PathVariable Long orderId,
-                                                           @Valid @RequestBody CancelOrderRequest request) {
+    public ApiResponseDto<CancelOrderResponse> cancelOrder(
+            @PathVariable Long orderId, @Valid @RequestBody CancelOrderRequest request) {
         Order order = cancelOrderUseCase.cancelOrder(request.toCommand(orderId));
         return ApiResponseDto.success("주문이 취소되었습니다.", CancelOrderResponse.from(order));
     }

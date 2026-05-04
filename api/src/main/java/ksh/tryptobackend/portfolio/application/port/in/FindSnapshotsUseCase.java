@@ -1,9 +1,8 @@
 package ksh.tryptobackend.portfolio.application.port.in;
 
-import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInfoResult;
-
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInfoResult;
 
 public interface FindSnapshotsUseCase {
 

@@ -1,5 +1,9 @@
 package ksh.tryptobackend.marketdata.domain.model;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.Duration;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -8,11 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CandleIntervalTest {
 
@@ -43,9 +42,9 @@ class CandleIntervalTest {
         @DisplayName("유효하지 않은 코드로 생성하면 INVALID_CANDLE_INTERVAL 예외가 발생한다")
         void of_invalidCode_throwsException(String code) {
             assertThatThrownBy(() -> CandleInterval.of(code))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_CANDLE_INTERVAL);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_CANDLE_INTERVAL);
         }
     }
 
@@ -63,7 +62,8 @@ class CandleIntervalTest {
             "ONE_MONTH, candle_1M"
         })
         @DisplayName("각 주기에 대응하는 InfluxDB measurement 이름을 반환한다")
-        void getMeasurement_returnsCorrectMeasurement(CandleInterval interval, String expectedMeasurement) {
+        void getMeasurement_returnsCorrectMeasurement(
+                CandleInterval interval, String expectedMeasurement) {
             assertThat(interval.getMeasurement()).isEqualTo(expectedMeasurement);
         }
     }

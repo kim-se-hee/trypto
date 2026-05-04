@@ -4,9 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record StartRoundCommand(
-    Long userId,
-    List<StartRoundSeedCommand> seeds,
-    BigDecimal emergencyFundingLimit,
-    List<StartRoundRuleCommand> rules
-) {
-}
+        Long userId,
+        List<StartRoundSeedCommand> seeds,
+        BigDecimal emergencyFundingLimit,
+        List<StartRoundRuleCommand> rules) {}

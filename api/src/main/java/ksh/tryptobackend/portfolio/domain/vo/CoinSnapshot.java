@@ -3,11 +3,7 @@ package ksh.tryptobackend.portfolio.domain.vo;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-public record CoinSnapshot(
-        String symbol,
-        String name,
-        BigDecimal currentPrice
-) {
+public record CoinSnapshot(String symbol, String name, BigDecimal currentPrice) {
 
     @Override
     public boolean equals(Object o) {

@@ -20,9 +20,9 @@ public class PortfolioController {
 
     @GetMapping
     public ApiResponseDto<MyHoldingsResponse> getMyHoldings(
-            @PathVariable Long userId,
-            @PathVariable Long walletId) {
-        MyHoldingsResult result = getMyHoldingsUseCase.getMyHoldings(new GetMyHoldingsQuery(userId, walletId));
+            @PathVariable Long userId, @PathVariable Long walletId) {
+        MyHoldingsResult result =
+                getMyHoldingsUseCase.getMyHoldings(new GetMyHoldingsQuery(userId, walletId));
         return ApiResponseDto.success("포트폴리오를 조회했습니다.", MyHoldingsResponse.from(result));
     }
 }

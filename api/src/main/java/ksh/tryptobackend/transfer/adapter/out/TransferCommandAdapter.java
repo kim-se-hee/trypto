@@ -1,14 +1,13 @@
 package ksh.tryptobackend.transfer.adapter.out;
 
+import java.util.Optional;
+import java.util.UUID;
 import ksh.tryptobackend.transfer.adapter.out.entity.TransferJpaEntity;
 import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.transfer.application.port.out.TransferCommandPort;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +24,6 @@ public class TransferCommandAdapter implements TransferCommandPort {
 
     @Override
     public Optional<Transfer> findByIdempotencyKey(UUID idempotencyKey) {
-        return repository.findByIdempotencyKey(idempotencyKey)
-            .map(TransferJpaEntity::toDomain);
+        return repository.findByIdempotencyKey(idempotencyKey).map(TransferJpaEntity::toDomain);
     }
 }

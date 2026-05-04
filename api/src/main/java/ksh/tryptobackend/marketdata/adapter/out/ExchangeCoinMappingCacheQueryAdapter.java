@@ -1,10 +1,9 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
+import java.util.Optional;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 public class ExchangeCoinMappingCacheQueryAdapter implements ExchangeCoinMappingCacheQueryPort {

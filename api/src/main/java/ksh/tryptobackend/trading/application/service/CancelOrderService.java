@@ -55,8 +55,10 @@ public class CancelOrderService implements CancelOrderUseCase {
     }
 
     private Order getOrder(CancelOrderCommand command) {
-        Order order = orderCommandPort.findById(command.orderId())
-            .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        Order order =
+                orderCommandPort
+                        .findById(command.orderId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
         if (!order.isOwnedBy(command.walletId())) {
             throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
@@ -70,20 +72,29 @@ public class CancelOrderService implements CancelOrderUseCase {
 
         if (order.isBuyOrder()) {
             TradingVenue venue = getTradingVenue(mapping.exchangeId());
-            manageWalletBalanceUseCase.unlockBalance(order.getWalletId(), venue.baseCurrencyCoinId(), order.getSettlementDebit());
+            manageWalletBalanceUseCase.unlockBalance(
+                    order.getWalletId(), venue.baseCurrencyCoinId(), order.getSettlementDebit());
         } else {
-            manageWalletBalanceUseCase.unlockBalance(order.getWalletId(), mapping.coinId(), order.getQuantity().value());
+            manageWalletBalanceUseCase.unlockBalance(
+                    order.getWalletId(), mapping.coinId(), order.getQuantity().value());
         }
     }
 
     private ExchangeCoinMappingResult getExchangeCoinMapping(Long exchangeCoinId) {
-        return findExchangeCoinMappingUseCase.findById(exchangeCoinId)
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        return findExchangeCoinMappingUseCase
+                .findById(exchangeCoinId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
     }
 
     private TradingVenue getTradingVenue(Long exchangeId) {
-        return findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .map(detail -> TradingVenue.of(detail.feeRate(), detail.baseCurrencyCoinId(), detail.domestic()))
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        return findExchangeDetailUseCase
+                .findExchangeDetail(exchangeId)
+                .map(
+                        detail ->
+                                TradingVenue.of(
+                                        detail.feeRate(),
+                                        detail.baseCurrencyCoinId(),
+                                        detail.domestic()))
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 }

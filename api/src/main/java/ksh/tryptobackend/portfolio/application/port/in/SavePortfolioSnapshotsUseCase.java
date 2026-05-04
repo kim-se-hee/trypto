@@ -1,8 +1,7 @@
 package ksh.tryptobackend.portfolio.application.port.in;
 
-import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotResult;
-
 import java.util.List;
+import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotResult;
 
 public interface SavePortfolioSnapshotsUseCase {
 

@@ -1,5 +1,6 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinChainsUseCase;
@@ -10,8 +11,6 @@ import ksh.tryptobackend.marketdata.domain.model.ExchangeCoinChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class FindCoinChainsService implements FindCoinChainsUseCase {
@@ -21,7 +20,8 @@ public class FindCoinChainsService implements FindCoinChainsUseCase {
 
     @Override
     public List<CoinChainResult> findCoinChains(Long exchangeId, Long coinId) {
-        List<ExchangeCoinChain> chains = exchangeCoinChainQueryPort.findByExchangeIdAndCoinId(exchangeId, coinId);
+        List<ExchangeCoinChain> chains =
+                exchangeCoinChainQueryPort.findByExchangeIdAndCoinId(exchangeId, coinId);
         if (chains.isEmpty()) {
             validateExchangeCoinExists(exchangeId, coinId);
         }
@@ -36,10 +36,12 @@ public class FindCoinChainsService implements FindCoinChainsUseCase {
 
     private List<CoinChainResult> toResults(List<ExchangeCoinChain> chains) {
         return chains.stream()
-                .map(chain -> new CoinChainResult(
-                        chain.getExchangeCoinChainId(),
-                        chain.getChain(),
-                        chain.isTagRequired()))
+                .map(
+                        chain ->
+                                new CoinChainResult(
+                                        chain.getExchangeCoinChainId(),
+                                        chain.getChain(),
+                                        chain.isTagRequired()))
                 .toList();
     }
 }

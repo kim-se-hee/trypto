@@ -1,5 +1,11 @@
 package ksh.tryptobackend.trading.application.service;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.marketdata.application.port.in.FindTicksUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.TickResult;
 import ksh.tryptobackend.trading.application.port.in.CompensateOrphanOrdersUseCase;
@@ -11,13 +17,6 @@ import ksh.tryptobackend.trading.domain.vo.PriceCandidates;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,7 +36,8 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
     @Override
     public int compensate(int boundarySeconds) {
         LocalDateTime now = LocalDateTime.now(clock);
-        List<OrphanOrder> orphans = orderQueryPort.findOrphanOrders(now.minusSeconds(boundarySeconds));
+        List<OrphanOrder> orphans =
+                orderQueryPort.findOrphanOrders(now.minusSeconds(boundarySeconds));
         if (orphans.isEmpty()) {
             return 0;
         }
@@ -56,14 +56,15 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
     private boolean compensateOne(OrphanOrder orphan, Instant nowInstant) {
         try {
             Instant from = orphan.createdAt().atZone(KST).toInstant();
-            List<TickResult> ticks = findTicksUseCase.findTicks(
-                orphan.exchangeName(), orphan.marketSymbol(), from, nowInstant);
+            List<TickResult> ticks =
+                    findTicksUseCase.findTicks(
+                            orphan.exchangeName(), orphan.marketSymbol(), from, nowInstant);
             PriceCandidates candidates = toPriceCandidates(ticks);
 
             Optional<PriceCandidate> matchedPrice = candidates.findFirstMatching(orphan);
             return matchedPrice
-                .map(c -> orphanOrderCompensator.compensate(orphan, c))
-                .orElse(false);
+                    .map(c -> orphanOrderCompensator.compensate(orphan, c))
+                    .orElse(false);
         } catch (Exception e) {
             log.error("orphan {} 보상 실패", orphan.orderId(), e);
             return false;
@@ -71,8 +72,7 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
     }
 
     private PriceCandidates toPriceCandidates(List<TickResult> ticks) {
-        return new PriceCandidates(ticks.stream()
-            .map(t -> new PriceCandidate(t.time(), t.price()))
-            .toList());
+        return new PriceCandidates(
+                ticks.stream().map(t -> new PriceCandidate(t.time(), t.price())).toList());
     }
 }

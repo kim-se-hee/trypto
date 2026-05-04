@@ -1,8 +1,7 @@
 package ksh.tryptobackend.common.exception;
 
-import lombok.Getter;
-
 import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class CustomException extends RuntimeException {

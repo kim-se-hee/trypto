@@ -1,13 +1,12 @@
 package ksh.tryptobackend.investmentround.domain.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -22,14 +21,15 @@ public class RuleSetting {
     private final BigDecimal thresholdValue;
     private final LocalDateTime createdAt;
 
-    public static RuleSetting create(Long roundId, RuleType ruleType, BigDecimal thresholdValue, LocalDateTime createdAt) {
+    public static RuleSetting create(
+            Long roundId, RuleType ruleType, BigDecimal thresholdValue, LocalDateTime createdAt) {
         validateThreshold(ruleType, thresholdValue);
         return RuleSetting.builder()
-            .roundId(roundId)
-            .ruleType(ruleType)
-            .thresholdValue(thresholdValue)
-            .createdAt(createdAt)
-            .build();
+                .roundId(roundId)
+                .ruleType(ruleType)
+                .thresholdValue(thresholdValue)
+                .createdAt(createdAt)
+                .build();
     }
 
     public static void validateThreshold(RuleType ruleType, BigDecimal thresholdValue) {
@@ -40,7 +40,8 @@ public class RuleSetting {
             return;
         }
 
-        if (thresholdValue.compareTo(MIN_COUNT) < 0 || thresholdValue.stripTrailingZeros().scale() > 0) {
+        if (thresholdValue.compareTo(MIN_COUNT) < 0
+                || thresholdValue.stripTrailingZeros().scale() > 0) {
             throw new CustomException(ErrorCode.INVALID_RULE_THRESHOLD);
         }
     }

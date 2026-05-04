@@ -1,11 +1,10 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.marketdata.application.port.in.FindAllExchangeIdsUseCase;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

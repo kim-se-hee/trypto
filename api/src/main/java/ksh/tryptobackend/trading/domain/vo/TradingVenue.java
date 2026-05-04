@@ -9,14 +9,16 @@ public class TradingVenue {
     private final Long baseCurrencyCoinId;
     private final OrderAmountPolicy orderAmountPolicy;
 
-    public TradingVenue(BigDecimal feeRate, Long baseCurrencyCoinId, OrderAmountPolicy orderAmountPolicy) {
+    public TradingVenue(
+            BigDecimal feeRate, Long baseCurrencyCoinId, OrderAmountPolicy orderAmountPolicy) {
         this.feeRate = feeRate;
         this.baseCurrencyCoinId = baseCurrencyCoinId;
         this.orderAmountPolicy = orderAmountPolicy;
     }
 
     public static TradingVenue of(BigDecimal feeRate, Long baseCurrencyCoinId, boolean domestic) {
-        OrderAmountPolicy policy = domestic ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
+        OrderAmountPolicy policy =
+                domestic ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
         return new TradingVenue(feeRate, baseCurrencyCoinId, policy);
     }
 
@@ -37,8 +39,8 @@ public class TradingVenue {
         if (this == o) return true;
         if (!(o instanceof TradingVenue that)) return false;
         return feeRate.compareTo(that.feeRate) == 0
-            && Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId)
-            && orderAmountPolicy == that.orderAmountPolicy;
+                && Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId)
+                && orderAmountPolicy == that.orderAmountPolicy;
     }
 
     @Override

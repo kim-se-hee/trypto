@@ -1,5 +1,7 @@
 package ksh.tryptobackend.trading.domain.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import ksh.tryptobackend.trading.application.port.in.RecalculateHoldingUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.domain.vo.OrphanOrder;
@@ -9,9 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Slf4j
 @Component
@@ -32,7 +31,8 @@ public class OrphanOrderCompensator {
         if (!filled) {
             return false;
         }
-        manageWalletBalanceUseCase.unlockBalance(orphan.walletId(), orphan.lockedCoinId(), orphan.lockedAmount());
+        manageWalletBalanceUseCase.unlockBalance(
+                orphan.walletId(), orphan.lockedCoinId(), orphan.lockedAmount());
         recalculateHoldingUseCase.recalculate(orphan.walletId(), orphan.coinId());
         log.info("orphan {} 보상 완료 at {}", orphan.orderId(), match.price());
         return true;

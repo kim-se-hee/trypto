@@ -1,10 +1,9 @@
 package ksh.tryptobackend.portfolio.domain.vo;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
-
 import java.util.Map;
 import java.util.Objects;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 
 public class CoinSnapshotMap {
 

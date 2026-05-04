@@ -20,10 +20,12 @@ public class OrderPlacedHoldingUpdater {
             return;
         }
 
-        Holding holding = holdingCommandPort
-            .findByWalletIdAndCoinId(event.walletId(), event.coinId())
-            .orElseGet(() -> Holding.empty(event.walletId(), event.coinId()));
-        holding.applyOrder(event.side(), event.filledPrice(), event.quantity().value(), event.currentPrice());
+        Holding holding =
+                holdingCommandPort
+                        .findByWalletIdAndCoinId(event.walletId(), event.coinId())
+                        .orElseGet(() -> Holding.empty(event.walletId(), event.coinId()));
+        holding.applyOrder(
+                event.side(), event.filledPrice(), event.quantity().value(), event.currentPrice());
         holdingCommandPort.save(holding);
     }
 }

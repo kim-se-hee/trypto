@@ -3,7 +3,6 @@ package ksh.tryptobackend.portfolio.domain.vo;
 import java.math.BigDecimal;
 
 public enum KrwConversionRate {
-
     DOMESTIC(BigDecimal.ONE),
     OVERSEAS(new BigDecimal("1400"));
 

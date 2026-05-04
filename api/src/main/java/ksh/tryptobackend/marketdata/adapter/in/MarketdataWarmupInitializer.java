@@ -60,7 +60,9 @@ public class MarketdataWarmupInitializer {
     }
 
     private void startTickerListener() {
-        rabbitListenerEndpointRegistry.getListenerContainer(RabbitMqConfig.TICKER_MARKETDATA_LISTENER_ID).start();
+        rabbitListenerEndpointRegistry
+                .getListenerContainer(RabbitMqConfig.TICKER_MARKETDATA_LISTENER_ID)
+                .start();
         log.info("marketdata RabbitMQ 시세 리스너 활성화");
     }
 }

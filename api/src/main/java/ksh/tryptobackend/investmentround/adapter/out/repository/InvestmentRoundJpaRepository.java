@@ -1,13 +1,13 @@
 package ksh.tryptobackend.investmentround.adapter.out.repository;
 
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-import java.util.Optional;
-
-public interface InvestmentRoundJpaRepository extends JpaRepository<InvestmentRoundJpaEntity, Long> {
+public interface InvestmentRoundJpaRepository
+        extends JpaRepository<InvestmentRoundJpaEntity, Long> {
 
     boolean existsByUserIdAndStatus(Long userId, RoundStatus status);
 

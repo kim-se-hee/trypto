@@ -1,10 +1,9 @@
 package ksh.tryptobackend.user.application.port.out;
 
-import ksh.tryptobackend.user.domain.model.User;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import ksh.tryptobackend.user.domain.model.User;
 
 public interface UserQueryPort {
 

@@ -8,5 +8,4 @@ public record TickerResponse(
         BigDecimal price,
         BigDecimal changeRate,
         BigDecimal quoteTurnover,
-        Long timestamp
-) {}
+        Long timestamp) {}

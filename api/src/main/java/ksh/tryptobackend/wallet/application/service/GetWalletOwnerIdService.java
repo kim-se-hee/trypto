@@ -19,12 +19,15 @@ public class GetWalletOwnerIdService implements GetWalletOwnerIdUseCase {
     @Override
     @Transactional(readOnly = true)
     public Long getWalletOwnerId(Long walletId) {
-        Long roundId = findWalletUseCase.findById(walletId)
-            .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND))
-            .roundId();
+        Long roundId =
+                findWalletUseCase
+                        .findById(walletId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND))
+                        .roundId();
 
-        return findRoundInfoUseCase.findById(roundId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND))
-            .userId();
+        return findRoundInfoUseCase
+                .findById(roundId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND))
+                .userId();
     }
 }

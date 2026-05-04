@@ -1,11 +1,10 @@
 package ksh.tryptobackend.portfolio.domain.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import ksh.tryptobackend.common.domain.vo.ProfitRate;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Getter
 @Builder
@@ -22,18 +21,22 @@ public class SnapshotDetail {
     private final BigDecimal profitRate;
     private final BigDecimal assetRatio;
 
-    public static SnapshotDetail create(Long coinId, BigDecimal quantity, BigDecimal avgBuyPrice,
-                                        BigDecimal currentPrice, BigDecimal totalAsset) {
+    public static SnapshotDetail create(
+            Long coinId,
+            BigDecimal quantity,
+            BigDecimal avgBuyPrice,
+            BigDecimal currentPrice,
+            BigDecimal totalAsset) {
         BigDecimal coinAsset = currentPrice.multiply(quantity);
 
         return SnapshotDetail.builder()
-            .coinId(coinId)
-            .quantity(quantity)
-            .avgBuyPrice(avgBuyPrice)
-            .currentPrice(currentPrice)
-            .profitRate(ProfitRate.fromAssetChange(currentPrice, avgBuyPrice).value())
-            .assetRatio(calculateAssetRatio(coinAsset, totalAsset))
-            .build();
+                .coinId(coinId)
+                .quantity(quantity)
+                .avgBuyPrice(avgBuyPrice)
+                .currentPrice(currentPrice)
+                .profitRate(ProfitRate.fromAssetChange(currentPrice, avgBuyPrice).value())
+                .assetRatio(calculateAssetRatio(coinAsset, totalAsset))
+                .build();
     }
 
     private static BigDecimal calculateAssetRatio(BigDecimal coinAsset, BigDecimal totalAsset) {
@@ -41,7 +44,7 @@ public class SnapshotDetail {
             return BigDecimal.ZERO;
         }
         return coinAsset
-            .divide(totalAsset, RATE_SCALE, RoundingMode.HALF_UP)
-            .multiply(new BigDecimal("100"));
+                .divide(totalAsset, RATE_SCALE, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"));
     }
 }

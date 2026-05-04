@@ -1,8 +1,7 @@
 package ksh.tryptobackend.marketdata.application.port.out;
 
-import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
-
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
 
 public interface ExchangeCoinMappingCacheQueryPort {
 

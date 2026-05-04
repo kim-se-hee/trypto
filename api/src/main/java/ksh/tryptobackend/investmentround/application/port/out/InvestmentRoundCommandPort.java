@@ -1,8 +1,7 @@
 package ksh.tryptobackend.investmentround.application.port.out;
 
-import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
-
 import java.util.Optional;
+import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 
 public interface InvestmentRoundCommandPort {
 

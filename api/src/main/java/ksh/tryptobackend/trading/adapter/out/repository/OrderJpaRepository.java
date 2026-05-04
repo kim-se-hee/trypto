@@ -1,11 +1,10 @@
 package ksh.tryptobackend.trading.adapter.out.repository;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
 import ksh.tryptobackend.trading.adapter.out.entity.OrderJpaEntity;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> {
 

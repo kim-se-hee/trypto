@@ -1,13 +1,10 @@
 package ksh.tryptobackend.marketdata.domain.vo;
 
-import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
-
 import java.math.BigDecimal;
+import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 
 public record ExchangeConfig(
         String name,
         ExchangeMarketType marketType,
         String baseCurrencySymbol,
-        BigDecimal feeRate
-) {
-}
+        BigDecimal feeRate) {}

@@ -37,19 +37,19 @@ public class UserController {
 
     @PutMapping("/{userId}/nickname")
     public ApiResponseDto<ChangeNicknameResponse> changeNickname(
-        @PathVariable Long userId,
-        @Valid @RequestBody ChangeNicknameRequest request
-    ) {
+            @PathVariable Long userId, @Valid @RequestBody ChangeNicknameRequest request) {
         User user = changeNicknameUseCase.changeNickname(request.toCommand(userId));
         return ApiResponseDto.success("닉네임이 변경되었습니다.", ChangeNicknameResponse.from(user));
     }
 
     @PutMapping("/{userId}/portfolio-visibility")
     public ApiResponseDto<ChangePortfolioVisibilityResponse> changePortfolioVisibility(
-        @PathVariable Long userId,
-        @Valid @RequestBody ChangePortfolioVisibilityRequest request
-    ) {
-        User user = changePortfolioVisibilityUseCase.changePortfolioVisibility(request.toCommand(userId));
-        return ApiResponseDto.success("포트폴리오 공개 설정이 변경되었습니다.", ChangePortfolioVisibilityResponse.from(user));
+            @PathVariable Long userId,
+            @Valid @RequestBody ChangePortfolioVisibilityRequest request) {
+        User user =
+                changePortfolioVisibilityUseCase.changePortfolioVisibility(
+                        request.toCommand(userId));
+        return ApiResponseDto.success(
+                "포트폴리오 공개 설정이 변경되었습니다.", ChangePortfolioVisibilityResponse.from(user));
     }
 }

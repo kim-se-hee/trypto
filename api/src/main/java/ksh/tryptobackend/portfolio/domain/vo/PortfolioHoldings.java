@@ -18,9 +18,7 @@ public class PortfolioHoldings {
     }
 
     public Set<Long> coinIds() {
-        return holdings.stream()
-                .map(PortfolioHolding::coinId)
-                .collect(Collectors.toSet());
+        return holdings.stream().map(PortfolioHolding::coinId).collect(Collectors.toSet());
     }
 
     public Set<Long> coinIdsIncluding(Long additionalCoinId) {
@@ -31,17 +29,18 @@ public class PortfolioHoldings {
 
     public List<HoldingSnapshot> toHoldingSnapshots(CoinSnapshotMap coinSnapshotMap) {
         return holdings.stream()
-                .map(holding -> {
-                    CoinSnapshot coinSnapshot = coinSnapshotMap.getCoinSnapshot(holding.coinId());
-                    return new HoldingSnapshot(
-                            holding.coinId(),
-                            coinSnapshot.symbol(),
-                            coinSnapshot.name(),
-                            holding.quantity(),
-                            holding.avgBuyPrice(),
-                            coinSnapshot.currentPrice()
-                    );
-                })
+                .map(
+                        holding -> {
+                            CoinSnapshot coinSnapshot =
+                                    coinSnapshotMap.getCoinSnapshot(holding.coinId());
+                            return new HoldingSnapshot(
+                                    holding.coinId(),
+                                    coinSnapshot.symbol(),
+                                    coinSnapshot.name(),
+                                    holding.quantity(),
+                                    holding.avgBuyPrice(),
+                                    coinSnapshot.currentPrice());
+                        })
                 .toList();
     }
 

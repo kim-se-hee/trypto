@@ -1,5 +1,6 @@
 package ksh.tryptobackend.ranking.application.service;
 
+import java.time.LocalDate;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingStatsUseCase;
@@ -10,8 +11,6 @@ import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -27,16 +26,14 @@ public class GetRankingStatsService implements GetRankingStatsUseCase {
     }
 
     private LocalDate findLatestReferenceDate(GetRankingStatsQuery query) {
-        return rankingQueryPort.findLatestReferenceDate(query.period())
-            .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
+        return rankingQueryPort
+                .findLatestReferenceDate(query.period())
+                .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 
     private RankingStatsResult buildStats(GetRankingStatsQuery query, LocalDate latestDate) {
         RankingStats stats = rankingQueryPort.getRankingStats(query.period(), latestDate);
         return new RankingStatsResult(
-            stats.totalParticipants(),
-            stats.maxProfitRate(),
-            stats.avgProfitRate()
-        );
+                stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate());
     }
 }

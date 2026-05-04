@@ -1,15 +1,14 @@
 package ksh.tryptobackend.user.adapter.out;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
 import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -25,8 +24,8 @@ public class UserQueryAdapter implements UserQueryPort {
     @Override
     public List<User> findByIds(Set<Long> userIds) {
         return userJpaRepository.findAllById(userIds).stream()
-            .map(UserJpaEntity::toDomain)
-            .toList();
+                .map(UserJpaEntity::toDomain)
+                .toList();
     }
 
     @Override

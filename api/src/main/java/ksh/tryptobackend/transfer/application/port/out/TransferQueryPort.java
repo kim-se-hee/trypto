@@ -1,9 +1,8 @@
 package ksh.tryptobackend.transfer.application.port.out;
 
+import java.util.List;
 import ksh.tryptobackend.transfer.domain.model.Transfer;
 import ksh.tryptobackend.transfer.domain.vo.TransferType;
-
-import java.util.List;
 
 public interface TransferQueryPort {
 

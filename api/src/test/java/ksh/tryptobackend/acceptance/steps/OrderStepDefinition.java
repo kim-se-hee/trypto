@@ -1,9 +1,15 @@
 package ksh.tryptobackend.acceptance.steps;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
@@ -15,13 +21,6 @@ import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrderStepDefinition {
 
@@ -43,14 +42,15 @@ public class OrderStepDefinition {
     private String savedIdempotencyKey;
     private Long firstOrderId;
 
-    public OrderStepDefinition(CommonApiClient apiClient,
-                               MockLivePriceAdapter livePriceAdapter,
-                               MockHoldingAdapter holdingAdapter,
-                               MockPriceChangeRateAdapter priceChangeRateAdapter,
-                               OrderJpaRepository orderJpaRepository,
-                               WalletBalanceJpaRepository walletBalanceJpaRepository,
-                               ExchangeJpaRepository exchangeJpaRepository,
-                               JdbcTemplate jdbcTemplate) {
+    public OrderStepDefinition(
+            CommonApiClient apiClient,
+            MockLivePriceAdapter livePriceAdapter,
+            MockHoldingAdapter holdingAdapter,
+            MockPriceChangeRateAdapter priceChangeRateAdapter,
+            OrderJpaRepository orderJpaRepository,
+            WalletBalanceJpaRepository walletBalanceJpaRepository,
+            ExchangeJpaRepository exchangeJpaRepository,
+            JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.livePriceAdapter = livePriceAdapter;
         this.holdingAdapter = holdingAdapter;
@@ -79,19 +79,31 @@ public class OrderStepDefinition {
     @Given("업비트 거래소가 등록되어 있다")
     public void 업비트_거래소가_등록되어_있다() {
         jdbcTemplate.execute(
-            "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
-                + "(" + KRW_COIN_ID + ", 'KRW', '원화'), "
-                + "(" + BTC_COIN_ID + ", 'BTC', '비트코인')");
-        exchangeJpaRepository.save(new ExchangeJpaEntity(
-            EXCHANGE_ID, "Upbit", ExchangeMarketType.DOMESTIC,
-            KRW_COIN_ID, new BigDecimal("0.0005")));
+                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
+                        + "("
+                        + KRW_COIN_ID
+                        + ", 'KRW', '원화'), "
+                        + "("
+                        + BTC_COIN_ID
+                        + ", 'BTC', '비트코인')");
+        exchangeJpaRepository.save(
+                new ExchangeJpaEntity(
+                        EXCHANGE_ID,
+                        "Upbit",
+                        ExchangeMarketType.DOMESTIC,
+                        KRW_COIN_ID,
+                        new BigDecimal("0.0005")));
     }
 
     @Given("업비트에 BTC가 상장되어 있다")
     public void 업비트에_BTC가_상장되어_있다() {
         jdbcTemplate.update(
-            "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES (?, ?, ?, ?)",
-            EXCHANGE_COIN_ID, EXCHANGE_ID, BTC_COIN_ID, "비트코인");
+                "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)"
+                        + " VALUES (?, ?, ?, ?)",
+                EXCHANGE_COIN_ID,
+                EXCHANGE_ID,
+                BTC_COIN_ID,
+                "비트코인");
     }
 
     @Given("BTC 현재가는 {long}원이다")
@@ -102,13 +114,18 @@ public class OrderStepDefinition {
     @Given("지갑에 KRW 잔고가 {long}원이다")
     public void 지갑에_KRW_잔고가_원이다(long amount) {
         walletBalanceJpaRepository.save(
-            new WalletBalanceJpaEntity(WALLET_ID, KRW_COIN_ID, new BigDecimal(amount), BigDecimal.ZERO));
+                new WalletBalanceJpaEntity(
+                        WALLET_ID, KRW_COIN_ID, new BigDecimal(amount), BigDecimal.ZERO));
     }
 
     @Given("지갑에 BTC 잔고가 {double}개이다")
     public void 지갑에_BTC_잔고가_개이다(double amount) {
         walletBalanceJpaRepository.save(
-            new WalletBalanceJpaEntity(WALLET_ID, BTC_COIN_ID, new BigDecimal(String.valueOf(amount)), BigDecimal.ZERO));
+                new WalletBalanceJpaEntity(
+                        WALLET_ID,
+                        BTC_COIN_ID,
+                        new BigDecimal(String.valueOf(amount)),
+                        BigDecimal.ZERO));
     }
 
     @When("시장가 매수 주문을 {long}원으로 요청한다")
@@ -160,8 +177,12 @@ public class OrderStepDefinition {
 
     @When("매수 주문 가능 정보를 조회한다")
     public void 매수_주문_가능_정보를_조회한다() {
-        apiClient.get("/api/orders/available?walletId=" + WALLET_ID
-            + "&exchangeCoinId=" + EXCHANGE_COIN_ID + "&side=BUY");
+        apiClient.get(
+                "/api/orders/available?walletId="
+                        + WALLET_ID
+                        + "&exchangeCoinId="
+                        + EXCHANGE_COIN_ID
+                        + "&side=BUY");
     }
 
     @When("주문 내역을 조회한다")
@@ -177,25 +198,25 @@ public class OrderStepDefinition {
 
     @Then("주문 상태는 {string}이다")
     public void 주문_상태는_이다(String status) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.status").isEqualTo(status);
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.status").isEqualTo(status);
     }
 
     @Then("체결 수량은 {int}보다 크다")
     public void 체결_수량은_보다_크다(int value) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.quantity").value(quantity -> {
-                assertThat(new BigDecimal(quantity.toString())).isGreaterThan(BigDecimal.ZERO);
-            });
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.quantity")
+                .value(
+                        quantity -> {
+                            assertThat(new BigDecimal(quantity.toString()))
+                                    .isGreaterThan(BigDecimal.ZERO);
+                        });
     }
 
     @Then("에러 코드는 {string}이다")
     public void 에러_코드는_이다(String code) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.code").isEqualTo(code);
+        apiClient.getLastResponse().expectBody().jsonPath("$.code").isEqualTo(code);
     }
 
     @Then("두 응답의 orderId가 동일하다")
@@ -205,21 +226,28 @@ public class OrderStepDefinition {
 
     @Then("주문 가능 금액은 {long}이다")
     public void 주문_가능_금액은_이다(long amount) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.available").value(available -> {
-                assertThat(new BigDecimal(available.toString()).longValue()).isEqualTo(amount);
-            });
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.available")
+                .value(
+                        available -> {
+                            assertThat(new BigDecimal(available.toString()).longValue())
+                                    .isEqualTo(amount);
+                        });
     }
 
     @Then("주문 내역이 {int}건이다")
     public void 주문_내역이_건이다(int count) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.content.length()").isEqualTo(count);
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.content.length()")
+                .isEqualTo(count);
     }
 
-    private Map<String, Object> createOrderBody(String side, String orderType, Number amount, Long price) {
+    private Map<String, Object> createOrderBody(
+            String side, String orderType, Number amount, Long price) {
         Map<String, Object> body = new HashMap<>();
         body.put("clientOrderId", UUID.randomUUID().toString());
         body.put("walletId", WALLET_ID);
@@ -235,14 +263,11 @@ public class OrderStepDefinition {
 
     @SuppressWarnings("unchecked")
     private void extractOrderIdIfSuccess() {
-        Map<String, Object> body = apiClient.getLastResponse()
-            .expectBody(Map.class)
-            .returnResult()
-            .getResponseBody();
+        Map<String, Object> body =
+                apiClient.getLastResponse().expectBody(Map.class).returnResult().getResponseBody();
         Map<String, Object> data = (Map<String, Object>) body.get("data");
         if (data != null && data.get("orderId") instanceof Number num) {
             lastOrderId = num.longValue();
         }
     }
-
 }

@@ -24,9 +24,11 @@ public class WithdrawalFeeController {
     @GetMapping
     public ApiResponseDto<WithdrawalFeeResponse> getWithdrawalFee(
             @Valid @ModelAttribute FindWithdrawalFeeRequest request) {
-        WithdrawalFeeResult result = findWithdrawalFeeUseCase
-                .findByExchangeIdAndCoinIdAndChain(request.exchangeId(), request.coinId(), request.chain())
-                .orElseThrow(() -> new CustomException(ErrorCode.WITHDRAWAL_FEE_NOT_FOUND));
+        WithdrawalFeeResult result =
+                findWithdrawalFeeUseCase
+                        .findByExchangeIdAndCoinIdAndChain(
+                                request.exchangeId(), request.coinId(), request.chain())
+                        .orElseThrow(() -> new CustomException(ErrorCode.WITHDRAWAL_FEE_NOT_FOUND));
         return ApiResponseDto.success("출금 수수료를 조회했습니다.", WithdrawalFeeResponse.from(result));
     }
 }

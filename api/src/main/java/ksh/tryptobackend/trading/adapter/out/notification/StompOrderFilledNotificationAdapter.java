@@ -22,13 +22,13 @@ public class StompOrderFilledNotificationAdapter implements OrderFilledNotificat
         try {
             OrderFilledStompPayload payload = OrderFilledStompPayload.from(notification);
             messagingTemplate.convertAndSendToUser(
-                notification.userId().toString(),
-                USER_DESTINATION,
-                payload
-            );
+                    notification.userId().toString(), USER_DESTINATION, payload);
         } catch (Exception e) {
-            log.warn("체결 알림 WebSocket 전송 실패: userId={}, orderId={}",
-                notification.userId(), notification.orderId(), e);
+            log.warn(
+                    "체결 알림 WebSocket 전송 실패: userId={}, orderId={}",
+                    notification.userId(),
+                    notification.orderId(),
+                    e);
         }
     }
 }

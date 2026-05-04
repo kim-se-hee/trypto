@@ -1,5 +1,6 @@
 package ksh.tryptobackend.portfolio.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.investmentround.application.port.in.FindActiveRoundsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotInputsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInputResult;
@@ -10,8 +11,6 @@ import ksh.tryptobackend.portfolio.domain.vo.WalletSnapshots;
 import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,26 +27,41 @@ public class FindSnapshotInputsService implements FindSnapshotInputsUseCase {
     }
 
     private ActiveRounds findActiveRounds() {
-        List<ActiveRound> rounds = findActiveRoundsUseCase.findAllActiveRounds().stream()
-            .map(r -> new ActiveRound(r.roundId(), r.userId(), r.startedAt()))
-            .toList();
+        List<ActiveRound> rounds =
+                findActiveRoundsUseCase.findAllActiveRounds().stream()
+                        .map(r -> new ActiveRound(r.roundId(), r.userId(), r.startedAt()))
+                        .toList();
         return new ActiveRounds(rounds);
     }
 
     private WalletSnapshots findWalletSnapshots(List<Long> roundIds) {
-        List<WalletSnapshot> wallets = findWalletUseCase.findByRoundIds(roundIds).stream()
-            .map(r -> new WalletSnapshot(r.walletId(), r.roundId(), r.exchangeId(), r.seedAmount()))
-            .toList();
+        List<WalletSnapshot> wallets =
+                findWalletUseCase.findByRoundIds(roundIds).stream()
+                        .map(
+                                r ->
+                                        new WalletSnapshot(
+                                                r.walletId(),
+                                                r.roundId(),
+                                                r.exchangeId(),
+                                                r.seedAmount()))
+                        .toList();
         return new WalletSnapshots(wallets);
     }
 
-    private List<SnapshotInputResult> toSnapshotInputResults(ActiveRounds activeRounds,
-                                                              WalletSnapshots walletSnapshots) {
+    private List<SnapshotInputResult> toSnapshotInputResults(
+            ActiveRounds activeRounds, WalletSnapshots walletSnapshots) {
         return activeRounds.values().stream()
-            .flatMap(round -> walletSnapshots.findByRoundId(round.roundId()).stream()
-                .map(wallet -> new SnapshotInputResult(
-                    round.roundId(), round.userId(),
-                    wallet.exchangeId(), wallet.walletId(), wallet.seedAmount())))
-            .toList();
+                .flatMap(
+                        round ->
+                                walletSnapshots.findByRoundId(round.roundId()).stream()
+                                        .map(
+                                                wallet ->
+                                                        new SnapshotInputResult(
+                                                                round.roundId(),
+                                                                round.userId(),
+                                                                wallet.exchangeId(),
+                                                                wallet.walletId(),
+                                                                wallet.seedAmount())))
+                .toList();
     }
 }

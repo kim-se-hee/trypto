@@ -1,5 +1,6 @@
 package ksh.tryptobackend.trading.adapter.out;
 
+import java.util.Optional;
 import ksh.tryptobackend.trading.adapter.out.entity.HoldingJpaEntity;
 import ksh.tryptobackend.trading.adapter.out.repository.HoldingJpaRepository;
 import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
@@ -7,8 +8,6 @@ import ksh.tryptobackend.trading.domain.model.Holding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -18,8 +17,7 @@ public class HoldingCommandAdapter implements HoldingCommandPort {
 
     @Override
     public Optional<Holding> findByWalletIdAndCoinId(Long walletId, Long coinId) {
-        return repository.findByWalletIdAndCoinId(walletId, coinId)
-            .map(HoldingJpaEntity::toDomain);
+        return repository.findByWalletIdAndCoinId(walletId, coinId).map(HoldingJpaEntity::toDomain);
     }
 
     @Override
@@ -38,8 +36,7 @@ public class HoldingCommandAdapter implements HoldingCommandPort {
         try {
             return repository.saveAndFlush(new HoldingJpaEntity(walletId, coinId));
         } catch (DataIntegrityViolationException e) {
-            return repository.findByWalletIdAndCoinId(walletId, coinId)
-                .orElseThrow(() -> e);
+            return repository.findByWalletIdAndCoinId(walletId, coinId).orElseThrow(() -> e);
         }
     }
 }

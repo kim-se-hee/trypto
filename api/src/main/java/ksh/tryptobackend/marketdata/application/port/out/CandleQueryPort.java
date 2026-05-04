@@ -1,9 +1,8 @@
 package ksh.tryptobackend.marketdata.application.port.out;
 
+import java.util.List;
 import ksh.tryptobackend.marketdata.domain.model.Candle;
 import ksh.tryptobackend.marketdata.domain.model.CandleFilter;
-
-import java.util.List;
 
 public interface CandleQueryPort {
 

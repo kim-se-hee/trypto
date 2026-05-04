@@ -1,5 +1,6 @@
 package ksh.tryptobackend.investmentround.adapter.out;
 
+import java.util.Optional;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
@@ -7,8 +8,6 @@ import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -18,7 +17,8 @@ public class InvestmentRoundCommandAdapter implements InvestmentRoundCommandPort
 
     @Override
     public InvestmentRound save(InvestmentRound round) {
-        InvestmentRoundJpaEntity saved = repository.save(InvestmentRoundJpaEntity.fromDomain(round));
+        InvestmentRoundJpaEntity saved =
+                repository.save(InvestmentRoundJpaEntity.fromDomain(round));
         return saved.toDomain();
     }
 

@@ -11,15 +11,20 @@ import org.springframework.stereotype.Component;
 @Component
 @StepScope
 @RequiredArgsConstructor
-public class RegretReportItemProcessor implements ItemProcessor<RegretReportInput, GeneratedRegretReportResult> {
+public class RegretReportItemProcessor
+        implements ItemProcessor<RegretReportInput, GeneratedRegretReportResult> {
 
     private final GenerateRegretReportBatchUseCase generateRegretReportBatchUseCase;
 
     @Override
     public GeneratedRegretReportResult process(RegretReportInput input) {
-        GenerateRegretReportCommand command = new GenerateRegretReportCommand(
-            input.roundId(), input.userId(), input.exchangeId(),
-            input.walletId(), input.startedAt());
+        GenerateRegretReportCommand command =
+                new GenerateRegretReportCommand(
+                        input.roundId(),
+                        input.userId(),
+                        input.exchangeId(),
+                        input.walletId(),
+                        input.startedAt());
         return generateRegretReportBatchUseCase.generateReport(command).orElse(null);
     }
 }

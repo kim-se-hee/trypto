@@ -19,7 +19,7 @@ public class BatchSkipPolicy implements SkipPolicy {
 
     private boolean isPriceNotAvailable(Throwable t) {
         return t instanceof CustomException ce
-            && ce.getErrorCode() == ErrorCode.PRICE_NOT_AVAILABLE;
+                && ce.getErrorCode() == ErrorCode.PRICE_NOT_AVAILABLE;
     }
 
     private boolean isDataIntegrityViolation(Throwable t) {

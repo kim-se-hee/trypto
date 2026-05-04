@@ -1,10 +1,9 @@
 package ksh.tryptobackend.wallet.application.port.out;
 
-import ksh.tryptobackend.wallet.domain.model.Wallet;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 
 public interface WalletQueryPort {
 

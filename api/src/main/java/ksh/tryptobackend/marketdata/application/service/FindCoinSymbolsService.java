@@ -1,12 +1,11 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import java.util.Map;
+import java.util.Set;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
 import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor

@@ -13,7 +13,5 @@ import org.springframework.test.context.ActiveProfiles;
 class TryptoBackendApplicationTests {
 
     @Test
-    void contextLoads() {
-    }
-
+    void contextLoads() {}
 }

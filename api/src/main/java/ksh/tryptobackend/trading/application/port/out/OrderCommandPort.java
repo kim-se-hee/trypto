@@ -1,10 +1,9 @@
 package ksh.tryptobackend.trading.application.port.out;
 
-import ksh.tryptobackend.trading.domain.model.Order;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import ksh.tryptobackend.trading.domain.model.Order;
 
 public interface OrderCommandPort {
 

@@ -5,13 +5,12 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public record AnalysisRound(
-    Long roundId,
-    Long userId,
-    BigDecimal initialSeed,
-    AnalysisRoundStatus status,
-    LocalDateTime startedAt,
-    LocalDateTime endedAt
-) {
+        Long roundId,
+        Long userId,
+        BigDecimal initialSeed,
+        AnalysisRoundStatus status,
+        LocalDateTime startedAt,
+        LocalDateTime endedAt) {
 
     public boolean isActive() {
         return status == AnalysisRoundStatus.ACTIVE;

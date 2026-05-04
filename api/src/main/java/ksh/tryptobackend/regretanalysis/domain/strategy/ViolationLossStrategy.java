@@ -1,13 +1,11 @@
 package ksh.tryptobackend.regretanalysis.domain.strategy;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext.SoldPortion;
 
-import java.math.BigDecimal;
-
 public enum ViolationLossStrategy {
-
     BUY {
         @Override
         public boolean supports(RuleType ruleType, boolean isBuy) {
@@ -28,14 +26,18 @@ public enum ViolationLossStrategy {
                     break;
                 }
                 BigDecimal matchedQty = sell.quantity().min(remainingQty);
-                totalLoss = totalLoss.add(
-                    context.filledPrice().subtract(sell.price()).multiply(matchedQty));
+                totalLoss =
+                        totalLoss.add(
+                                context.filledPrice().subtract(sell.price()).multiply(matchedQty));
                 remainingQty = remainingQty.subtract(matchedQty);
             }
 
             if (remainingQty.compareTo(BigDecimal.ZERO) > 0) {
-                totalLoss = totalLoss.add(
-                    context.filledPrice().subtract(context.currentPrice()).multiply(remainingQty));
+                totalLoss =
+                        totalLoss.add(
+                                context.filledPrice()
+                                        .subtract(context.currentPrice())
+                                        .multiply(remainingQty));
             }
 
             return totalLoss;
@@ -50,7 +52,9 @@ public enum ViolationLossStrategy {
 
         @Override
         public BigDecimal calculateLoss(ViolationLossContext context) {
-            return context.currentPrice().subtract(context.filledPrice()).multiply(context.quantity());
+            return context.currentPrice()
+                    .subtract(context.filledPrice())
+                    .multiply(context.quantity());
         }
     },
 
@@ -62,7 +66,9 @@ public enum ViolationLossStrategy {
 
         @Override
         public BigDecimal calculateLoss(ViolationLossContext context) {
-            return context.currentPrice().multiply(context.quantity()).subtract(context.tradeAmount());
+            return context.currentPrice()
+                    .multiply(context.quantity())
+                    .subtract(context.tradeAmount());
         }
     },
 
@@ -74,7 +80,8 @@ public enum ViolationLossStrategy {
 
         @Override
         public BigDecimal calculateLoss(ViolationLossContext context) {
-            return context.tradeAmount().subtract(context.currentPrice().multiply(context.quantity()));
+            return context.tradeAmount()
+                    .subtract(context.currentPrice().multiply(context.quantity()));
         }
     };
 
@@ -88,6 +95,7 @@ public enum ViolationLossStrategy {
                 return strategy;
             }
         }
-        throw new IllegalArgumentException("No strategy for " + ruleType + " (isBuy=" + isBuy + ")");
+        throw new IllegalArgumentException(
+                "No strategy for " + ruleType + " (isBuy=" + isBuy + ")");
     }
 }

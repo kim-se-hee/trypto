@@ -1,12 +1,11 @@
 package ksh.tryptobackend.wallet.domain.model;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -23,11 +22,7 @@ public class DepositAddress {
         String seed = walletId + ":" + coinId;
         String address = generateHash(seed);
 
-        return DepositAddress.builder()
-            .walletId(walletId)
-            .coinId(coinId)
-            .address(address)
-            .build();
+        return DepositAddress.builder().walletId(walletId).coinId(coinId).address(address).build();
     }
 
     private static String generateHash(String input) {

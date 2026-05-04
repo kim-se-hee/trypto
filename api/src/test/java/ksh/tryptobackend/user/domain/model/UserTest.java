@@ -1,16 +1,15 @@
 package ksh.tryptobackend.user.domain.model;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalDateTime;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UserTest {
 
@@ -62,9 +61,9 @@ class UserTest {
         @DisplayName("경계값 — 1자 닉네임은 길이 위반으로 실패한다")
         void changeNickname_belowMinLength_throwsException() {
             assertThatThrownBy(() -> user.changeNickname("가"))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_NICKNAME_LENGTH);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_NICKNAME_LENGTH);
         }
 
         @Test
@@ -75,18 +74,18 @@ class UserTest {
 
             // Then
             assertThatThrownBy(() -> user.changeNickname(twentyOneChars))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_NICKNAME_LENGTH);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_NICKNAME_LENGTH);
         }
 
         @Test
         @DisplayName("현재 닉네임과 동일한 값으로 변경 시 실패한다")
         void changeNickname_sameAsCurrent_throwsException() {
             assertThatThrownBy(() -> user.changeNickname("기존닉네임"))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
 
         @Test
@@ -97,14 +96,14 @@ class UserTest {
 
             // Then — 동일 닉네임 에러가 길이 에러보다 먼저 발생
             assertThatThrownBy(() -> shortNicknameUser.changeNickname("가"))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
     }
 
     private static User createUser(String nickname) {
-        return User.reconstitute(1L, "test@test.com", nickname, false,
-            LocalDateTime.now(), LocalDateTime.now());
+        return User.reconstitute(
+                1L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
     }
 }

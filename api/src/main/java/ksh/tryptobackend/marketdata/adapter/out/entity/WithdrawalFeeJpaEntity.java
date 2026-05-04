@@ -4,13 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import ksh.tryptobackend.marketdata.domain.model.WithdrawalFee;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
-
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "withdrawal_fee")
@@ -40,12 +39,12 @@ public class WithdrawalFeeJpaEntity {
 
     public WithdrawalFee toDomain() {
         return WithdrawalFee.builder()
-            .withdrawalFeeId(id)
-            .exchangeId(exchangeId)
-            .coinId(coinId)
-            .chain(chain)
-            .fee(fee)
-            .minWithdrawal(minWithdrawal)
-            .build();
+                .withdrawalFeeId(id)
+                .exchangeId(exchangeId)
+                .coinId(coinId)
+                .chain(chain)
+                .fee(fee)
+                .minWithdrawal(minWithdrawal)
+                .build();
     }
 }

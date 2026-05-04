@@ -1,10 +1,9 @@
 package ksh.tryptobackend.investmentround.application.port.out;
 
-import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
-
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
+import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 
 public interface EmergencyFundingQueryPort {
 

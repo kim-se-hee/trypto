@@ -1,5 +1,6 @@
 package ksh.tryptobackend.batch.ranking;
 
+import java.time.LocalDate;
 import ksh.tryptobackend.ranking.application.port.in.CalculateRankingUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.command.CalculateRankingCommand;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.retry.RetryPolicy;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
 
 @Component
 @StepScope
@@ -30,9 +29,10 @@ public class RankingTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         LocalDate snapshotDate = LocalDate.parse(snapshotDateParam);
         RetryTemplate retryTemplate = new RetryTemplate(batchRetryPolicy);
-        retryTemplate.invoke(() ->
-            calculateRankingUseCase.calculateRanking(new CalculateRankingCommand(snapshotDate))
-        );
+        retryTemplate.invoke(
+                () ->
+                        calculateRankingUseCase.calculateRanking(
+                                new CalculateRankingCommand(snapshotDate)));
         return RepeatStatus.FINISHED;
     }
 }

@@ -1,8 +1,7 @@
 package ksh.tryptobackend.marketdata.application.port.out;
 
-import ksh.tryptobackend.marketdata.domain.vo.TickerSnapshots;
-
 import java.util.Set;
+import ksh.tryptobackend.marketdata.domain.vo.TickerSnapshots;
 
 public interface TickerSnapshotQueryPort {
 

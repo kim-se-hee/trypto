@@ -1,8 +1,7 @@
 package ksh.tryptobackend.wallet.application.port.out;
 
-import ksh.tryptobackend.wallet.domain.model.DepositAddress;
-
 import java.util.Optional;
+import ksh.tryptobackend.wallet.domain.model.DepositAddress;
 
 public interface DepositAddressQueryPort {
 

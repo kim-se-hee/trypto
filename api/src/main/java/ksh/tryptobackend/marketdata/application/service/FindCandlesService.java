@@ -1,5 +1,8 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.regex.Pattern;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindCandlesUseCase;
@@ -12,10 +15,6 @@ import ksh.tryptobackend.marketdata.domain.model.CandleInterval;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -50,8 +49,10 @@ public class FindCandlesService implements FindCandlesUseCase {
     }
 
     private String resolveInfluxCoin(FindCandlesQuery query) {
-        ExchangeSummary exchange = exchangeQueryPort.findExchangeSummaryByName(query.exchange())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeSummary exchange =
+                exchangeQueryPort
+                        .findExchangeSummaryByName(query.exchange())
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         return query.coin() + "/" + exchange.baseCurrencySymbol();
     }
 

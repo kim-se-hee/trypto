@@ -1,16 +1,15 @@
 package ksh.tryptobackend.investmentround.adapter.out.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "investment_round")
@@ -73,24 +72,27 @@ public class InvestmentRoundJpaEntity {
         entity.startedAt = round.getStartedAt();
         entity.endedAt = round.getEndedAt();
 
-        entity.rules = round.getRules().stream()
-            .map(InvestmentRuleJpaEntity::fromDomain)
-            .toList();
+        entity.rules = round.getRules().stream().map(InvestmentRuleJpaEntity::fromDomain).toList();
 
-        entity.fundings = round.getFundings().stream()
-            .map(EmergencyFundingJpaEntity::fromDomain)
-            .toList();
+        entity.fundings =
+                round.getFundings().stream().map(EmergencyFundingJpaEntity::fromDomain).toList();
 
         return entity;
     }
 
     public InvestmentRound toDomain() {
         return InvestmentRound.reconstitute(
-            id, version, userId, roundNumber,
-            initialSeed, emergencyFundingLimit, emergencyChargeCount, status,
-            startedAt, endedAt,
-            rules.stream().map(InvestmentRuleJpaEntity::toRoundDomain).toList(),
-            fundings.stream().map(EmergencyFundingJpaEntity::toDomain).toList()
-        );
+                id,
+                version,
+                userId,
+                roundNumber,
+                initialSeed,
+                emergencyFundingLimit,
+                emergencyChargeCount,
+                status,
+                startedAt,
+                endedAt,
+                rules.stream().map(InvestmentRuleJpaEntity::toRoundDomain).toList(),
+                fundings.stream().map(EmergencyFundingJpaEntity::toDomain).toList());
     }
 }

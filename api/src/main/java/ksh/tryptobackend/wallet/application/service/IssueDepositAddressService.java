@@ -33,31 +33,40 @@ public class IssueDepositAddressService implements IssueDepositAddressUseCase {
         Long exchangeId = getExchangeIdByWalletId(command.walletId());
         validateTransferable(exchangeId, command.coinId());
 
-        return depositAddressQueryPort.findByWalletIdAndCoinId(command.walletId(), command.coinId())
-            .orElseGet(() -> createDepositAddress(command));
+        return depositAddressQueryPort
+                .findByWalletIdAndCoinId(command.walletId(), command.coinId())
+                .orElseGet(() -> createDepositAddress(command));
     }
 
     private Long getExchangeIdByWalletId(Long walletId) {
-        return walletQueryPort.findById(walletId)
-            .map(Wallet::getExchangeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        return walletQueryPort
+                .findById(walletId)
+                .map(Wallet::getExchangeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     private void validateTransferable(Long exchangeId, Long coinId) {
-        DepositTargetExchange exchange = findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .map(detail -> DepositTargetExchange.of(detail.baseCurrencyCoinId(), detail.domestic()))
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        DepositTargetExchange exchange =
+                findExchangeDetailUseCase
+                        .findExchangeDetail(exchangeId)
+                        .map(
+                                detail ->
+                                        DepositTargetExchange.of(
+                                                detail.baseCurrencyCoinId(), detail.domestic()))
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         exchange.validateTransferable(coinId);
     }
 
     private DepositAddress createDepositAddress(IssueDepositAddressCommand command) {
         try {
-            return transactionTemplate.execute(status ->
-                depositAddressCommandPort.save(
-                    DepositAddress.create(command.walletId(), command.coinId())));
+            return transactionTemplate.execute(
+                    status ->
+                            depositAddressCommandPort.save(
+                                    DepositAddress.create(command.walletId(), command.coinId())));
         } catch (DataIntegrityViolationException e) {
-            return depositAddressQueryPort.findByWalletIdAndCoinId(command.walletId(), command.coinId())
-                .orElseThrow(() -> new CustomException(ErrorCode.CONCURRENT_MODIFICATION));
+            return depositAddressQueryPort
+                    .findByWalletIdAndCoinId(command.walletId(), command.coinId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.CONCURRENT_MODIFICATION));
         }
     }
 }

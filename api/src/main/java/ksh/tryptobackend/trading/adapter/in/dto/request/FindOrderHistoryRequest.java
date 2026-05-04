@@ -8,13 +8,12 @@ import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
 public record FindOrderHistoryRequest(
-    @NotNull Long walletId,
-    Long exchangeCoinId,
-    Side side,
-    OrderStatus status,
-    Long cursorOrderId,
-    @Min(1) @Max(50) Integer size
-) {
+        @NotNull Long walletId,
+        Long exchangeCoinId,
+        Side side,
+        OrderStatus status,
+        Long cursorOrderId,
+        @Min(1) @Max(50) Integer size) {
 
     public FindOrderHistoryRequest {
         if (size == null) {
@@ -23,6 +22,7 @@ public record FindOrderHistoryRequest(
     }
 
     public FindOrderHistoryQuery toQuery() {
-        return new FindOrderHistoryQuery(walletId, exchangeCoinId, side, status, cursorOrderId, size);
+        return new FindOrderHistoryQuery(
+                walletId, exchangeCoinId, side, status, cursorOrderId, size);
     }
 }

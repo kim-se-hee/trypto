@@ -1,5 +1,9 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinsUseCase;
@@ -14,11 +18,6 @@ import ksh.tryptobackend.marketdata.domain.vo.TickerSnapshots;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,38 +45,35 @@ public class FindExchangeCoinsService implements FindExchangeCoinsUseCase {
     }
 
     private Map<Long, Coin> findCoinMap(List<ExchangeCoin> exchangeCoins) {
-        Set<Long> coinIds = exchangeCoins.stream()
-            .map(ExchangeCoin::coinId)
-            .collect(Collectors.toSet());
+        Set<Long> coinIds =
+                exchangeCoins.stream().map(ExchangeCoin::coinId).collect(Collectors.toSet());
         return coinQueryPort.findByIds(coinIds).stream()
-            .collect(Collectors.toMap(Coin::coinId, coin -> coin));
+                .collect(Collectors.toMap(Coin::coinId, coin -> coin));
     }
 
     private TickerSnapshots findTickerSnapshots(List<ExchangeCoin> exchangeCoins) {
-        Set<Long> exchangeCoinIds = exchangeCoins.stream()
-            .map(ExchangeCoin::exchangeCoinId)
-            .collect(Collectors.toSet());
+        Set<Long> exchangeCoinIds =
+                exchangeCoins.stream()
+                        .map(ExchangeCoin::exchangeCoinId)
+                        .collect(Collectors.toSet());
         return tickerSnapshotQueryPort.findByExchangeCoinIds(exchangeCoinIds);
     }
 
-    private List<ExchangeCoinListResult> toResults(List<ExchangeCoin> exchangeCoins,
-                                                    Map<Long, Coin> coinMap,
-                                                    TickerSnapshots tickerSnapshots) {
-        return exchangeCoins.stream()
-            .map(ec -> toResult(ec, coinMap, tickerSnapshots))
-            .toList();
+    private List<ExchangeCoinListResult> toResults(
+            List<ExchangeCoin> exchangeCoins,
+            Map<Long, Coin> coinMap,
+            TickerSnapshots tickerSnapshots) {
+        return exchangeCoins.stream().map(ec -> toResult(ec, coinMap, tickerSnapshots)).toList();
     }
 
-    private ExchangeCoinListResult toResult(ExchangeCoin exchangeCoin,
-                                             Map<Long, Coin> coinMap,
-                                             TickerSnapshots tickerSnapshots) {
+    private ExchangeCoinListResult toResult(
+            ExchangeCoin exchangeCoin, Map<Long, Coin> coinMap, TickerSnapshots tickerSnapshots) {
         Coin coin = coinMap.get(exchangeCoin.coinId());
         return new ExchangeCoinListResult(
-            exchangeCoin.exchangeCoinId(),
-            exchangeCoin.coinId(),
-            coin.symbol(),
-            exchangeCoin.displayName(),
-            tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId())
-        );
+                exchangeCoin.exchangeCoinId(),
+                exchangeCoin.coinId(),
+                coin.symbol(),
+                exchangeCoin.displayName(),
+                tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId()));
     }
 }

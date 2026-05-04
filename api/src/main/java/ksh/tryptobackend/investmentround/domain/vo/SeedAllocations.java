@@ -1,12 +1,11 @@
 package ksh.tryptobackend.investmentround.domain.vo;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
-
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 
 public class SeedAllocations {
 
@@ -23,8 +22,8 @@ public class SeedAllocations {
 
     public BigDecimal totalAmount() {
         return allocations.stream()
-            .map(SeedAllocation::amount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(SeedAllocation::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<SeedAllocation> getAll() {

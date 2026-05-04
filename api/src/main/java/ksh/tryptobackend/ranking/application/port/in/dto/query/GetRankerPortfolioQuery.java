@@ -2,8 +2,4 @@ package ksh.tryptobackend.ranking.application.port.in.dto.query;
 
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 
-public record GetRankerPortfolioQuery(
-    Long userId,
-    RankingPeriod period
-) {
-}
+public record GetRankerPortfolioQuery(Long userId, RankingPeriod period) {}

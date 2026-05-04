@@ -4,13 +4,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record WalletBalancesResult(
-    Long exchangeId,
-    String baseCurrencySymbol,
-    BigDecimal baseCurrencyAvailable,
-    BigDecimal baseCurrencyLocked,
-    List<CoinBalance> balances
-) {
+        Long exchangeId,
+        String baseCurrencySymbol,
+        BigDecimal baseCurrencyAvailable,
+        BigDecimal baseCurrencyLocked,
+        List<CoinBalance> balances) {
 
-    public record CoinBalance(Long coinId, BigDecimal available, BigDecimal locked) {
-    }
+    public record CoinBalance(Long coinId, BigDecimal available, BigDecimal locked) {}
 }

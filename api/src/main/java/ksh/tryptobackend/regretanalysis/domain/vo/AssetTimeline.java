@@ -1,15 +1,14 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 
 public final class AssetTimeline {
 
@@ -27,16 +26,14 @@ public final class AssetTimeline {
     }
 
     public List<LocalDate> getDates() {
-        return snapshots.stream()
-            .map(AssetSnapshot::getSnapshotDate)
-            .toList();
+        return snapshots.stream().map(AssetSnapshot::getSnapshotDate).toList();
     }
 
     public Optional<BigDecimal> findAssetAt(LocalDate date) {
         return snapshots.stream()
-            .filter(s -> s.getSnapshotDate().equals(date))
-            .findFirst()
-            .map(AssetSnapshot::getTotalAsset);
+                .filter(s -> s.getSnapshotDate().equals(date))
+                .findFirst()
+                .map(AssetSnapshot::getTotalAsset);
     }
 
     public BigDecimal getSeedMoney() {

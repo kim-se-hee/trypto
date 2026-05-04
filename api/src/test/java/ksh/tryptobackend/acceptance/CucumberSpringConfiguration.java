@@ -11,5 +11,4 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @AutoConfigureRestTestClient
 @Import({TestContainerConfiguration.class, MockAdapterConfiguration.class})
-public class CucumberSpringConfiguration {
-}
+public class CucumberSpringConfiguration {}

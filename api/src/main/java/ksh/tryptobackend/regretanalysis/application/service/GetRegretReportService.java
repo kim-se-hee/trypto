@@ -1,5 +1,6 @@
 package ksh.tryptobackend.regretanalysis.application.service;
 
+import java.util.Map;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.FindInvestmentRulesUseCase;
@@ -16,14 +17,12 @@ import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPo
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
-import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRoundStatus;
+import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
 import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +42,9 @@ public class GetRegretReportService implements GetRegretReportUseCase {
         AnalysisExchange exchange = getExchangeInfo(query.exchangeId());
         AnalysisRules rules = findRules(query.roundId());
 
-        RegretReport report = regretReportQueryPort.getByRoundIdAndExchangeId(
-            query.roundId(), query.exchangeId());
+        RegretReport report =
+                regretReportQueryPort.getByRoundIdAndExchangeId(
+                        query.roundId(), query.exchangeId());
 
         return toResult(report, exchange, rules);
     }
@@ -63,21 +63,28 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     }
 
     private AnalysisRound getRound(Long roundId) {
-        RoundInfoResult result = findRoundInfoUseCase.findById(roundId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        RoundInfoResult result =
+                findRoundInfoUseCase
+                        .findById(roundId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
         return toAnalysisRound(result);
     }
 
     private AnalysisRound toAnalysisRound(RoundInfoResult result) {
         return new AnalysisRound(
-            result.roundId(), result.userId(), result.initialSeed(),
-            AnalysisRoundStatus.valueOf(result.status()),
-            result.startedAt(), result.endedAt());
+                result.roundId(),
+                result.userId(),
+                result.initialSeed(),
+                AnalysisRoundStatus.valueOf(result.status()),
+                result.startedAt(),
+                result.endedAt());
     }
 
     private AnalysisExchange getExchangeInfo(Long exchangeId) {
-        ExchangeDetailResult result = findExchangeDetailUseCase.findExchangeDetail(exchangeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeDetailResult result =
+                findExchangeDetailUseCase
+                        .findExchangeDetail(exchangeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         return toAnalysisExchange(exchangeId, result);
     }
 
@@ -88,20 +95,21 @@ public class GetRegretReportService implements GetRegretReportUseCase {
 
     private AnalysisRules findRules(Long roundId) {
         return new AnalysisRules(
-            findInvestmentRulesUseCase.findByRoundId(roundId).stream()
-                .map(this::toAnalysisRule)
-                .toList());
+                findInvestmentRulesUseCase.findByRoundId(roundId).stream()
+                        .map(this::toAnalysisRule)
+                        .toList());
     }
 
     private AnalysisRule toAnalysisRule(InvestmentRuleResult result) {
         return new AnalysisRule(result.ruleId(), result.ruleType(), result.thresholdValue());
     }
 
-    private RegretReportResult toResult(RegretReport report, AnalysisExchange exchange,
-                                        AnalysisRules rules) {
+    private RegretReportResult toResult(
+            RegretReport report, AnalysisExchange exchange, AnalysisRules rules) {
         Map<Long, AnalysisRule> ruleMap = rules.toMap();
-        Map<Long, String> coinSymbols = findCoinSymbolsUseCase.findSymbolsByIds(
-            report.getViolationDetails().extractCoinIds());
+        Map<Long, String> coinSymbols =
+                findCoinSymbolsUseCase.findSymbolsByIds(
+                        report.getViolationDetails().extractCoinIds());
 
         return RegretReportResult.from(report, exchange, ruleMap, coinSymbols);
     }

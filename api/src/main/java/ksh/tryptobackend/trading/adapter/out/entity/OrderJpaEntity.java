@@ -1,6 +1,8 @@
 package ksh.tryptobackend.trading.adapter.out.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.MarketIdentifier;
@@ -11,9 +13,6 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
@@ -112,25 +111,43 @@ public class OrderJpaEntity {
         entity.status = order.getStatus();
         entity.createdAt = order.getCreatedAt();
         entity.filledAt = order.getFilledAt();
-        entity.violations = order.getViolations().stream()
-            .map(v -> RuleViolationJpaEntity.fromOrderViolation(order.getId(), v))
-            .toList();
+        entity.violations =
+                order.getViolations().stream()
+                        .map(v -> RuleViolationJpaEntity.fromOrderViolation(order.getId(), v))
+                        .toList();
         return entity;
     }
 
     public Order toDomain() {
         Fee domainFee = (fee != null && feeRate != null) ? Fee.of(fee, feeRate) : null;
         java.util.List<ksh.tryptobackend.trading.domain.model.RuleViolation> domainViolations =
-            violations.stream()
-                .map(v -> new ksh.tryptobackend.trading.domain.model.RuleViolation(
-                    v.getRuleId(), v.getViolationReason(), v.getCreatedAt()))
-                .toList();
+                violations.stream()
+                        .map(
+                                v ->
+                                        new ksh.tryptobackend.trading.domain.model.RuleViolation(
+                                                v.getRuleId(),
+                                                v.getViolationReason(),
+                                                v.getCreatedAt()))
+                        .toList();
         return Order.reconstitute(
-            id, idempotencyKey, userId, walletId, exchangeCoinId, coinId, baseCoinId,
-            new MarketIdentifier(exchangeName, marketSymbol),
-            side, orderType, amount, new Quantity(quantity),
-            price, filledPrice, domainFee, status,
-            createdAt, filledAt, domainViolations
-        );
+                id,
+                idempotencyKey,
+                userId,
+                walletId,
+                exchangeCoinId,
+                coinId,
+                baseCoinId,
+                new MarketIdentifier(exchangeName, marketSymbol),
+                side,
+                orderType,
+                amount,
+                new Quantity(quantity),
+                price,
+                filledPrice,
+                domainFee,
+                status,
+                createdAt,
+                filledAt,
+                domainViolations);
     }
 }

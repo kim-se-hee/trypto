@@ -8,14 +8,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "investment_rule")
@@ -53,11 +52,11 @@ public class InvestmentRuleJpaEntity {
 
     public RuleSetting toRoundDomain() {
         return RuleSetting.builder()
-            .ruleId(id)
-            .roundId(roundId)
-            .ruleType(ruleType)
-            .thresholdValue(thresholdValue)
-            .createdAt(createdAt)
-            .build();
+                .ruleId(id)
+                .roundId(roundId)
+                .ruleType(ruleType)
+                .thresholdValue(thresholdValue)
+                .createdAt(createdAt)
+                .build();
     }
 }

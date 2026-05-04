@@ -1,12 +1,11 @@
 package ksh.tryptobackend.wallet.application.service;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.out.WalletCommandPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

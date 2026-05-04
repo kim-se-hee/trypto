@@ -1,5 +1,13 @@
 package ksh.tryptobackend.common.seed;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 import ksh.tryptobackend.common.domain.vo.ProfitRate;
 import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
@@ -9,15 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
 
 @Slf4j
 @Component
@@ -50,13 +49,19 @@ class RankingDataSeeder {
 
             for (int rank = 0; rank < profitDataList.size(); rank++) {
                 UserProfitData data = profitDataList.get(rank);
-                BigDecimal profitRateValue = new BigDecimal(data.profitRate).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal profitRateValue =
+                        new BigDecimal(data.profitRate).setScale(4, RoundingMode.HALF_UP);
 
-                Ranking ranking = Ranking.create(
-                    data.userId, data.roundId, period,
-                    rank + 1, ProfitRate.of(profitRateValue), data.tradeCount,
-                    today, now
-                );
+                Ranking ranking =
+                        Ranking.create(
+                                data.userId,
+                                data.roundId,
+                                period,
+                                rank + 1,
+                                ProfitRate.of(profitRateValue),
+                                data.tradeCount,
+                                today,
+                                now);
                 rankings.add(RankingJpaEntity.fromDomain(ranking));
             }
         }

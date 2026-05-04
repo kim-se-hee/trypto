@@ -6,13 +6,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import ksh.tryptobackend.marketdata.domain.model.Exchange;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "exchange_market")
@@ -37,8 +36,12 @@ public class ExchangeJpaEntity {
     @Column(name = "fee_rate", nullable = false, precision = 10, scale = 6)
     private BigDecimal feeRate;
 
-    public ExchangeJpaEntity(Long id, String name, ExchangeMarketType marketType,
-                              Long baseCurrencyCoinId, BigDecimal feeRate) {
+    public ExchangeJpaEntity(
+            Long id,
+            String name,
+            ExchangeMarketType marketType,
+            Long baseCurrencyCoinId,
+            BigDecimal feeRate) {
         this.id = id;
         this.name = name;
         this.marketType = marketType;
@@ -48,11 +51,11 @@ public class ExchangeJpaEntity {
 
     public Exchange toDomain() {
         return Exchange.builder()
-            .exchangeId(id)
-            .name(name)
-            .marketType(marketType)
-            .baseCurrencyCoinId(baseCurrencyCoinId)
-            .feeRate(feeRate)
-            .build();
+                .exchangeId(id)
+                .name(name)
+                .marketType(marketType)
+                .baseCurrencyCoinId(baseCurrencyCoinId)
+                .feeRate(feeRate)
+                .build();
     }
 }

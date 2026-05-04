@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,17 +17,14 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Entity
 @Table(
-    name = "emergency_funding",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_emergency_funding_round_idempotency", columnNames = {"round_id", "idempotency_key"})
-    }
-)
+        name = "emergency_funding",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_emergency_funding_round_idempotency",
+                    columnNames = {"round_id", "idempotency_key"})
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EmergencyFundingJpaEntity {
@@ -63,12 +63,12 @@ public class EmergencyFundingJpaEntity {
 
     public EmergencyFunding toDomain() {
         return EmergencyFunding.builder()
-            .fundingId(id)
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .amount(amount)
-            .idempotencyKey(idempotencyKey)
-            .createdAt(createdAt)
-            .build();
+                .fundingId(id)
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .amount(amount)
+                .idempotencyKey(idempotencyKey)
+                .createdAt(createdAt)
+                .build();
     }
 }

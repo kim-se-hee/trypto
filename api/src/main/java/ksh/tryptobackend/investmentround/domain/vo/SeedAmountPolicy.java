@@ -1,16 +1,14 @@
 package ksh.tryptobackend.investmentround.domain.vo;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Getter
 @RequiredArgsConstructor
 public enum SeedAmountPolicy {
-
     DOMESTIC(new BigDecimal("1000000"), new BigDecimal("50000000")),
     OVERSEAS(new BigDecimal("100"), new BigDecimal("50000"));
 

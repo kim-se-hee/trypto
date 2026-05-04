@@ -3,17 +3,16 @@ package ksh.tryptobackend.marketdata.adapter.out;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.marketdata.application.port.out.TickQueryPort;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeSymbolKey;
 import ksh.tryptobackend.marketdata.domain.vo.Tick;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,14 +35,28 @@ public class TickQueryAdapter implements TickQueryPort {
 
     private String buildFluxQuery(ExchangeSymbolKey key, Instant from, Instant to) {
         return new StringBuilder()
-            .append("from(bucket: \"").append(bucket).append("\")")
-            .append(" |> range(start: ").append(from).append(", stop: ").append(to).append(")")
-            .append(" |> filter(fn: (r) => r._measurement == \"").append(MEASUREMENT).append("\"")
-            .append(" and r.exchange == \"").append(key.exchange()).append("\"")
-            .append(" and r.symbol == \"").append(key.symbol()).append("\"")
-            .append(" and r._field == \"").append(PRICE_FIELD).append("\")")
-            .append(" |> sort(columns: [\"_time\"])")
-            .toString();
+                .append("from(bucket: \"")
+                .append(bucket)
+                .append("\")")
+                .append(" |> range(start: ")
+                .append(from)
+                .append(", stop: ")
+                .append(to)
+                .append(")")
+                .append(" |> filter(fn: (r) => r._measurement == \"")
+                .append(MEASUREMENT)
+                .append("\"")
+                .append(" and r.exchange == \"")
+                .append(key.exchange())
+                .append("\"")
+                .append(" and r.symbol == \"")
+                .append(key.symbol())
+                .append("\"")
+                .append(" and r._field == \"")
+                .append(PRICE_FIELD)
+                .append("\")")
+                .append(" |> sort(columns: [\"_time\"])")
+                .toString();
     }
 
     private List<Tick> mapToTicks(List<FluxTable> tables) {

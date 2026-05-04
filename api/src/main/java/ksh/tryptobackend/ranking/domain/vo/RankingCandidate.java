@@ -1,23 +1,19 @@
 package ksh.tryptobackend.ranking.domain.vo;
 
-import ksh.tryptobackend.common.domain.vo.ProfitRate;
-
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import ksh.tryptobackend.common.domain.vo.ProfitRate;
 
 public record RankingCandidate(
-    Long userId,
-    Long roundId,
-    ProfitRate profitRate,
-    int tradeCount,
-    LocalDateTime startedAt
-) implements Comparable<RankingCandidate> {
+        Long userId, Long roundId, ProfitRate profitRate, int tradeCount, LocalDateTime startedAt)
+        implements Comparable<RankingCandidate> {
 
     private static final Comparator<RankingCandidate> COMPARATOR =
-        Comparator.comparing(RankingCandidate::profitRate).reversed()
-            .thenComparing(RankingCandidate::tradeCount)
-            .thenComparing(RankingCandidate::startedAt)
-            .thenComparing(RankingCandidate::userId);
+            Comparator.comparing(RankingCandidate::profitRate)
+                    .reversed()
+                    .thenComparing(RankingCandidate::tradeCount)
+                    .thenComparing(RankingCandidate::startedAt)
+                    .thenComparing(RankingCandidate::userId);
 
     @Override
     public int compareTo(RankingCandidate other) {

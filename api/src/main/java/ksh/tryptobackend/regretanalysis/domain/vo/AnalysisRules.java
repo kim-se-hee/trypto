@@ -12,13 +12,10 @@ public record AnalysisRules(List<AnalysisRule> rules) {
     }
 
     public Optional<AnalysisRule> findById(Long ruleId) {
-        return rules.stream()
-            .filter(rule -> rule.ruleId().equals(ruleId))
-            .findFirst();
+        return rules.stream().filter(rule -> rule.ruleId().equals(ruleId)).findFirst();
     }
 
     public Map<Long, AnalysisRule> toMap() {
-        return rules.stream()
-            .collect(Collectors.toMap(AnalysisRule::ruleId, r -> r));
+        return rules.stream().collect(Collectors.toMap(AnalysisRule::ruleId, r -> r));
     }
 }

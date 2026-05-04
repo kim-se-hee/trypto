@@ -1,21 +1,20 @@
 package ksh.tryptobackend.acceptance.steps;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 public class TransferStepDefinition {
 
@@ -37,10 +36,11 @@ public class TransferStepDefinition {
     private Long lastTransferId;
     private Long firstTransferId;
 
-    public TransferStepDefinition(CommonApiClient apiClient,
-                                  TransferJpaRepository transferJpaRepository,
-                                  WalletBalanceJpaRepository walletBalanceJpaRepository,
-                                  JdbcTemplate jdbcTemplate) {
+    public TransferStepDefinition(
+            CommonApiClient apiClient,
+            TransferJpaRepository transferJpaRepository,
+            WalletBalanceJpaRepository walletBalanceJpaRepository,
+            JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.transferJpaRepository = transferJpaRepository;
         this.walletBalanceJpaRepository = walletBalanceJpaRepository;
@@ -51,10 +51,13 @@ public class TransferStepDefinition {
     public void setUp() {
         transferJpaRepository.deleteAllInBatch();
         walletBalanceJpaRepository.deleteAllInBatch();
-        jdbcTemplate.update("DELETE FROM wallet WHERE wallet_id IN (?, ?, ?)",
-            FROM_WALLET_ID, TO_WALLET_ID, OTHER_ROUND_WALLET_ID);
-        jdbcTemplate.update("DELETE FROM investment_round WHERE round_id IN (?, ?)",
-            ROUND_ID, OTHER_ROUND_ID);
+        jdbcTemplate.update(
+                "DELETE FROM wallet WHERE wallet_id IN (?, ?, ?)",
+                FROM_WALLET_ID,
+                TO_WALLET_ID,
+                OTHER_ROUND_WALLET_ID);
+        jdbcTemplate.update(
+                "DELETE FROM investment_round WHERE round_id IN (?, ?)", ROUND_ID, OTHER_ROUND_ID);
         jdbcTemplate.update("DELETE FROM coin WHERE coin_id = ?", COIN_ID);
         lastTransferId = null;
         firstTransferId = null;
@@ -70,15 +73,20 @@ public class TransferStepDefinition {
     @Given("송금용 코인이 등록되어 있다")
     public void 송금용_코인이_등록되어_있다() {
         jdbcTemplate.update(
-            "INSERT INTO coin (coin_id, symbol, name) VALUES (?, ?, ?)",
-            COIN_ID, COIN_SYMBOL, "Bitcoin");
+                "INSERT INTO coin (coin_id, symbol, name) VALUES (?, ?, ?)",
+                COIN_ID,
+                COIN_SYMBOL,
+                "Bitcoin");
     }
 
     @Given("출금 지갑에 BTC 잔고가 {double}개 있다")
     public void 출금_지갑에_BTC_잔고가_개_있다(double amount) {
         walletBalanceJpaRepository.save(
-            new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
-                FROM_WALLET_ID, COIN_ID, new BigDecimal(String.valueOf(amount)), BigDecimal.ZERO));
+                new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
+                        FROM_WALLET_ID,
+                        COIN_ID,
+                        new BigDecimal(String.valueOf(amount)),
+                        BigDecimal.ZERO));
     }
 
     @Given("다른 라운드의 지갑이 준비되어 있다")
@@ -102,7 +110,8 @@ public class TransferStepDefinition {
 
     @When("출금 지갑에서 다른 라운드 지갑으로 BTC {double}개를 송금한다")
     public void 출금_지갑에서_다른_라운드_지갑으로_BTC_개를_송금한다(double amount) {
-        Map<String, Object> body = createTransferBody(FROM_WALLET_ID, OTHER_ROUND_WALLET_ID, amount);
+        Map<String, Object> body =
+                createTransferBody(FROM_WALLET_ID, OTHER_ROUND_WALLET_ID, amount);
         apiClient.post("/api/transfers", body);
     }
 
@@ -132,9 +141,7 @@ public class TransferStepDefinition {
 
     @Then("송금 상태는 {string}이다")
     public void 송금_상태는_이다(String status) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.status").isEqualTo(status);
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.status").isEqualTo(status);
     }
 
     @Then("두 응답의 transferId가 동일하다")
@@ -142,7 +149,8 @@ public class TransferStepDefinition {
         assertThat(firstTransferId).isEqualTo(lastTransferId);
     }
 
-    private Map<String, Object> createTransferBody(Long fromWalletId, Long toWalletId, double amount) {
+    private Map<String, Object> createTransferBody(
+            Long fromWalletId, Long toWalletId, double amount) {
         Map<String, Object> body = new HashMap<>();
         body.put("idempotencyKey", UUID.randomUUID().toString());
         body.put("fromWalletId", fromWalletId);
@@ -154,25 +162,28 @@ public class TransferStepDefinition {
 
     private void createRound(Long roundId) {
         jdbcTemplate.update(
-            "INSERT INTO investment_round (round_id, version, user_id, round_number, initial_seed, " +
-                "emergency_funding_limit, emergency_charge_count, status, started_at) " +
-                "VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', ?)",
-            roundId, roundId, LocalDateTime.now());
+                "INSERT INTO investment_round (round_id, version, user_id, round_number,"
+                        + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
+                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', ?)",
+                roundId,
+                roundId,
+                LocalDateTime.now());
     }
 
     private void createWallet(Long walletId, Long roundId, Long exchangeId) {
         jdbcTemplate.update(
-            "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at) " +
-                "VALUES (?, ?, ?, 10000000, ?)",
-            walletId, roundId, exchangeId, LocalDateTime.now());
+                "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at) "
+                        + "VALUES (?, ?, ?, 10000000, ?)",
+                walletId,
+                roundId,
+                exchangeId,
+                LocalDateTime.now());
     }
 
     @SuppressWarnings("unchecked")
     private void extractTransferIdIfSuccess() {
-        Map<String, Object> body = apiClient.getLastResponse()
-            .expectBody(Map.class)
-            .returnResult()
-            .getResponseBody();
+        Map<String, Object> body =
+                apiClient.getLastResponse().expectBody(Map.class).returnResult().getResponseBody();
         Map<String, Object> data = (Map<String, Object>) body.get("data");
         if (data != null && data.get("transferId") instanceof Number num) {
             lastTransferId = num.longValue();

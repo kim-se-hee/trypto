@@ -1,10 +1,9 @@
 package ksh.tryptobackend.regretanalysis.application.port.out;
 
-import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
-import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
+import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 
 public interface RegretReportQueryPort {
 

@@ -23,20 +23,22 @@ public final class BtcBenchmark {
 
     private BtcBenchmark(List<DailyValue> entries) {
         this.entries = entries;
-        this.entryByDate = entries.stream()
-            .collect(Collectors.toMap(DailyValue::date, Function.identity()));
+        this.entryByDate =
+                entries.stream().collect(Collectors.toMap(DailyValue::date, Function.identity()));
     }
 
-    public static BtcBenchmark calculate(BigDecimal seedMoney,
-                                          Map<LocalDate, BigDecimal> btcPriceByDate,
-                                          List<LocalDate> snapshotDates,
-                                          LocalDate startDate) {
+    public static BtcBenchmark calculate(
+            BigDecimal seedMoney,
+            Map<LocalDate, BigDecimal> btcPriceByDate,
+            List<LocalDate> snapshotDates,
+            LocalDate startDate) {
         BigDecimal btcPriceAtStart = btcPriceByDate.get(startDate);
         if (btcPriceAtStart == null || btcPriceAtStart.compareTo(BigDecimal.ZERO) == 0) {
             return new BtcBenchmark(List.of());
         }
 
-        BigDecimal btcQuantity = seedMoney.divide(btcPriceAtStart, PRICE_SCALE, RoundingMode.HALF_UP);
+        BigDecimal btcQuantity =
+                seedMoney.divide(btcPriceAtStart, PRICE_SCALE, RoundingMode.HALF_UP);
 
         List<DailyValue> result = new ArrayList<>();
         for (LocalDate date : snapshotDates) {
@@ -74,7 +76,9 @@ public final class BtcBenchmark {
     public int hashCode() {
         int result = Objects.hash(entries.size());
         for (DailyValue entry : entries) {
-            result = 31 * result + Objects.hash(entry.date(), entry.assetValue().stripTrailingZeros());
+            result =
+                    31 * result
+                            + Objects.hash(entry.date(), entry.assetValue().stripTrailingZeros());
         }
         return result;
     }

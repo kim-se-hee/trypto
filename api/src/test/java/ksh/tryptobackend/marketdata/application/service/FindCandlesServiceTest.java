@@ -1,5 +1,16 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.dto.query.FindCandlesQuery;
@@ -18,18 +29,6 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 class FindCandlesServiceTest {
 
     private CandleQueryPort candleQueryPort;
@@ -37,7 +36,8 @@ class FindCandlesServiceTest {
     private FindCandlesService findCandlesService;
 
     private static final ExchangeSummary UPBIT_SUMMARY = new ExchangeSummary(1L, "UPBIT", "KRW");
-    private static final ExchangeSummary BINANCE_SUMMARY = new ExchangeSummary(3L, "BINANCE", "USDT");
+    private static final ExchangeSummary BINANCE_SUMMARY =
+            new ExchangeSummary(3L, "BINANCE", "USDT");
 
     @BeforeEach
     void setUp() {
@@ -45,8 +45,10 @@ class FindCandlesServiceTest {
         exchangeQueryPort = mock(ExchangeQueryPort.class);
         findCandlesService = new FindCandlesService(candleQueryPort, exchangeQueryPort);
 
-        when(exchangeQueryPort.findExchangeSummaryByName("UPBIT")).thenReturn(Optional.of(UPBIT_SUMMARY));
-        when(exchangeQueryPort.findExchangeSummaryByName("BINANCE")).thenReturn(Optional.of(BINANCE_SUMMARY));
+        when(exchangeQueryPort.findExchangeSummaryByName("UPBIT"))
+                .thenReturn(Optional.of(UPBIT_SUMMARY));
+        when(exchangeQueryPort.findExchangeSummaryByName("BINANCE"))
+                .thenReturn(Optional.of(BINANCE_SUMMARY));
     }
 
     @Nested
@@ -63,9 +65,9 @@ class FindCandlesServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> findCandlesService.findCandles(query))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_EXCHANGE_NAME);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_EXCHANGE_NAME);
         }
 
         @Test
@@ -73,13 +75,14 @@ class FindCandlesServiceTest {
         void findCandles_unknownExchange_throwsException() {
             // Given
             FindCandlesQuery query = new FindCandlesQuery("UNKNOWN", "BTC", "1d", 60, null);
-            when(exchangeQueryPort.findExchangeSummaryByName("UNKNOWN")).thenReturn(Optional.empty());
+            when(exchangeQueryPort.findExchangeSummaryByName("UNKNOWN"))
+                    .thenReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> findCandlesService.findCandles(query))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.EXCHANGE_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.EXCHANGE_NOT_FOUND);
         }
     }
 
@@ -97,9 +100,9 @@ class FindCandlesServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> findCandlesService.findCandles(query))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_COIN_SYMBOL);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_COIN_SYMBOL);
         }
     }
 
@@ -168,9 +171,9 @@ class FindCandlesServiceTest {
 
             // When & Then
             assertThatThrownBy(() -> findCandlesService.findCandles(query))
-                .isInstanceOf(CustomException.class)
-                .extracting(ex -> ((CustomException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_CANDLE_INTERVAL);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.INVALID_CANDLE_INTERVAL);
         }
     }
 
@@ -274,11 +277,14 @@ class FindCandlesServiceTest {
         void findCandles_returnsPortResult() {
             // Given
             FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
-            List<Candle> expected = List.of(
-                new Candle(Instant.parse("2026-03-10T00:00:00Z"),
-                    new BigDecimal("68500000"), new BigDecimal("69200000"),
-                    new BigDecimal("67800000"), new BigDecimal("68900000"))
-            );
+            List<Candle> expected =
+                    List.of(
+                            new Candle(
+                                    Instant.parse("2026-03-10T00:00:00Z"),
+                                    new BigDecimal("68500000"),
+                                    new BigDecimal("69200000"),
+                                    new BigDecimal("67800000"),
+                                    new BigDecimal("68900000")));
             when(candleQueryPort.findByFilter(any())).thenReturn(expected);
 
             // When

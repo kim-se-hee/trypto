@@ -9,5 +9,4 @@ public class TryptoBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(TryptoBackendApplication.class, args);
     }
-
 }

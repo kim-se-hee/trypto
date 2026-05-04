@@ -6,13 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "rule_impact")
@@ -52,9 +51,6 @@ public class RuleImpactJpaEntity {
 
     RuleImpact toDomain() {
         return RuleImpact.reconstitute(
-            id, reportId, ruleId,
-            violationCount, totalLossAmount,
-            ImpactGap.of(impactGap)
-        );
+                id, reportId, ruleId, violationCount, totalLossAmount, ImpactGap.of(impactGap));
     }
 }

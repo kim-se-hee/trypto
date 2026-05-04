@@ -1,9 +1,8 @@
 package ksh.tryptobackend.marketdata.domain.model;
 
+import java.math.BigDecimal;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
 
 @Getter
 @Builder

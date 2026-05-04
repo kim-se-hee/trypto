@@ -1,8 +1,7 @@
 package ksh.tryptobackend.trading.application.port.in;
 
-import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
-
 import java.util.List;
+import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
 
 public interface FindViolationsUseCase {
 

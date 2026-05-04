@@ -1,6 +1,8 @@
 package ksh.tryptobackend.ranking.adapter.out;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDate;
+import java.util.List;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
 import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
@@ -10,9 +12,6 @@ import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -25,14 +24,14 @@ public class RankingCommandAdapter implements RankingCommandPort {
 
     @Override
     @Transactional
-    public void replaceByPeriodAndDate(List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate) {
-        queryFactory.delete(ranking)
-            .where(ranking.period.eq(period)
-                .and(ranking.referenceDate.eq(referenceDate)))
-            .execute();
-        List<RankingJpaEntity> entities = rankings.stream()
-            .map(RankingJpaEntity::fromDomain)
-            .toList();
+    public void replaceByPeriodAndDate(
+            List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate) {
+        queryFactory
+                .delete(ranking)
+                .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)))
+                .execute();
+        List<RankingJpaEntity> entities =
+                rankings.stream().map(RankingJpaEntity::fromDomain).toList();
         rankingJpaRepository.saveAll(entities);
     }
 }

@@ -1,8 +1,7 @@
 package ksh.tryptobackend.investmentround.application.port.in;
 
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
-
 import java.util.Optional;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
 
 public interface FindRoundInfoUseCase {
 

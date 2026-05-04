@@ -1,10 +1,9 @@
 package ksh.tryptobackend.trading.adapter.out.repository;
 
-import ksh.tryptobackend.trading.adapter.out.entity.HoldingJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.trading.adapter.out.entity.HoldingJpaEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HoldingJpaRepository extends JpaRepository<HoldingJpaEntity, Long> {
 

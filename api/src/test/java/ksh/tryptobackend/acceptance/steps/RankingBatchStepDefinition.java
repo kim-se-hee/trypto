@@ -1,9 +1,17 @@
 package ksh.tryptobackend.acceptance.steps;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
 import ksh.tryptobackend.portfolio.adapter.out.repository.SnapshotDetailJpaRepository;
 import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
@@ -14,15 +22,6 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class RankingBatchStepDefinition {
 
@@ -38,12 +37,13 @@ public class RankingBatchStepDefinition {
 
     private List<RankingJpaEntity> savedRankings;
 
-    public RankingBatchStepDefinition(JobOperator jobOperator,
-                                      Job rankingJob,
-                                      RankingJpaRepository rankingRepository,
-                                      PortfolioSnapshotJpaRepository snapshotRepository,
-                                      SnapshotDetailJpaRepository detailRepository,
-                                      JdbcTemplate jdbcTemplate) {
+    public RankingBatchStepDefinition(
+            JobOperator jobOperator,
+            Job rankingJob,
+            RankingJpaRepository rankingRepository,
+            PortfolioSnapshotJpaRepository snapshotRepository,
+            SnapshotDetailJpaRepository detailRepository,
+            JdbcTemplate jdbcTemplate) {
         this.jobOperator = jobOperator;
         this.rankingJob = rankingJob;
         this.rankingRepository = rankingRepository;
@@ -58,7 +58,9 @@ public class RankingBatchStepDefinition {
         detailRepository.deleteAllInBatch();
         snapshotRepository.deleteAllInBatch();
         jdbcTemplate.update("DELETE FROM orders");
-        jdbcTemplate.update("DELETE FROM wallet WHERE round_id IN (SELECT round_id FROM investment_round WHERE status = 'ACTIVE')");
+        jdbcTemplate.update(
+                "DELETE FROM wallet WHERE round_id IN (SELECT round_id FROM investment_round WHERE"
+                        + " status = 'ACTIVE')");
     }
 
     @Given("랭킹 대상 라운드가 존재한다")
@@ -90,10 +92,11 @@ public class RankingBatchStepDefinition {
 
     @When("랭킹 배치를 실행한다")
     public void 랭킹_배치를_실행한다() throws Exception {
-        JobParameters params = new JobParametersBuilder()
-            .addString("snapshotDate", SNAPSHOT_DATE.toString())
-            .addLong("run.id", System.currentTimeMillis())
-            .toJobParameters();
+        JobParameters params =
+                new JobParametersBuilder()
+                        .addString("snapshotDate", SNAPSHOT_DATE.toString())
+                        .addLong("run.id", System.currentTimeMillis())
+                        .toJobParameters();
         jobOperator.start(rankingJob, params);
         savedRankings = rankingRepository.findAll();
     }
@@ -105,49 +108,55 @@ public class RankingBatchStepDefinition {
 
     @Then("DAILY 랭킹이 {int}건 생성된다")
     public void DAILY_랭킹이_건_생성된다(int count) {
-        List<RankingJpaEntity> dailyRankings = savedRankings.stream()
-            .filter(r -> r.getPeriod() == RankingPeriod.DAILY)
-            .toList();
+        List<RankingJpaEntity> dailyRankings =
+                savedRankings.stream().filter(r -> r.getPeriod() == RankingPeriod.DAILY).toList();
         assertThat(dailyRankings).hasSize(count);
     }
 
     @Then("{int}위의 수익률은 {double}이다")
     public void 위의_수익률은_이다(int rank, double profitRate) {
-        List<RankingJpaEntity> dailyRankings = savedRankings.stream()
-            .filter(r -> r.getPeriod() == RankingPeriod.DAILY)
-            .sorted(Comparator.comparingInt(RankingJpaEntity::getRank))
-            .toList();
+        List<RankingJpaEntity> dailyRankings =
+                savedRankings.stream()
+                        .filter(r -> r.getPeriod() == RankingPeriod.DAILY)
+                        .sorted(Comparator.comparingInt(RankingJpaEntity::getRank))
+                        .toList();
 
-        RankingJpaEntity ranking = dailyRankings.stream()
-            .filter(r -> r.getRank() == rank)
-            .findFirst()
-            .orElseThrow();
+        RankingJpaEntity ranking =
+                dailyRankings.stream().filter(r -> r.getRank() == rank).findFirst().orElseThrow();
 
         assertThat(ranking.getProfitRate())
-            .isEqualByComparingTo(new BigDecimal(String.valueOf(profitRate)));
+                .isEqualByComparingTo(new BigDecimal(String.valueOf(profitRate)));
     }
 
     private void ensureActiveRound(Long roundId, Long userId) {
-        Integer count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM investment_round WHERE round_id = ?", Integer.class, roundId);
+        Integer count =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM investment_round WHERE round_id = ?",
+                        Integer.class,
+                        roundId);
         if (count == null || count == 0) {
             jdbcTemplate.update(
-                "INSERT INTO investment_round (round_id, version, user_id, round_number, initial_seed, " +
-                    "emergency_funding_limit, emergency_charge_count, status, started_at) " +
-                    "VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', ?)",
-                roundId, userId, LocalDateTime.of(2026, 1, 1, 0, 0));
+                    "INSERT INTO investment_round (round_id, version, user_id, round_number,"
+                        + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
+                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', ?)",
+                    roundId,
+                    userId,
+                    LocalDateTime.of(2026, 1, 1, 0, 0));
         }
     }
 
     private Long insertWalletAndGetId(Long roundId) {
         Long walletId = roundId * 1000;
-        Integer count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM wallet WHERE wallet_id = ?", Integer.class, walletId);
+        Integer count =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM wallet WHERE wallet_id = ?", Integer.class, walletId);
         if (count == null || count == 0) {
             jdbcTemplate.update(
-                "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at) " +
-                    "VALUES (?, ?, 1, 10000000, ?)",
-                walletId, roundId, LocalDateTime.now());
+                    "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)"
+                            + " VALUES (?, ?, 1, 10000000, ?)",
+                    walletId,
+                    roundId,
+                    LocalDateTime.now());
         }
         return walletId;
     }
@@ -155,29 +164,33 @@ public class RankingBatchStepDefinition {
     private void insertFilledOrders(Long walletId, int count) {
         for (int i = 0; i < count; i++) {
             jdbcTemplate.update(
-                "INSERT INTO orders (idempotency_key, wallet_id, exchange_coin_id, order_type, side, " +
-                    "order_amount, quantity, price, filled_price, fee, fee_rate, status, created_at, filled_at) " +
-                    "VALUES (?, ?, 1, 'MARKET', 'BUY', 100000, 0.001, 50000000, 50000000, 50, 0.0005, 'FILLED', ?, ?)",
-                java.util.UUID.randomUUID().toString(), walletId, LocalDateTime.now(), LocalDateTime.now());
+                    "INSERT INTO orders (idempotency_key, wallet_id, exchange_coin_id, order_type,"
+                            + " side, order_amount, quantity, price, filled_price, fee, fee_rate,"
+                            + " status, created_at, filled_at) VALUES (?, ?, 1, 'MARKET', 'BUY',"
+                            + " 100000, 0.001, 50000000, 50000000, 50, 0.0005, 'FILLED', ?, ?)",
+                    java.util.UUID.randomUUID().toString(),
+                    walletId,
+                    LocalDateTime.now(),
+                    LocalDateTime.now());
         }
     }
 
     private void insertSnapshot(Map<String, String> row, LocalDate snapshotDate) {
         jdbcTemplate.update(
-            "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, "
-                + "total_asset, total_asset_krw, total_investment, total_investment_krw, "
-                + "total_profit, total_profit_rate, snapshot_date) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            Long.valueOf(row.get("userId")),
-            Long.valueOf(row.get("roundId")),
-            Long.valueOf(row.get("exchangeId")),
-            new BigDecimal(row.get("totalAssetKrw")),
-            new BigDecimal(row.get("totalAssetKrw")),
-            new BigDecimal(row.get("totalInvestmentKrw")),
-            new BigDecimal(row.get("totalInvestmentKrw")),
-            new BigDecimal(row.get("totalAssetKrw")).subtract(new BigDecimal(row.get("totalInvestmentKrw"))),
-            BigDecimal.ZERO,
-            snapshotDate
-        );
+                "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, "
+                        + "total_asset, total_asset_krw, total_investment, total_investment_krw, "
+                        + "total_profit, total_profit_rate, snapshot_date) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                Long.valueOf(row.get("userId")),
+                Long.valueOf(row.get("roundId")),
+                Long.valueOf(row.get("exchangeId")),
+                new BigDecimal(row.get("totalAssetKrw")),
+                new BigDecimal(row.get("totalAssetKrw")),
+                new BigDecimal(row.get("totalInvestmentKrw")),
+                new BigDecimal(row.get("totalInvestmentKrw")),
+                new BigDecimal(row.get("totalAssetKrw"))
+                        .subtract(new BigDecimal(row.get("totalInvestmentKrw"))),
+                BigDecimal.ZERO,
+                snapshotDate);
     }
 }

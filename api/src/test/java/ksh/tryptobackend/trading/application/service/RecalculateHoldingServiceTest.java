@@ -1,5 +1,13 @@
 package ksh.tryptobackend.trading.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.trading.application.port.out.HoldingCommandPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Holding;
@@ -12,15 +20,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class RecalculateHoldingServiceTest {
@@ -96,7 +95,7 @@ class RecalculateHoldingServiceTest {
         Holding existing = Holding.empty(WALLET_ID, COIN_ID);
         givenFills(List.of(buy(bd("100"), bd("1"))));
         given(holdingCommandPort.findByWalletIdAndCoinId(WALLET_ID, COIN_ID))
-            .willReturn(Optional.of(existing));
+                .willReturn(Optional.of(existing));
 
         service.recalculate(WALLET_ID, COIN_ID);
 
@@ -123,7 +122,8 @@ class RecalculateHoldingServiceTest {
     }
 
     private void givenNoExistingHolding() {
-        given(holdingCommandPort.findByWalletIdAndCoinId(WALLET_ID, COIN_ID)).willReturn(Optional.empty());
+        given(holdingCommandPort.findByWalletIdAndCoinId(WALLET_ID, COIN_ID))
+                .willReturn(Optional.empty());
     }
 
     private Holding capture() {
@@ -133,13 +133,13 @@ class RecalculateHoldingServiceTest {
     }
 
     private FilledOrder buy(BigDecimal price, BigDecimal qty) {
-        return new FilledOrder(1L, WALLET_ID, 1L, Side.BUY,
-            price.multiply(qty), qty, price, LocalDateTime.now());
+        return new FilledOrder(
+                1L, WALLET_ID, 1L, Side.BUY, price.multiply(qty), qty, price, LocalDateTime.now());
     }
 
     private FilledOrder sell(BigDecimal price, BigDecimal qty) {
-        return new FilledOrder(1L, WALLET_ID, 1L, Side.SELL,
-            price.multiply(qty), qty, price, LocalDateTime.now());
+        return new FilledOrder(
+                1L, WALLET_ID, 1L, Side.SELL, price.multiply(qty), qty, price, LocalDateTime.now());
     }
 
     private static BigDecimal bd(String v) {

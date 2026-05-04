@@ -1,8 +1,15 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import ksh.tryptobackend.marketdata.adapter.out.entity.CoinJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
@@ -16,17 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @RequiredArgsConstructor
@@ -52,9 +51,7 @@ public class TickerSnapshotQueryAdapter implements TickerSnapshotQueryPort {
         buildRedisKeysInBatch(exchangeCoinIds);
 
         List<Long> ids = new ArrayList<>(exchangeCoinIds);
-        List<String> keys = ids.stream()
-            .map(redisKeyCache::get)
-            .toList();
+        List<String> keys = ids.stream().map(redisKeyCache::get).toList();
 
         List<String> jsons = redisTemplate.opsForValue().multiGet(keys);
 
@@ -67,9 +64,10 @@ public class TickerSnapshotQueryAdapter implements TickerSnapshotQueryPort {
     }
 
     private void buildRedisKeysInBatch(Set<Long> exchangeCoinIds) {
-        Set<Long> uncachedIds = exchangeCoinIds.stream()
-            .filter(id -> !redisKeyCache.containsKey(id))
-            .collect(Collectors.toSet());
+        Set<Long> uncachedIds =
+                exchangeCoinIds.stream()
+                        .filter(id -> !redisKeyCache.containsKey(id))
+                        .collect(Collectors.toSet());
 
         if (uncachedIds.isEmpty()) {
             return;
@@ -77,24 +75,28 @@ public class TickerSnapshotQueryAdapter implements TickerSnapshotQueryPort {
 
         List<ExchangeCoinJpaEntity> exchangeCoins = exchangeCoinRepository.findByIdIn(uncachedIds);
 
-        Set<Long> exchangeIds = exchangeCoins.stream()
-            .map(ExchangeCoinJpaEntity::getExchangeId)
-            .collect(Collectors.toSet());
-        Map<Long, ExchangeJpaEntity> exchangeMap = exchangeRepository.findAllById(exchangeIds).stream()
-            .collect(Collectors.toMap(ExchangeJpaEntity::getId, e -> e));
+        Set<Long> exchangeIds =
+                exchangeCoins.stream()
+                        .map(ExchangeCoinJpaEntity::getExchangeId)
+                        .collect(Collectors.toSet());
+        Map<Long, ExchangeJpaEntity> exchangeMap =
+                exchangeRepository.findAllById(exchangeIds).stream()
+                        .collect(Collectors.toMap(ExchangeJpaEntity::getId, e -> e));
 
         Set<Long> coinIds = new HashSet<>();
         exchangeCoins.forEach(ec -> coinIds.add(ec.getCoinId()));
         exchangeMap.values().forEach(ex -> coinIds.add(ex.getBaseCurrencyCoinId()));
 
-        Map<Long, String> symbolMap = coinRepository.findByIdIn(coinIds).stream()
-            .collect(Collectors.toMap(CoinJpaEntity::getId, CoinJpaEntity::getSymbol));
+        Map<Long, String> symbolMap =
+                coinRepository.findByIdIn(coinIds).stream()
+                        .collect(Collectors.toMap(CoinJpaEntity::getId, CoinJpaEntity::getSymbol));
 
         for (ExchangeCoinJpaEntity ec : exchangeCoins) {
             ExchangeJpaEntity exchange = exchangeMap.get(ec.getExchangeId());
             String baseSymbol = symbolMap.get(ec.getCoinId());
             String quoteSymbol = symbolMap.get(exchange.getBaseCurrencyCoinId());
-            String key = TICKER_KEY_PREFIX + exchange.getName() + ":" + baseSymbol + "/" + quoteSymbol;
+            String key =
+                    TICKER_KEY_PREFIX + exchange.getName() + ":" + baseSymbol + "/" + quoteSymbol;
             redisKeyCache.put(ec.getId(), key);
         }
     }

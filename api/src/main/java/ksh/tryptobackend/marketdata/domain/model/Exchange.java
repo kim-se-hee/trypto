@@ -1,11 +1,10 @@
 package ksh.tryptobackend.marketdata.domain.model;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
 
 @Getter
 @Builder

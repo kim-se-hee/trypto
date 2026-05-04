@@ -14,11 +14,12 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-    name = "deposit_address",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_deposit_address_wallet_coin", columnNames = {"wallet_id", "coin_id"})
-    }
-)
+        name = "deposit_address",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_deposit_address_wallet_coin",
+                    columnNames = {"wallet_id", "coin_id"})
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DepositAddressJpaEntity {
@@ -48,10 +49,10 @@ public class DepositAddressJpaEntity {
 
     public DepositAddress toDomain() {
         return DepositAddress.builder()
-            .depositAddressId(id)
-            .walletId(walletId)
-            .coinId(coinId)
-            .address(address)
-            .build();
+                .depositAddressId(id)
+                .walletId(walletId)
+                .coinId(coinId)
+                .address(address)
+                .build();
     }
 }

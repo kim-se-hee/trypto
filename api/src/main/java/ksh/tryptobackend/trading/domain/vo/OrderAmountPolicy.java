@@ -1,16 +1,14 @@
 package ksh.tryptobackend.trading.domain.vo;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Getter
 @RequiredArgsConstructor
 public enum OrderAmountPolicy {
-
     DOMESTIC(new BigDecimal("5000"), new BigDecimal("1000000000")),
     OVERSEAS(new BigDecimal("5"), null);
 

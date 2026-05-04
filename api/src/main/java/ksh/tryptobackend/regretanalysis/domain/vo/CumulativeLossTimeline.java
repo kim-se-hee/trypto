@@ -1,7 +1,5 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
-import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 
 public final class CumulativeLossTimeline {
 
@@ -21,15 +20,16 @@ public final class CumulativeLossTimeline {
 
     private CumulativeLossTimeline(List<DailyLoss> entries) {
         this.entries = entries;
-        this.entryByDate = entries.stream()
-            .collect(Collectors.toMap(DailyLoss::date, Function.identity()));
+        this.entryByDate =
+                entries.stream().collect(Collectors.toMap(DailyLoss::date, Function.identity()));
     }
 
-    public static CumulativeLossTimeline build(List<ViolationDetail> violations,
-                                                List<LocalDate> snapshotDates) {
-        List<ViolationDetail> sortedViolations = violations.stream()
-            .sorted(Comparator.comparing(ViolationDetail::getOccurredDate))
-            .toList();
+    public static CumulativeLossTimeline build(
+            List<ViolationDetail> violations, List<LocalDate> snapshotDates) {
+        List<ViolationDetail> sortedViolations =
+                violations.stream()
+                        .sorted(Comparator.comparing(ViolationDetail::getOccurredDate))
+                        .toList();
 
         List<DailyLoss> result = new ArrayList<>();
         BigDecimal cumulativeLoss = BigDecimal.ZERO;
@@ -37,8 +37,12 @@ public final class CumulativeLossTimeline {
 
         for (LocalDate snapshotDate : snapshotDates) {
             while (violationIndex < sortedViolations.size()
-                && !sortedViolations.get(violationIndex).getOccurredDate().isAfter(snapshotDate)) {
-                cumulativeLoss = cumulativeLoss.add(sortedViolations.get(violationIndex).getLossAmount());
+                    && !sortedViolations
+                            .get(violationIndex)
+                            .getOccurredDate()
+                            .isAfter(snapshotDate)) {
+                cumulativeLoss =
+                        cumulativeLoss.add(sortedViolations.get(violationIndex).getLossAmount());
                 violationIndex++;
             }
             result.add(new DailyLoss(snapshotDate, cumulativeLoss));
@@ -63,7 +67,8 @@ public final class CumulativeLossTimeline {
         for (int i = 0; i < entries.size(); i++) {
             DailyLoss a = entries.get(i);
             DailyLoss b = that.entries.get(i);
-            if (!a.date().equals(b.date()) || a.cumulativeLoss().compareTo(b.cumulativeLoss()) != 0) {
+            if (!a.date().equals(b.date())
+                    || a.cumulativeLoss().compareTo(b.cumulativeLoss()) != 0) {
                 return false;
             }
         }
@@ -74,7 +79,10 @@ public final class CumulativeLossTimeline {
     public int hashCode() {
         int result = Objects.hash(entries.size());
         for (DailyLoss entry : entries) {
-            result = 31 * result + Objects.hash(entry.date(), entry.cumulativeLoss().stripTrailingZeros());
+            result =
+                    31 * result
+                            + Objects.hash(
+                                    entry.date(), entry.cumulativeLoss().stripTrailingZeros());
         }
         return result;
     }

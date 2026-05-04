@@ -4,8 +4,4 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record FindWithdrawalFeeRequest(
-    @NotNull Long exchangeId,
-    @NotNull Long coinId,
-    @NotBlank String chain
-) {
-}
+        @NotNull Long exchangeId, @NotNull Long coinId, @NotBlank String chain) {}

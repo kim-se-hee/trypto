@@ -1,21 +1,21 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
-import ksh.tryptobackend.marketdata.domain.vo.DailyClosePrice;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
+import ksh.tryptobackend.marketdata.domain.vo.DailyClosePrice;
 
 public class MockBtcPriceHistoryAdapter implements BtcPriceHistoryQueryPort {
 
     private final Map<String, BigDecimal> prices = new ConcurrentHashMap<>();
 
     @Override
-    public List<DailyClosePrice> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) {
+    public List<DailyClosePrice> findBtcDailyPrices(
+            LocalDate startDate, LocalDate endDate, String currency) {
         List<DailyClosePrice> result = new ArrayList<>();
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             String key = toKey(date, currency);

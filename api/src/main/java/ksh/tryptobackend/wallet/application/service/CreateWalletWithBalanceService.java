@@ -17,7 +17,10 @@ public class CreateWalletWithBalanceService implements CreateWalletWithBalanceUs
     @Transactional
     public Long createWalletWithBalance(CreateWalletWithBalanceCommand command) {
         return walletCommandPort.createWalletWithBalance(
-            command.roundId(), command.exchangeId(), command.baseCurrencyCoinId(),
-            command.initialAmount(), command.createdAt());
+                command.roundId(),
+                command.exchangeId(),
+                command.baseCurrencyCoinId(),
+                command.initialAmount(),
+                command.createdAt());
     }
 }

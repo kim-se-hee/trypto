@@ -1,8 +1,7 @@
 package ksh.tryptobackend.investmentround.application.port.out;
 
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
-
 import java.util.List;
+import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
 
 public interface RuleSettingQueryPort {
 

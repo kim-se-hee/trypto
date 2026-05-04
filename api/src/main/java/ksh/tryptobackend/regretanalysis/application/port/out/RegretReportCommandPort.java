@@ -1,8 +1,7 @@
 package ksh.tryptobackend.regretanalysis.application.port.out;
 
-import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
-
 import java.util.List;
+import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 
 public interface RegretReportCommandPort {
 

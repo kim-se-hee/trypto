@@ -13,13 +13,11 @@ public class EvaluatedHoldings {
 
     public BigDecimal totalEvaluatedAmount() {
         return holdings.stream()
-            .map(EvaluatedHolding::getEvaluatedAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(EvaluatedHolding::getEvaluatedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<SnapshotDetail> toSnapshotDetails(BigDecimal totalAsset) {
-        return holdings.stream()
-            .map(h -> h.toSnapshotDetail(totalAsset))
-            .toList();
+        return holdings.stream().map(h -> h.toSnapshotDetail(totalAsset)).toList();
     }
 }

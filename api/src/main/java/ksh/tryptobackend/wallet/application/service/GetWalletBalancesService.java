@@ -1,5 +1,7 @@
 package ksh.tryptobackend.wallet.application.service;
 
+import java.util.List;
+import java.util.Set;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
@@ -21,9 +23,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Set;
-
 @Service
 @RequiredArgsConstructor
 public class GetWalletBalancesService implements GetWalletBalancesUseCase {
@@ -42,20 +41,24 @@ public class GetWalletBalancesService implements GetWalletBalancesUseCase {
         validateOwnership(wallet, query);
 
         Long baseCurrencyCoinId = getBaseCurrencyCoinId(wallet);
-        WalletBalances balances = new WalletBalances(walletBalanceQueryPort.findByWalletId(query.walletId()));
+        WalletBalances balances =
+                new WalletBalances(walletBalanceQueryPort.findByWalletId(query.walletId()));
         String baseCurrencySymbol = resolveBaseCurrencySymbol(baseCurrencyCoinId);
 
         return buildResult(wallet, baseCurrencySymbol, baseCurrencyCoinId, balances);
     }
 
     private Wallet getWallet(GetWalletBalancesQuery query) {
-        return walletQueryPort.findById(query.walletId())
-            .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        return walletQueryPort
+                .findById(query.walletId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     private void validateOwnership(Wallet wallet, GetWalletBalancesQuery query) {
-        RoundInfoResult round = findRoundInfoUseCase.findById(wallet.getRoundId())
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        RoundInfoResult round =
+                findRoundInfoUseCase
+                        .findById(wallet.getRoundId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
 
         if (!round.userId().equals(query.userId())) {
             throw new CustomException(ErrorCode.WALLET_NOT_OWNED);
@@ -63,15 +66,17 @@ public class GetWalletBalancesService implements GetWalletBalancesUseCase {
     }
 
     private Long getBaseCurrencyCoinId(Wallet wallet) {
-        ExchangeDetailResult exchange = findExchangeDetailUseCase.findExchangeDetail(wallet.getExchangeId())
-            .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeDetailResult exchange =
+                findExchangeDetailUseCase
+                        .findExchangeDetail(wallet.getExchangeId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         return exchange.baseCurrencyCoinId();
     }
 
     private String resolveBaseCurrencySymbol(Long baseCurrencyCoinId) {
-        CoinInfoResult coinInfo = findCoinInfoUseCase.findByIds(Set.of(baseCurrencyCoinId))
-            .get(baseCurrencyCoinId);
+        CoinInfoResult coinInfo =
+                findCoinInfoUseCase.findByIds(Set.of(baseCurrencyCoinId)).get(baseCurrencyCoinId);
 
         if (coinInfo == null) {
             throw new CustomException(ErrorCode.COIN_NOT_FOUND);
@@ -80,20 +85,23 @@ public class GetWalletBalancesService implements GetWalletBalancesUseCase {
         return coinInfo.symbol();
     }
 
-    private WalletBalancesResult buildResult(Wallet wallet, String baseCurrencySymbol,
-                                              Long baseCurrencyCoinId, WalletBalances balances) {
+    private WalletBalancesResult buildResult(
+            Wallet wallet,
+            String baseCurrencySymbol,
+            Long baseCurrencyCoinId,
+            WalletBalances balances) {
         WalletBalance baseCurrency = balances.getBaseCurrencyOrZero(baseCurrencyCoinId);
 
-        List<CoinBalance> coinBalances = balances.findCoinBalances(baseCurrencyCoinId).stream()
-            .map(b -> new CoinBalance(b.getCoinId(), b.getAvailable(), b.getLocked()))
-            .toList();
+        List<CoinBalance> coinBalances =
+                balances.findCoinBalances(baseCurrencyCoinId).stream()
+                        .map(b -> new CoinBalance(b.getCoinId(), b.getAvailable(), b.getLocked()))
+                        .toList();
 
         return new WalletBalancesResult(
-            wallet.getExchangeId(),
-            baseCurrencySymbol,
-            baseCurrency.getAvailable(),
-            baseCurrency.getLocked(),
-            coinBalances
-        );
+                wallet.getExchangeId(),
+                baseCurrencySymbol,
+                baseCurrency.getAvailable(),
+                baseCurrency.getLocked(),
+                coinBalances);
     }
 }

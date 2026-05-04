@@ -1,9 +1,8 @@
 package ksh.tryptobackend.transfer.application.port.out;
 
-import ksh.tryptobackend.transfer.domain.model.Transfer;
-
 import java.util.Optional;
 import java.util.UUID;
+import ksh.tryptobackend.transfer.domain.model.Transfer;
 
 public interface TransferCommandPort {
 

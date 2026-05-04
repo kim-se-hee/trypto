@@ -1,10 +1,9 @@
 package ksh.tryptobackend.wallet.domain.vo;
 
+import java.util.Objects;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Getter;
-
-import java.util.Objects;
 
 @Getter
 public class DepositTargetExchange {
@@ -33,7 +32,7 @@ public class DepositTargetExchange {
         if (o == null || getClass() != o.getClass()) return false;
         DepositTargetExchange that = (DepositTargetExchange) o;
         return fiatCurrency == that.fiatCurrency
-            && Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId);
+                && Objects.equals(baseCurrencyCoinId, that.baseCurrencyCoinId);
     }
 
     @Override

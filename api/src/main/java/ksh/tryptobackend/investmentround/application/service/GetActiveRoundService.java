@@ -1,5 +1,6 @@
 package ksh.tryptobackend.investmentround.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.GetActiveRoundUseCase;
@@ -15,8 +16,6 @@ import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,14 +37,13 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
     }
 
     private RoundOverview getActiveRound(Long userId) {
-        return investmentRoundQueryPort.findActiveRoundByUserId(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
+        return investmentRoundQueryPort
+                .findActiveRoundByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
     }
 
     private List<GetActiveRoundWalletResult> toWalletResults(Long roundId) {
-        return findWalletUseCase.findByRoundId(roundId).stream()
-            .map(this::toWalletResult)
-            .toList();
+        return findWalletUseCase.findByRoundId(roundId).stream().map(this::toWalletResult).toList();
     }
 
     private GetActiveRoundWalletResult toWalletResult(WalletResult walletResult) {

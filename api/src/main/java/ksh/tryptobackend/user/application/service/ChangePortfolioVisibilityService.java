@@ -28,7 +28,8 @@ public class ChangePortfolioVisibilityService implements ChangePortfolioVisibili
     }
 
     private User getUser(Long userId) {
-        return userQueryPort.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return userQueryPort
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

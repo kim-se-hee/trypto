@@ -4,6 +4,11 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
@@ -14,12 +19,6 @@ import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class RoundStepDefinition {
 
@@ -34,12 +33,11 @@ public class RoundStepDefinition {
     private Long lastRoundId;
 
     public RoundStepDefinition(
-        CommonApiClient apiClient,
-        ExchangeJpaRepository exchangeJpaRepository,
-        InvestmentRoundJpaRepository investmentRoundJpaRepository,
-        InvestmentRuleJpaRepository investmentRuleJpaRepository,
-        WalletJpaRepository walletJpaRepository
-    ) {
+            CommonApiClient apiClient,
+            ExchangeJpaRepository exchangeJpaRepository,
+            InvestmentRoundJpaRepository investmentRoundJpaRepository,
+            InvestmentRuleJpaRepository investmentRuleJpaRepository,
+            WalletJpaRepository walletJpaRepository) {
         this.apiClient = apiClient;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.investmentRoundJpaRepository = investmentRoundJpaRepository;
@@ -58,11 +56,26 @@ public class RoundStepDefinition {
 
     @Given("라운드용 거래소 메타데이터가 준비되어 있다")
     public void 라운드용_거래소_메타데이터가_준비되어_있다() {
-        exchangeJpaRepository.saveAll(List.of(
-            new ExchangeJpaEntity(1L, "UPBIT", ExchangeMarketType.DOMESTIC, 1L, new BigDecimal("0.0005")),
-            new ExchangeJpaEntity(2L, "BITHUMB", ExchangeMarketType.DOMESTIC, 1L, new BigDecimal("0.0005")),
-            new ExchangeJpaEntity(3L, "BINANCE", ExchangeMarketType.OVERSEAS, 3L, new BigDecimal("0.001"))
-        ));
+        exchangeJpaRepository.saveAll(
+                List.of(
+                        new ExchangeJpaEntity(
+                                1L,
+                                "UPBIT",
+                                ExchangeMarketType.DOMESTIC,
+                                1L,
+                                new BigDecimal("0.0005")),
+                        new ExchangeJpaEntity(
+                                2L,
+                                "BITHUMB",
+                                ExchangeMarketType.DOMESTIC,
+                                1L,
+                                new BigDecimal("0.0005")),
+                        new ExchangeJpaEntity(
+                                3L,
+                                "BINANCE",
+                                ExchangeMarketType.OVERSEAS,
+                                3L,
+                                new BigDecimal("0.001"))));
     }
 
     @When("기본 라운드 시작 요청을 보낸다")
@@ -128,23 +141,21 @@ public class RoundStepDefinition {
 
     @Then("라운드 상태는 {string}이다")
     public void 라운드_상태는_이다(String status) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.status").isEqualTo(status);
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.status").isEqualTo(status);
     }
 
     @Then("원칙 개수는 {int}개이다")
     public void 원칙_개수는_개이다(int count) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.rules.length()").isEqualTo(count);
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.rules.length()").isEqualTo(count);
     }
 
     @Then("지갑 개수는 {int}개이다")
     public void 지갑_개수는_개이다(int count) {
-        apiClient.getLastResponse()
-            .expectBody()
-            .jsonPath("$.data.wallets.length()").isEqualTo(count);
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.wallets.length()")
+                .isEqualTo(count);
     }
 
     @When("라운드 종료 요청을 보낸다")
@@ -161,13 +172,21 @@ public class RoundStepDefinition {
 
     @Given("파산 상태의 라운드가 존재한다")
     public void 파산_상태의_라운드가_존재한다() {
-        InvestmentRoundJpaEntity entity = InvestmentRoundJpaEntity.fromDomain(
-            InvestmentRound.reconstitute(
-                null, null, USER_ID, 1L,
-                new BigDecimal("1000000"), new BigDecimal("500000"), 3,
-                RoundStatus.BANKRUPT,
-                LocalDateTime.now(), null,
-                List.of(), List.of()));
+        InvestmentRoundJpaEntity entity =
+                InvestmentRoundJpaEntity.fromDomain(
+                        InvestmentRound.reconstitute(
+                                null,
+                                null,
+                                USER_ID,
+                                1L,
+                                new BigDecimal("1000000"),
+                                new BigDecimal("500000"),
+                                3,
+                                RoundStatus.BANKRUPT,
+                                LocalDateTime.now(),
+                                null,
+                                List.of(),
+                                List.of()));
         InvestmentRoundJpaEntity saved = investmentRoundJpaRepository.save(entity);
         lastRoundId = saved.getId();
     }
@@ -181,19 +200,21 @@ public class RoundStepDefinition {
     private Map<String, Object> defaultRequest() {
         Map<String, Object> body = new HashMap<>();
         body.put("userId", USER_ID);
-        body.put("seeds", List.of(
-            seed(1L, new BigDecimal("5000000")),
-            seed(2L, new BigDecimal("3000000")),
-            seed(3L, new BigDecimal("100"))
-        ));
+        body.put(
+                "seeds",
+                List.of(
+                        seed(1L, new BigDecimal("5000000")),
+                        seed(2L, new BigDecimal("3000000")),
+                        seed(3L, new BigDecimal("100"))));
         body.put("emergencyFundingLimit", new BigDecimal("500000"));
-        body.put("rules", List.of(
-            rule("LOSS_CUT", new BigDecimal("10")),
-            rule("PROFIT_TAKE", new BigDecimal("30")),
-            rule("CHASE_BUY_BAN", new BigDecimal("15")),
-            rule("AVERAGING_DOWN_LIMIT", new BigDecimal("3")),
-            rule("OVERTRADING_LIMIT", new BigDecimal("10"))
-        ));
+        body.put(
+                "rules",
+                List.of(
+                        rule("LOSS_CUT", new BigDecimal("10")),
+                        rule("PROFIT_TAKE", new BigDecimal("30")),
+                        rule("CHASE_BUY_BAN", new BigDecimal("15")),
+                        rule("AVERAGING_DOWN_LIMIT", new BigDecimal("3")),
+                        rule("OVERTRADING_LIMIT", new BigDecimal("10"))));
         return body;
     }
 
@@ -223,10 +244,8 @@ public class RoundStepDefinition {
 
     @SuppressWarnings("unchecked")
     private void extractRoundIdIfSuccess() {
-        Map<String, Object> body = apiClient.getLastResponse()
-            .expectBody(Map.class)
-            .returnResult()
-            .getResponseBody();
+        Map<String, Object> body =
+                apiClient.getLastResponse().expectBody(Map.class).returnResult().getResponseBody();
         Map<String, Object> data = (Map<String, Object>) body.get("data");
         if (data != null && data.get("roundId") instanceof Number num) {
             lastRoundId = num.longValue();

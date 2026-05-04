@@ -1,13 +1,12 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.marketdata.application.port.out.LivePriceQueryPort;
-import ksh.tryptobackend.marketdata.domain.vo.LivePrices;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import ksh.tryptobackend.marketdata.application.port.out.LivePriceQueryPort;
+import ksh.tryptobackend.marketdata.domain.vo.LivePrices;
 
 public class MockLivePriceAdapter implements LivePriceQueryPort {
 
@@ -20,8 +19,11 @@ public class MockLivePriceAdapter implements LivePriceQueryPort {
 
     @Override
     public LivePrices getCurrentPrices(Set<Long> exchangeCoinIds) {
-        Map<Long, BigDecimal> priceMap = exchangeCoinIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> prices.getOrDefault(id, BigDecimal.ZERO)));
+        Map<Long, BigDecimal> priceMap =
+                exchangeCoinIds.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        id -> id, id -> prices.getOrDefault(id, BigDecimal.ZERO)));
         return new LivePrices(priceMap);
     }
 

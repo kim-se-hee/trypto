@@ -1,11 +1,10 @@
 package ksh.tryptobackend.investmentround.application.service;
 
+import java.math.BigDecimal;
 import ksh.tryptobackend.investmentround.application.port.in.SumEmergencyFundingUseCase;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

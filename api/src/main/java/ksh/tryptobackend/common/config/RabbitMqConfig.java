@@ -1,5 +1,6 @@
 package ksh.tryptobackend.common.config;
 
+import java.util.UUID;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
@@ -12,8 +13,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.UUID;
 
 @Configuration
 public class RabbitMqConfig {
@@ -41,7 +40,8 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding tickerMarketdataBinding(Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
+    public Binding tickerMarketdataBinding(
+            Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
         return BindingBuilder.bind(tickerMarketdataQueue).to(tickerFanoutExchange);
     }
 
@@ -62,7 +62,8 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding engineOrderFilledBinding(Queue engineOrderFilledQueue, FanoutExchange orderFilledFanoutExchange) {
+    public Binding engineOrderFilledBinding(
+            Queue engineOrderFilledQueue, FanoutExchange orderFilledFanoutExchange) {
         return BindingBuilder.bind(engineOrderFilledQueue).to(orderFilledFanoutExchange);
     }
 
@@ -72,7 +73,8 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
+    public RabbitTemplate rabbitTemplate(
+            ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(jsonMessageConverter);
         if (connectionFactory instanceof CachingConnectionFactory ccf) {

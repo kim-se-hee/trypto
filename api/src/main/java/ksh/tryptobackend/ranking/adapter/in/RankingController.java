@@ -38,34 +38,36 @@ public class RankingController {
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<RankingItemResponse>> getRankings(
-        @Valid @ModelAttribute GetRankingsRequest request
-    ) {
+            @Valid @ModelAttribute GetRankingsRequest request) {
         RankingCursorResult result = getRankingsUseCase.getRankings(request.toQuery());
-        CursorPageResponseDto<RankingItemResponse> response = CursorPageResponseDto.of(
-            result.content().stream().map(RankingItemResponse::from).toList(),
-            result.nextCursor() != null ? result.nextCursor().longValue() : null,
-            result.hasNext());
+        CursorPageResponseDto<RankingItemResponse> response =
+                CursorPageResponseDto.of(
+                        result.content().stream().map(RankingItemResponse::from).toList(),
+                        result.nextCursor() != null ? result.nextCursor().longValue() : null,
+                        result.hasNext());
         return ApiResponseDto.success("랭킹을 조회했습니다.", response);
     }
 
     @GetMapping("/me")
-    public ApiResponseDto<MyRankingResponse> getMyRanking(@Valid @ModelAttribute GetMyRankingRequest request) {
+    public ApiResponseDto<MyRankingResponse> getMyRanking(
+            @Valid @ModelAttribute GetMyRankingRequest request) {
         MyRankingResult result = getMyRankingUseCase.getMyRanking(request.toQuery());
         MyRankingResponse response = result != null ? MyRankingResponse.from(result) : null;
         return ApiResponseDto.success("내 랭킹을 조회했습니다.", response);
     }
 
     @GetMapping("/stats")
-    public ApiResponseDto<RankingStatsResponse> getRankingStats(@Valid @ModelAttribute GetRankingStatsRequest request) {
+    public ApiResponseDto<RankingStatsResponse> getRankingStats(
+            @Valid @ModelAttribute GetRankingStatsRequest request) {
         RankingStatsResult result = getRankingStatsUseCase.getRankingStats(request.toQuery());
         return ApiResponseDto.success("랭킹 통계를 조회했습니다.", RankingStatsResponse.from(result));
     }
 
     @GetMapping("/{userId}/portfolio")
     public ApiResponseDto<RankerPortfolioResponse> getRankerPortfolio(
-            @PathVariable Long userId,
-            @Valid @ModelAttribute GetRankerPortfolioRequest request) {
-        RankerPortfolioResult result = getRankerPortfolioUseCase.getRankerPortfolio(request.toQuery(userId));
+            @PathVariable Long userId, @Valid @ModelAttribute GetRankerPortfolioRequest request) {
+        RankerPortfolioResult result =
+                getRankerPortfolioUseCase.getRankerPortfolio(request.toQuery(userId));
         return ApiResponseDto.success("포트폴리오를 조회했습니다.", RankerPortfolioResponse.from(result));
     }
 }

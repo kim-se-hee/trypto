@@ -9,7 +9,8 @@ public record MarketIdentifier(String exchangeName, String marketSymbol) {
         Objects.requireNonNull(marketSymbol);
     }
 
-    public static MarketIdentifier of(String exchangeName, String coinSymbol, String baseCurrencySymbol) {
+    public static MarketIdentifier of(
+            String exchangeName, String coinSymbol, String baseCurrencySymbol) {
         return new MarketIdentifier(exchangeName, coinSymbol + "/" + baseCurrencySymbol);
     }
 }

@@ -1,5 +1,14 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import ksh.tryptobackend.marketdata.application.port.in.FindAllExchangeIdsUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinInfoUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinsUseCase;
@@ -18,16 +27,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class WarmupExchangeCoinMappingServiceTest {
 
@@ -45,11 +44,14 @@ class WarmupExchangeCoinMappingServiceTest {
         // Given
         when(findAllExchangeIdsUseCase.findAllExchangeIds()).thenReturn(List.of(1L));
         when(findExchangeDetailUseCase.findExchangeDetail(1L))
-            .thenReturn(Optional.of(new ExchangeDetailResult("Upbit", 100L, true, new BigDecimal("0.0005"))));
+                .thenReturn(
+                        Optional.of(
+                                new ExchangeDetailResult(
+                                        "Upbit", 100L, true, new BigDecimal("0.0005"))));
         when(findCoinInfoUseCase.findByIds(Set.of(100L)))
-            .thenReturn(Map.of(100L, new CoinInfoResult("KRW", "Korean Won")));
+                .thenReturn(Map.of(100L, new CoinInfoResult("KRW", "Korean Won")));
         when(findExchangeCoinsUseCase.findByExchangeId(1L))
-            .thenReturn(List.of(new ExchangeCoinListResult(10L, 5L, "BTC", "Bitcoin", null)));
+                .thenReturn(List.of(new ExchangeCoinListResult(10L, 5L, "BTC", "Bitcoin", null)));
 
         // When
         sut.warmup();
@@ -57,7 +59,7 @@ class WarmupExchangeCoinMappingServiceTest {
         // Then
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<ExchangeSymbolKey, ExchangeCoinMapping>> captor =
-            ArgumentCaptor.forClass(Map.class);
+                ArgumentCaptor.forClass(Map.class);
         verify(exchangeCoinMappingCacheCommandPort).loadAll(captor.capture());
 
         Map<ExchangeSymbolKey, ExchangeCoinMapping> mappings = captor.getValue();

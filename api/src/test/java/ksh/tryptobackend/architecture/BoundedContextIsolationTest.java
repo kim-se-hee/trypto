@@ -1,14 +1,17 @@
 package ksh.tryptobackend.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
+
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.library.freeze.FreezingArchRule;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
-
-@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(
+        packages = "ksh.tryptobackend",
+        importOptions = ImportOption.DoNotIncludeTests.class)
 class BoundedContextIsolationTest {
 
     @ArchTest
@@ -54,45 +57,71 @@ class BoundedContextIsolationTest {
     @ArchTest
     void common_should_not_depend_on_any_context(JavaClasses classes) {
         noClasses()
-            .that().resideInAPackage(COMMON + "..")
-            .and().resideOutsideOfPackage(COMMON + ".seed..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(allContextRootPackages())
-            .as("Common should not depend on any bounded context (seed excluded)")
-            .check(classes);
+                .that()
+                .resideInAPackage(COMMON + "..")
+                .and()
+                .resideOutsideOfPackage(COMMON + ".seed..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(allContextRootPackages())
+                .as("Common should not depend on any bounded context (seed excluded)")
+                .check(classes);
     }
 
     @ArchTest
     void batch_should_only_depend_on_context_use_cases(JavaClasses classes) {
         noClasses()
-            .that().resideInAPackage(BATCH + "..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(allContextForbiddenPackages())
-            .as("Batch should only depend on UseCase (port.in) of bounded contexts")
-            .check(classes);
+                .that()
+                .resideInAPackage(BATCH + "..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(allContextForbiddenPackages())
+                .as("Batch should only depend on UseCase (port.in) of bounded contexts")
+                .check(classes);
     }
 
     private void assertContextIsolation(String context, JavaClasses classes) {
         String[] otherPortInPackages = otherContextPortInPackages(context);
+        String[] otherPortOutPackages = otherContextPortOutPackages(context);
 
         for (String other : BOUNDED_CONTEXTS) {
             if (other.equals(context)) continue;
 
             noClasses()
-                .that().resideInAPackage(contextPkg(context, ".."))
-                .should().dependOnClassesThat()
-                .resideInAnyPackage(forbiddenPackagesOf(other))
-                .as(context + " should not access forbidden packages of " + other)
-                .check(classes);
+                    .that()
+                    .resideInAPackage(contextPkg(context, ".."))
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(forbiddenPackagesOf(other))
+                    .as(context + " should not access forbidden packages of " + other)
+                    .check(classes);
         }
 
         noClasses()
-            .that().resideInAPackage(contextPkg(context, ".."))
-            .and().resideOutsideOfPackage(contextPkg(context, SERVICE))
-            .and().resideOutsideOfPackage(contextPkg(context, DOMAIN_SERVICE))
-            .should().dependOnClassesThat()
-            .resideInAnyPackage(otherPortInPackages)
-            .as(context + " non-service classes should not depend on other context UseCases")
-            .check(classes);
+                .that()
+                .resideInAPackage(contextPkg(context, ".."))
+                .and()
+                .resideOutsideOfPackage(contextPkg(context, SERVICE))
+                .and()
+                .resideOutsideOfPackage(contextPkg(context, DOMAIN_SERVICE))
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(otherPortInPackages)
+                .as(context + " non-service classes should not depend on other context UseCases")
+                .check(classes);
+
+        FreezingArchRule.freeze(
+                        noClasses()
+                                .that()
+                                .resideInAPackage(contextPkg(context, SERVICE))
+                                .should()
+                                .dependOnClassesThat()
+                                .resideInAnyPackage(otherPortOutPackages)
+                                .as(
+                                        context
+                                                + " service should not depend on other context's"
+                                                + " OutputPort — cross-context goes through"
+                                                + " UseCase"))
+                .check(classes);
     }
 }

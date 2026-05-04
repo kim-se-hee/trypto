@@ -1,13 +1,12 @@
 package ksh.tryptobackend.regretanalysis.domain.model;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -29,72 +28,83 @@ public class RegretReport {
 
     private static final int RATE_SCALE = 4;
 
-    public static RegretReport generate(Long userId, Long roundId, Long exchangeId,
-                                        BigDecimal actualProfitRate, BigDecimal totalInvestment,
-                                        List<RuleImpact> ruleImpacts,
-                                        List<ViolationDetail> violationDetails,
-                                        LocalDate analysisStart, LocalDate analysisEnd,
-                                        LocalDateTime createdAt) {
+    public static RegretReport generate(
+            Long userId,
+            Long roundId,
+            Long exchangeId,
+            BigDecimal actualProfitRate,
+            BigDecimal totalInvestment,
+            List<RuleImpact> ruleImpacts,
+            List<ViolationDetail> violationDetails,
+            LocalDate analysisStart,
+            LocalDate analysisEnd,
+            LocalDateTime createdAt) {
         BigDecimal missedProfit = sumLossAmounts(violationDetails);
-        BigDecimal ruleFollowedProfitRate = calculateRuleFollowedRate(
-            actualProfitRate, missedProfit, totalInvestment);
+        BigDecimal ruleFollowedProfitRate =
+                calculateRuleFollowedRate(actualProfitRate, missedProfit, totalInvestment);
 
         return RegretReport.builder()
-            .userId(userId)
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .totalViolations(violationDetails.size())
-            .missedProfit(missedProfit)
-            .actualProfitRate(actualProfitRate)
-            .ruleFollowedProfitRate(ruleFollowedProfitRate)
-            .analysisStart(analysisStart)
-            .analysisEnd(analysisEnd)
-            .createdAt(createdAt)
-            .ruleImpacts(ruleImpacts)
-            .violationDetails(new ViolationDetails(violationDetails))
-            .build();
+                .userId(userId)
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .totalViolations(violationDetails.size())
+                .missedProfit(missedProfit)
+                .actualProfitRate(actualProfitRate)
+                .ruleFollowedProfitRate(ruleFollowedProfitRate)
+                .analysisStart(analysisStart)
+                .analysisEnd(analysisEnd)
+                .createdAt(createdAt)
+                .ruleImpacts(ruleImpacts)
+                .violationDetails(new ViolationDetails(violationDetails))
+                .build();
     }
 
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
         return violationDetails.stream()
-            .map(ViolationDetail::getLossAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(ViolationDetail::getLossAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private static BigDecimal calculateRuleFollowedRate(BigDecimal actualProfitRate,
-                                                        BigDecimal missedProfit,
-                                                        BigDecimal totalInvestment) {
+    private static BigDecimal calculateRuleFollowedRate(
+            BigDecimal actualProfitRate, BigDecimal missedProfit, BigDecimal totalInvestment) {
         if (totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
             return actualProfitRate;
         }
-        BigDecimal impactRate = missedProfit
-            .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
-            .multiply(new BigDecimal("100"));
+        BigDecimal impactRate =
+                missedProfit
+                        .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal("100"));
         return actualProfitRate.add(impactRate);
     }
 
-    public static RegretReport reconstitute(Long reportId, Long userId, Long roundId, Long exchangeId,
-                                            int totalViolations, BigDecimal missedProfit,
-                                            BigDecimal actualProfitRate, BigDecimal ruleFollowedProfitRate,
-                                            LocalDate analysisStart, LocalDate analysisEnd,
-                                            LocalDateTime createdAt,
-                                            List<RuleImpact> ruleImpacts,
-                                            List<ViolationDetail> violationDetails) {
+    public static RegretReport reconstitute(
+            Long reportId,
+            Long userId,
+            Long roundId,
+            Long exchangeId,
+            int totalViolations,
+            BigDecimal missedProfit,
+            BigDecimal actualProfitRate,
+            BigDecimal ruleFollowedProfitRate,
+            LocalDate analysisStart,
+            LocalDate analysisEnd,
+            LocalDateTime createdAt,
+            List<RuleImpact> ruleImpacts,
+            List<ViolationDetail> violationDetails) {
         return RegretReport.builder()
-            .reportId(reportId)
-            .userId(userId)
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .totalViolations(totalViolations)
-            .missedProfit(missedProfit)
-            .actualProfitRate(actualProfitRate)
-            .ruleFollowedProfitRate(ruleFollowedProfitRate)
-            .analysisStart(analysisStart)
-            .analysisEnd(analysisEnd)
-            .createdAt(createdAt)
-            .ruleImpacts(ruleImpacts)
-            .violationDetails(new ViolationDetails(violationDetails))
-            .build();
+                .reportId(reportId)
+                .userId(userId)
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .totalViolations(totalViolations)
+                .missedProfit(missedProfit)
+                .actualProfitRate(actualProfitRate)
+                .ruleFollowedProfitRate(ruleFollowedProfitRate)
+                .analysisStart(analysisStart)
+                .analysisEnd(analysisEnd)
+                .createdAt(createdAt)
+                .ruleImpacts(ruleImpacts)
+                .violationDetails(new ViolationDetails(violationDetails))
+                .build();
     }
-
 }

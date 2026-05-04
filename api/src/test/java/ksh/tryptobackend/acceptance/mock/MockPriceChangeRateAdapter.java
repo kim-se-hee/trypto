@@ -1,10 +1,9 @@
 package ksh.tryptobackend.acceptance.mock;
 
-import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
 
 public class MockPriceChangeRateAdapter implements PriceChangeRateQueryPort {
 

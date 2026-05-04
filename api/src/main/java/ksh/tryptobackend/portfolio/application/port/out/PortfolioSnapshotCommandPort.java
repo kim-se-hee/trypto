@@ -1,8 +1,7 @@
 package ksh.tryptobackend.portfolio.application.port.out;
 
-import ksh.tryptobackend.portfolio.domain.model.PortfolioSnapshot;
-
 import java.util.List;
+import ksh.tryptobackend.portfolio.domain.model.PortfolioSnapshot;
 
 public interface PortfolioSnapshotCommandPort {
 

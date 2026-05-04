@@ -1,8 +1,7 @@
 package ksh.tryptobackend.wallet.application.port.in;
 
-import ksh.tryptobackend.wallet.application.port.in.dto.result.DepositAddressResult;
-
 import java.util.Optional;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.DepositAddressResult;
 
 public interface FindDepositAddressUseCase {
 

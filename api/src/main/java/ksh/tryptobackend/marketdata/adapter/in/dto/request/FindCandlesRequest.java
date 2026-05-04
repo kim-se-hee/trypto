@@ -6,12 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import ksh.tryptobackend.marketdata.application.port.in.dto.query.FindCandlesQuery;
 
 public record FindCandlesRequest(
-    @NotBlank String exchange,
-    @NotBlank String coin,
-    @NotBlank String interval,
-    @Min(1) @Max(200) Integer limit,
-    String cursor
-) {
+        @NotBlank String exchange,
+        @NotBlank String coin,
+        @NotBlank String interval,
+        @Min(1) @Max(200) Integer limit,
+        String cursor) {
 
     public FindCandlesQuery toQuery() {
         return new FindCandlesQuery(exchange, coin, interval, limit, cursor);

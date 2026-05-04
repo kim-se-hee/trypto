@@ -9,10 +9,12 @@ public class WalletSnapshots {
     private final Map<Long, List<WalletSnapshot>> valuesByRoundId;
 
     public WalletSnapshots(List<WalletSnapshot> wallets) {
-        this.valuesByRoundId = wallets.stream()
-            .collect(Collectors.collectingAndThen(
-                Collectors.groupingBy(WalletSnapshot::roundId),
-                Map::copyOf));
+        this.valuesByRoundId =
+                wallets.stream()
+                        .collect(
+                                Collectors.collectingAndThen(
+                                        Collectors.groupingBy(WalletSnapshot::roundId),
+                                        Map::copyOf));
     }
 
     public List<WalletSnapshot> findByRoundId(Long roundId) {

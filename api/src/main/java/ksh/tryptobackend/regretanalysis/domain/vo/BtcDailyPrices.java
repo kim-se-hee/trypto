@@ -16,8 +16,9 @@ public class BtcDailyPrices {
     }
 
     public static BtcDailyPrices of(List<BtcDailyPrice> prices) {
-        Map<LocalDate, BigDecimal> priceByDate = prices.stream()
-            .collect(Collectors.toMap(BtcDailyPrice::date, BtcDailyPrice::closePrice));
+        Map<LocalDate, BigDecimal> priceByDate =
+                prices.stream()
+                        .collect(Collectors.toMap(BtcDailyPrice::date, BtcDailyPrice::closePrice));
         return new BtcDailyPrices(priceByDate);
     }
 

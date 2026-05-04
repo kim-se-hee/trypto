@@ -2,10 +2,4 @@ package ksh.tryptobackend.ranking.application.port.in.dto.result;
 
 import ksh.tryptobackend.common.domain.vo.ProfitRate;
 
-public record MyRankingResult(
-    int rank,
-    String nickname,
-    ProfitRate profitRate,
-    int tradeCount
-) {
-}
+public record MyRankingResult(int rank, String nickname, ProfitRate profitRate, int tradeCount) {}

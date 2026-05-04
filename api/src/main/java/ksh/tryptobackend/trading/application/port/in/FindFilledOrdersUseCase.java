@@ -1,9 +1,8 @@
 package ksh.tryptobackend.trading.application.port.in;
 
-import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
 
 public interface FindFilledOrdersUseCase {
 

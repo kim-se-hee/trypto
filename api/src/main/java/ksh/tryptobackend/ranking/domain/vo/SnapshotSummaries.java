@@ -1,20 +1,22 @@
 package ksh.tryptobackend.ranking.domain.vo;
 
-import ksh.tryptobackend.common.domain.vo.ProfitRate;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import ksh.tryptobackend.common.domain.vo.ProfitRate;
 
 public class SnapshotSummaries {
 
     private final Map<RoundKey, BigDecimal> totalAssetMap;
 
     public SnapshotSummaries(List<SnapshotSummary> summaries) {
-        this.totalAssetMap = summaries.stream()
-            .collect(Collectors.toMap(SnapshotSummary::roundKey, SnapshotSummary::totalAssetKrw));
+        this.totalAssetMap =
+                summaries.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        SnapshotSummary::roundKey, SnapshotSummary::totalAssetKrw));
     }
 
     public Optional<ProfitRate> calculateProfitRate(RoundKey key, SnapshotSummaries previous) {

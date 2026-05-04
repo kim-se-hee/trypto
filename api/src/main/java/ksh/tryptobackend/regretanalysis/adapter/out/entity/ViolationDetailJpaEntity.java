@@ -6,13 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "violation_detail")
@@ -60,8 +59,6 @@ public class ViolationDetailJpaEntity {
 
     public ViolationDetail toDomain() {
         return ViolationDetail.reconstitute(
-            id, reportId, orderId, ruleId,
-            coinId, lossAmount, profitLoss, occurredAt
-        );
+                id, reportId, orderId, ruleId, coinId, lossAmount, profitLoss, occurredAt);
     }
 }

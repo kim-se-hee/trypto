@@ -1,5 +1,9 @@
 package ksh.tryptobackend.trading.domain.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
@@ -13,11 +17,6 @@ import ksh.tryptobackend.trading.domain.vo.TradingContext;
 import ksh.tryptobackend.trading.domain.vo.TradingVenue;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Builder(access = lombok.AccessLevel.PRIVATE)
@@ -41,50 +40,63 @@ public class Order {
     private OrderStatus status;
     private final LocalDateTime createdAt;
     private LocalDateTime filledAt;
-    @Builder.Default
-    private final List<RuleViolation> violations = new ArrayList<>();
+    @Builder.Default private final List<RuleViolation> violations = new ArrayList<>();
 
     public static Order create(PlaceOrderCommand cmd, TradingContext ctx) {
         return switch (cmd.orderType()) {
-            case MARKET -> cmd.side() == Side.BUY
-                ? createMarketBuyOrder(cmd, ctx)
-                : createMarketSellOrder(cmd, ctx);
-            case LIMIT -> cmd.side() == Side.BUY
-                ? createLimitBuyOrder(cmd, ctx)
-                : createLimitSellOrder(cmd, ctx);
+            case MARKET ->
+                    cmd.side() == Side.BUY
+                            ? createMarketBuyOrder(cmd, ctx)
+                            : createMarketSellOrder(cmd, ctx);
+            case LIMIT ->
+                    cmd.side() == Side.BUY
+                            ? createLimitBuyOrder(cmd, ctx)
+                            : createLimitSellOrder(cmd, ctx);
         };
     }
 
-    public static Order reconstitute(Long id, String idempotencyKey, Long userId, Long walletId,
-                                     Long exchangeCoinId, Long coinId, Long baseCoinId,
-                                     MarketIdentifier marketIdentifier,
-                                     Side side, OrderType orderType, BigDecimal amount, Quantity quantity,
-                                     BigDecimal price, BigDecimal filledPrice, Fee fee, OrderStatus status,
-                                     LocalDateTime createdAt, LocalDateTime filledAt,
-                                     List<RuleViolation> violations) {
+    public static Order reconstitute(
+            Long id,
+            String idempotencyKey,
+            Long userId,
+            Long walletId,
+            Long exchangeCoinId,
+            Long coinId,
+            Long baseCoinId,
+            MarketIdentifier marketIdentifier,
+            Side side,
+            OrderType orderType,
+            BigDecimal amount,
+            Quantity quantity,
+            BigDecimal price,
+            BigDecimal filledPrice,
+            Fee fee,
+            OrderStatus status,
+            LocalDateTime createdAt,
+            LocalDateTime filledAt,
+            List<RuleViolation> violations) {
         return Order.builder()
-            .id(id)
-            .idempotencyKey(idempotencyKey)
-            .userId(userId)
-            .walletId(walletId)
-            .exchangeCoinId(exchangeCoinId)
-            .coinId(coinId)
-            .baseCoinId(baseCoinId)
-            .marketIdentifier(marketIdentifier)
-            .side(side)
-            .orderType(orderType)
-            .amount(amount)
-            .quantity(quantity)
-            .price(price)
-            .filledPrice(filledPrice)
-            .fee(fee)
-            .status(status)
-            .createdAt(createdAt)
-            .filledAt(filledAt)
-            .violations(violations != null ? new ArrayList<>(violations) : new ArrayList<>())
-            .build();
+                .id(id)
+                .idempotencyKey(idempotencyKey)
+                .userId(userId)
+                .walletId(walletId)
+                .exchangeCoinId(exchangeCoinId)
+                .coinId(coinId)
+                .baseCoinId(baseCoinId)
+                .marketIdentifier(marketIdentifier)
+                .side(side)
+                .orderType(orderType)
+                .amount(amount)
+                .quantity(quantity)
+                .price(price)
+                .filledPrice(filledPrice)
+                .fee(fee)
+                .status(status)
+                .createdAt(createdAt)
+                .filledAt(filledAt)
+                .violations(violations != null ? new ArrayList<>(violations) : new ArrayList<>())
+                .build();
     }
-
 
     public void addViolations(List<RuleViolation> newViolations) {
         this.violations.addAll(newViolations);
@@ -173,16 +185,32 @@ public class Order {
         BigDecimal filledAmount = quantity.value().multiply(ctx.currentPrice());
         Fee fee = ctx.venue().calculateFee(filledAmount);
 
-        return createOrder(cmd, ctx, Side.BUY, OrderType.MARKET,
-            filledAmount, quantity, null, ctx.currentPrice(), fee);
+        return createOrder(
+                cmd,
+                ctx,
+                Side.BUY,
+                OrderType.MARKET,
+                filledAmount,
+                quantity,
+                null,
+                ctx.currentPrice(),
+                fee);
     }
 
     private static Order createMarketSellOrder(PlaceOrderCommand cmd, TradingContext ctx) {
         BigDecimal filledAmount = cmd.amount().multiply(ctx.currentPrice());
         Fee fee = ctx.venue().calculateFee(filledAmount);
 
-        return createOrder(cmd, ctx, Side.SELL, OrderType.MARKET,
-            filledAmount, new Quantity(cmd.amount()), null, ctx.currentPrice(), fee);
+        return createOrder(
+                cmd,
+                ctx,
+                Side.SELL,
+                OrderType.MARKET,
+                filledAmount,
+                new Quantity(cmd.amount()),
+                null,
+                ctx.currentPrice(),
+                fee);
     }
 
     private static Order createLimitBuyOrder(PlaceOrderCommand cmd, TradingContext ctx) {
@@ -194,8 +222,16 @@ public class Order {
         BigDecimal filledAmount = quantity.value().multiply(cmd.price());
         Fee fee = ctx.venue().calculateFee(filledAmount);
 
-        return createOrder(cmd, ctx, Side.BUY, OrderType.LIMIT,
-            filledAmount, quantity, cmd.price(), cmd.price(), fee);
+        return createOrder(
+                cmd,
+                ctx,
+                Side.BUY,
+                OrderType.LIMIT,
+                filledAmount,
+                quantity,
+                cmd.price(),
+                cmd.price(),
+                fee);
     }
 
     private static Order createLimitSellOrder(PlaceOrderCommand cmd, TradingContext ctx) {
@@ -205,33 +241,47 @@ public class Order {
         BigDecimal filledAmount = cmd.amount().multiply(cmd.price());
         Fee fee = ctx.venue().calculateFee(filledAmount);
 
-        return createOrder(cmd, ctx, Side.SELL, OrderType.LIMIT,
-            filledAmount, new Quantity(cmd.amount()), cmd.price(), cmd.price(), fee);
+        return createOrder(
+                cmd,
+                ctx,
+                Side.SELL,
+                OrderType.LIMIT,
+                filledAmount,
+                new Quantity(cmd.amount()),
+                cmd.price(),
+                cmd.price(),
+                fee);
     }
 
-    private static Order createOrder(PlaceOrderCommand cmd, TradingContext ctx,
-                                     Side side, OrderType orderType, BigDecimal amount,
-                                     Quantity quantity, BigDecimal price, BigDecimal filledPrice,
-                                     Fee fee) {
+    private static Order createOrder(
+            PlaceOrderCommand cmd,
+            TradingContext ctx,
+            Side side,
+            OrderType orderType,
+            BigDecimal amount,
+            Quantity quantity,
+            BigDecimal price,
+            BigDecimal filledPrice,
+            Fee fee) {
         TradingVenue venue = ctx.venue();
         return Order.builder()
-            .idempotencyKey(cmd.idempotencyKey())
-            .userId(ctx.userId())
-            .walletId(cmd.walletId())
-            .exchangeCoinId(cmd.exchangeCoinId())
-            .coinId(ctx.coinId())
-            .baseCoinId(venue.baseCurrencyCoinId())
-            .marketIdentifier(ctx.marketIdentifier())
-            .side(side)
-            .orderType(orderType)
-            .amount(amount)
-            .quantity(quantity)
-            .price(price)
-            .filledPrice(filledPrice)
-            .fee(fee)
-            .status(orderType == OrderType.MARKET ? OrderStatus.FILLED : OrderStatus.PENDING)
-            .createdAt(ctx.now())
-            .filledAt(orderType == OrderType.MARKET ? ctx.now() : null)
-            .build();
+                .idempotencyKey(cmd.idempotencyKey())
+                .userId(ctx.userId())
+                .walletId(cmd.walletId())
+                .exchangeCoinId(cmd.exchangeCoinId())
+                .coinId(ctx.coinId())
+                .baseCoinId(venue.baseCurrencyCoinId())
+                .marketIdentifier(ctx.marketIdentifier())
+                .side(side)
+                .orderType(orderType)
+                .amount(amount)
+                .quantity(quantity)
+                .price(price)
+                .filledPrice(filledPrice)
+                .fee(fee)
+                .status(orderType == OrderType.MARKET ? OrderStatus.FILLED : OrderStatus.PENDING)
+                .createdAt(ctx.now())
+                .filledAt(orderType == OrderType.MARKET ? ctx.now() : null)
+                .build();
     }
 }

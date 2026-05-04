@@ -5,10 +5,15 @@ import java.time.LocalDateTime;
 
 public interface WalletCommandPort {
 
-    Long createWallet(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt);
+    Long createWallet(
+            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt);
 
-    Long createWalletWithBalance(Long roundId, Long exchangeId, Long baseCurrencyCoinId,
-                                 BigDecimal initialAmount, LocalDateTime createdAt);
+    Long createWalletWithBalance(
+            Long roundId,
+            Long exchangeId,
+            Long baseCurrencyCoinId,
+            BigDecimal initialAmount,
+            LocalDateTime createdAt);
 
     void deductBalance(Long walletId, Long coinId, BigDecimal amount);
 

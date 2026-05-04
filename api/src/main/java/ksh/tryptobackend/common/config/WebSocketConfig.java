@@ -28,14 +28,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
         registry.enableSimpleBroker("/topic", "/queue")
-                .setHeartbeatValue(new long[]{heartbeatSend, heartbeatReceive})
+                .setHeartbeatValue(new long[] {heartbeatSend, heartbeatReceive})
                 .setTaskScheduler(heartbeatScheduler());
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint(endpoint)
-                .setAllowedOriginPatterns("*");
+        registry.addEndpoint(endpoint).setAllowedOriginPatterns("*");
     }
 
     @Bean

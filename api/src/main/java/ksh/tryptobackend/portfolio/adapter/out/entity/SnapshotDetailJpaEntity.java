@@ -6,12 +6,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import ksh.tryptobackend.portfolio.domain.model.SnapshotDetail;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "portfolio_snapshot_detail")
@@ -58,13 +57,13 @@ public class SnapshotDetailJpaEntity {
 
     public SnapshotDetail toDomain() {
         return SnapshotDetail.builder()
-            .id(id)
-            .coinId(coinId)
-            .quantity(quantity)
-            .avgBuyPrice(avgBuyPrice)
-            .currentPrice(currentPrice)
-            .profitRate(profitRate)
-            .assetRatio(assetRatio)
-            .build();
+                .id(id)
+                .coinId(coinId)
+                .quantity(quantity)
+                .avgBuyPrice(avgBuyPrice)
+                .currentPrice(currentPrice)
+                .profitRate(profitRate)
+                .assetRatio(assetRatio)
+                .build();
     }
 }

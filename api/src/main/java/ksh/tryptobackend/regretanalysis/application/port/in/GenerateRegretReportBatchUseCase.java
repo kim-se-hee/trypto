@@ -1,9 +1,8 @@
 package ksh.tryptobackend.regretanalysis.application.port.in;
 
+import java.util.Optional;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.command.GenerateRegretReportCommand;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
-
-import java.util.Optional;
 
 public interface GenerateRegretReportBatchUseCase {
 

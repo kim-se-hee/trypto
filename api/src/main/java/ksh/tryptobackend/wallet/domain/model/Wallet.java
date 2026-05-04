@@ -1,10 +1,9 @@
 package ksh.tryptobackend.wallet.domain.model;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -16,12 +15,13 @@ public class Wallet {
     private final BigDecimal seedAmount;
     private final LocalDateTime createdAt;
 
-    public static Wallet create(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+    public static Wallet create(
+            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
         return Wallet.builder()
-            .roundId(roundId)
-            .exchangeId(exchangeId)
-            .seedAmount(seedAmount)
-            .createdAt(createdAt)
-            .build();
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .seedAmount(seedAmount)
+                .createdAt(createdAt)
+                .build();
     }
 }

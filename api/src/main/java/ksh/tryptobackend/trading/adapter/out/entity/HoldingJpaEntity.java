@@ -1,16 +1,16 @@
 package ksh.tryptobackend.trading.adapter.out.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import ksh.tryptobackend.trading.domain.model.Holding;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Entity
-@Table(name = "holding",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
+@Table(
+        name = "holding",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HoldingJpaEntity {
@@ -53,14 +53,14 @@ public class HoldingJpaEntity {
 
     public Holding toDomain() {
         return Holding.builder()
-            .id(id)
-            .walletId(walletId)
-            .coinId(coinId)
-            .avgBuyPrice(avgBuyPrice)
-            .totalQuantity(totalQuantity)
-            .totalBuyAmount(totalBuyAmount)
-            .averagingDownCount(averagingDownCount)
-            .build();
+                .id(id)
+                .walletId(walletId)
+                .coinId(coinId)
+                .avgBuyPrice(avgBuyPrice)
+                .totalQuantity(totalQuantity)
+                .totalBuyAmount(totalBuyAmount)
+                .averagingDownCount(averagingDownCount)
+                .build();
     }
 
     public void updateFrom(Holding holding) {

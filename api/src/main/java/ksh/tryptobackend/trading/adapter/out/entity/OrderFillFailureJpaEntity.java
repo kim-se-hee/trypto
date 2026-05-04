@@ -6,13 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.domain.model.OrderFillFailure;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "order_fill_failure")
@@ -53,12 +52,12 @@ public class OrderFillFailureJpaEntity {
 
     public OrderFillFailure toDomain() {
         return OrderFillFailure.builder()
-            .id(id)
-            .orderId(orderId)
-            .attemptedPrice(attemptedPrice)
-            .failedAt(failedAt)
-            .reason(reason)
-            .resolved(resolved)
-            .build();
+                .id(id)
+                .orderId(orderId)
+                .attemptedPrice(attemptedPrice)
+                .failedAt(failedAt)
+                .reason(reason)
+                .resolved(resolved)
+                .build();
     }
 }

@@ -25,28 +25,27 @@ public class SnapshotJobConfig {
 
     @Bean
     public Job snapshotJob(Step snapshotStep) {
-        return new JobBuilder("snapshot-job", jobRepository)
-            .start(snapshotStep)
-            .build();
+        return new JobBuilder("snapshot-job", jobRepository).start(snapshotStep).build();
     }
 
     @Bean
-    public Step snapshotStep(SnapshotItemReader reader,
-                             SnapshotItemProcessor processor,
-                             SnapshotItemWriter writer,
-                             RetryPolicy batchRetryPolicy,
-                             SkipPolicy batchSkipPolicy,
-                             LoggingSkipListener<Object, Object> batchSkipListener) {
+    public Step snapshotStep(
+            SnapshotItemReader reader,
+            SnapshotItemProcessor processor,
+            SnapshotItemWriter writer,
+            RetryPolicy batchRetryPolicy,
+            SkipPolicy batchSkipPolicy,
+            LoggingSkipListener<Object, Object> batchSkipListener) {
         return new StepBuilder("snapshot-step", jobRepository)
-            .<SnapshotInput, SnapshotResult>chunk(CHUNK_SIZE)
-            .transactionManager(transactionManager)
-            .reader(reader)
-            .processor(processor)
-            .writer(writer)
-            .faultTolerant()
-            .retryPolicy(batchRetryPolicy)
-            .skipPolicy(batchSkipPolicy)
-            .listener(batchSkipListener)
-            .build();
+                .<SnapshotInput, SnapshotResult>chunk(CHUNK_SIZE)
+                .transactionManager(transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .faultTolerant()
+                .retryPolicy(batchRetryPolicy)
+                .skipPolicy(batchSkipPolicy)
+                .listener(batchSkipListener)
+                .build();
     }
 }

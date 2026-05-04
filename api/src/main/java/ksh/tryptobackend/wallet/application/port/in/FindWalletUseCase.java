@@ -1,9 +1,8 @@
 package ksh.tryptobackend.wallet.application.port.in;
 
-import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
-
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 
 public interface FindWalletUseCase {
 

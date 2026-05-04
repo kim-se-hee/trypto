@@ -1,10 +1,9 @@
 package ksh.tryptobackend.wallet.adapter.out.repository;
 
-import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WalletBalanceJpaRepository extends JpaRepository<WalletBalanceJpaEntity, Long> {
 

@@ -19,16 +19,14 @@ public class RankingJobConfig {
 
     @Bean
     public Job rankingJob(Step rankingStep) {
-        return new JobBuilder("ranking-job", jobRepository)
-            .start(rankingStep)
-            .build();
+        return new JobBuilder("ranking-job", jobRepository).start(rankingStep).build();
     }
 
     @Bean
     public Step rankingStep(RankingTasklet tasklet) {
         return new StepBuilder("ranking-step", jobRepository)
-            .tasklet(tasklet)
-            .transactionManager(transactionManager)
-            .build();
+                .tasklet(tasklet)
+                .transactionManager(transactionManager)
+                .build();
     }
 }

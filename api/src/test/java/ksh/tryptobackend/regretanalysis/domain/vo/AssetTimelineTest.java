@@ -1,20 +1,18 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AssetTimelineTest {
 
@@ -24,10 +22,7 @@ class AssetTimelineTest {
 
     private AssetSnapshot snapshotOn(LocalDate date, BigDecimal totalAsset) {
         return AssetSnapshot.reconstitute(
-            1L, 1L, 1L,
-            totalAsset, BigDecimal.ZERO, BigDecimal.ZERO,
-            date
-        );
+                1L, 1L, 1L, totalAsset, BigDecimal.ZERO, BigDecimal.ZERO, date);
     }
 
     @Nested
@@ -42,9 +37,9 @@ class AssetTimelineTest {
 
             // When & Then
             assertThatThrownBy(() -> AssetTimeline.of(emptySnapshots))
-                .isInstanceOf(CustomException.class)
-                .extracting(e -> ((CustomException) e).getErrorCode())
-                .isEqualTo(ErrorCode.SNAPSHOT_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .extracting(e -> ((CustomException) e).getErrorCode())
+                    .isEqualTo(ErrorCode.SNAPSHOT_NOT_FOUND);
         }
 
         @Test
@@ -69,9 +64,8 @@ class AssetTimelineTest {
         @DisplayName("시작일과 종료일이 같으면 1일이다")
         void calculateTotalDays_sameDay_returnsOne() {
             // Given
-            AssetTimeline timeline = AssetTimeline.of(List.of(
-                snapshotOn(DAY_1, new BigDecimal("1000000"))
-            ));
+            AssetTimeline timeline =
+                    AssetTimeline.of(List.of(snapshotOn(DAY_1, new BigDecimal("1000000"))));
 
             // When
             int totalDays = timeline.calculateTotalDays();
@@ -84,11 +78,12 @@ class AssetTimelineTest {
         @DisplayName("3일간의 스냅샷이면 3을 반환한다")
         void calculateTotalDays_threeDays_returnsThree() {
             // Given
-            AssetTimeline timeline = AssetTimeline.of(List.of(
-                snapshotOn(DAY_1, new BigDecimal("1000000")),
-                snapshotOn(DAY_2, new BigDecimal("1100000")),
-                snapshotOn(DAY_3, new BigDecimal("1050000"))
-            ));
+            AssetTimeline timeline =
+                    AssetTimeline.of(
+                            List.of(
+                                    snapshotOn(DAY_1, new BigDecimal("1000000")),
+                                    snapshotOn(DAY_2, new BigDecimal("1100000")),
+                                    snapshotOn(DAY_3, new BigDecimal("1050000"))));
 
             // When
             int totalDays = timeline.calculateTotalDays();
@@ -106,10 +101,11 @@ class AssetTimelineTest {
         @DisplayName("존재하는 날짜를 조회하면 자산값을 반환한다")
         void findAssetAt_existingDate_returnsAsset() {
             // Given
-            AssetTimeline timeline = AssetTimeline.of(List.of(
-                snapshotOn(DAY_1, new BigDecimal("1000000")),
-                snapshotOn(DAY_2, new BigDecimal("1100000"))
-            ));
+            AssetTimeline timeline =
+                    AssetTimeline.of(
+                            List.of(
+                                    snapshotOn(DAY_1, new BigDecimal("1000000")),
+                                    snapshotOn(DAY_2, new BigDecimal("1100000"))));
 
             // When
             Optional<BigDecimal> asset = timeline.findAssetAt(DAY_2);
@@ -123,9 +119,8 @@ class AssetTimelineTest {
         @DisplayName("존재하지 않는 날짜를 조회하면 빈 Optional을 반환한다")
         void findAssetAt_nonExistentDate_returnsEmpty() {
             // Given
-            AssetTimeline timeline = AssetTimeline.of(List.of(
-                snapshotOn(DAY_1, new BigDecimal("1000000"))
-            ));
+            AssetTimeline timeline =
+                    AssetTimeline.of(List.of(snapshotOn(DAY_1, new BigDecimal("1000000"))));
 
             // When
             Optional<BigDecimal> asset = timeline.findAssetAt(DAY_3);
@@ -143,10 +138,11 @@ class AssetTimelineTest {
         @DisplayName("첫 번째 스냅샷의 총 자산이 시드머니다")
         void getSeedMoney_returnsFirstSnapshotAsset() {
             // Given
-            AssetTimeline timeline = AssetTimeline.of(List.of(
-                snapshotOn(DAY_1, new BigDecimal("1000000")),
-                snapshotOn(DAY_2, new BigDecimal("1200000"))
-            ));
+            AssetTimeline timeline =
+                    AssetTimeline.of(
+                            List.of(
+                                    snapshotOn(DAY_1, new BigDecimal("1000000")),
+                                    snapshotOn(DAY_2, new BigDecimal("1200000"))));
 
             // When
             BigDecimal seedMoney = timeline.getSeedMoney();

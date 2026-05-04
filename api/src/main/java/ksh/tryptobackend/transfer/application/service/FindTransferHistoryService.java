@@ -1,5 +1,9 @@
 package ksh.tryptobackend.transfer.application.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
@@ -12,11 +16,6 @@ import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,19 +50,16 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private List<Transfer> fetchTransfersWithOverflow(FindTransferHistoryQuery query) {
         return transferQueryPort.findByCursor(
-            query.walletId(), query.type(), query.cursorTransferId(), query.size() + 1);
+                query.walletId(), query.type(), query.cursorTransferId(), query.size() + 1);
     }
 
     private Map<Long, String> resolveCoinSymbols(List<Transfer> transfers) {
-        Set<Long> coinIds = transfers.stream()
-            .map(Transfer::getCoinId)
-            .collect(Collectors.toSet());
+        Set<Long> coinIds = transfers.stream().map(Transfer::getCoinId).collect(Collectors.toSet());
         return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
     }
 
-    private TransferHistoryCursorResult buildCursorResult(List<Transfer> transfers,
-                                                           Map<Long, String> coinSymbolMap,
-                                                           boolean hasNext) {
+    private TransferHistoryCursorResult buildCursorResult(
+            List<Transfer> transfers, Map<Long, String> coinSymbolMap, boolean hasNext) {
         Long nextCursor = hasNext ? transfers.getLast().getTransferId() : null;
         return new TransferHistoryCursorResult(transfers, coinSymbolMap, nextCursor, hasNext);
     }

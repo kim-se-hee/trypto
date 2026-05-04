@@ -1,9 +1,8 @@
 package ksh.tryptobackend.wallet.adapter.out.repository;
 
+import java.util.Optional;
 import ksh.tryptobackend.wallet.adapter.out.entity.DepositAddressJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
 
 public interface DepositAddressJpaRepository extends JpaRepository<DepositAddressJpaEntity, Long> {
 

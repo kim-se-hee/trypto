@@ -1,10 +1,17 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.WriteApiBlocking;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeSymbolKey;
 import ksh.tryptobackend.marketdata.domain.vo.Tick;
 import org.junit.jupiter.api.AfterAll;
@@ -19,14 +26,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @Testcontainers
 class TickQueryAdapterTest {
 
@@ -35,15 +34,16 @@ class TickQueryAdapterTest {
     private static final String BUCKET = "ticker";
 
     @Container
-    static final GenericContainer<?> INFLUX = new GenericContainer<>(DockerImageName.parse("influxdb:2.7"))
-        .withExposedPorts(8086)
-        .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
-        .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
-        .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "admin1234")
-        .withEnv("DOCKER_INFLUXDB_INIT_ORG", ORG)
-        .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", BUCKET)
-        .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", TOKEN)
-        .waitingFor(Wait.forHttp("/health").forStatusCode(200));
+    static final GenericContainer<?> INFLUX =
+            new GenericContainer<>(DockerImageName.parse("influxdb:2.7"))
+                    .withExposedPorts(8086)
+                    .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
+                    .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
+                    .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "admin1234")
+                    .withEnv("DOCKER_INFLUXDB_INIT_ORG", ORG)
+                    .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", BUCKET)
+                    .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", TOKEN)
+                    .waitingFor(Wait.forHttp("/health").forStatusCode(200));
 
     private static InfluxDBClient client;
     private static TickQueryAdapter adapter;
@@ -75,11 +75,14 @@ class TickQueryAdapterTest {
     void findTicksReturnsWrittenPointsInTimeOrder() {
         Instant base = Instant.now().truncatedTo(ChronoUnit.MILLIS).minus(1, ChronoUnit.HOURS);
         writePoint(exchange, symbol, bd("102.5"), base.plusSeconds(2));
-        writePoint(exchange, symbol, bd("100"),   base);
-        writePoint(exchange, symbol, bd("101"),   base.plusSeconds(1));
+        writePoint(exchange, symbol, bd("100"), base);
+        writePoint(exchange, symbol, bd("101"), base.plusSeconds(1));
 
-        List<Tick> ticks = adapter.findTicks(new ExchangeSymbolKey(exchange, symbol),
-            base.minusSeconds(1), base.plusSeconds(10));
+        List<Tick> ticks =
+                adapter.findTicks(
+                        new ExchangeSymbolKey(exchange, symbol),
+                        base.minusSeconds(1),
+                        base.plusSeconds(10));
 
         assertThat(ticks).hasSize(3);
         assertThat(ticks.get(0).price()).isEqualByComparingTo("100");
@@ -96,8 +99,11 @@ class TickQueryAdapterTest {
         writePoint("other-ex-" + UUID.randomUUID(), symbol, bd("999"), base.plusSeconds(1));
         writePoint(exchange, "OTHER-" + UUID.randomUUID() + "/KRW", bd("888"), base.plusSeconds(1));
 
-        List<Tick> ticks = adapter.findTicks(new ExchangeSymbolKey(exchange, symbol),
-            base.minusSeconds(1), base.plusSeconds(10));
+        List<Tick> ticks =
+                adapter.findTicks(
+                        new ExchangeSymbolKey(exchange, symbol),
+                        base.minusSeconds(1),
+                        base.plusSeconds(10));
 
         assertThat(ticks).hasSize(1);
         assertThat(ticks.get(0).price()).isEqualByComparingTo("100");
@@ -108,18 +114,20 @@ class TickQueryAdapterTest {
     void returnsEmptyWhenNoMatchingTicks() {
         Instant base = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-        List<Tick> ticks = adapter.findTicks(new ExchangeSymbolKey(exchange, symbol),
-            base.minusSeconds(10), base);
+        List<Tick> ticks =
+                adapter.findTicks(
+                        new ExchangeSymbolKey(exchange, symbol), base.minusSeconds(10), base);
 
         assertThat(ticks).isEmpty();
     }
 
     private static void writePoint(String exchange, String symbol, BigDecimal price, Instant time) {
-        Point p = Point.measurement("ticker_raw")
-            .addTag("exchange", exchange)
-            .addTag("symbol", symbol)
-            .addField("price", price.doubleValue())
-            .time(time, WritePrecision.MS);
+        Point p =
+                Point.measurement("ticker_raw")
+                        .addTag("exchange", exchange)
+                        .addTag("symbol", symbol)
+                        .addField("price", price.doubleValue())
+                        .time(time, WritePrecision.MS);
         WriteApiBlocking write = client.getWriteApiBlocking();
         write.writePoint(BUCKET, ORG, p);
     }
