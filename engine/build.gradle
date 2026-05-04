@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'me.champeau.jmh' version '0.7.2'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 group = 'ksh'
@@ -62,4 +63,18 @@ jmh {
     benchmarkMode = ['thrpt', 'avgt']
     resultFormat = 'JSON'
     jvmArgsAppend = ['-Xms4g', '-Xmx10g']
+}
+
+spotless {
+    java {
+        target 'src/**/*.java'
+
+        googleJavaFormat('1.25.2').aosp().reflowLongStrings()
+        formatAnnotations()
+
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        toggleOffOn()
+    }
 }
