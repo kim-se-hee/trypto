@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { StompSubscription } from "@stomp/stompjs";
 import {
   connect,
   subscribeUserEvents,
@@ -12,7 +13,6 @@ interface UseUserEventsOptions {
 }
 
 export function useUserEvents({ userId, onOrderFilled }: UseUserEventsOptions): void {
-  const subscriptionRef = useRef<ReturnType<typeof subscribeUserEvents>>(null);
   const onOrderFilledRef = useRef(onOrderFilled);
   onOrderFilledRef.current = onOrderFilled;
 
@@ -23,18 +23,27 @@ export function useUserEvents({ userId, onOrderFilled }: UseUserEventsOptions): 
       connect();
     }
 
-    const timer = setTimeout(() => {
-      subscriptionRef.current = subscribeUserEvents(userId, (event) => {
+    let cancelled = false;
+    let subscription: StompSubscription | null = null;
+    let retryId: number | null = null;
+
+    const trySubscribe = () => {
+      if (cancelled) return;
+      subscription = subscribeUserEvents(userId, (event) => {
         if (event.eventType === "ORDER_FILLED" && onOrderFilledRef.current) {
           onOrderFilledRef.current(event);
         }
       });
-    }, 500);
+      if (!subscription) {
+        retryId = window.setTimeout(trySubscribe, 50);
+      }
+    };
+    trySubscribe();
 
     return () => {
-      clearTimeout(timer);
-      subscriptionRef.current?.unsubscribe();
-      subscriptionRef.current = null;
+      cancelled = true;
+      if (retryId !== null) window.clearTimeout(retryId);
+      subscription?.unsubscribe();
     };
   }, [userId]);
 }

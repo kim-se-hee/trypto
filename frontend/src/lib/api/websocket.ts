@@ -79,7 +79,7 @@ export function subscribeTickers(
   exchangeId: number,
   callback: (ticker: Ticker) => void,
 ): StompSubscription | null {
-  if (!client?.active) return null;
+  if (!client?.connected) return null;
 
   return client.subscribe(`/topic/tickers.${exchangeId}`, (message) => {
     try {
@@ -95,7 +95,7 @@ export function subscribeUserEvents(
   userId: number,
   callback: (event: UserEvent) => void,
 ): StompSubscription | null {
-  if (!client?.active) return null;
+  if (!client?.connected) return null;
 
   return client.subscribe(`/user/${userId}/queue/events`, (message) => {
     try {

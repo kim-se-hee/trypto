@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatVolume, formatChangeRate, getCurrencySymbol } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
@@ -17,6 +17,77 @@ interface CoinTableProps {
 type SortKey = "name" | "price" | "change" | "volume";
 
 const GRID_COLS = "grid-cols-[2fr_minmax(100px,140px)_minmax(80px,100px)_minmax(160px,1fr)]";
+
+interface CoinRowProps {
+  coin: CoinData;
+  baseCurrency: string;
+  currencySymbol: string;
+  isSelected: boolean;
+  isLast: boolean;
+  onSelect?: (symbol: string) => void;
+}
+
+const CoinRow = memo(function CoinRow({
+  coin,
+  baseCurrency,
+  currencySymbol,
+  isSelected,
+  isLast,
+  onSelect,
+}: CoinRowProps) {
+  const handleClick = () => onSelect?.(coin.symbol);
+
+  return (
+    <div
+      onClick={handleClick}
+      className={cn(
+        "group grid cursor-pointer items-center px-5 py-[18px] transition-colors hover:bg-primary/[0.03]",
+        GRID_COLS,
+        !isLast && "border-b border-border/30",
+        isSelected && "bg-primary/[0.04]",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <CoinIcon symbol={coin.symbol} size={32} />
+        <div className="flex flex-col leading-tight">
+          <span className="text-[13px] font-semibold tracking-wide">{coin.symbol}</span>
+          <span className="text-[11px] text-muted-foreground">{coin.name}</span>
+        </div>
+      </div>
+
+      <div className={cn(
+        "text-right font-mono text-sm font-semibold tabular-nums",
+        coin.changeRate > 0 && "text-positive",
+        coin.changeRate < 0 && "text-negative",
+      )}>
+        {coin.currentPrice > 0
+          ? <>{currencySymbol}{formatPrice(coin.currentPrice, baseCurrency)}</>
+          : <span className="text-muted-foreground">-</span>}
+      </div>
+
+      <div className="flex justify-end">
+        {coin.currentPrice > 0 ? (
+          <span
+            className={cn(
+              "inline-block rounded-full px-2 py-0.5 font-mono text-xs font-medium tabular-nums",
+              coin.changeRate > 0 && "bg-positive/15 text-positive",
+              coin.changeRate < 0 && "bg-negative/15 text-negative",
+              coin.changeRate === 0 && "text-muted-foreground",
+            )}
+          >
+            {formatChangeRate(coin.changeRate)}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">-</span>
+        )}
+      </div>
+
+      <div className="text-right font-mono text-xs tabular-nums text-muted-foreground">
+        {coin.volume > 0 ? formatVolume(coin.volume, baseCurrency) : "-"}
+      </div>
+    </div>
+  );
+});
 
 export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: CoinTableProps) {
   const comparator = useCallback((key: SortKey, dir: SortDir) => {
@@ -48,7 +119,6 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
-      {/* Table header */}
       <div className={cn("grid items-center bg-secondary/30 px-5 py-3.5", GRID_COLS)}>
         {columns.map((col) => (
           <button
@@ -68,70 +138,23 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
         ))}
       </div>
 
-      {/* Table body */}
       <div>
         {sortedCoins.length === 0 ? (
           <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
             검색 결과가 없습니다.
           </div>
         ) : (
-          sortedCoins.map((coin, i) => {
-            const isSelected = selectedSymbol === coin.symbol;
-            return (
-            <div
+          sortedCoins.map((coin, i) => (
+            <CoinRow
               key={coin.symbol}
-              onClick={() => onSelect?.(coin.symbol)}
-              className={cn(
-                "group grid cursor-pointer items-center px-5 py-[18px] transition-colors hover:bg-primary/[0.03]",
-                GRID_COLS,
-                i !== sortedCoins.length - 1 && "border-b border-border/30",
-                isSelected && "bg-primary/[0.04]",
-              )}
-            >
-              {/* Coin info */}
-              <div className="flex items-center gap-3">
-                <CoinIcon symbol={coin.symbol} size={32} />
-                <div className="flex flex-col leading-tight">
-                  <span className="text-[13px] font-semibold tracking-wide">{coin.symbol}</span>
-                  <span className="text-[11px] text-muted-foreground">{coin.name}</span>
-                </div>
-              </div>
-
-              {/* Price */}
-              <div className={cn(
-                "text-right font-mono text-sm font-semibold tabular-nums",
-                coin.changeRate > 0 && "text-positive",
-                coin.changeRate < 0 && "text-negative",
-              )}>
-                {coin.currentPrice > 0
-                  ? <>{currencySymbol}{formatPrice(coin.currentPrice, baseCurrency)}</>
-                  : <span className="text-muted-foreground">-</span>}
-              </div>
-
-              {/* Change rate */}
-              <div className="flex justify-end">
-                {coin.currentPrice > 0 ? (
-                  <span
-                    className={cn(
-                      "inline-block rounded-full px-2 py-0.5 font-mono text-xs font-medium tabular-nums",
-                      coin.changeRate > 0 && "bg-positive/15 text-positive",
-                      coin.changeRate < 0 && "bg-negative/15 text-negative",
-                      coin.changeRate === 0 && "text-muted-foreground",
-                    )}
-                  >
-                    {formatChangeRate(coin.changeRate)}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">-</span>
-                )}
-              </div>
-
-              {/* Volume */}
-              <div className="text-right font-mono text-xs tabular-nums text-muted-foreground">
-                {coin.volume > 0 ? formatVolume(coin.volume, baseCurrency) : "-"}
-              </div>
-            </div>
-          )})
+              coin={coin}
+              baseCurrency={baseCurrency}
+              currencySymbol={currencySymbol}
+              isSelected={selectedSymbol === coin.symbol}
+              isLast={i === sortedCoins.length - 1}
+              onSelect={onSelect}
+            />
+          ))
         )}
       </div>
     </div>
