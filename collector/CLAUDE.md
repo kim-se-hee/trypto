@@ -24,7 +24,6 @@
 | HTTP 클라이언트 | RestClient | Spring Boot 관리 |
 | WebSocket 클라이언트 | `java.net.http.HttpClient` + `WebSocket` | JDK 21 표준 |
 | 시계열 DB | InfluxDB (`influxdb-client-java`) | 7.2.0 |
-| 서킷 브레이커 | Resilience4j | 2.3.0 |
 | 유틸리티 | Lombok | Spring Boot 관리 |
 | 컨테이너 | Docker Compose | — |
 

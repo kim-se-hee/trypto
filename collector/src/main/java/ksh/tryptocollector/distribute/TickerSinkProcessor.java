@@ -1,6 +1,5 @@
 package ksh.tryptocollector.distribute;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import ksh.tryptocollector.model.NormalizedTicker;
 import ksh.tryptocollector.distribute.rabbitmq.EngineInboxPublisher;
 import ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher;
@@ -18,7 +17,6 @@ public class TickerSinkProcessor {
     private final TickerEventPublisher tickerEventPublisher;
     private final EngineInboxPublisher engineInboxPublisher;
     private final TickRawWriter tickRawWriter;
-    private final CircuitBreaker redisCircuitBreaker;
 
     public void process(NormalizedTicker ticker) {
         writeRawTick(ticker);
@@ -36,7 +34,6 @@ public class TickerSinkProcessor {
     }
 
     private void saveToRedis(NormalizedTicker ticker) {
-        if (redisCircuitBreaker.getState() == CircuitBreaker.State.OPEN) return;
         try {
             tickerRedisRepository.save(ticker);
         } catch (Exception e) {

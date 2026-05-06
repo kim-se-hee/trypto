@@ -4,7 +4,7 @@
 
 `TickerSinkProcessor` (@Component, 패키지 `exchange`) — WebSocket 핸들러가 정규화한 시세를 받아 네 채널 모두에 팬아웃한다.
 
-**의존성:** `TickRawWriter`, `TickerRedisRepository`, `TickerEventPublisher`, `EngineInboxPublisher`, `CircuitBreaker`(Redis)
+**의존성:** `TickRawWriter`, `TickerRedisRepository`, `TickerEventPublisher`, `EngineInboxPublisher`
 
 | 단계 | 호출 | 채널 |
 |------|------|------|
@@ -13,16 +13,7 @@
 | 3 | `TickerEventPublisher.publish()` | RabbitMQ `ticker.exchange` |
 | 4 | `EngineInboxPublisher.publish()` | RabbitMQ `engine.inbox` |
 
-**격리:** 각 단계를 try/catch로 감싸 한 채널 실패가 다른 채널로 전이되지 않도록 한다. Redis는 추가로 서킷 브레이커가 OPEN 상태면 호출 자체를 스킵한다.
-
-`CircuitBreakerConfig` (@Configuration, 패키지 `config`) — Resilience4j. 현재 Redis 접근에만 적용한다.
-
-| 항목 | 값 |
-|------|-----|
-| 슬라이딩 윈도우 | 5회 |
-| 실패 임계치 | 60% |
-| OPEN 대기 시간 | 10초 |
-| HALF_OPEN 허용 호출 | 2회 |
+**격리:** 각 단계를 try/catch로 감싸 한 채널 실패가 다른 채널로 전이되지 않도록 한다.
 
 ## 저장 · Redis 시세 캐시
 

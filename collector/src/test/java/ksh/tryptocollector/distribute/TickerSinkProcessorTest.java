@@ -1,7 +1,5 @@
 package ksh.tryptocollector.distribute;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import ksh.tryptocollector.model.NormalizedTicker;
 import ksh.tryptocollector.distribute.rabbitmq.EngineInboxPublisher;
 import ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher;
@@ -32,10 +30,9 @@ class TickerSinkProcessorTest {
 
     @BeforeEach
     void setUp() {
-        CircuitBreaker circuitBreaker = CircuitBreakerRegistry.ofDefaults().circuitBreaker("redis");
         tickerSinkProcessor = new TickerSinkProcessor(
                 tickerRedisRepository, tickerEventPublisher, engineInboxPublisher,
-                tickRawWriter, circuitBreaker);
+                tickRawWriter);
     }
 
     @Test
