@@ -78,4 +78,4 @@ app:
 
 | 토픽 | 전파 수단 | 기능 문서 |
 |------|----------|----------|
-| `/topic/prices.{exchangeId}` | RabbitMQ fanout | [live-ticker-streaming.md](marketdata/live-ticker-streaming.md) |
+| `/topic/tickers.{exchangeId}` | RabbitMQ fanout | [live-ticker-streaming.md](marketdata/live-ticker-streaming.md) |

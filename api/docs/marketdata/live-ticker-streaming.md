@@ -23,7 +23,7 @@
 2. RabbitMQ fanout exchange로 `TickerMessage`를 발행한다
 3. marketdata `LiveTickerEventListener`가 `ticker.marketdata.{uuid}` 큐에서 메시지를 소비한다
 4. `ResolveLiveTickerService`가 매핑 캐시에서 exchange+symbol → ExchangeCoinMapping을 조회하여 `LiveTickerResult`를 반환한다
-5. `LiveTickerEventListener`가 `LivePriceResponse`로 변환하여 `/topic/prices.{exchangeId}`로 전송한다
+5. `LiveTickerEventListener`가 `TickerResponse`로 변환하여 `/topic/tickers.{exchangeId}`로 전송한다
 
 ## 워밍업
 
@@ -34,7 +34,7 @@
 ## STOMP 토픽
 
 ```
-/topic/prices.{exchangeId}
+/topic/tickers.{exchangeId}
 ```
 
 - 거래소별 토픽으로, 해당 거래소의 모든 코인 티커 업데이트가 개별 메시지로 전달된다
@@ -56,7 +56,7 @@
 }
 ```
 
-### LivePriceResponse (WebSocket 전송)
+### TickerResponse (WebSocket 전송)
 
 ```json
 {
@@ -80,7 +80,7 @@
 
 ## 소비 화면
 
-클라이언트가 `/topic/prices.{exchangeId}`를 구독하면, 아래 화면들이 수신된 메시지에서 필요한 필드를 선택적으로 사용한다.
+클라이언트가 `/topic/tickers.{exchangeId}`를 구독하면, 아래 화면들이 수신된 메시지에서 필요한 필드를 선택적으로 사용한다.
 
 | 화면 | 사용 필드 | 용도 |
 |------|----------|------|
