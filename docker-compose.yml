@@ -245,6 +245,7 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
+    profiles: ["metrics"]
     networks:
       - trypto-net
     privileged: true
@@ -260,6 +261,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
+    profiles: ["metrics"]
     networks:
       - trypto-net
     pid: host
