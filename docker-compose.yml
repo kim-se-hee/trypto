@@ -151,6 +151,8 @@ services:
       INFLUXDB_TOKEN: trypto-collector-token
       COMPENSATION_BOUNDARY_SECONDS: "30"
       COMPENSATION_INTERVAL_MS: "30000"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB_SOCKET: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_MESSAGING: DEBUG
     depends_on:
       collector:
         condition: service_healthy
@@ -209,6 +211,8 @@ services:
       - "5173:5173"
     environment:
       VITE_API_TARGET: http://backend:8080
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
     depends_on:
       backend:
         condition: service_healthy
