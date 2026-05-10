@@ -31,7 +31,10 @@ resource "aws_instance" "sut" {
   }
 }
 
+// 분산을 위해 loadgen 은 N대로 띄운다. 각 인스턴스는 SSH/k6 dashboard 만 쓰면 되므로
+// EIP 는 안 붙이고 ephemeral 공인 IP 를 그대로 쓴다 — 매번 IP 가 바뀌지만 어차피 spot 이라 무관.
 resource "aws_instance" "loadgen" {
+  count                       = var.loadgen_count
   ami                         = data.aws_ami.trypto_base.id
   instance_type               = var.loadgen_instance_type
   key_name                    = var.key_pair_name
@@ -56,7 +59,7 @@ resource "aws_instance" "loadgen" {
   }
 
   tags = {
-    Name    = "trypto-loadgen"
+    Name    = "trypto-loadgen-${count.index}"
     Role    = "loadgen"
     Project = "trypto-loadtest"
   }
@@ -65,9 +68,4 @@ resource "aws_instance" "loadgen" {
 resource "aws_eip_association" "sut" {
   instance_id   = aws_instance.sut.id
   allocation_id = data.aws_eip.sut.id
-}
-
-resource "aws_eip_association" "loadgen" {
-  instance_id   = aws_instance.loadgen.id
-  allocation_id = data.aws_eip.loadgen.id
 }

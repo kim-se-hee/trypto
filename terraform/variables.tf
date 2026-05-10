@@ -10,7 +10,13 @@ variable "sut_instance_type" {
 
 variable "loadgen_instance_type" {
   type    = string
-  default = "c5.4xlarge"
+  default = "r5.4xlarge"
+}
+
+variable "loadgen_count" {
+  type        = number
+  default     = 1
+  description = "loadgen 인스턴스 수. /performance-test 의 두 번째 인자로 덮어쓴다."
 }
 
 variable "use_spot" {

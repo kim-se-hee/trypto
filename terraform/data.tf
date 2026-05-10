@@ -24,6 +24,5 @@ data "aws_eip" "sut" {
   id = var.sut_eip_allocation_id
 }
 
-data "aws_eip" "loadgen" {
-  id = var.loadgen_eip_allocation_id
-}
+// loadgen 은 분산 후 EIP 를 쓰지 않는다 (인스턴스 N대에 EIP 1개 의미 없음).
+// 기존 EIP allocation 은 보존만 — 단일 loadgen 으로 되돌릴 때를 위해 variable 도 그대로 둔다.
