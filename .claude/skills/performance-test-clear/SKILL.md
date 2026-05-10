@@ -1,6 +1,6 @@
 ---
 description: >
-  부하테스트용으로 띄워둔 EC2 인스턴스(SUT m5.2xlarge, loadgen c5.4xlarge) 를 terraform destroy 로 정리한다.
+  부하테스트용으로 띄워둔 EC2 인스턴스(SUT m5.2xlarge, loadgen r5.4xlarge × 4) 를 terraform destroy 로 정리한다.
   spot 인스턴스라 stop 이 안 되고 항상 destroy. EBS 도 같이 사라진다.
   EIP/SG/키페어/AMI 는 보존된다 — 다음 /performance-test 호출 때 같은 EIP 가 다시 붙는다.
 ---
