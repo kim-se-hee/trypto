@@ -10,8 +10,7 @@ public record BithumbTickerMessage(
         String code,
         @JsonProperty("trade_price") BigDecimal tradePrice,
         @JsonProperty("signed_change_rate") BigDecimal signedChangeRate,
-        @JsonProperty("acc_trade_price_24h") BigDecimal accTradePrice24h,
-        long timestamp
+        @JsonProperty("acc_trade_price_24h") BigDecimal accTradePrice24h
 ) {
     public NormalizedTicker toNormalized(String displayName) {
         String base = code.substring(4);
@@ -21,7 +20,7 @@ public record BithumbTickerMessage(
                 tradePrice,
                 signedChangeRate,
                 accTradePrice24h,
-                timestamp
+                System.currentTimeMillis()
         );
     }
 }

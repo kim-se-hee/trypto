@@ -11,8 +11,7 @@ public record BinanceTickerMessage(
         @JsonProperty("s") String symbol,
         @JsonProperty("c") String lastPrice,
         @JsonProperty("o") String openPrice,
-        @JsonProperty("q") String quoteVolume,
-        @JsonProperty("E") long eventTime
+        @JsonProperty("q") String quoteVolume
 ) {
     private static final int CHANGE_RATE_SCALE = 8;
 
@@ -31,7 +30,7 @@ public record BinanceTickerMessage(
                 close,
                 changeRate,
                 new BigDecimal(quoteVolume),
-                eventTime
+                System.currentTimeMillis()
         );
     }
 }
