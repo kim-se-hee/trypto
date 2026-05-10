@@ -33,19 +33,6 @@
       "fieldConfig": { "defaults": { "unit": "none" } }
     },
     {
-      "id": 102,
-      "title": "거래소별 시세 발행 rate (msg/s)",
-      "type": "timeseries",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "targets": [
-        { "expr": "rate(loadtest_synthetic_ticker_published_total[30s])", "legendFormat": "{{exchange}}" },
-        { "expr": "sum(rate(loadtest_synthetic_ticker_published_total[30s]))", "legendFormat": "total" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "msg/s" } }
-    },
-
-    {
       "id": 200,
       "title": "🚦 큐 적체",
       "type": "row",
@@ -93,23 +80,37 @@
     },
     {
       "id": 301,
-      "title": "api JVM heap 사용률",
+      "title": "api 컨테이너 메모리 사용량 (MB)",
       "type": "timeseries",
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 18 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 18 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "sum by (job) (jvm_memory_used_bytes{job=\"api\", area=\"heap\"}) / sum by (job) (jvm_memory_max_bytes{job=\"api\", area=\"heap\"})",
-          "legendFormat": "heap %"
+          "expr": "container_memory_working_set_bytes{name=~\"trypto-backend.*\"}",
+          "legendFormat": "{{name}}"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1, "min": 0 } }
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 307,
+      "title": "api 가 서버 RAM 차지하는 비율 (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "100 * sum(container_memory_working_set_bytes{name=~\"trypto-backend.*\"}) / scalar(node_memory_MemTotal_bytes)",
+          "legendFormat": "서버 RAM 대비"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
     },
     {
       "id": 302,
       "title": "api GC pause (sec)",
       "type": "timeseries",
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 18 },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 25 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         { "expr": "rate(jvm_gc_pause_seconds_sum{job=\"api\"}[1m])", "legendFormat": "{{action}} {{cause}}" }
@@ -117,10 +118,21 @@
       "fieldConfig": { "defaults": { "unit": "s" } }
     },
     {
+      "id": 305,
+      "title": "api GC STW 횟수 (회/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "rate(jvm_gc_pause_seconds_count{job=\"api\"}[1m])", "legendFormat": "{{action}} {{cause}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
       "id": 303,
       "title": "STOMP 채널 active threads",
       "type": "timeseries",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 18 },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 25 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         { "expr": "stomp_broker_active", "legendFormat": "broker" },
@@ -130,55 +142,111 @@
       "fieldConfig": { "defaults": { "unit": "none" } }
     },
     {
-      "id": 304,
-      "title": "호스트 TCP / fd",
+      "id": 308,
+      "title": "api 컨테이너가 잡고 있는 vCPU",
       "type": "timeseries",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 25 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 32 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "api 컨테이너가 사용하는 CPU 시간을 코어 단위로 환산. 100% = 1 vCPU 풀 점유. SUT m5.2xlarge 의 상한은 800% (8 vCPU). 이 값이 700% 이상이면 outbound fanout 이 CPU 한계에 닿아 reject/세션 끊김의 직접 원인이 된다.",
       "targets": [
-        { "expr": "node_sockstat_TCP_inuse", "legendFormat": "TCP inuse" },
-        { "expr": "node_filefd_allocated", "legendFormat": "fd allocated" },
-        { "expr": "rate(node_netstat_Tcp_RetransSegs[1m])", "legendFormat": "TCP RetransSegs/s" },
-        { "expr": "rate(node_netstat_Tcp_OutRsts[1m])", "legendFormat": "TCP OutRsts/s" }
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"trypto-backend.*\"}[1m])) * 100", "legendFormat": "api 컨테이너" }
       ],
-      "fieldConfig": { "defaults": { "unit": "none" } }
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 800 } }
     },
     {
-      "id": 305,
-      "title": "api GC STW 횟수 (회/s)",
+      "id": 309,
+      "title": "SUT 호스트 전체 CPU 활용률",
       "type": "timeseries",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 25 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "SUT 인스턴스 전체 vCPU 의 비유휴 비율. api 컨테이너 외에 mysql / collector / engine / rabbitmq 등 SUT 위 모든 워크로드의 합산 CPU 사용량을 보여준다. 90% 넘기 시작하면 어떤 컨테이너 하나가 CPU 를 쥐고 다른 컨테이너의 처리도 늦춘다.",
+      "targets": [
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))) * 100", "legendFormat": "SUT 호스트" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+
+    {
+      "id": 350,
+      "title": "🔍 outbound 진단",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 }
+    },
+    {
+      "id": 351,
+      "title": "outbound 폐기 메시지 (rejected/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 40 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
-        { "expr": "rate(jvm_gc_pause_seconds_count{job=\"api\"}[1m])", "legendFormat": "{{action}} {{cause}}" }
+        { "expr": "rate(stomp_clientOutbound_rejected_total[1m])", "legendFormat": "clientOutbound" },
+        { "expr": "rate(stomp_broker_rejected_total[1m])", "legendFormat": "broker" },
+        { "expr": "rate(stomp_clientInbound_rejected_total[1m])", "legendFormat": "clientInbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 352,
+      "title": "outbound 1건 처리 시간 (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "histogram_quantile(0.5,  sum(rate(stomp_clientOutbound_handle_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(stomp_clientOutbound_handle_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(stomp_clientOutbound_handle_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 353,
+      "title": "끊김 사유 (disconnects/s by reason)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "sum by (reason) (rate(stomp_sessions_disconnect_total[1m]))", "legendFormat": "{{reason}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 354,
+      "title": "수집기 → api outbound 직전 e2e (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 18, "x": 0, "y": 47 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "collector 가 ticker 를 publish 한 시각부터 api 가 outbound socket write 를 시작하기 직전까지의 시간. RabbitMQ 큐 대기 + RabbitListener 처리 + broker 채널 fan-out 시간이 모두 포함된다. outbound 1건 처리 시간 (p99 < 1ms) 과 비교하면 어디서 시간이 새는지 보인다.",
+      "targets": [
+        { "expr": "histogram_quantile(0.5,  sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 355,
+      "title": "e2e 헤더 누락 (msg/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 47 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "outbound 단계에서 publishedAtMs 헤더를 못 찾은 메시지 수. 0 이 아니면 broker fanout 단계에서 헤더가 손실된다는 뜻 — e2e 패널이 비는 직접 증거.",
+      "targets": [
+        { "expr": "rate(ticker_collectorToOutbound_headerMissing_total[1m])", "legendFormat": "header missing/s" }
       ],
       "fieldConfig": { "defaults": { "unit": "ops" } }
     },
 
     {
       "id": 400,
-      "title": "👤 사용자 체감 (k6)",
+      "title": "🤖 k6 부하기 시그널 (끊김 / 연결실패 / 수신)",
       "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 }
-    },
-    {
-      "id": 401,
-      "title": "메시지 e2e latency (ms) — collector 발행~브라우저 도착",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 33 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "targets": [
-        { "expr": "histogram_quantile(0.5,  sum(rate(k6_message_e2e_latency_seconds[1m]))) * 1000", "legendFormat": "p50" },
-        { "expr": "histogram_quantile(0.95, sum(rate(k6_message_e2e_latency_seconds[1m]))) * 1000", "legendFormat": "p95" },
-        { "expr": "histogram_quantile(0.99, sum(rate(k6_message_e2e_latency_seconds[1m]))) * 1000", "legendFormat": "p99" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "ms" } }
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 54 }
     },
     {
       "id": 402,
       "title": "끊김 (disconnects/s)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 41 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 55 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         { "expr": "rate(k6_stomp_disconnects_total[1m])", "legendFormat": "disconnects/s" }
@@ -189,21 +257,10 @@
       "id": 403,
       "title": "연결 실패 (connect failures/s)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 41 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 55 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         { "expr": "rate(k6_stomp_connect_failures_total[1m])", "legendFormat": "connect failures/s" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "none" } }
-    },
-    {
-      "id": 404,
-      "title": "메시지 수신 (msg received/s)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 41 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "targets": [
-        { "expr": "rate(k6_stomp_messages_received_total[1m])", "legendFormat": "msg received/s" }
       ],
       "fieldConfig": { "defaults": { "unit": "none" } }
     }
