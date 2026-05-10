@@ -331,12 +331,14 @@ for i in "${!LOADGEN_IPS[@]}"; do
   fi
 done
 
+# 헬스체크는 health path 로, 출력은 사용자가 클릭할 root URL 로 — 분리한다.
+# health URL 그대로 출력하면 클릭해도 JSON / 빈 응답만 뜨고 대시보드 안 뜸.
 check_url() {
-  local url=$1 label=$2
-  if curl -fsS -m 5 -o /dev/null "$url" 2>/dev/null; then
-    echo "  ✓ $label  $url"
+  local probe_url=$1 display_url=$2 label=$3
+  if curl -fsS -m 5 -o /dev/null "$probe_url" 2>/dev/null; then
+    echo "  ✓ $label  $display_url"
   else
-    echo "  ✗ $label  $url  (아직 응답 없음 — 1~2분 후 다시 시도)"
+    echo "  ✗ $label  $display_url  (아직 응답 없음 — 1~2분 후 다시 시도)"
   fi
 }
 
@@ -344,18 +346,15 @@ echo ""
 echo "🟢 부하테스트 시작 (시나리오: $scenario, container: $CONTAINER_NAME, loadgen ${LOADGEN_COUNT}대)"
 echo ""
 echo "▶ SUT 대시보드"
-check_url "http://$SUT_IP:3000/api/health"    "Grafana                "
-check_url "http://$SUT_IP:9091/-/ready"       "Prometheus             "
-check_url "http://$SUT_IP:15672"              "RabbitMQ Management    "
+check_url "http://$SUT_IP:3000/api/health"  "http://$SUT_IP:3000"    "Grafana             (admin/admin)"
+check_url "http://$SUT_IP:9091/-/ready"     "http://$SUT_IP:9091"    "Prometheus                      "
+check_url "http://$SUT_IP:15672"            "http://$SUT_IP:15672"   "RabbitMQ Management (guest/guest)"
 echo ""
 echo "▶ loadgen k6 dashboards (인스턴스마다 별도)"
 for i in "${!LOADGEN_IPS[@]}"; do
   IP="${LOADGEN_IPS[$i]}"
-  check_url "http://$IP:5665"                 "loadgen#$i             "
+  check_url "http://$IP:5665"               "http://$IP:5665"        "loadgen#$i                       "
 done
-echo ""
-echo "  Grafana 로그인: admin / admin"
-echo "  RabbitMQ 로그인: guest / guest"
 echo ""
 echo "▶ SSH / 로그"
 echo "  SUT       ssh -i ~/.ssh/trypto-key-pair.pem ec2-user@$SUT_IP"
@@ -367,7 +366,31 @@ echo ""
 echo "끝나면 /performance-test-clear 로 인스턴스 정리."
 ```
 
-여기서 스킬은 **종료**한다. 테스트 완료를 기다리지 않는다.
+### 13. 최종 보고 (스킬 종료 직전, 필수)
+
+⚠️ **스킬을 종료하기 전 마지막 텍스트 응답으로** 대시보드 URL 들을 사용자에게 다시 정리해서 보고한다. bash echo 출력은 긴 로그에 묻혀서 사용자가 스크롤해서 찾아야 한다 — 텍스트 응답에 다시 적어줘야 한 눈에 클릭 가능하다.
+
+다음 형식으로 (markdown 으로):
+
+```
+**SUT 대시보드** (<SUT_IP>)
+- Grafana — http://<SUT_IP>:3000  (admin / admin)
+- Prometheus — http://<SUT_IP>:9091
+- RabbitMQ — http://<SUT_IP>:15672  (guest / guest)
+
+**k6 web dashboard** (loadgen N대, 각 VU=<PER_LOADGEN_VU>)
+- loadgen#0 — http://<IP0>:5665
+- loadgen#1 — http://<IP1>:5665
+...
+
+**SSH**
+- SUT — ssh -i ~/.ssh/trypto-key-pair.pem ec2-user@<SUT_IP>
+- loadgen#i — ssh -i ~/.ssh/trypto-key-pair.pem ec2-user@<IPi>
+
+container 이름: <CONTAINER_NAME> (`docker logs -f` 로 진행상황 확인). 끝나면 `/performance-test-clear`.
+```
+
+그 다음 스킬은 **종료**한다. 테스트 완료를 기다리지 않는다.
 
 ## 실패 처리
 
