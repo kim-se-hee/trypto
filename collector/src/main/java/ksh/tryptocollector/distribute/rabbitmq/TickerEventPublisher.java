@@ -2,8 +2,9 @@ package ksh.tryptocollector.distribute.rabbitmq;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import ksh.tryptocollector.model.NormalizedTicker;
-import ksh.tryptocollector.model.TickerEvent;
+import ksh.tryptocollector.model.TickerBatchEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -23,14 +24,20 @@ public class TickerEventPublisher {
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
-    public void publish(NormalizedTicker ticker) {
+    public void publishBatch(String exchange, List<NormalizedTicker> tickers) {
+        if (tickers.isEmpty()) {
+            return;
+        }
         try {
-            TickerEvent event = TickerEvent.from(ticker);
+            TickerBatchEvent batch = new TickerBatchEvent(
+                    exchange,
+                    tickers.stream().map(TickerBatchEvent.Item::from).toList()
+            );
             byte[] body;
             try {
-                body = objectMapper.writeValueAsBytes(event);
+                body = objectMapper.writeValueAsBytes(batch);
             } catch (JacksonException e) {
-                log.error("시세 이벤트 직렬화 실패: {}", event, e);
+                log.error("시세 배치 직렬화 실패: exchange={}, size={}", exchange, tickers.size(), e);
                 return;
             }
             Message message = MessageBuilder.withBody(body)
@@ -38,12 +45,15 @@ public class TickerEventPublisher {
                     .build();
             rabbitTemplate.send(RabbitMQConfig.TICKER_EXCHANGE, "", message);
             Counter.builder("rabbitmq.publish")
-                    .tag("exchange", ticker.exchange())
+                    .tag("exchange", exchange)
                     .register(meterRegistry)
                     .increment();
+            Counter.builder("rabbitmq.publish.ticker.size")
+                    .tag("exchange", exchange)
+                    .register(meterRegistry)
+                    .increment(tickers.size());
         } catch (Exception e) {
-            log.error("시세 이벤트 발행 실패: {}/{}", ticker.exchange(),
-                    ticker.base() + "/" + ticker.quote(), e);
+            log.error("시세 배치 발행 실패: exchange={}, size={}", exchange, tickers.size(), e);
         }
     }
 }
