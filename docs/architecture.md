@@ -5,7 +5,7 @@
 | 서비스 | 역할 |
 |--------|------|
 | `collector` | 업비트·빗썸·바이낸스 WebSocket으로 시세를 수집·정규화하여 4곳으로 팬아웃 (Redis / InfluxDB / `ticker.exchange` / `engine.inbox`) |
-| `api` | 사용자 요청을 REST·WebSocket(STOMP)로 처리. 모의 투자 핵심 비즈니스 로직과 보상 스케줄러를 보유 |
+| `api` | 사용자 요청을 REST · SSE(시세) · WebSocket/STOMP(체결 통지)로 처리. 모의 투자 핵심 비즈니스 로직과 보상 스케줄러를 보유 |
 | `engine` | 단일 쓰기 스레드 매칭 엔진. 주문 장부를 유지하고 시세 틱에 따라 체결 |
 | `frontend` | 사용자 UI 제공 |
 
@@ -54,7 +54,7 @@ flowchart TD
     REDIS -.시세 조회.-> API
     INFLUX -.캔들 조회.-> API
 
-    API <-->|REST · STOMP| FE
+    API <-->|REST · SSE(시세) · STOMP(체결 통지)| FE
 ```
 
 ---
@@ -84,7 +84,7 @@ flowchart TD
 
 # 핵심 흐름
 
-- **시세 표시**: 거래소 → collector → ticker.exchange → api → STOMP → frontend
+- **시세 표시**: 거래소 → collector → ticker.exchange → api → SSE(`/api/sse/tickers/{exchangeId}`) → frontend
 - **시세 기반 매칭**: 거래소 → collector → engine.inbox(TickReceived) → engine → 체결
 - **주문**: frontend → api(검증·잔고차감·DB) → engine.inbox(OrderPlaced) → engine
 - **체결 통지**: engine → outbox → order.filled.notification → api → STOMP
