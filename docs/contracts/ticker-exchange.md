@@ -6,7 +6,7 @@
 |------|------|
 | 종류 | RabbitMQ Fanout Exchange |
 | 이름 | `ticker.exchange` (`app.rabbitmq.ticker-exchange`로 외부화) |
-| 발행자 | `collector` — `ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher` (`TickerEventConflator` 가 50ms 주기로 호출) |
+| 발행자 | `collector` — `ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher` |
 | 소비자 | `api` — `ksh.tryptobackend.marketdata.adapter.in.LiveTickerEventListener` |
 | Content-Type | `application/json` |
 | Routing key | `""` (fanout) |
@@ -14,7 +14,7 @@
 
 # 발행 단위
 
-1 메시지 = **1 거래소의 50ms 윈도우 batch**. collector 의 `TickerEventConflator` 가 `(exchange, base, quote)` 별 slot 에 최신 tick 1건만 유지하다가 50ms 마다 거래소별로 묶어 발행한다. 같은 키로 윈도우 안에 N건 들어오면 마지막 1건만 batch 에 포함된다.
+1 메시지 = **1 거래소의 50ms 윈도우 batch**. collector 가 거래소·심볼별로 최신 tick 1건만 유지하다 50ms 마다 거래소별로 묶어 발행한다. 같은 심볼로 윈도우 안에 N건 들어오면 마지막 1건만 batch 에 포함된다.
 
 # 페이로드
 
