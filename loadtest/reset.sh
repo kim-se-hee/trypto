@@ -1,8 +1,8 @@
 #!/bin/bash
 # 부하테스트 재실행용 상태 원복 스크립트
 # SUT(또는 로컬)에서 실행:
-#   ./loadtest/reset.sh                          # 기본 프로파일
-#   ./loadtest/reset.sh ticker_subscription.js   # loadtest 오버라이드 같이 적용
+#   ./loadtest/reset.sh                       # 기본 프로파일
+#   ./loadtest/reset.sh ticker_websocket.js   # loadtest 오버라이드 같이 적용
 #
 # 두 가지 경로:
 # - cold path  — 컨테이너 처음 띄우거나 mysql 이 살아있지 않을 때. down -v + pull + up
@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 SCENARIO="${1:-}"
 COMPOSE_ARGS=("-f" "docker-compose.yml")
 case "$SCENARIO" in
-  ticker_subscription.js)
+  ticker_websocket.js)
     # loadtest 오버라이드 + 호스트 메트릭(node-exporter/cadvisor) 둘 다 켬
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml" "--profile" "metrics")
     ;;

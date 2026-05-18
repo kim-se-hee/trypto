@@ -1,4 +1,4 @@
-// trypto 시세 SSE 부하 테스트 — 단일 ramp(up/sustain/down).
+// trypto 시세 STOMP/WebSocket 부하 테스트 — 단일 ramp(up/sustain/down).
 //
 // 시나리오 시간선:
 //   T=0~10분  : 동접 0 → 5,000 / 시세 0 → 241/s   (선형 ramp up, 비율 5000:241 동조)
@@ -6,35 +6,42 @@
 //   T=20~25분 : 동접 5,000 → 0 / 시세 241 → 0/s   (선형 ramp down)
 //
 // 거래소 분포 (VU 입주):
-//   Upbit   90% → /api/sse/tickers/1
-//   Bithumb  5% → /api/sse/tickers/2
-//   Binance  5% → /api/sse/tickers/3
+//   Upbit   90% → /topic/tickers.1
+//   Bithumb  5% → /topic/tickers.2
+//   Binance  5% → /topic/tickers.3
 //
 // 측정값 (k6 결과 — client 한계 시그널만 측정):
-//   sse_disconnects        : VU 연결 끊김 누계 (서버 강제 종료 / 네트워크 끊김 감지용)
-//   sse_connect_failures   : 초기 연결 실패 누계 (HTTP status != 200)
-//   sse_messages_received  : 받은 SSE event 누계 (부하 검증용)
+//   stomp_disconnects        : VU 연결 끊김 누계 (heartbeat drift 감지용)
+//   stomp_connect_failures   : 초기 연결 실패 누계
+//   stomp_messages_received  : 받은 STOMP MESSAGE 누계 (부하 검증용)
 //
 // 서버 측 처리 시간 ("서버가 보내기 직전까지의 시간") 은 server-side metric 으로 본다 —
-//   ticker_collectorToOutbound_duration_seconds (api 가 SSE write 직전까지의 시간).
+//   stomp_clientOutbound_handle_duration_seconds (outbound channel 1건 처리 시간).
+// k6 측 e2e_latency 는 client 도달 시간이라 client 한계가 노이즈로 끼어 의미가 흐려져 제거.
 //
 // 메시지 받으면 JSON.parse 까지만 흉내내고 결과는 버림 (운영 client 의 CPU 부담 시늉).
-//
-// xk6-sse 확장이 필요하다 (github.com/phymbert/xk6-sse). 표준 k6 이미지엔 없으므로 커스텀 빌드된 k6 이미지로 실행한다.
-// /performance-test 스킬이 loadtest/k6/Dockerfile 을 빌드해 Docker Hub 의 kimsehee98/trypto-k6:lt-<hash>
-// 태그로 push 하고, 각 loadgen 인스턴스가 그 이미지를 pull 해서 사용한다.
 
 import http from 'k6/http';
 import { check, fail } from 'k6';
 import { Counter } from 'k6/metrics';
-import sse from 'k6/x/sse';
+import { WebSocket } from 'k6/experimental/websockets';
+import { setInterval, clearInterval, setTimeout } from 'k6/timers';
+import {
+  buildConnectFrame,
+  buildSubscribeFrame,
+  buildDisconnectFrame,
+  parseFrames,
+  defaultConnectOptions,
+  HEARTBEAT_FRAME,
+} from '../lib/stomp.js';
 
-const disconnects = new Counter('sse_disconnects');
-const connectFailures = new Counter('sse_connect_failures');
-const messagesReceived = new Counter('sse_messages_received');
+const disconnects = new Counter('stomp_disconnects');
+const connectFailures = new Counter('stomp_connect_failures');
+const messagesReceived = new Counter('stomp_messages_received');
 
 const API_HOST = __ENV.API_HOST || 'localhost:8080';
 const COLLECTOR_HOST = __ENV.COLLECTOR_HOST || 'localhost:8081';
+const WS_URL = `ws://${API_HOST}/ws`;
 
 const TARGET_VU = parseInt(__ENV.TARGET_VU || '5000', 10);
 const PEAK_RATE_UPBIT = 217;
@@ -42,7 +49,10 @@ const PEAK_RATE_BITHUMB = 12;
 const PEAK_RATE_BINANCE = 12;
 
 // 분산 모드: loadgen N대를 띄울 때 collector ramp 는 1대만 호출해야 한다.
+// (4대가 동시에 같은 endpoint 를 4번 POST 하면 마지막이 이기는 race 가 되고,
+//  정확히 같은 모양이라 무해하지만 의도가 흐려진다.)
 // orchestrator(skill) 가 첫 인스턴스만 RUN_RAMP_SETUP=true, 나머지는 false 로 띄운다.
+// 단일 인스턴스 단독 실행 시 default true 라 기존 동작과 동일.
 const RUN_RAMP_SETUP = (__ENV.RUN_RAMP_SETUP || 'true').toLowerCase() !== 'false';
 
 const RAMP_UP_DURATION = '10m';
@@ -51,7 +61,7 @@ const RAMP_DOWN_DURATION = '5m';
 
 export const options = {
   scenarios: {
-    ticker_subscription: {
+    ticker_websocket: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
@@ -65,8 +75,8 @@ export const options = {
     },
   },
   thresholds: {
-    'sse_disconnects':       ['count<50'],
-    'sse_connect_failures':  ['count<50'],
+    'stomp_disconnects':     ['count<50'],
+    'stomp_connect_failures':['count<50'],
   },
 };
 
@@ -113,36 +123,75 @@ export function teardown() {
 
 export function subscribeAndIdle() {
   const exchangeId = pickExchangeId();
-  const url = `http://${API_HOST}/api/sse/tickers/${exchangeId}`;
-  const params = { tags: { exchangeId: String(exchangeId) } };
+  const destination = `/topic/tickers.${exchangeId}`;
 
-  let opened = false;
+  const ws = new WebSocket(WS_URL);
+  let connected = false;
+  let heartbeatTimer = null;
 
-  // sse.open 은 SSE stream 이 닫힐 때까지 (서버 close / VU 종료 / client.close) 블로킹한다.
-  // SseEmitter timeout 0L 라 서버는 능동 close 안 함 → ramping-vus executor 가 VU 종료시킬 때
-  // 자동으로 underlying HTTP 연결을 끊는다. 클라이언트는 별도 sleep / explicit close 불필요.
-  const response = sse.open(url, params, function (client) {
-    client.on('open', () => {
-      opened = true;
-    });
+  ws.onopen = () => {
+    const opts = defaultConnectOptions(API_HOST);
+    ws.send(buildConnectFrame(opts.host, opts.heartbeatSendMs, opts.heartbeatRecvMs));
+  };
 
-    client.on('event', (event) => {
-      messagesReceived.add(1);
-      // 운영 client 의 CPU 부담 시늉 — JSON.parse 까지만 흉내내고 결과는 버린다.
-      consumeBody(event.data);
-    });
+  ws.onmessage = (evt) => {
+    const text = typeof evt.data === 'string' ? evt.data : '';
+    if (!text) return;
 
-    client.on('error', () => {
-      // 정상 sustain 중 끊김 = 서버 강제 종료 / 네트워크 끊김 의심
-      if (opened) {
-        disconnects.add(1);
+    const frames = parseFrames(text);
+    for (const frame of frames) {
+      if (frame.command === 'CONNECTED') {
+        connected = true;
+        // CONNECTED 받은 직후 SUBSCRIBE
+        ws.send(buildSubscribeFrame(destination, `sub-${__VU}`));
+        // 클라→서버 하트비트 시작 (CONNECTED 후 시점부터)
+        heartbeatTimer = setInterval(() => {
+          try { ws.send(HEARTBEAT_FRAME); } catch (_) { /* close 직후 send 는 무시 */ }
+        }, defaultConnectOptions().heartbeatSendMs);
+      } else if (frame.command === 'MESSAGE') {
+        messagesReceived.add(1);
+        // 운영 client 의 CPU 부담 시늉 — JSON.parse 까지만 흉내내고 결과는 버린다.
+        // server 처리 시간 자체는 server-side handle_duration metric 으로 본다.
+        consumeBody(frame.body);
+      } else if (frame.command === 'ERROR') {
+        // STOMP ERROR — 서버가 끊을 예정. 카운트만.
       }
-    });
-  });
+    }
+  };
 
-  if (!response || response.status !== 200) {
-    connectFailures.add(1);
-  }
+  ws.onclose = () => {
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+    if (connected) {
+      // 정상 sustain 중 끊김 = heartbeat drift 또는 서버 강제 종료 의심
+      disconnects.add(1);
+    } else {
+      connectFailures.add(1);
+    }
+  };
+
+  ws.onerror = () => {
+    if (!connected) {
+      connectFailures.add(1);
+    }
+  };
+
+  // VU 가 ramping-vus executor 의 요청에 의해 stop 되면 자동으로 close 한다.
+  // 명시적으로 sleep 하지 않아도 onmessage 가 비동기로 메시지를 받는다.
+  // 단, k6 의 VU 함수는 return 하면 다음 iteration 으로 넘어가므로
+  // 끝까지 살아있게 하려면 wait 한다.
+  return new Promise((resolve) => {
+    // VU lifecycle 관리: 30분 + 마진 후 자체 종료
+    setTimeout(() => {
+      try {
+        ws.send(buildDisconnectFrame());
+      } catch (_) { /* ignore */ }
+      try { ws.close(); } catch (_) { /* ignore */ }
+      resolve();
+    }, 30 * 60 * 1000);
+  });
 }
 
 function consumeBody(body) {
