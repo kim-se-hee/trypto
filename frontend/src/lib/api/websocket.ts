@@ -1,5 +1,4 @@
 import { Client, type StompSubscription } from "@stomp/stompjs";
-import { API_BASE_URL } from "./client";
 
 export interface Ticker {
   coinId: number;
@@ -36,7 +35,6 @@ interface Subscriber {
   subscription: StompSubscription | null;
 }
 
-// 시세는 SSE 로 분리됐고 이 STOMP 클라이언트는 체결 통지(/user/{userId}/queue/events) 전용이다.
 let client: Client | null = null;
 let visibilityListenerAttached = false;
 let hiddenAt: number | null = null;
@@ -137,39 +135,30 @@ export function disconnect(): void {
   subscribers.clear();
 }
 
-/**
- * 거래소 1개의 시세를 SSE 로 구독한다.
- *
- * 거래소 탭을 바꾸면 호출 측이 cleanup 함수를 호출해 EventSource 를 close 하고 새 거래소를 구독한다.
- * 한 클라이언트가 동시에 여러 거래소를 구독하지 않는다.
- */
 export function subscribeTickers(
   exchangeId: number,
   callback: (tickers: Ticker[]) => void,
 ): () => void {
-  const url = `${API_BASE_URL}/api/sse/tickers/${exchangeId}`;
-  const source = new EventSource(url);
-
-  source.onmessage = (event) => {
-    try {
-      const parsed = JSON.parse(event.data) as Ticker[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        callback(parsed);
+  const sub: Subscriber = {
+    topic: `/topic/tickers.${exchangeId}`,
+    handler: (body) => {
+      try {
+        const parsed = JSON.parse(body) as Ticker[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          callback(parsed);
+        }
+      } catch {
+        // ignore parse errors
       }
-    } catch {
-      // ignore parse errors
-    }
+    },
+    subscription: null,
   };
-
-  // EventSource 는 연결 끊김 시 브라우저가 자동 재연결한다. 로깅만 한다.
-  source.onerror = () => {
-    if (source.readyState === EventSource.CLOSED) {
-      // 명시적으로 닫힌 상태는 cleanup 경로 — 별다른 처리 없음
-    }
-  };
-
+  subscribers.add(sub);
+  activateSubscriber(sub);
   return () => {
-    source.close();
+    subscribers.delete(sub);
+    sub.subscription?.unsubscribe();
+    sub.subscription = null;
   };
 }
 
