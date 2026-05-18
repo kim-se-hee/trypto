@@ -21,11 +21,11 @@
 
 ## 메시지 흐름
 
-1. 시세 수집기가 거래소 WebSocket에서 티커를 수신한다
-2. collector 의 `TickerEventConflator` 가 `(exchange, base, quote)` 별 slot 에 최신 1건만 유지하다 50ms 마다 거래소별로 묶어 RabbitMQ fanout exchange 로 `TickerBatchMessage` 1건을 발행한다 (= 1 메시지 / 1 거래소 / 50ms)
-3. marketdata `LiveTickerEventListener`가 `ticker.marketdata.{uuid}` 큐에서 batch 를 소비한다
-4. batch 안의 각 ticker 에 대해 `ResolveLiveTickerService`가 exchange+symbol → ExchangeCoinMapping 으로 `LiveTickerResult`를 반환한다
-5. `LiveTickerEventListener`가 resolve 결과들을 `List<TickerResponse>` 로 묶어 `/topic/tickers.{exchangeId}` 로 STOMP 1 프레임으로 전송한다
+1. collector 가 거래소에서 티커를 수신한다
+2. collector 가 거래소·심볼별로 최신 1건만 남기는 50ms 윈도우로 묶어 거래소당 배치 1건을 fanout 발행한다
+3. marketdata 가 인스턴스별 큐에서 배치를 소비한다
+4. 배치 안의 각 티커를 외부 식별자(거래소+심볼) → 내부 코인 매핑으로 변환한다
+5. 변환 결과를 거래소별 STOMP 토픽에 1 프레임으로 내려준다
 
 ## 워밍업
 
