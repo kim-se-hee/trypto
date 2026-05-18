@@ -91,6 +91,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Bean
+    public ThreadPoolTaskExecutor sseOutboundExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(64);
+        executor.setMaxPoolSize(128);
+        executor.setQueueCapacity(20_000);
+        // 시세는 stale 한 옛 가격을 흘려보내고 최신을 살린다 — broadcast 가 밀리면 가장 오래된 것부터 버린다.
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
+        executor.setThreadNamePrefix("sse-outbound-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
     public ThreadPoolTaskExecutor stompBrokerExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(16);
