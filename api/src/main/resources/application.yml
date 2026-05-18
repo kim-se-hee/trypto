@@ -63,6 +63,12 @@ management:
         match.batch.e2e: true
         pending.order.fill: true
 
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging.simp.stomp: DEBUG
+    org.apache.tomcat.websocket: DEBUG
+
 compensation:
   boundary-seconds: ${COMPENSATION_BOUNDARY_SECONDS:30}
   interval-ms: ${COMPENSATION_INTERVAL_MS:30000}

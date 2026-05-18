@@ -1,0 +1,9 @@
+services:
+  collector:
+    environment:
+      SPRING_PROFILES_ACTIVE: loadtest
+
+  # 부하테스트에선 frontend 불필요. profiles 로 비활성.
+  # reset.sh 는 --profile metrics 만 활성화하므로 dev 프로파일은 절대 안 켜진다.
+  frontend:
+    profiles: ["dev"]

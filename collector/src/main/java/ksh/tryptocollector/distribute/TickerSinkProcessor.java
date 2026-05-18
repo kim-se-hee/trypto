@@ -2,7 +2,7 @@ package ksh.tryptocollector.distribute;
 
 import ksh.tryptocollector.model.NormalizedTicker;
 import ksh.tryptocollector.distribute.rabbitmq.EngineInboxPublisher;
-import ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher;
+import ksh.tryptocollector.distribute.rabbitmq.TickerEventConflator;
 import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
 import ksh.tryptocollector.distribute.tick.TickRawWriter;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TickerSinkProcessor {
     private final TickerRedisRepository tickerRedisRepository;
-    private final TickerEventPublisher tickerEventPublisher;
+    private final TickerEventConflator tickerEventConflator;
     private final EngineInboxPublisher engineInboxPublisher;
     private final TickRawWriter tickRawWriter;
 
@@ -43,9 +43,9 @@ public class TickerSinkProcessor {
 
     private void publishEvent(NormalizedTicker ticker) {
         try {
-            tickerEventPublisher.publish(ticker);
+            tickerEventConflator.submit(ticker);
         } catch (Exception e) {
-            log.error("RabbitMQ 발행 실패: {}/{}", ticker.exchange(), ticker.base(), e);
+            log.error("RabbitMQ conflator 제출 실패: {}/{}", ticker.exchange(), ticker.base(), e);
         }
     }
 

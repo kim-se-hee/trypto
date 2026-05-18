@@ -1,0 +1,273 @@
+{
+  "title": "Loadtest — STOMP Ticker Pipeline",
+  "uid": "loadtest-stomp",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 100,
+      "title": "📥 부하 입력",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 101,
+      "title": "동접 STOMP 세션 수",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "stomp_sessions_active", "legendFormat": "active sessions" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+
+    {
+      "id": 200,
+      "title": "🚦 채널별 큐 적체 / 폐기",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 }
+    },
+    {
+      "id": 201,
+      "title": "broker 큐 크기",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "broker 채널 executor 의 대기 큐 크기. 0 이상으로 깔리면 outbound 로 fan-out 하기 전 단계에서 적체된다는 뜻.",
+      "targets": [
+        { "expr": "stomp_broker_queue_size", "legendFormat": "broker" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 202,
+      "title": "clientInbound 큐 크기",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "클라 → 서버 STOMP 프레임(CONNECT/SUBSCRIBE/heartbeat) 처리 큐. 적체되면 client heartbeat 처리 지연으로 1002 close 가 터진다.",
+      "targets": [
+        { "expr": "stomp_clientInbound_queue_size", "legendFormat": "clientInbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 203,
+      "title": "clientOutbound 큐 크기",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "서버 → 클라 STOMP MESSAGE 프레임 처리 큐. fan-out × 동접 으로 가장 압력이 큰 큐.",
+      "targets": [
+        { "expr": "stomp_clientOutbound_queue_size", "legendFormat": "clientOutbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 204,
+      "title": "broker 폐기 메시지 (rejected/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "broker 큐가 가득 차서 ThreadPoolExecutor 가 폐기한 작업 수. 0 보다 크면 메시지 손실.",
+      "targets": [
+        { "expr": "rate(stomp_broker_rejected_total[1m])", "legendFormat": "broker" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 205,
+      "title": "clientInbound 폐기 메시지 (rejected/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "clientInbound 큐가 가득 차서 폐기된 클라 → 서버 프레임 수. CONNECT/SUBSCRIBE/heartbeat 손실 직접 증거.",
+      "targets": [
+        { "expr": "rate(stomp_clientInbound_rejected_total[1m])", "legendFormat": "clientInbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 206,
+      "title": "clientOutbound 폐기 메시지 (rejected/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "clientOutbound 큐가 가득 차서 폐기된 서버 → 클라 MESSAGE 수. 시세 누락 직접 증거.",
+      "targets": [
+        { "expr": "rate(stomp_clientOutbound_rejected_total[1m])", "legendFormat": "clientOutbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+
+    {
+      "id": 300,
+      "title": "💻 자원 (api JVM + 호스트)",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }
+    },
+    {
+      "id": 301,
+      "title": "api 컨테이너 메모리 사용량 (MB)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "container_memory_working_set_bytes{name=~\"trypto-backend.*\"}",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 307,
+      "title": "api 가 서버 RAM 차지하는 비율 (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "100 * sum(container_memory_working_set_bytes{name=~\"trypto-backend.*\"}) / scalar(node_memory_MemTotal_bytes)",
+          "legendFormat": "서버 RAM 대비"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 302,
+      "title": "api GC pause (sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "rate(jvm_gc_pause_seconds_sum{job=\"api\"}[1m])", "legendFormat": "{{action}} {{cause}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 305,
+      "title": "api GC STW 횟수 (회/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "rate(jvm_gc_pause_seconds_count{job=\"api\"}[1m])", "legendFormat": "{{action}} {{cause}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 303,
+      "title": "STOMP 채널 active threads",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "stomp_broker_active", "legendFormat": "broker" },
+        { "expr": "stomp_clientInbound_active", "legendFormat": "clientInbound" },
+        { "expr": "stomp_clientOutbound_active", "legendFormat": "clientOutbound" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 308,
+      "title": "api 컨테이너가 잡고 있는 vCPU",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "api 컨테이너가 사용하는 CPU 시간을 코어 단위로 환산. 100% = 1 vCPU 풀 점유. SUT m5.2xlarge 의 상한은 800% (8 vCPU). 이 값이 700% 이상이면 outbound fanout 이 CPU 한계에 닿아 reject/세션 끊김의 직접 원인이 된다.",
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\"trypto-backend.*\"}[1m])) * 100", "legendFormat": "api 컨테이너" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 800 } }
+    },
+    {
+      "id": 309,
+      "title": "SUT 호스트 전체 CPU 활용률",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "SUT 인스턴스 전체 vCPU 의 비유휴 비율. api 컨테이너 외에 mysql / collector / engine / rabbitmq 등 SUT 위 모든 워크로드의 합산 CPU 사용량을 보여준다. 90% 넘기 시작하면 어떤 컨테이너 하나가 CPU 를 쥐고 다른 컨테이너의 처리도 늦춘다.",
+      "targets": [
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))) * 100", "legendFormat": "SUT 호스트" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+
+    {
+      "id": 350,
+      "title": "🔍 진단",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 45 }
+    },
+    {
+      "id": 353,
+      "title": "끊김 사유 (disconnects/s by reason)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 46 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "STOMP 세션 종료를 reason 별로 분류. protocol_error 가 솟으면 채널 큐 적체 → server heartbeat read timeout → 1002 close 사이클의 신호.",
+      "targets": [
+        { "expr": "sum by (reason) (rate(stomp_sessions_disconnect_total[1m]))", "legendFormat": "{{reason}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 354,
+      "title": "수집기 → api outbound 직전 e2e (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 16, "x": 8, "y": 46 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "description": "collector 가 ticker 를 publish 한 시각부터 api 가 outbound socket write 를 시작하기 직전까지의 시간. RabbitMQ 큐 대기 + RabbitListener 처리 + broker 채널 fan-out 시간이 모두 포함된다.",
+      "targets": [
+        { "expr": "histogram_quantile(0.5,  sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(ticker_collectorToOutbound_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 400,
+      "title": "🤖 k6 부하기 시그널 (끊김 / 연결실패 / 수신)",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 53 }
+    },
+    {
+      "id": 402,
+      "title": "끊김 (disconnects/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 54 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "rate(k6_stomp_disconnects_total[1m])", "legendFormat": "disconnects/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 403,
+      "title": "연결 실패 (connect failures/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 54 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        { "expr": "rate(k6_stomp_connect_failures_total[1m])", "legendFormat": "connect failures/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 2
+}

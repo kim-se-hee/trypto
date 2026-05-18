@@ -19,6 +19,7 @@ import ksh.tryptocollector.metadata.MarketMetadataRedisRepository;
 import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -51,6 +52,9 @@ public class ExchangeInitializer {
     private static final int THREAD_POOL_SIZE = 3;
     private static final String EXECUTOR_METRIC_NAME = "exchange.initializer";
 
+    @Value("${loadtest.skip-websocket-subscription:false}")
+    private boolean skipWebSocketSubscription;
+
     private ExecutorService exchangeThreadPool;
 
     public void start() {
@@ -66,16 +70,28 @@ public class ExchangeInitializer {
 
     private void initUpbit() {
         loadUpbitMetadata();
+        if (skipWebSocketSubscription) {
+            log.info("업비트 WebSocket 구독 스킵 (loadtest 모드)");
+            return;
+        }
         upbitWebSocketHandler.connect();
     }
 
     private void initBithumb() {
         loadBithumbMetadata();
+        if (skipWebSocketSubscription) {
+            log.info("빗썸 WebSocket 구독 스킵 (loadtest 모드)");
+            return;
+        }
         bithumbWebSocketHandler.connect();
     }
 
     private void initBinance() {
         loadBinanceMetadata();
+        if (skipWebSocketSubscription) {
+            log.info("바이낸스 WebSocket 구독 스킵 (loadtest 모드)");
+            return;
+        }
         binanceWebSocketHandler.connect();
     }
 

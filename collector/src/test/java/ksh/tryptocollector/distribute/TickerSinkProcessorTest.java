@@ -2,7 +2,7 @@ package ksh.tryptocollector.distribute;
 
 import ksh.tryptocollector.model.NormalizedTicker;
 import ksh.tryptocollector.distribute.rabbitmq.EngineInboxPublisher;
-import ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher;
+import ksh.tryptocollector.distribute.rabbitmq.TickerEventConflator;
 import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
 import ksh.tryptocollector.distribute.tick.TickRawWriter;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 class TickerSinkProcessorTest {
 
     @Mock private TickerRedisRepository tickerRedisRepository;
-    @Mock private TickerEventPublisher tickerEventPublisher;
+    @Mock private TickerEventConflator tickerEventConflator;
     @Mock private EngineInboxPublisher engineInboxPublisher;
     @Mock private TickRawWriter tickRawWriter;
 
@@ -31,12 +31,12 @@ class TickerSinkProcessorTest {
     @BeforeEach
     void setUp() {
         tickerSinkProcessor = new TickerSinkProcessor(
-                tickerRedisRepository, tickerEventPublisher, engineInboxPublisher,
+                tickerRedisRepository, tickerEventConflator, engineInboxPublisher,
                 tickRawWriter);
     }
 
     @Test
-    @DisplayName("TickRawWriter 예외가 나도 Redis/RabbitMQ/engine.inbox 발행은 계속된다")
+    @DisplayName("TickRawWriter 예외가 나도 Redis/conflator/engine.inbox 발행은 계속된다")
     void givenTickRawWriterThrows_whenProcess_thenOtherSinksProceed() {
         NormalizedTicker ticker = new NormalizedTicker(
                 "upbit", "BTC", "KRW", "BTC/KRW",
@@ -47,7 +47,7 @@ class TickerSinkProcessorTest {
         tickerSinkProcessor.process(ticker);
 
         verify(tickerRedisRepository).save(ticker);
-        verify(tickerEventPublisher).publish(ticker);
+        verify(tickerEventConflator).submit(ticker);
         verify(engineInboxPublisher).publish(ticker);
     }
 }

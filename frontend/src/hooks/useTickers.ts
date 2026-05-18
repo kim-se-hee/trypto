@@ -44,14 +44,14 @@ export function useTickers({ exchangeId, initialCoins }: UseTickersOptions): Coi
       });
     };
 
-    const onTicker = (ticker: Ticker) => {
-      pending.set(ticker.symbol, ticker);
+    const onBatch = (tickers: Ticker[]) => {
+      tickers.forEach((ticker) => pending.set(ticker.symbol, ticker));
       if (rafId === null) {
         rafId = requestAnimationFrame(flush);
       }
     };
 
-    const unsubscribe = subscribeTickers(exchangeId, onTicker);
+    const unsubscribe = subscribeTickers(exchangeId, onBatch);
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);

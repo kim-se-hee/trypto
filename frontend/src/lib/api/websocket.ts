@@ -137,13 +137,16 @@ export function disconnect(): void {
 
 export function subscribeTickers(
   exchangeId: number,
-  callback: (ticker: Ticker) => void,
+  callback: (tickers: Ticker[]) => void,
 ): () => void {
   const sub: Subscriber = {
     topic: `/topic/tickers.${exchangeId}`,
     handler: (body) => {
       try {
-        callback(JSON.parse(body) as Ticker);
+        const parsed = JSON.parse(body) as Ticker[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          callback(parsed);
+        }
       } catch {
         // ignore parse errors
       }

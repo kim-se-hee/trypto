@@ -61,6 +61,7 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "15692:15692"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -70,7 +71,7 @@ services:
       retries: 5
 
   influxdb:
-    image: influxdb:2-alpine
+    image: influxdb:2.7.10-alpine
     networks:
       - trypto-net
     ports:
@@ -225,7 +226,7 @@ services:
 
   # ---------- monitoring ----------
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.55.1
     networks:
       - trypto-net
     ports:
@@ -233,9 +234,17 @@ services:
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
+    # default command + remote-write receiver 활성화 (k6 가 loadgen 에서 push 함)
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.3.0
     networks:
       - trypto-net
     ports:

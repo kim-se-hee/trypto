@@ -1,0 +1,7 @@
+loadtest:
+  skip-websocket-subscription: true
+
+logging:
+  level:
+    ksh.tryptocollector.loadtest: INFO
+    ksh.tryptocollector.ingest: WARN
