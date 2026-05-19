@@ -8,4 +8,5 @@ public record NotifyOrderFilledCommand(
         Long userId,
         BigDecimal executedPrice,
         BigDecimal quantity,
-        LocalDateTime executedAt) {}
+        LocalDateTime executedAt,
+        LocalDateTime matchedAt) {}

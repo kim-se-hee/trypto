@@ -21,7 +21,8 @@ public class OrderFilledNotificationService implements NotifyOrderFilledUseCase 
                         command.userId(),
                         command.executedPrice(),
                         command.quantity(),
-                        command.executedAt());
+                        command.executedAt(),
+                        command.matchedAt());
         orderFilledNotificationPort.push(notification);
     }
 }
