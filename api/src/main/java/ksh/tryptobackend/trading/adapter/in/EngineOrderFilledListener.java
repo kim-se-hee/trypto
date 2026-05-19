@@ -23,7 +23,8 @@ public class EngineOrderFilledListener {
                         message.userId(),
                         message.executedPrice(),
                         message.quantity(),
-                        message.executedAt());
+                        message.executedAt(),
+                        message.matchedAt());
         notifyOrderFilledUseCase.notifyOrderFilled(command);
     }
 }

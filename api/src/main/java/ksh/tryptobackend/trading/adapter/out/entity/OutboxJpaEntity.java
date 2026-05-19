@@ -34,4 +34,7 @@ public class OutboxJpaEntity {
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
+
+    @Column(name = "matched_at")
+    private LocalDateTime matchedAt;
 }
