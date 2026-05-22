@@ -13,18 +13,18 @@ public class TestContainerConfiguration {
     @Bean
     @ServiceConnection
     static MySQLContainer<?> mysqlContainer() {
-        return new MySQLContainer<>("mysql:8.0.30");
+        return new MySQLContainer<>("mysql:8.0.30").withReuse(true);
     }
 
     @Bean
     @ServiceConnection
     static RedisContainer redisContainer() {
-        return new RedisContainer("redis:7.4");
+        return new RedisContainer("redis:7.4").withReuse(true);
     }
 
     @Bean
     @ServiceConnection
     static RabbitMQContainer rabbitMQContainer() {
-        return new RabbitMQContainer("rabbitmq:3.13-management");
+        return new RabbitMQContainer("rabbitmq:3.13-management").withReuse(true);
     }
 }

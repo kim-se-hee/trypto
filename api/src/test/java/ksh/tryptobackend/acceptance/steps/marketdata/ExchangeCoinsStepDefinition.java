@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.marketdata;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -15,11 +14,6 @@ public class ExchangeCoinsStepDefinition {
     public ExchangeCoinsStepDefinition(CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before("@exchange-coins")
-    public void setUp() {
-        jdbcTemplate.execute("DELETE FROM exchange_coin WHERE exchange_coin_id IN (10, 11)");
     }
 
     @Given("거래소 코인 조회 테스트 데이터가 준비되어 있다")

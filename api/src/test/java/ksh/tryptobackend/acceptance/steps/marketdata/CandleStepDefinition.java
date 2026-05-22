@@ -1,6 +1,5 @@
 package ksh.tryptobackend.acceptance.steps.marketdata;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -25,11 +24,6 @@ public class CandleStepDefinition {
         this.apiClient = apiClient;
         this.mockCandleAdapter = mockCandleAdapter;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before
-    public void setUp() {
-        mockCandleAdapter.clear();
     }
 
     @Given("캔들 데이터가 존재한다")

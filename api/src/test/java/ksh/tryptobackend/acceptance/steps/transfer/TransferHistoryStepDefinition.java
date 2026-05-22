@@ -1,8 +1,7 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.transfer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -24,7 +23,7 @@ public class TransferHistoryStepDefinition {
     private static final Long OTHER_USER_ID = 2L;
     private static final Long WALLET_ID = 100L;
     private static final Long OTHER_WALLET_ID = 200L;
-    private static final Long COIN_ID = 1L;
+    private static final Long COIN_ID = 2L;
     private static final String COIN_SYMBOL = "BTC";
     private static final Long EXCHANGE_ID = 1L;
 
@@ -41,24 +40,6 @@ public class TransferHistoryStepDefinition {
         this.apiClient = apiClient;
         this.transferJpaRepository = transferJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before("@transfer-history")
-    public void setUp() {
-        transferJpaRepository.deleteAllInBatch();
-        jdbcTemplate.update(
-                "DELETE FROM wallet WHERE wallet_id IN (?, ?)", WALLET_ID, OTHER_WALLET_ID);
-        jdbcTemplate.update(
-                "DELETE FROM investment_round WHERE round_id IN (?, ?)",
-                WALLET_ID,
-                OTHER_WALLET_ID);
-        jdbcTemplate.update("DELETE FROM coin WHERE coin_id = ?", COIN_ID);
-        jdbcTemplate.update(
-                "INSERT INTO coin (coin_id, symbol, name) VALUES (?, ?, ?)",
-                COIN_ID,
-                COIN_SYMBOL,
-                "Bitcoin");
-        walletId = null;
     }
 
     @Given("송금 내역 조회용 지갑과 송금 데이터가 준비되어 있다")

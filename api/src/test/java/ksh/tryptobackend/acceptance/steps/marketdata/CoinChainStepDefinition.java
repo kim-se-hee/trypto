@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.marketdata;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -17,16 +16,8 @@ public class CoinChainStepDefinition {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Before("@coin-chains")
-    public void setUp() {
-        jdbcTemplate.execute(
-                "DELETE FROM exchange_coin_chain WHERE exchange_coin_chain_id IN (1, 2, 3)");
-        jdbcTemplate.execute("DELETE FROM exchange_coin WHERE exchange_coin_id IN (102, 103, 104)");
-    }
-
     @Given("코인 체인 조회용 데이터가 준비되어 있다")
     public void 코인_체인_조회용_데이터가_준비되어_있다() {
-        insertExchange();
         insertExchangeCoins();
         insertExchangeCoinChains();
     }
@@ -61,23 +52,19 @@ public class CoinChainStepDefinition {
         apiClient.getLastResponse().expectBody().jsonPath("$.data[0].tagRequired").isEqualTo(false);
     }
 
-    private void insertExchange() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
-                        + " base_currency_coin_id, fee_rate) VALUES (1, 'Upbit', 'DOMESTIC', 1,"
-                        + " 0.000500)");
-    }
-
     private void insertExchangeCoins() {
         jdbcTemplate.execute(
-                "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)"
-                        + " VALUES (102, 1, 2, '비트코인'), (103, 1, 3, '리플'), (104, 1, 4, '이더리움')");
+                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES (4, 'XRP', '리플')");
+        jdbcTemplate.execute(
+                "INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id,"
+                        + " display_name) VALUES (102, 1, 2, '비트코인'), (103, 1, 3, '리플'), (104, 1,"
+                        + " 4, '이더리움')");
     }
 
     private void insertExchangeCoinChains() {
         jdbcTemplate.execute(
-                "INSERT INTO exchange_coin_chain (exchange_coin_chain_id, exchange_coin_id, chain,"
-                    + " tag_required) VALUES (1, 102, 'ERC-20', false), (2, 102, 'BEP-20', false),"
-                    + " (3, 103, 'Ripple', true)");
+                "INSERT IGNORE INTO exchange_coin_chain (exchange_coin_chain_id, exchange_coin_id,"
+                    + " chain, tag_required) VALUES (1, 102, 'ERC-20', false), (2, 102, 'BEP-20',"
+                    + " false), (3, 103, 'Ripple', true)");
     }
 }

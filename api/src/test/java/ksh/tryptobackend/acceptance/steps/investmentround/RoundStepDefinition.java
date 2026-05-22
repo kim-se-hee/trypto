@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.investmentround;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,13 +11,11 @@ import java.util.Map;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
-import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRuleJpaRepository;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
 
 public class RoundStepDefinition {
 
@@ -27,56 +24,20 @@ public class RoundStepDefinition {
     private final CommonApiClient apiClient;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final InvestmentRoundJpaRepository investmentRoundJpaRepository;
-    private final InvestmentRuleJpaRepository investmentRuleJpaRepository;
-    private final WalletJpaRepository walletJpaRepository;
 
     private Long lastRoundId;
 
     public RoundStepDefinition(
             CommonApiClient apiClient,
             ExchangeJpaRepository exchangeJpaRepository,
-            InvestmentRoundJpaRepository investmentRoundJpaRepository,
-            InvestmentRuleJpaRepository investmentRuleJpaRepository,
-            WalletJpaRepository walletJpaRepository) {
+            InvestmentRoundJpaRepository investmentRoundJpaRepository) {
         this.apiClient = apiClient;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.investmentRoundJpaRepository = investmentRoundJpaRepository;
-        this.investmentRuleJpaRepository = investmentRuleJpaRepository;
-        this.walletJpaRepository = walletJpaRepository;
-    }
-
-    @Before
-    public void setUp() {
-        investmentRuleJpaRepository.deleteAllInBatch();
-        walletJpaRepository.deleteAllInBatch();
-        investmentRoundJpaRepository.deleteAllInBatch();
-        exchangeJpaRepository.deleteAllInBatch();
-        lastRoundId = null;
     }
 
     @Given("라운드용 거래소 메타데이터가 준비되어 있다")
-    public void 라운드용_거래소_메타데이터가_준비되어_있다() {
-        exchangeJpaRepository.saveAll(
-                List.of(
-                        new ExchangeJpaEntity(
-                                1L,
-                                "UPBIT",
-                                ExchangeMarketType.DOMESTIC,
-                                1L,
-                                new BigDecimal("0.0005")),
-                        new ExchangeJpaEntity(
-                                2L,
-                                "BITHUMB",
-                                ExchangeMarketType.DOMESTIC,
-                                1L,
-                                new BigDecimal("0.0005")),
-                        new ExchangeJpaEntity(
-                                3L,
-                                "BINANCE",
-                                ExchangeMarketType.OVERSEAS,
-                                3L,
-                                new BigDecimal("0.001"))));
-    }
+    public void 라운드용_거래소_메타데이터가_준비되어_있다() {}
 
     @When("기본 라운드 시작 요청을 보낸다")
     public void 기본_라운드_시작_요청을_보낸다() {

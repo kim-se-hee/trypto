@@ -1,4 +1,4 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.ranking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -162,13 +162,22 @@ public class RankingBatchStepDefinition {
     }
 
     private void insertFilledOrders(Long walletId, int count) {
+        Long userId =
+                jdbcTemplate.queryForObject(
+                        "SELECT user_id FROM investment_round WHERE round_id ="
+                                + " (SELECT round_id FROM wallet WHERE wallet_id = ?)",
+                        Long.class,
+                        walletId);
         for (int i = 0; i < count; i++) {
             jdbcTemplate.update(
-                    "INSERT INTO orders (idempotency_key, wallet_id, exchange_coin_id, order_type,"
+                    "INSERT INTO orders (idempotency_key, user_id, wallet_id, exchange_coin_id,"
+                            + " coin_id, base_coin_id, exchange_name, market_symbol, order_type,"
                             + " side, order_amount, quantity, price, filled_price, fee, fee_rate,"
-                            + " status, created_at, filled_at) VALUES (?, ?, 1, 'MARKET', 'BUY',"
-                            + " 100000, 0.001, 50000000, 50000000, 50, 0.0005, 'FILLED', ?, ?)",
+                            + " status, created_at, filled_at) VALUES (?, ?, ?, 10, 2, 1, 'UPBIT',"
+                            + " 'BTC/KRW', 'MARKET', 'BUY', 100000, 0.001, 50000000, 50000000, 50,"
+                            + " 0.0005, 'FILLED', ?, ?)",
                     java.util.UUID.randomUUID().toString(),
+                    userId,
                     walletId,
                     LocalDateTime.now(),
                     LocalDateTime.now());

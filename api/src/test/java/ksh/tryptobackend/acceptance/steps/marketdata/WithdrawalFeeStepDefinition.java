@@ -1,8 +1,7 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.marketdata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -25,16 +24,11 @@ public class WithdrawalFeeStepDefinition {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Before("@withdrawal-fee")
-    public void setUp() {
-        jdbcTemplate.execute("DELETE FROM withdrawal_fee");
-    }
-
     @Given("출금 수수료 데이터가 준비되어 있다")
     public void 출금_수수료_데이터가_준비되어_있다() {
         jdbcTemplate.update(
-                "INSERT INTO withdrawal_fee (withdrawal_fee_id, exchange_id, coin_id, chain, fee,"
-                        + " min_withdrawal) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO withdrawal_fee (withdrawal_fee_id, exchange_id, coin_id, chain,"
+                        + " fee, min_withdrawal) VALUES (?, ?, ?, ?, ?, ?)",
                 1L,
                 EXCHANGE_ID,
                 COIN_ID,

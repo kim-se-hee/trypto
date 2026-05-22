@@ -1,4 +1,4 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.trading;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,9 +24,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 public class OrderStepDefinition {
 
+    private static final Long USER_ID = 1L;
+    private static final Long ROUND_ID = 1L;
     private static final Long WALLET_ID = 1L;
     private static final Long EXCHANGE_ID = 1L;
-    private static final Long EXCHANGE_COIN_ID = 1L;
+    private static final Long EXCHANGE_COIN_ID = 10L;
     private static final Long KRW_COIN_ID = 1L;
     private static final Long BTC_COIN_ID = 2L;
     private final CommonApiClient apiClient;
@@ -61,49 +63,15 @@ public class OrderStepDefinition {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Before
-    public void setUp() {
-        orderJpaRepository.deleteAll();
-        walletBalanceJpaRepository.deleteAllInBatch();
-        exchangeJpaRepository.deleteAllInBatch();
-        jdbcTemplate.update("DELETE FROM exchange_coin");
-        jdbcTemplate.update("DELETE FROM coin");
-        livePriceAdapter.clear();
-        holdingAdapter.clear();
-        priceChangeRateAdapter.clear();
-        lastOrderId = null;
-        savedIdempotencyKey = null;
-        firstOrderId = null;
-    }
-
     @Given("업비트 거래소가 등록되어 있다")
     public void 업비트_거래소가_등록되어_있다() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
-                        + "("
-                        + KRW_COIN_ID
-                        + ", 'KRW', '원화'), "
-                        + "("
-                        + BTC_COIN_ID
-                        + ", 'BTC', '비트코인')");
-        exchangeJpaRepository.save(
-                new ExchangeJpaEntity(
-                        EXCHANGE_ID,
-                        "Upbit",
-                        ExchangeMarketType.DOMESTIC,
-                        KRW_COIN_ID,
-                        new BigDecimal("0.0005")));
+        // seed-data.sql 에서 exchange/coin/exchange_coin 적재. 시나리오용 user/round/wallet 만 별도 생성.
+        ensureUserRoundWallet();
     }
 
     @Given("업비트에 BTC가 상장되어 있다")
     public void 업비트에_BTC가_상장되어_있다() {
-        jdbcTemplate.update(
-                "INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)"
-                        + " VALUES (?, ?, ?, ?)",
-                EXCHANGE_COIN_ID,
-                EXCHANGE_ID,
-                BTC_COIN_ID,
-                "비트코인");
+        // seed-data.sql 에서 적재.
     }
 
     @Given("BTC 현재가는 {long}원이다")
@@ -113,6 +81,7 @@ public class OrderStepDefinition {
 
     @Given("지갑에 KRW 잔고가 {long}원이다")
     public void 지갑에_KRW_잔고가_원이다(long amount) {
+        ensureUserRoundWallet();
         walletBalanceJpaRepository.save(
                 new WalletBalanceJpaEntity(
                         WALLET_ID, KRW_COIN_ID, new BigDecimal(amount), BigDecimal.ZERO));
@@ -120,12 +89,54 @@ public class OrderStepDefinition {
 
     @Given("지갑에 BTC 잔고가 {double}개이다")
     public void 지갑에_BTC_잔고가_개이다(double amount) {
+        ensureUserRoundWallet();
         walletBalanceJpaRepository.save(
                 new WalletBalanceJpaEntity(
                         WALLET_ID,
                         BTC_COIN_ID,
                         new BigDecimal(String.valueOf(amount)),
                         BigDecimal.ZERO));
+    }
+
+    private void ensureUserRoundWallet() {
+        Integer userCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM user WHERE user_id = ?", Integer.class, USER_ID);
+        if (userCount == null || userCount == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO user (user_id, email, nickname, portfolio_public, created_at,"
+                            + " updated_at) VALUES (?, ?, ?, true, NOW(), NOW())",
+                    USER_ID,
+                    "trader1@example.com",
+                    "트레이더1");
+        }
+        Integer roundCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM investment_round WHERE round_id = ?",
+                        Integer.class,
+                        ROUND_ID);
+        if (roundCount == null || roundCount == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO investment_round (round_id, version, user_id, round_number,"
+                        + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
+                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE',"
+                        + " NOW())",
+                    ROUND_ID,
+                    USER_ID);
+        }
+        Integer walletCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM wallet WHERE wallet_id = ?",
+                        Integer.class,
+                        WALLET_ID);
+        if (walletCount == null || walletCount == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)"
+                            + " VALUES (?, ?, ?, 10000000, NOW())",
+                    WALLET_ID,
+                    ROUND_ID,
+                    EXCHANGE_ID);
+        }
     }
 
     @When("시장가 매수 주문을 {long}원으로 요청한다")

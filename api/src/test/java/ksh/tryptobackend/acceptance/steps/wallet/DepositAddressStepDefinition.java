@@ -1,8 +1,7 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.wallet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -13,7 +12,6 @@ import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.DepositAddressJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
 
@@ -27,7 +25,6 @@ public class DepositAddressStepDefinition {
     private final CommonApiClient apiClient;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final WalletJpaRepository walletJpaRepository;
-    private final DepositAddressJpaRepository depositAddressJpaRepository;
 
     private Long walletId;
     private String previousAddress;
@@ -35,33 +32,14 @@ public class DepositAddressStepDefinition {
     public DepositAddressStepDefinition(
             CommonApiClient apiClient,
             ExchangeJpaRepository exchangeJpaRepository,
-            WalletJpaRepository walletJpaRepository,
-            DepositAddressJpaRepository depositAddressJpaRepository) {
+            WalletJpaRepository walletJpaRepository) {
         this.apiClient = apiClient;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.walletJpaRepository = walletJpaRepository;
-        this.depositAddressJpaRepository = depositAddressJpaRepository;
-    }
-
-    @Before("@deposit-address")
-    public void setUp() {
-        depositAddressJpaRepository.deleteAllInBatch();
-        walletJpaRepository.deleteAllInBatch();
-        exchangeJpaRepository.deleteAllInBatch();
-        walletId = null;
-        previousAddress = null;
     }
 
     @Given("입금 주소용 거래소와 지갑이 준비되어 있다")
     public void 입금_주소용_거래소와_지갑이_준비되어_있다() {
-        exchangeJpaRepository.save(
-                new ExchangeJpaEntity(
-                        EXCHANGE_ID,
-                        "Upbit",
-                        ExchangeMarketType.DOMESTIC,
-                        KRW_COIN_ID,
-                        new BigDecimal("0.0005")));
-
         Wallet wallet = Wallet.create(ROUND_ID, EXCHANGE_ID, BigDecimal.ZERO, LocalDateTime.now());
         WalletJpaEntity walletEntity = WalletJpaEntity.fromDomain(wallet);
         walletId = walletJpaRepository.save(walletEntity).getId();

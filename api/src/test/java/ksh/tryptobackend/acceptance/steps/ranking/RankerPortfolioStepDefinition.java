@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.ranking;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -18,13 +17,6 @@ public class RankerPortfolioStepDefinition {
     public RankerPortfolioStepDefinition(CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before
-    public void setUp() {
-        jdbcTemplate.execute("DELETE FROM portfolio_snapshot_detail");
-        jdbcTemplate.execute("DELETE FROM portfolio_snapshot");
-        jdbcTemplate.execute("DELETE FROM ranking");
     }
 
     @Given("포트폴리오 테스트 데이터가 준비되어 있다")

@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.ranking;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -8,7 +7,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class RankingStepDefinition {
@@ -17,22 +15,11 @@ public class RankingStepDefinition {
     private static final Long ROUND_ID = 1L;
 
     private final CommonApiClient apiClient;
-    private final RankingJpaRepository rankingJpaRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    public RankingStepDefinition(
-            CommonApiClient apiClient,
-            RankingJpaRepository rankingJpaRepository,
-            JdbcTemplate jdbcTemplate) {
+    public RankingStepDefinition(CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
-        this.rankingJpaRepository = rankingJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before
-    public void setUp() {
-        rankingJpaRepository.deleteAllInBatch();
-        jdbcTemplate.update("DELETE FROM user WHERE user_id IN (101, 102, 103)");
     }
 
     @Given("랭킹 테스트 데이터가 준비되어 있다")

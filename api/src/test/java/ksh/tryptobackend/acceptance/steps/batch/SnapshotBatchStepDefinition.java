@@ -1,4 +1,4 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,16 +60,8 @@ public class SnapshotBatchStepDefinition {
 
     @Given("스냅샷 배치 데이터를 초기화한다")
     public void 스냅샷_배치_데이터를_초기화한다() {
-        detailRepository.deleteAllInBatch();
-        snapshotRepository.deleteAllInBatch();
-        jdbcTemplate.update("DELETE FROM holding");
-        jdbcTemplate.update("DELETE FROM wallet_balance");
-        jdbcTemplate.update("DELETE FROM emergency_funding");
-        jdbcTemplate.update(
-                "DELETE FROM wallet WHERE round_id IN (SELECT round_id FROM investment_round WHERE"
-                        + " status = 'ACTIVE')");
-        jdbcTemplate.update("DELETE FROM exchange_coin");
-        jdbcTemplate.update("DELETE FROM exchange_market");
+        // 글로벌 DatabaseCleanupHook 이 매 시나리오 시작 시 scenario 테이블을 모두 TRUNCATE 한다.
+        // seed 테이블(coin/exchange_market/exchange_coin/...)은 청소 대상이 아니므로 본 step 에서도 건드리지 않는다.
         holdingAdapter.clear();
         livePriceAdapter.clear();
     }
@@ -95,8 +87,17 @@ public class SnapshotBatchStepDefinition {
             Long baseCurrencyCoinId = Long.valueOf(row.get("baseCurrencyCoinId"));
             String conversionRate = row.get("conversionRate");
             String marketType = "DOMESTIC".equals(conversionRate) ? "DOMESTIC" : "OVERSEAS";
+            ensureCoin(baseCurrencyCoinId);
             insertExchange(exchangeId, baseCurrencyCoinId, marketType);
         }
+    }
+
+    private void ensureCoin(Long coinId) {
+        jdbcTemplate.update(
+                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES (?, ?, ?)",
+                coinId,
+                "COIN" + coinId,
+                "coin-" + coinId);
     }
 
     @Given("스냅샷용 잔고가 존재한다")
@@ -245,19 +246,15 @@ public class SnapshotBatchStepDefinition {
     }
 
     private void insertExchange(Long exchangeId, Long baseCurrencyCoinId, String marketType) {
-        Integer count =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM exchange_market WHERE exchange_id = ?",
-                        Integer.class,
-                        exchangeId);
-        if (count == null || count == 0) {
-            jdbcTemplate.update(
-                    "INSERT INTO exchange_market (exchange_id, name, market_type,"
-                            + " base_currency_coin_id, fee_rate) VALUES (?, ?, ?, ?, 0.0005)",
-                    exchangeId,
-                    "Exchange-" + exchangeId,
-                    marketType,
-                    baseCurrencyCoinId);
-        }
+        // 매 시나리오 시작 시 seed 가 재적재되므로 충돌 시 UPDATE 로 시나리오가 원하는 base_currency_coin_id 를 보장한다.
+        jdbcTemplate.update(
+                "INSERT INTO exchange_market (exchange_id, name, market_type,"
+                    + " base_currency_coin_id, fee_rate) VALUES (?, ?, ?, ?, 0.0005) ON DUPLICATE"
+                    + " KEY UPDATE base_currency_coin_id = VALUES(base_currency_coin_id),"
+                    + " market_type = VALUES(market_type)",
+                exchangeId,
+                "Exchange-" + exchangeId,
+                marketType,
+                baseCurrencyCoinId);
     }
 }

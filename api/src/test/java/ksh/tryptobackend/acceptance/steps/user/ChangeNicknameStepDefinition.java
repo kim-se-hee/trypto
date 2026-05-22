@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.user;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -22,12 +21,6 @@ public class ChangeNicknameStepDefinition {
             CommonApiClient apiClient, UserJpaRepository userJpaRepository) {
         this.apiClient = apiClient;
         this.userJpaRepository = userJpaRepository;
-    }
-
-    @Before
-    public void setUp() {
-        userJpaRepository.deleteAllInBatch();
-        userId = null;
     }
 
     @Given("닉네임이 {string}인 사용자가 존재한다")

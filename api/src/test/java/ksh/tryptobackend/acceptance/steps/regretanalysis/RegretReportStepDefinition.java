@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.regretanalysis;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -62,19 +61,8 @@ public class RegretReportStepDefinition {
         this.walletJpaRepository = walletJpaRepository;
     }
 
-    @Before
-    public void setUp() {
-        regretReportJpaRepository.deleteAll();
-        walletJpaRepository.deleteAllInBatch();
-        investmentRoundJpaRepository.deleteAll();
-        exchangeJpaRepository.deleteAllInBatch();
-        jdbcTemplate.execute("DELETE FROM `coin`");
-    }
-
     @Given("복기 리포트용 기초 데이터가 준비되어 있다")
     public void 복기_리포트용_기초_데이터가_준비되어_있다() {
-        insertCoins();
-        insertExchanges();
         savedRoundId = insertRound();
         insertWallets(savedRoundId);
     }

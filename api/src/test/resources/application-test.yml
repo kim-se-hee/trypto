@@ -1,4 +1,17 @@
+spring:
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:/db/seed-data.sql
+
 app:
   market-meta-sync:
+    enabled: false
     max-retries: 1
     retry-interval-seconds: 0
+
+logging:
+  level:
+    org.springframework.web.socket: WARN
+    org.springframework.messaging.simp.stomp: WARN
+    org.apache.tomcat.websocket: WARN

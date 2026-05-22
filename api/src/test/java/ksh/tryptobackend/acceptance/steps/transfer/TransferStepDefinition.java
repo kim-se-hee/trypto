@@ -1,8 +1,7 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.transfer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -25,11 +23,10 @@ public class TransferStepDefinition {
     private static final Long OTHER_ROUND_WALLET_ID = 601L;
     private static final Long EXCHANGE_ID_1 = 1L;
     private static final Long EXCHANGE_ID_2 = 2L;
-    private static final Long COIN_ID = 10L;
+    private static final Long COIN_ID = 2L;
     private static final String COIN_SYMBOL = "BTC";
 
     private final CommonApiClient apiClient;
-    private final TransferJpaRepository transferJpaRepository;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
     private final JdbcTemplate jdbcTemplate;
 
@@ -38,29 +35,11 @@ public class TransferStepDefinition {
 
     public TransferStepDefinition(
             CommonApiClient apiClient,
-            TransferJpaRepository transferJpaRepository,
             WalletBalanceJpaRepository walletBalanceJpaRepository,
             JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
-        this.transferJpaRepository = transferJpaRepository;
         this.walletBalanceJpaRepository = walletBalanceJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before("@transfer")
-    public void setUp() {
-        transferJpaRepository.deleteAllInBatch();
-        walletBalanceJpaRepository.deleteAllInBatch();
-        jdbcTemplate.update(
-                "DELETE FROM wallet WHERE wallet_id IN (?, ?, ?)",
-                FROM_WALLET_ID,
-                TO_WALLET_ID,
-                OTHER_ROUND_WALLET_ID);
-        jdbcTemplate.update(
-                "DELETE FROM investment_round WHERE round_id IN (?, ?)", ROUND_ID, OTHER_ROUND_ID);
-        jdbcTemplate.update("DELETE FROM coin WHERE coin_id = ?", COIN_ID);
-        lastTransferId = null;
-        firstTransferId = null;
     }
 
     @Given("송금용 동일 라운드의 두 지갑이 준비되어 있다")
@@ -71,13 +50,7 @@ public class TransferStepDefinition {
     }
 
     @Given("송금용 코인이 등록되어 있다")
-    public void 송금용_코인이_등록되어_있다() {
-        jdbcTemplate.update(
-                "INSERT INTO coin (coin_id, symbol, name) VALUES (?, ?, ?)",
-                COIN_ID,
-                COIN_SYMBOL,
-                "Bitcoin");
-    }
+    public void 송금용_코인이_등록되어_있다() {}
 
     @Given("출금 지갑에 BTC 잔고가 {double}개 있다")
     public void 출금_지갑에_BTC_잔고가_개_있다(double amount) {

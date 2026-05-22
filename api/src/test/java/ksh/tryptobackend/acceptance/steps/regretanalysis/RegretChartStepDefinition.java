@@ -1,6 +1,5 @@
-package ksh.tryptobackend.acceptance.steps;
+package ksh.tryptobackend.acceptance.steps.regretanalysis;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -38,17 +37,6 @@ public class RegretChartStepDefinition {
         this.regretReportJpaRepository = regretReportJpaRepository;
         this.mockBtcPriceHistoryAdapter = mockBtcPriceHistoryAdapter;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Before
-    public void setUp() {
-        jdbcTemplate.execute("DELETE FROM violation_detail");
-        jdbcTemplate.execute("DELETE FROM rule_impact");
-        regretReportJpaRepository.deleteAllInBatch();
-        jdbcTemplate.execute("DELETE FROM portfolio_snapshot WHERE round_id IN (201, 202)");
-        jdbcTemplate.execute("DELETE FROM investment_round WHERE round_id IN (201, 202)");
-        jdbcTemplate.update("DELETE FROM user WHERE user_id = ?", USER_ID);
-        mockBtcPriceHistoryAdapter.clear();
     }
 
     @Given("복기 그래프 테스트 데이터가 준비되어 있다")
