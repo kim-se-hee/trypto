@@ -14,22 +14,21 @@ tools:
 model: inherit
 ---
 
-`@<feature>` 태그로 좁힌 인수 테스트를 실행하고, 실패하면 직접 원인 분석·수정·재실행 루프를 돈다. 한 호출 = 한 기능의 검증 사이클 전체. 메인 세션에는 결과 한 줄만 돌려준다.
+해당 기능의 인수 테스트만 태그 필터로 골라 실행하고, 실패하면 직접 원인 분석·수정·재실행 루프를 돈다.
 
 메인 세션이 호출 프롬프트에 다음 두 값을 포함해 전달한다:
-- `scope` — 기능이 속한 위치 (예: `api/trading`, `engine`)
+- `scope` — 기능이 속한 위치 (예: `api/trading`). 항상 `api/<context>` 형태다.
 - `feature` — 기능 이름 (예: `place-order`)
 
-## 사전 준비
-
-1. `docs/<scope>/<feature>/spec.md` 와 `plan.md` 를 읽어 기능의 비즈니스 규칙·시퀀스를 파악한다.
-2. `<module>/docs/testing.md` 를 읽어 인수 테스트 컨벤션을 파악한다. 모듈명은 `scope` 의 첫 세그먼트다.
-3. 모듈 루트(`<module>/`) 위치 확인. 이후 모든 gradle 명령은 거기서 실행한다.
+기능에 대한 문서들이 모여 있는 디렉터리는 다음과 같다:
+- scope 가 `api/<context>` 면 `api/docs/<context>/<feature>/`
 
 ## 실행
 
+각 `.feature` 파일은 파일명과 동일한 태그(`@<feature>`)를 `기능:` 윗줄에 갖고 있다. 그 태그로 필터링한다.
+
 ```bash
-cd <module> && ./gradlew test --tests CucumberIntegrationTest -Dcucumber.filter.tags="@<feature>" --console=plain
+cd api && ./gradlew test --tests CucumberIntegrationTest "-Dcucumber.filter.tags=@<feature>" --console=plain
 ```
 
 - 통과: 보고 단계로.
@@ -37,38 +36,55 @@ cd <module> && ./gradlew test --tests CucumberIntegrationTest -Dcucumber.filter.
 
 ## 수정 루프 (최대 3회)
 
-기본 전제: 인수 테스트가 깨졌다는 건 거의 항상 **프로덕션 코드 버그**다. 인수 테스트는 spec.md 기반으로 별도 에이전트가 작성했고, task-implementer 단계의 단위 테스트로는 못 잡은 통합/배선 결함이 드러난 것이라고 가정한다.
-
 각 회차마다:
 
-1. **실패 분석.** `build/test-results/test/*.xml` 와 콘솔 출력에서 실패한 시나리오·step·예외 타입·메시지·스택 트레이스를 추출한다.
-2. **디버깅.** 스택 트레이스를 따라 프로덕션 코드를 읽고 버그를 식별한다. spec.md / plan.md 재참조는 코드에 원인이 정말 없다고 생각할 때만 한다.
-3. **수정.** 의심되는 원인을 고치기 위해 프로덕션 코드를 고친다. 인수 테스트 자체가 명백히 이상한 경우에만 테스트를 건드린다.
+1. **실패 분석.** `build/test-results/test/TEST-feature_classpath_features-<context>-<feature>.feature.xml` 와 콘솔 출력에서 실패한 시나리오·step·예외 타입·메시지·스택 트레이스를 추출한다. 
+2. **디버깅.** 스택 트레이스를 따라 프로덕션 코드를 읽고 버그를 식별한다. 코드만으로 원인 판단이 어려우면 그때 기능 디렉터리의 `spec.md` / `plan.md` 를 읽어 기대 동작을 확인한다.
+3. **수정.** 의심되는 원인을 고치기 위해 프로덕션 코드를 고친다. 인수 테스트 자체가 명백히 이상한 경우에만 테스트를 건드리고, 이때만 `api/docs/testing.md` 의 컨벤션을 확인한다.
 4. **재실행.** 같은 명령으로 다시 돌린다.
 5. **커밋.** 통과하면 루트 `docs/git-convention.md` 컨벤션에 맞게 커밋한다.
 
-3회 모두 실패하면 마지막 실패 메시지·스택 트레이스 요약·시도한 수정 내역을 정리해 보고하고 종료한다. 추측으로 우회하지 않는다.
+3회 모두 실패하면 `build/test-results/test/<feature>-failure.md` 에 실패 상세를 정리한 뒤, 메인엔 핵심만 한 화면 분량으로 보고하고 종료한다. 추측으로 우회하지 않는다.
 
-## 작업 범위 제한
+### 실패 보고 .md 양식
 
-- **이 기능의 인수 테스트와 그 통과를 위한 최소 수정만 한다.** 다른 기능 코드, 무관한 리팩터링, 다른 task 의 미완 잔여 작업은 건드리지 않는다.
-- **plan.md를 수정하지 않는다.** 체크박스 갱신은 메인 세션 책임.
-- **단위 테스트는 신규 작성하지 않는다.** 깨진 단위 테스트가 있으면 보고만 한다 (task-implementer 영역).
+`build/test-results/test/<feature>-failure.md` 는 다음 구조로 작성한다.
+
+```markdown
+# <context>/<feature> 실패 보고
+
+## 시도한 수정 (3회)
+- 1회차: <파일:줄> — <한 줄 요약>
+- 2회차: ...
+- 3회차: ...
+
+## 실패 시나리오
+
+### <시나리오 제목>
+- 실패 step: <step 본문>
+- 클라이언트 측: <예외 타입> — <한 줄 메시지>
+  at <file:line>
+- 서버 측 (콘솔 캡처):
+  \`\`\`
+  <Spring/JDBC/기타 서버 스택 발췌>
+  \`\`\`
+
+### <다른 시나리오 제목>
+...
+```
 
 ## 보고 형식
 
 통과:
 ```
-인수 테스트 통과: @<feature>
-실행: <시나리오 수>개 (<재시도 횟수>회차에 통과)
-커밋: <SHA 단축> (수정이 있었던 경우)
+인수 테스트 통과: <context>/<feature>
 ```
 
-실패 (3회 모두):
+3회 모두 실패:
 ```
-인수 테스트 실패: @<feature>
-마지막 실패 시나리오:
-- <시나리오 제목>: <한 줄 원인>
-시도한 수정: <간단한 요약>
-다음 단계 제안: <사용자가 봐야 할 부분>
+인수 테스트 실패: <context>/<feature>
+실패 시나리오 (<N>개):
+- <시나리오 1>: <예외 타입> — <한 줄 메시지>
+- <시나리오 2>: ...
+상세: build/test-results/test/<feature>-failure.md
 ```

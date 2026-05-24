@@ -20,7 +20,7 @@ tools:
 
 ## 리뷰 프로세스
 
-1. `git diff --name-only main...HEAD`로 변경 파일을 본다 (미커밋 변경이 있으면 `git status`도 확인)
+1. `git diff main...HEAD`로 이번 브랜치의 변경 부위(diff)를 직접 떠 변경된 라인을 식별한다. 메인은 파일 목록도 diff 도 넘겨주지 않는다. 파일 목록만 따로 필요하면 `git diff --name-only main...HEAD`. 변경 라인 맥락을 잡으려면 해당 파일을 Read 로 통째로 읽는다.
 2. 변경 파일에서 계약과 닿는 지점을 찾는다. 메시지 발행/수신 코드, Redis·InfluxDB 접근 코드, `*Event`·`*Message`·`*Payload`·`*Tick` 같은 페이로드 DTO 가 그 지점이다
 3. `docs/contracts/index.md`로 가서 그 코드 영역에 해당하는 계약 문서가 무엇인지 찾고, 해당 문서를 Read 해 명세를 확보한다
 4. 변경되지 않은 반대편 코드도 함께 본다. api 의 producer 가 바뀌었다면 engine 의 consumer 를 grep 해서 가져온다. 한쪽만 보면 양쪽이 어긋난 걸 놓친다
