@@ -1,4 +1,5 @@
 # language: ko
+@active-round
 기능: 활성 라운드 조회
 
   배경:

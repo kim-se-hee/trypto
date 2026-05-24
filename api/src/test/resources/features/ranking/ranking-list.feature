@@ -1,4 +1,5 @@
 # language: ko
+@ranking-list
 기능: 랭킹 목록 조회
 
   배경:

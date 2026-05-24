@@ -1,4 +1,5 @@
 # language: ko
+@batch-orchestration
 기능: 배치 오케스트레이션
 
   시나리오: 전체 배치 순차 실행

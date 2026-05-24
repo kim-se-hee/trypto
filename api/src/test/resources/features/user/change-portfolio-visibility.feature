@@ -1,4 +1,5 @@
 # language: ko
+@change-portfolio-visibility
 기능: 포트폴리오 공개 설정 변경
 
   배경:

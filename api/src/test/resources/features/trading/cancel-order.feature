@@ -1,4 +1,5 @@
 # language: ko
+@cancel-order
 기능: CEX 주문 취소
 
   배경:

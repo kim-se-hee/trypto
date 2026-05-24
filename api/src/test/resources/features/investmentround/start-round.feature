@@ -1,4 +1,5 @@
 # language: ko
+@start-round
 기능: 투자 라운드 시작
 
   배경:

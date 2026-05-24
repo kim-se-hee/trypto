@@ -1,4 +1,5 @@
 # language: ko
+@change-nickname
 기능: 닉네임 변경
 
   배경:

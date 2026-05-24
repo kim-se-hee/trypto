@@ -1,4 +1,5 @@
 # language: ko
+@regret-chart
 기능: 복기 그래프 데이터 조회
 
   배경:

@@ -1,4 +1,5 @@
 # language: ko
+@place-order
 기능: CEX 주문 생성
 
   배경:

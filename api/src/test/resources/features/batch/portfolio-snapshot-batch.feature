@@ -1,4 +1,5 @@
 # language: ko
+@portfolio-snapshot-batch
 기능: 포트폴리오 스냅샷 배치
 
   시나리오: 활성 라운드 1개, BTC 보유 시 스냅샷 생성

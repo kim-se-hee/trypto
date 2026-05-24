@@ -1,4 +1,5 @@
 # language: ko
+@my-holdings
 기능: 포트폴리오 보유 현황 조회
 
   배경:

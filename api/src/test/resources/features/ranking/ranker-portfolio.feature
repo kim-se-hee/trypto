@@ -1,4 +1,5 @@
 # language: ko
+@ranker-portfolio
 기능: 랭커 포트폴리오 조회
 
   배경:

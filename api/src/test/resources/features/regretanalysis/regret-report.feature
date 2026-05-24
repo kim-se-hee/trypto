@@ -1,4 +1,5 @@
 # language: ko
+@regret-report
 기능: 투자 복기 리포트 조회
 
   배경:

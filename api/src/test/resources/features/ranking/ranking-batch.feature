@@ -1,4 +1,5 @@
 # language: ko
+@ranking-batch
 기능: 랭킹 배치
 
   시나리오: 스냅샷 데이터 기반 랭킹 계산
