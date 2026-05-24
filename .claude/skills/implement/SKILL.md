@@ -6,7 +6,7 @@ description: >
 arguments: [scope, feature]
 ---
 
-`/implement` 는 `docs/<scope>/<feature>/plan.md` 한 장을 동작하는 코드로 변환하는 오케스트레이터다. 메인 세션은 디스패치만 담당하고 실제 작성은 서브에이전트가 한다
+`/implement` 는 기능 디렉터리의 `plan.md` 한 장을 동작하는 코드로 변환하는 오케스트레이터다. 메인 세션은 디스패치만 담당하고 실제 작성은 서브에이전트가 한다
 
 ## 입력
 
@@ -23,15 +23,24 @@ arguments: [scope, feature]
 
 인자가 부족하거나 형식이 맞지 않으면 사용자에게 호출 형태를 안내하고 종료한다.
 
+## 디렉터리 구조
+
+`docs` 는 항상 모듈 루트 바로 아래에 있다. api 모듈만 그 안에서 바운디드 컨텍스트로 한 단계 더 나뉜다.
+
+- api (scope `api/<context>`): `api/docs/<context>/<feature>/`
+- 그 외 (scope `<module>`): `<module>/docs/<feature>/`
+
+이하 본문에서 "기능 디렉터리" 는 위 구조의 `<feature>/` 디렉터리를 가리킨다.
+
 ## 사전 제약
 
-`docs/<scope>/<feature>/plan.md` 가 존재해야 한다. 없으면 종료한다.
+기능 디렉터리에 `plan.md` 가 존재해야 한다. 없으면 종료한다.
 
 ## 흐름
 
 ### 0. plan.md 검사
 
-`docs/<scope>/<feature>/plan.md` 를 Read 하여 `## task 목록` 섹션에서 미완료 항목을 위→아래 순서로 추출한다. 모두 완료 상태면 "이미 완료" 알리고 종료.
+기능 디렉터리의 `plan.md` 를 Read 하여 `## task 목록` 섹션에서 미완료 항목을 위→아래 순서로 추출한다. 모두 완료 상태면 "이미 완료" 알리고 종료.
 
 ### 1. 워크트리 + 브랜치 생성
 
@@ -43,9 +52,7 @@ arguments: [scope, feature]
 git worktree add -b feat/<feature> ../trypto-<feature>
 ```
 
-이미 워크트리·브랜치가 존재하면 사용자에게 알리고 종료 (덮어쓰지 않음).
-
-이후 모든 작업은 새 워크트리 안에서 수행한다.
+이미 워크트리·브랜치가 존재하면 사용자에게 알리고 종료
 
 ### 2. 인수 테스트 작성
 
@@ -74,7 +81,7 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 
 ### 5. 기능 index.md 갱신
 
-다음 조건이 모두 참일 때만 `docs/<scope>/<feature>/index.md` 의 `단계` 줄을 `단계: implement` 로 갱신한다.
+다음 조건이 모두 참일 때만 기능 디렉터리의 `index.md` 의 `단계` 줄을 `단계: implement` 로 갱신한다.
 
 - 3단계 task 루프가 중단 없이 끝났다 (미완료 task 0개).
 - 4단계 인수 테스트가 통과했거나 모듈 정책상 미작성으로 건너뛰었다.
@@ -84,7 +91,7 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 ### 6. 보고
 
 ```
-구현 완료: docs/<scope>/<feature>/
+구현 완료: <기능 디렉터리>
 
 워크트리: ../trypto-<feature>
 브랜치: feat/<feature>
