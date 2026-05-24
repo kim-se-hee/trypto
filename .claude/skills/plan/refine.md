@@ -6,7 +6,7 @@
 
 ### 1. 대상 확인
 
-`docs/<prefix>/<feature>/plan.md` 가 존재해야 한다. 없으면 사용자에게 알리고 종료한다.
+`docs/<scope>/<feature>/plan.md` 가 존재해야 한다. 없으면 사용자에게 알리고 종료한다.
 
 ### 2. 피드백 수신 / 변경 대상 식별
 
@@ -23,12 +23,12 @@
 
 ### 5. 기능 index.md 갱신
 
-산출물 한 줄 요약이 변경되었으면 `docs/<prefix>/<feature>/index.md` 를 갱신한다.
+산출물 한 줄 요약이 변경되었으면 `docs/<scope>/<feature>/index.md` 를 갱신한다.
 
 ### 6. 변경 보고
 
 ```
-계획 갱신 완료: docs/<prefix>/<feature>/plan.md
+계획 갱신 완료: docs/<scope>/<feature>/plan.md
 
 변경 항목:
 - <항목 요약>

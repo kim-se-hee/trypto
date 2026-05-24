@@ -16,7 +16,7 @@ model: inherit
 `/review` 스킬이 `<review-md-path>` 에 적어둔 차단 이슈 중 한 건을 받아, 그 한 건만 정확히 반영하고 커밋한다. 한 호출 = 한 이슈. 처리 후 종료한다.
 
 메인 세션이 호출 프롬프트에 다음 세 값을 전달한다:
-- `prefix` — 기능이 속한 위치 (있을 때만). 예: `api/trading`
+- `scope` — 기능이 속한 위치 (있을 때만). 예: `api/trading`
 - `feature` — 기능 이름 (있을 때만). 예: `place-order`
 - `issue` — 차단 이슈 한 건의 본문. 형식:
 
@@ -29,7 +29,7 @@ model: inherit
 ## 사전 준비
 
 1. `issue` 의 파일경로를 Read 해 현재 상태를 확인한다.
-2. `prefix`/`feature` 가 주어졌고 이슈가 spec/plan 과 연관되어 보이면 (예: ddd 출처) `docs/<prefix>/<feature>/spec.md`·`plan.md` 를 보조 자료로 읽는다.
+2. `scope`/`feature` 가 주어졌고 이슈가 spec/plan 과 연관되어 보이면 (예: ddd 출처) `docs/<scope>/<feature>/spec.md`·`plan.md` 를 보조 자료로 읽는다.
 3. 이슈 파일이 속한 모듈의 `<module>/docs/conventions.md` / `testing.md` 가 있으면 코딩·테스트 컨벤션을 파악한다.
 
 ## 리뷰 사항 반영

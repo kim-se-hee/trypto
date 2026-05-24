@@ -1,16 +1,16 @@
 ---
 description: >
-  계획서를 코드로 옮기는 워크플로우. /implement <prefix> <feature> 로 호출하면
+  계획서를 코드로 옮기는 워크플로우. /implement <scope> <feature> 로 호출하면
   기능별 워크트리·브랜치를 만들고, 인수 테스트를 작성하고, plan.md 의 task 들을
   TDD 로 한 개씩 처리한다.
-arguments: [prefix, feature]
+arguments: [scope, feature]
 ---
 
-`/implement` 는 `docs/<prefix>/<feature>/plan.md` 한 장을 동작하는 코드로 변환하는 오케스트레이터다. 메인 세션은 디스패치만 담당하고 실제 작성은 서브에이전트가 한다
+`/implement` 는 `docs/<scope>/<feature>/plan.md` 한 장을 동작하는 코드로 변환하는 오케스트레이터다. 메인 세션은 디스패치만 담당하고 실제 작성은 서브에이전트가 한다
 
 ## 입력
 
-- `$prefix` — 기능이 속한 위치
+- `$scope` — 기능이 속한 위치
   - api 모듈 : `api/<context>` (예: `api/trading`)
   - 그 외 모듈: 모듈명 그대로 (예: `engine`, `collector`, `frontend`)
 - `$feature` — 기능 이름 (kebab-case, 예: `place-order`)
@@ -25,13 +25,13 @@ arguments: [prefix, feature]
 
 ## 사전 제약
 
-`docs/<prefix>/<feature>/plan.md` 가 존재해야 한다. 없으면 종료한다.
+`docs/<scope>/<feature>/plan.md` 가 존재해야 한다. 없으면 종료한다.
 
 ## 흐름
 
 ### 0. plan.md 검사
 
-`docs/<prefix>/<feature>/plan.md` 를 Read 하여 `## task 목록` 섹션에서 미완료 항목을 위→아래 순서로 추출한다. 모두 완료 상태면 "이미 완료" 알리고 종료.
+`docs/<scope>/<feature>/plan.md` 를 Read 하여 `## task 목록` 섹션에서 미완료 항목을 위→아래 순서로 추출한다. 모두 완료 상태면 "이미 완료" 알리고 종료.
 
 ### 1. 워크트리 + 브랜치 생성
 
@@ -49,7 +49,7 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 
 ### 2. 인수 테스트 작성
 
-`acceptance-test-author` 서브에이전트를 호출한다. 프롬프트에 `prefix`, `feature` 만 전달하고 파일 본문은 인용하지 않는다 
+`acceptance-test-author` 서브에이전트를 호출한다. 프롬프트에 `scope`, `feature` 만 전달하고 파일 본문은 인용하지 않는다 
 서브에이전트가 자기 사전 준비 단계에서 spec.md·plan.md·모듈 testing.md 를 직접 Read 한다. 메인 컨텍스트에 본문이 안 쌓이도록 하기 위함이다.
 
 ### 3. task 루프
@@ -58,7 +58,7 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 
 각 task 마다:
 
-1. `task-implementer` 호출. 프롬프트에 `prefix`, `feature`, `task 본문` 을 전달.
+1. `task-implementer` 호출. 프롬프트에 `scope`, `feature`, `task 본문` 을 전달.
 2. 정상 종료 후 `plan.md` 의 해당 줄을 `- [ ]` → `- [x]` 로 갱신한다.
 
 서브에이전트가 작업 중간에 막혀 에러를 보고하면 (테스트가 계속 그린이라 못 진행, 컴파일 실패 등) 메인은 사용자에게 그 메시지를 그대로 전달하고 루프를 중단한다.
@@ -67,14 +67,14 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 
 2단계가 "인수 테스트 미작성" 으로 종료했다면 (모듈 정책상 인수 테스트를 두지 않는 경우) 이 단계는 건너뛰고 5단계로 간다.
 
-모든 task 가 끝난 뒤 `acceptance-test-runner` 서브에이전트에 위임한다. 프롬프트에 `prefix`, `feature` 만 전달한다. 러너는 `@<feature>` 태그로 좁혀 인수 테스트를 실행하고, 실패 시 자체적으로 원인 분석·수정·재실행·커밋 루프를 돈 뒤 메인엔 결과 한 줄만 돌려준다 (gradle 출력은 메인 컨텍스트에 쌓이지 않음).
+모든 task 가 끝난 뒤 `acceptance-test-runner` 서브에이전트에 위임한다. 프롬프트에 `scope`, `feature` 만 전달한다. 러너는 `@<feature>` 태그로 좁혀 인수 테스트를 실행하고, 실패 시 자체적으로 원인 분석·수정·재실행·커밋 루프를 돈 뒤 메인엔 결과 한 줄만 돌려준다 (gradle 출력은 메인 컨텍스트에 쌓이지 않음).
 
 - **통과**: 5단계로.
 - **실패**: 러너가 보고한 메시지를 사용자에게 그대로 전달하고 종료.
 
 ### 5. 기능 index.md 갱신
 
-다음 조건이 모두 참일 때만 `docs/<prefix>/<feature>/index.md` 의 `단계` 줄을 `단계: implement` 로 갱신한다.
+다음 조건이 모두 참일 때만 `docs/<scope>/<feature>/index.md` 의 `단계` 줄을 `단계: implement` 로 갱신한다.
 
 - 3단계 task 루프가 중단 없이 끝났다 (미완료 task 0개).
 - 4단계 인수 테스트가 통과했거나 모듈 정책상 미작성으로 건너뛰었다.
@@ -84,7 +84,7 @@ git worktree add -b feat/<feature> ../trypto-<feature>
 ### 6. 보고
 
 ```
-구현 완료: docs/<prefix>/<feature>/
+구현 완료: docs/<scope>/<feature>/
 
 워크트리: ../trypto-<feature>
 브랜치: feat/<feature>

@@ -16,7 +16,7 @@ tools:
 
 ## 리뷰 프로세스
 
-1. `docs/<prefix>/<feature>/spec.md`와 `plan.md`를 읽어 BR(비즈니스 규칙)과 도메인 설계 결정 파악
+1. `docs/<scope>/<feature>/spec.md`와 `plan.md`를 읽어 BR(비즈니스 규칙)과 도메인 설계 결정 파악
 2. `git diff --name-only main...HEAD`로 이번 브랜치의 변경 파일 파악 (미커밋 변경이 있으면 `git status`도 확인)
 3. 변경 파일 주변 패키지를 먼저 훑어 이 프로젝트의 컨벤션 학습 — BC 분리 방식, 어댑터·포트 명명, 패키지 구조, 크로스 BC 접근 패턴
 4. 아래 4가지 관점을 우선으로 보고, 그 외 DDD 원칙 위반도 능동적으로 탐지

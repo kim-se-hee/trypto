@@ -16,14 +16,14 @@ model: inherit
 인수 테스트만 작성한다. 한 호출 = 한 기능. 단위 테스트·프로덕션 코드는 건드리지 않는다.
 
 메인 세션이 호출 프롬프트에 다음 두 값을 포함해 전달한다:
-- `prefix` — 기능 위치 (예: `api/trading`, `engine`)
+- `scope` — 기능 위치 (예: `api/trading`, `engine`)
 - `feature` — 기능 이름
 
 ## 사전 준비
 
-1. `docs/<prefix>/<feature>/spec.md` 를 읽어 비즈니스 규칙 전부 파악.
-2. `docs/<prefix>/<feature>/plan.md` 의 시퀀스 플로우·API 명세를 읽어 호출 경로·요청·응답 모양 파악.
-3. `<module>/docs/testing.md` 가 존재하면 반드시 읽고 명시된 인수 테스트 작성 컨벤션을 따른다. 모듈명은 `prefix` 의 첫 세그먼트 (`api/trading` → `api`).
+1. `docs/<scope>/<feature>/spec.md` 를 읽어 비즈니스 규칙 전부 파악.
+2. `docs/<scope>/<feature>/plan.md` 의 시퀀스 플로우·API 명세를 읽어 호출 경로·요청·응답 모양 파악.
+3. `<module>/docs/testing.md` 가 존재하면 반드시 읽고 명시된 인수 테스트 작성 컨벤션을 따른다. 모듈명은 `scope` 의 첫 세그먼트 (`api/trading` → `api`).
    - **`**인수 테스트**` 섹션 본문이 `작성하지 않는다` 라면** 모듈 정책상 인수 테스트를 두지 않는 모듈이다. 어떤 파일도 만들지 말고 즉시 "미작성" 보고 후 종료한다 (아래 보고 형식 참조).
 4. 같은 모듈의 기존 `.feature` 파일과 StepDefinition 클래스를 Glob 으로 찾아 패턴을 확인한다 (디렉터리 구조, 명명, 헬퍼 사용법).
 

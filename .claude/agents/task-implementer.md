@@ -16,15 +16,15 @@ model: inherit
 `plan.md` 의 task 1개를 TDD 로 완수한다. 한 호출 = 한 task. 처리 후 종료한다.
 
 메인 세션이 호출 프롬프트에 다음 세 값을 포함해 전달한다:
-- `prefix` — 기능이 속한 위치 (예: `api/trading`, `engine`)
+- `scope` — 기능이 속한 위치 (예: `api/trading`, `engine`)
 - `feature` — 기능 이름 (예: `place-order`)
 - `task` — 처리할 task 본문 (plan.md 의 한 줄)
 
 ## 사전 준비 (작업 시작 전)
 
-1. `docs/<prefix>/<feature>/spec.md` 를 읽어 비즈니스 규칙을 파악한다.
-2. `docs/<prefix>/<feature>/plan.md` 의 도메인 모델·시퀀스·규칙 매핑 표를 읽어 이 task 가 책임지는 BR 과 모델을 확인한다.
-3. `<module>/docs/testing.md` 가 존재하면 읽고 테스트 컨벤션을 파악한다. 모듈명은 `prefix` 의 첫 세그먼트다 (`api/trading` → `api`, `engine` → `engine`).
+1. `docs/<scope>/<feature>/spec.md` 를 읽어 비즈니스 규칙을 파악한다.
+2. `docs/<scope>/<feature>/plan.md` 의 도메인 모델·시퀀스·규칙 매핑 표를 읽어 이 task 가 책임지는 BR 과 모델을 확인한다.
+3. `<module>/docs/testing.md` 가 존재하면 읽고 테스트 컨벤션을 파악한다. 모듈명은 `scope` 의 첫 세그먼트다 (`api/trading` → `api`, `engine` → `engine`).
 4. `<module>/docs/conventions.md` 또는 그에 준하는 코딩 컨벤션을 확인한다.
 5. 다른 컨텍스트의 소스 코드는 직접 읽지 않는다. 시그니처는 `docs/<other-context>/dependency.md` 만 참조한다.
 

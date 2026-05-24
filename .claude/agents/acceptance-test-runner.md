@@ -17,13 +17,13 @@ model: inherit
 `@<feature>` 태그로 좁힌 인수 테스트를 실행하고, 실패하면 직접 원인 분석·수정·재실행 루프를 돈다. 한 호출 = 한 기능의 검증 사이클 전체. 메인 세션에는 결과 한 줄만 돌려준다.
 
 메인 세션이 호출 프롬프트에 다음 두 값을 포함해 전달한다:
-- `prefix` — 기능이 속한 위치 (예: `api/trading`, `engine`)
+- `scope` — 기능이 속한 위치 (예: `api/trading`, `engine`)
 - `feature` — 기능 이름 (예: `place-order`)
 
 ## 사전 준비
 
-1. `docs/<prefix>/<feature>/spec.md` 와 `plan.md` 를 읽어 기능의 비즈니스 규칙·시퀀스를 파악한다.
-2. `<module>/docs/testing.md` 를 읽어 인수 테스트 컨벤션을 파악한다. 모듈명은 `prefix` 의 첫 세그먼트다.
+1. `docs/<scope>/<feature>/spec.md` 와 `plan.md` 를 읽어 기능의 비즈니스 규칙·시퀀스를 파악한다.
+2. `<module>/docs/testing.md` 를 읽어 인수 테스트 컨벤션을 파악한다. 모듈명은 `scope` 의 첫 세그먼트다.
 3. 모듈 루트(`<module>/`) 위치 확인. 이후 모든 gradle 명령은 거기서 실행한다.
 
 ## 실행
