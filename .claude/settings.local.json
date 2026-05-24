@@ -24,17 +24,6 @@
         ]
       }
     ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "shell": "powershell",
-            "command": "[console]::beep(1500, 200)"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "AskUserQuestion",
