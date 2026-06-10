@@ -4,10 +4,14 @@
 #   ./loadtest/reset.sh                       # 기본 프로파일
 #   ./loadtest/reset.sh ticker_websocket.js   # loadtest 오버라이드 같이 적용
 #
-# 두 가지 경로:
-# - cold path  — 컨테이너 처음 띄우거나 mysql 이 살아있지 않을 때. down -v + pull + up
+# 세 가지 경로:
+# - cold path  — 컨테이너 처음 띄우거나 mysql 이 살아있지 않을 때. down -v + pull + up.
+#                조회 시나리오면 healthy 후 추가 시드(랭킹/보유/캔들/현재가)를 한 번 적재한다.
 # - warm path  — 트레이딩 시나리오(place_order/match_pending) + mysql 이 healthy 상태로 살아있을 때
 #                전체 재기동 대신 거래 흔적만 비우고 engine 만 재시작 (~30s, cold 의 약 1/3)
+# - read-warm  — 조회 시나리오(ranking_list/my_holdings/candle_scroll) + mysql healthy 일 때.
+#                조회는 데이터를 바꾸지 않으므로 재시드 없이 backend 만 새 코드로 재시작한다
+#                (ddl-auto=none, sql.init=never → 테이블·데이터 보존).
 set -e
 
 cd "$(dirname "$0")/.."
@@ -23,6 +27,10 @@ case "$SCENARIO" in
     # backend 를 loadtest 프로파일로 띄워서 market-meta-sync 를 끈다 → loadtest.sql 의 coin_id=1=KRW 가정이 유효
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
+  ranking_list.js|my_holdings.js|candle_scroll.js)
+    # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
+    COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
+    ;;
 esac
 
 # warm path 가능 여부 — 트레이딩 시나리오 + mysql 이 healthy 상태로 떠있어야 함
@@ -35,6 +43,12 @@ case "$SCENARIO" in
       WARM_PATH=1
     fi
     ;;
+esac
+
+# 조회 시나리오 판별 — 데이터를 바꾸지 않아 재측정 사이클에서 재시드가 불필요하다.
+READ_SCENARIO=0
+case "$SCENARIO" in
+  ranking_list.js|my_holdings.js|candle_scroll.js) READ_SCENARIO=1 ;;
 esac
 
 if [ "$WARM_PATH" = 1 ]; then
@@ -98,6 +112,35 @@ SQL
   exit 0
 fi
 
+# read-warm path — 조회 시나리오 + mysql healthy. 데이터를 그대로 두고 backend 만 새 코드로 재시작한다.
+# ddl-auto=none + sql.init=never 라 Hibernate 가 테이블을 날리거나 loadtest.sql 을 재적재하지 않아
+# cold 에서 깔아둔 랭킹/보유/캔들 시드가 보존된다.
+if [ "$READ_SCENARIO" = 1 ]; then
+  MYSQL_CID=$(docker compose "${COMPOSE_ARGS[@]}" ps -q mysql 2>/dev/null || true)
+  if [ -n "$MYSQL_CID" ] \
+     && [ "$(docker inspect -f '{{.State.Health.Status}}' "$MYSQL_CID" 2>/dev/null)" = "healthy" ]; then
+    echo "[read-warm] 조회 fast path: 데이터 보존, backend 만 새 코드로 재시작 (ddl-auto=none, sql.init=never)"
+    HIBERNATE_DDL_AUTO=none SQL_INIT_MODE=never \
+      docker compose "${COMPOSE_ARGS[@]}" up -d --no-deps --force-recreate backend
+
+    echo "[read-warm] backend healthy 대기"
+    deadline=$(( $(date +%s) + 300 ))
+    while :; do
+      bs=$(docker compose "${COMPOSE_ARGS[@]}" ps backend --format '{{.Health}}' 2>/dev/null)
+      [ "$bs" = "healthy" ] && break
+      if [ "$(date +%s)" -gt "$deadline" ]; then
+        echo "[ERROR] backend healthy 대기 타임아웃 (backend=$bs)" >&2
+        docker compose "${COMPOSE_ARGS[@]}" ps >&2
+        exit 1
+      fi
+      sleep 3
+    done
+
+    echo "=== 준비 완료 (read-warm path). k6 실행 가능 ==="
+    exit 0
+  fi
+fi
+
 # cold path — 처음 띄우거나 컨테이너 죽어있을 때
 echo "[1/4] compose down -v (모든 볼륨 제거)"
 docker compose "${COMPOSE_ARGS[@]}" down -v
@@ -124,5 +167,33 @@ while :; do
   echo "  대기 중: $unhealthy"
   sleep 5
 done
+
+# 조회 시나리오: loadtest.sql 이 채우지 않는 추가 데이터를 한 번 적재한다 (이후 read-warm 으로 보존).
+if [ "$READ_SCENARIO" = 1 ]; then
+  WALLET_COUNT="${SEED_WALLETS:-1000}"
+  RANKING_DAYS="${RANKING_DAYS:-30}"
+  CANDLE_DAYS="${CANDLE_DAYS:-30}"
+  case "$SCENARIO" in
+    ranking_list.js)
+      echo "[read-seed] ranking 적재 (period 3 × ${RANKING_DAYS}일 × ${WALLET_COUNT}명)"
+      sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@RANKING_DAYS@/${RANKING_DAYS}/g" loadtest/seed/ranking.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      ;;
+    my_holdings.js)
+      echo "[read-seed] holding 적재 (${WALLET_COUNT} 지갑 × 3코인) + Redis 현재가"
+      sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g" loadtest/seed/holdings.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      docker compose "${COMPOSE_ARGS[@]}" exec -T redis redis-cli SET 'ticker:UPBIT:BTC/KRW' '{"lastPrice":50000000}' >/dev/null
+      docker compose "${COMPOSE_ARGS[@]}" exec -T redis redis-cli SET 'ticker:UPBIT:ETH/KRW' '{"lastPrice":5200000}'  >/dev/null
+      docker compose "${COMPOSE_ARGS[@]}" exec -T redis redis-cli SET 'ticker:UPBIT:XRP/KRW' '{"lastPrice":4800}'      >/dev/null
+      ;;
+    candle_scroll.js)
+      echo "[read-seed] candle_1m 적재 (UPBIT × 10코인 × ${CANDLE_DAYS}일)"
+      bash loadtest/seed/gen-candles.sh "${CANDLE_DAYS}" \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T influxdb influx write \
+            --bucket ticker --org trypto --token trypto-collector-token --precision s
+      ;;
+  esac
+fi
 
 echo "=== 준비 완료. k6 실행 가능 ==="
