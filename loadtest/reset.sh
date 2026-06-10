@@ -145,8 +145,15 @@ fi
 echo "[1/4] compose down -v (모든 볼륨 제거)"
 docker compose "${COMPOSE_ARGS[@]}" down -v
 
-echo "[2/4] compose pull (.env 의 새 이미지 태그로 Hub 에서 가져오기)"
-docker compose "${COMPOSE_ARGS[@]}" pull
+# 이미지 확보: 기본은 Hub pull (AWS SUT 는 prebuilt 이미지를 받는다).
+# RESET_BUILD_LOCAL=1 이면 로컬 소스로 빌드한다 (로컬 performance-tune — Hub 의존 없이 작업트리 코드를 검증).
+if [ "${RESET_BUILD_LOCAL:-0}" = "1" ]; then
+  echo "[2/4] compose build (RESET_BUILD_LOCAL=1 — 로컬 소스로 이미지 빌드)"
+  docker compose "${COMPOSE_ARGS[@]}" build
+else
+  echo "[2/4] compose pull (.env 의 새 이미지 태그로 Hub 에서 가져오기)"
+  docker compose "${COMPOSE_ARGS[@]}" pull
+fi
 
 echo "[3/4] compose up -d"
 docker compose "${COMPOSE_ARGS[@]}" up -d
