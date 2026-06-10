@@ -1,0 +1,51 @@
+-- 랭킹 조회(GET /api/rankings) 부하테스트용 시드 템플릿.
+-- reset.sh 가 ranking_list.js 시나리오일 때 base.sql.tmpl 뒤에 이어붙여
+-- @WALLET_COUNT@ / @RANKING_DAYS@ 를 치환해 base.sql 로 렌더한다.
+--
+-- 선행: base.sql(=base.sql.tmpl) 이 user / investment_round 를 1~@WALLET_COUNT@ 로 먼저 적재한다.
+--       ranking.user_id / round_id 가 그 범위를 그대로 참조한다.
+--
+-- 조회 경로가 밟는 두 쿼리:
+--   findLatestReferenceDate → SELECT MAX(reference_date) FROM ranking WHERE period = ?
+--   findRankings            → WHERE period = ? AND reference_date = ? AND `rank` > ? ORDER BY `rank` LIMIT ?
+-- 두 쿼리를 받쳐줄 복합 인덱스를 끝에서 함께 만든다.
+--
+-- 적재 규모: period 3종 × 최근 @RANKING_DAYS@ 일 × user @WALLET_COUNT@ 명.
+-- `rank` 는 (period, reference_date) 안에서 1~@WALLET_COUNT@ 로 고유 → 커서 페이징(`rank` > cursor)이 항상 성립한다.
+-- 조회는 최신 날짜의 1~@WALLET_COUNT@ 순위를 커서로 훑는다. 과거 @RANKING_DAYS@ 일치는
+-- 테이블 규모와 MAX(reference_date) 비용을 현실화하는 용도다 (k6 가 referenceDate 는 보내지 않음).
+
+SET SESSION cte_max_recursion_depth = 1000000;
+
+INSERT INTO ranking
+  (user_id, round_id, period, `rank`, profit_rate, trade_count, reference_date, created_at)
+WITH RECURSIVE
+  u AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n + 1 FROM u WHERE n < @WALLET_COUNT@
+  ),
+  d AS (
+    SELECT 0 AS k
+    UNION ALL
+    SELECT k + 1 FROM d WHERE k < @RANKING_DAYS@ - 1
+  ),
+  p AS (
+    SELECT 'DAILY' AS period
+    UNION ALL SELECT 'WEEKLY'
+    UNION ALL SELECT 'MONTHLY'
+  )
+SELECT
+  u.n                                         AS user_id,
+  u.n                                         AS round_id,
+  p.period                                    AS period,
+  u.n                                         AS `rank`,
+  ROUND(50 - (u.n / @WALLET_COUNT@ * 100), 4) AS profit_rate,  -- 상위일수록 높은 수익률 (≈ +49.9% ~ -50%)
+  MOD(u.n, 30) + 1                            AS trade_count,   -- 1~30
+  DATE_SUB(CURDATE(), INTERVAL d.k DAY)       AS reference_date,
+  NOW()                                       AS created_at
+FROM p
+CROSS JOIN d
+CROSS JOIN u;
+
+CREATE INDEX idx_ranking_period_date_rank ON ranking (period, reference_date, `rank`);
