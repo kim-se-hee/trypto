@@ -1,0 +1,8 @@
+ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.investmentround.application.port.in.SumEmergencyFundingUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.portfolio.application.port.in.FindSnapshotsUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.trading.application.port.in.FindFilledOrdersUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.user.application.port.in.FindUserPublicInfoUseCase declares 2 methods, but UseCase should declare exactly one
+ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase declares 5 methods, but UseCase should declare exactly one
+ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase declares 4 methods, but UseCase should declare exactly one
