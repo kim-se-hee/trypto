@@ -83,8 +83,8 @@ export function queryHistory() {
   const type = pickType();
   const cursor = pickCursor();
 
-  let url = `${API}/api/wallets/${walletId}/transfers?size=${SIZE}&type=${type}`;
-  if (cursor !== null) url += `&cursor=${cursor}`;
+  let url = `${API}/api/wallets/${walletId}/transfers?size=${SIZE}&type=${type}&userId=${walletId}`;
+  if (cursor !== null) url += `&cursorTransferId=${cursor}`;
 
   const res = http.get(url, { tags: { scenario: 'transfer_history' } });
 
