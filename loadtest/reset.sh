@@ -27,7 +27,7 @@ case "$SCENARIO" in
     # backend 를 loadtest 프로파일로 띄워서 market-meta-sync 를 끈다 → loadtest.sql 의 coin_id=1=KRW 가정이 유효
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
-  ranking_list.js|my_holdings.js|candle_scroll.js)
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js)
     # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
@@ -48,7 +48,7 @@ esac
 # 조회 시나리오 판별 — 데이터를 바꾸지 않아 재측정 사이클에서 재시드가 불필요하다.
 READ_SCENARIO=0
 case "$SCENARIO" in
-  ranking_list.js|my_holdings.js|candle_scroll.js) READ_SCENARIO=1 ;;
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js) READ_SCENARIO=1 ;;
 esac
 
 if [ "$WARM_PATH" = 1 ]; then
@@ -180,6 +180,8 @@ if [ "$READ_SCENARIO" = 1 ]; then
   WALLET_COUNT="${SEED_WALLETS:-1000}"
   RANKING_DAYS="${RANKING_DAYS:-30}"
   CANDLE_DAYS="${CANDLE_DAYS:-30}"
+  SNAPSHOT_USERS="${SNAPSHOT_USERS:-100}"
+  SNAPSHOT_DAYS="${SNAPSHOT_DAYS:-30}"
   case "$SCENARIO" in
     ranking_list.js)
       echo "[read-seed] ranking 적재 (period 3 × ${RANKING_DAYS}일 × ${WALLET_COUNT}명)"
@@ -199,6 +201,14 @@ if [ "$READ_SCENARIO" = 1 ]; then
       bash loadtest/seed/gen-candles.sh "${CANDLE_DAYS}" \
         | docker compose "${COMPOSE_ARGS[@]}" exec -T influxdb influx write \
             --bucket ticker --org trypto --token trypto-collector-token --precision s
+      ;;
+    ranker_portfolio.js)
+      echo "[read-seed] ranking 적재 (period 3 × ${RANKING_DAYS}일 × ${WALLET_COUNT}명) — rank=user_id 라 1~100 이 열람 가능 상위 구간"
+      sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@RANKING_DAYS@/${RANKING_DAYS}/g" loadtest/seed/ranking.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      echo "[read-seed] portfolio_snapshot(+detail) 적재 (상위 ${SNAPSHOT_USERS}명 × ${SNAPSHOT_DAYS}일 × 코인 5종)"
+      sed "s/@SNAPSHOT_USERS@/${SNAPSHOT_USERS}/g; s/@SNAPSHOT_DAYS@/${SNAPSHOT_DAYS}/g" loadtest/seed/ranker-portfolio.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
       ;;
   esac
 fi
