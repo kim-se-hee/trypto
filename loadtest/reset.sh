@@ -27,7 +27,7 @@ case "$SCENARIO" in
     # backend 를 loadtest 프로파일로 띄워서 market-meta-sync 를 끈다 → loadtest.sql 의 coin_id=1=KRW 가정이 유효
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
-  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js)
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js)
     # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
@@ -48,7 +48,7 @@ esac
 # 조회 시나리오 판별 — 데이터를 바꾸지 않아 재측정 사이클에서 재시드가 불필요하다.
 READ_SCENARIO=0
 case "$SCENARIO" in
-  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js) READ_SCENARIO=1 ;;
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js) READ_SCENARIO=1 ;;
 esac
 
 if [ "$WARM_PATH" = 1 ]; then
@@ -182,6 +182,7 @@ if [ "$READ_SCENARIO" = 1 ]; then
   CANDLE_DAYS="${CANDLE_DAYS:-30}"
   SNAPSHOT_USERS="${SNAPSHOT_USERS:-100}"
   SNAPSHOT_DAYS="${SNAPSHOT_DAYS:-30}"
+  TRANSFERS_PER_WALLET="${TRANSFERS_PER_WALLET:-150}"
   case "$SCENARIO" in
     ranking_list.js)
       echo "[read-seed] ranking 적재 (period 3 × ${RANKING_DAYS}일 × ${WALLET_COUNT}명)"
@@ -208,6 +209,11 @@ if [ "$READ_SCENARIO" = 1 ]; then
         | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
       echo "[read-seed] portfolio_snapshot(+detail) 적재 (상위 ${SNAPSHOT_USERS}명 × ${SNAPSHOT_DAYS}일 × 코인 5종)"
       sed "s/@SNAPSHOT_USERS@/${SNAPSHOT_USERS}/g; s/@SNAPSHOT_DAYS@/${SNAPSHOT_DAYS}/g" loadtest/seed/ranker-portfolio.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      ;;
+    transfer_history.js)
+      echo "[read-seed] transfer 적재 (${WALLET_COUNT} 지갑 × 지갑당 출금 ${TRANSFERS_PER_WALLET}건 → 이력 ≈ ${TRANSFERS_PER_WALLET}×2/지갑)"
+      sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@TRANSFERS_PER_WALLET@/${TRANSFERS_PER_WALLET}/g" loadtest/seed/transfer.sql.tmpl \
         | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
       ;;
   esac
