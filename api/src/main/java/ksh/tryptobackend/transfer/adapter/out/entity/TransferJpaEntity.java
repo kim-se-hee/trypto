@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,7 +19,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "transfer")
+@Table(
+        name = "transfer",
+        indexes = {
+            @Index(
+                    name = "idx_transfer_from_wallet_cursor",
+                    columnList = "from_wallet_id, transfer_id"),
+            @Index(
+                    name = "idx_transfer_to_wallet_cursor",
+                    columnList = "to_wallet_id, transfer_id")
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TransferJpaEntity {
