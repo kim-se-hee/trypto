@@ -31,6 +31,10 @@ case "$SCENARIO" in
     # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
+  get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|deposit_address.js|my_ranking.js|ranking_stats.js|coin_chains.js|withdrawal_fee.js|regret_report.js|regret_chart.js|transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
+    # 신규 18개 기능 시나리오 — base(loadtest.sql 확장 시드) + 시나리오별 추가 시드. market-meta-sync off.
+    COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
+    ;;
 esac
 
 # warm path 가능 여부 — 트레이딩 시나리오 + mysql 이 healthy 상태로 떠있어야 함
@@ -45,10 +49,22 @@ case "$SCENARIO" in
     ;;
 esac
 
+# write-warm 가능 여부 — 신규 쓰기 시나리오 + mysql healthy. cold 대신 생성행만 비우고 base 가변상태를 복원한다.
+WRITE_WARM=0
+case "$SCENARIO" in
+  transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
+    MYSQL_CID=$(docker compose "${COMPOSE_ARGS[@]}" ps -q mysql 2>/dev/null || true)
+    if [ -n "$MYSQL_CID" ] \
+       && [ "$(docker inspect -f '{{.State.Health.Status}}' "$MYSQL_CID" 2>/dev/null)" = "healthy" ]; then
+      WRITE_WARM=1
+    fi
+    ;;
+esac
+
 # 조회 시나리오 판별 — 데이터를 바꾸지 않아 재측정 사이클에서 재시드가 불필요하다.
 READ_SCENARIO=0
 case "$SCENARIO" in
-  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js) READ_SCENARIO=1 ;;
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js|get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|deposit_address.js|my_ranking.js|ranking_stats.js|coin_chains.js|withdrawal_fee.js|regret_report.js|regret_chart.js) READ_SCENARIO=1 ;;
 esac
 
 if [ "$WARM_PATH" = 1 ]; then
@@ -109,6 +125,71 @@ SQL
   done
 
   echo "=== 준비 완료 (warm path). k6 실행 가능 ==="
+  exit 0
+fi
+
+# write-warm path — 신규 쓰기 시나리오 + mysql healthy. 생성행만 비우고 base 가변상태를 복원해 cold 없이 같은 출발점으로.
+if [ "$WRITE_WARM" = 1 ]; then
+  echo "[write-warm] 쓰기 시나리오 fast path: 생성행 truncate + base 가변상태 복원 + backend/engine 재시작"
+
+  echo "[write-warm 1/4] mysql 쓰기 흔적 제거 + base 가변상태 복원"
+  docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto <<'SQL'
+SET FOREIGN_KEY_CHECKS = 0;
+-- 체결/주문/송금/긴급충전이 만든 행 제거 (자식 → 부모 순서)
+TRUNCATE TABLE order_fill_failure;
+TRUNCATE TABLE rule_violation;
+TRUNCATE TABLE holding;
+TRUNCATE TABLE outbox;
+TRUNCATE TABLE orders;
+TRUNCATE TABLE transfer;
+TRUNCATE TABLE emergency_funding;
+-- start_round 이 만든 라운드/지갑/잔고/규칙 (base 범위 밖: round>1000, wallet>2000) 제거
+DELETE FROM wallet_balance WHERE wallet_id > 2000;
+DELETE FROM wallet         WHERE wallet_id > 2000;
+DELETE FROM investment_rule  WHERE round_id > 1000;
+DELETE FROM investment_round WHERE round_id > 1000;
+-- 쓰기로 생긴 알트코인 잔고 제거 (base 는 KRW=coin_id 1 만)
+DELETE FROM wallet_balance WHERE coin_id <> 1;
+SET FOREIGN_KEY_CHECKS = 1;
+-- base 가변 상태 복원
+UPDATE wallet_balance SET available = 10000000000.00000000, locked = 0.00000000 WHERE coin_id = 1;
+UPDATE investment_round
+   SET emergency_funding_limit = 1000000.00000000, emergency_charge_count = 1000000,
+       status = 'ACTIVE', ended_at = NULL
+ WHERE round_id BETWEEN 1 AND 1000;
+UPDATE user SET nickname = CONCAT('loadtest', user_id), portfolio_public = true WHERE user_id BETWEEN 1 AND 1200;
+SQL
+
+  echo "[write-warm 2/4] rabbitmq 큐 purge (cancel 가 engine.inbox 로 보낸 미처리 주문)"
+  docker compose "${COMPOSE_ARGS[@]}" exec -T rabbitmq sh -c '
+    rabbitmqctl list_queues -q name | while read q; do
+      [ -z "$q" ] && continue
+      rabbitmqctl purge_queue "$q" >/dev/null 2>&1 || true
+    done
+  '
+
+  echo "[write-warm 3/4] backend + engine 재시작 (ddl-auto=none·sql.init=never 로 테이블 보존 → 위 복원이 리셋, 인메모리·WAL 정리)"
+  docker compose "${COMPOSE_ARGS[@]}" stop engine backend
+  docker compose "${COMPOSE_ARGS[@]}" rm -f engine backend
+  docker volume rm trypto_engine-wal >/dev/null 2>&1 || true
+  HIBERNATE_DDL_AUTO=none SQL_INIT_MODE=never \
+    docker compose "${COMPOSE_ARGS[@]}" up -d backend engine
+
+  echo "[write-warm 4/4] backend + engine healthy 대기"
+  deadline=$(( $(date +%s) + 180 ))
+  while :; do
+    bs=$(docker compose "${COMPOSE_ARGS[@]}" ps backend --format '{{.Health}}' 2>/dev/null)
+    es=$(docker compose "${COMPOSE_ARGS[@]}" ps engine --format '{{.Health}}' 2>/dev/null)
+    [ "$bs" = "healthy" ] && [ "$es" = "healthy" ] && break
+    if [ "$(date +%s)" -gt "$deadline" ]; then
+      echo "[ERROR] healthy 대기 타임아웃 (backend=$bs engine=$es)" >&2
+      docker compose "${COMPOSE_ARGS[@]}" ps >&2
+      exit 1
+    fi
+    sleep 3
+  done
+
+  echo "=== 준비 완료 (write-warm path). k6 실행 가능 ==="
   exit 0
 fi
 
@@ -214,6 +295,24 @@ if [ "$READ_SCENARIO" = 1 ]; then
     transfer_history.js)
       echo "[read-seed] transfer 적재 (${WALLET_COUNT} 지갑 × 지갑당 출금 ${TRANSFERS_PER_WALLET}건 → 이력 ≈ ${TRANSFERS_PER_WALLET}×2/지갑)"
       sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@TRANSFERS_PER_WALLET@/${TRANSFERS_PER_WALLET}/g" loadtest/seed/transfer.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      ;;
+    my_ranking.js|ranking_stats.js)
+      echo "[read-seed] ranking 적재 (my_ranking/ranking_stats — ranking_list 와 동일 시드 재사용)"
+      sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@RANKING_DAYS@/${RANKING_DAYS}/g" loadtest/seed/ranking.sql.tmpl \
+        | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
+      ;;
+    coin_chains.js)
+      echo "[read-seed] exchange_coin_chain 적재"
+      docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto < loadtest/seed/coin-chains.sql.tmpl
+      ;;
+    withdrawal_fee.js)
+      echo "[read-seed] withdrawal_fee 적재"
+      docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto < loadtest/seed/withdrawal-fee.sql.tmpl
+      ;;
+    regret_report.js|regret_chart.js)
+      echo "[read-seed] regret 적재 (report/violation/impact/rule + snapshot, ${REGRET_ROUNDS:-1000} 라운드 × ${REGRET_DAYS:-30}일)"
+      sed "s/@REGRET_ROUNDS@/${REGRET_ROUNDS:-1000}/g; s/@REGRET_DAYS@/${REGRET_DAYS:-30}/g" loadtest/seed/regret.sql.tmpl \
         | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
       ;;
   esac
