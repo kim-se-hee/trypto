@@ -1,0 +1,139 @@
+-- 투자 복기(regret) 조회 부하테스트용 시드 템플릿.
+-- reset.sh 가 regret_report.js / regret_chart.js 시나리오일 때 base.sql 적재 뒤에 이어붙여
+-- @REGRET_ROUNDS@(기본 1000) / @REGRET_DAYS@(기본 30) 를 치환해 렌더한다.
+--
+-- 선행:
+--   base.sql → coin(1=KRW, 2~11) / exchange_market(1=UPBIT,DOMESTIC) / user / investment_round(ACTIVE) /
+--              wallet(round n → wallet n, exchange 1) 적재. user n == round n == wallet n 1:1.
+--
+-- 배치(RegretReportJob)가 만들 산출물을 직접 시드해 GET 조회가 곧장 200 이 나오게 한다.
+-- API 는 조회만 하므로 row 가 있으면 충분하다. 분석 로직은 배치 몫이라 값의 정합성보다
+-- NOT NULL 충족과 FK 연결(report_id)·날짜 범위 일관성에 집중한다.
+--
+-- 조회 경로가 요구하는 최소 조건(200 의 충분조건):
+--   리포트(GetRegretReportService) — round 소유자(userId==roundId) + exchange 1 지갑 존재(base) +
+--     exchange 1 메타(base) + investment_rule(아래) + regret_report 1행(아래).
+--     coin 심볼은 violation_detail.coin_id(2~11) 로 base coin 에서 해소된다.
+--   그래프(GetRegretChartService) — 위 + portfolio_snapshot 최소 1행(없으면 SNAPSHOT_NOT_FOUND).
+--     BTC 벤치마크는 InfluxDB 의 라운드 시작일 BTC 가격이 없으면 빈 벤치마크로 떨어져 200 을 막지 않는다.
+--
+-- ID 전략: report_id == round_id == user_id == n. regret_report 는 IDENTITY 지만
+--   자식(rule_impact/violation_detail)의 report_id FK 를 결정적으로 잇기 위해 PK 를 명시 INSERT 한다.
+--   rule_id 도 (n-1)*3 + k 로 결정적으로 잡아 rule_impact 가 그대로 참조한다.
+--
+-- 주의: investment_rule 은 base(base.sql) 가 아니라 이 시드에만 둔다. base 에 두면
+--   trading 의 주문 시점 룰검사(TradingRules.inspect)와 결합돼 쓰기 시나리오를 오염시킨다.
+--   regret 시드는 읽기 전용 시나리오에서만 적재되므로 격리된다.
+
+SET SESSION cte_max_recursion_depth = 1000000;
+
+-- investment_rule — round 당 3개 규칙. rule_id = (round-1)*3 + {1,2,3}.
+--   k=1 LOSS_CUT(10%), k=2 CHASE_BUY_BAN(20%), k=3 AVERAGING_DOWN_LIMIT(2회).
+INSERT INTO investment_rule (rule_id, round_id, rule_type, threshold_value, created_at)
+WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
+SELECT
+  (r.n - 1) * 3 + k.k                      AS rule_id,
+  r.n                                       AS round_id,
+  k.rule_type                               AS rule_type,
+  k.threshold_value                         AS threshold_value,
+  NOW()                                     AS created_at
+FROM r CROSS JOIN (
+  SELECT 1 AS k, 'LOSS_CUT'             AS rule_type, 10.00000000 AS threshold_value
+  UNION ALL SELECT 2, 'CHASE_BUY_BAN',         20.00000000
+  UNION ALL SELECT 3, 'AVERAGING_DOWN_LIMIT',   2.00000000
+) k;
+
+-- regret_report — round 당 1행. report_id == round_id == n. 모든 NOT NULL 채움.
+--   analysis_start = 라운드 시작(= 첫 스냅샷일 = REGRET_DAYS-1 일 전), analysis_end = 마지막 스냅샷일(오늘).
+INSERT INTO regret_report (
+  report_id, user_id, round_id, exchange_id,
+  total_violations, missed_profit, actual_profit_rate, rule_followed_profit_rate,
+  analysis_start, analysis_end, created_at
+)
+WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
+SELECT
+  r.n                                                          AS report_id,
+  r.n                                                          AS user_id,
+  r.n                                                          AS round_id,
+  1                                                            AS exchange_id,
+  7                                                            AS total_violations,
+  893837.00000000                                              AS missed_profit,
+  4.0000                                                       AS actual_profit_rate,
+  12.9000                                                      AS rule_followed_profit_rate,
+  DATE_SUB(CURDATE(), INTERVAL @REGRET_DAYS@ - 1 DAY)          AS analysis_start,
+  CURDATE()                                                    AS analysis_end,
+  NOW()                                                        AS created_at
+FROM r;
+
+-- rule_impact — report 당 규칙 수(3)만큼. report_id 로 FK 연결.
+INSERT INTO rule_impact (
+  report_id, rule_id, violation_count, total_loss_amount, impact_gap
+)
+WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
+SELECT
+  r.n                                       AS report_id,
+  (r.n - 1) * 3 + k.k                       AS rule_id,
+  k.violation_count                         AS violation_count,
+  k.total_loss_amount                       AS total_loss_amount,
+  k.impact_gap                              AS impact_gap
+FROM r CROSS JOIN (
+  SELECT 1 AS k, 2 AS violation_count, 350000.00000000 AS total_loss_amount, 3.5000 AS impact_gap  -- LOSS_CUT
+  UNION ALL SELECT 2, 2, 265000.00000000, 4.5000                                                    -- CHASE_BUY_BAN
+  UNION ALL SELECT 3, 1, 120000.00000000, 1.2000                                                    -- AVERAGING_DOWN_LIMIT
+) k;
+
+-- violation_detail — report 당 7행. coin_id 2~11 순환, loss_amount/profit_loss/occurred_at 을
+--   분석기간(analysis_start ~ analysis_end) 안에 분산한다. occurred_at 은 d*4 일째로 흩뿌려
+--   그래프 누적손실·위반마커가 여러 날짜에 걸치게 한다(REGRET_DAYS=30 기준 d=0..6 → 0~24일째).
+--   order_id 는 일부 null(가격 모니터링 위반=손절), 일부 채움(주문 시점 위반)로 섞는다.
+INSERT INTO violation_detail (
+  report_id, order_id, rule_id, coin_id, loss_amount, profit_loss, occurred_at
+)
+WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
+SELECT
+  r.n                                                                          AS report_id,
+  v.order_id                                                                   AS order_id,
+  (r.n - 1) * 3 + v.rule_k                                                     AS rule_id,
+  v.coin_id                                                                    AS coin_id,
+  v.loss_amount                                                                AS loss_amount,
+  v.profit_loss                                                                AS profit_loss,
+  TIMESTAMP(
+    DATE_SUB(CURDATE(), INTERVAL (@REGRET_DAYS@ - 1) - v.d * 4 DAY),
+    '10:00:00'
+  )                                                                            AS occurred_at
+FROM r CROSS JOIN (
+  SELECT 0 AS d, NULL AS order_id, 1 AS rule_k, 2  AS coin_id,  60000.00000000 AS loss_amount, -120000.00000000 AS profit_loss
+  UNION ALL SELECT 1, NULL, 1, 3,   80000.00000000, -150000.00000000
+  UNION ALL SELECT 2, 11,   2, 4,  130000.00000000, -200000.00000000
+  UNION ALL SELECT 3, 18,   2, 5,  135000.00000000,  120000.00000000
+  UNION ALL SELECT 4, 22,   3, 6,  120000.00000000, -220000.00000000
+  UNION ALL SELECT 5, NULL, 1, 7,  210000.00000000, -385000.00000000
+  UNION ALL SELECT 6, 31,   2, 8,   95000.00000000,   45000.00000000
+) v;
+
+-- portfolio_snapshot — round n + exchange 1 일별 @REGRET_DAYS@행. detail 은 그래프에 불필요해 헤더만(미적재).
+--   snapshot_date 는 analysis_start(REGRET_DAYS-1 일 전) ~ analysis_end(오늘). total_asset 은
+--   d 에 따라 완만히 증가시켜 자산 추이가 평평하지 않게 한다. user_id/round_id == n.
+INSERT INTO portfolio_snapshot
+  (user_id, round_id, exchange_id,
+   total_asset, total_asset_krw, total_investment, total_investment_krw,
+   total_profit, total_profit_rate, snapshot_date)
+WITH RECURSIVE
+  r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@),
+  d AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM d WHERE k < @REGRET_DAYS@ - 1)
+SELECT
+  r.n                                                       AS user_id,
+  r.n                                                       AS round_id,
+  1                                                         AS exchange_id,
+  10000000000.00000000 + d.k * 10000000.00000000           AS total_asset,
+  10000000000.00000000 + d.k * 10000000.00000000           AS total_asset_krw,
+  10000000000.00000000                                      AS total_investment,
+  10000000000.00000000                                      AS total_investment_krw,
+  d.k * 10000000.00000000                                   AS total_profit,
+  CAST(d.k * 0.1 AS DECIMAL(10,4))                          AS total_profit_rate,
+  DATE_SUB(CURDATE(), INTERVAL (@REGRET_DAYS@ - 1) - d.k DAY) AS snapshot_date
+FROM r CROSS JOIN d;
+
+-- 조회용 인덱스. regret 조회는 (round_id, exchange_id) 로 리포트/스냅샷을 찾는다.
+CREATE INDEX idx_regret_report_round_exchange ON regret_report (round_id, exchange_id);
+CREATE INDEX idx_snapshot_round_exchange_date ON portfolio_snapshot (round_id, exchange_id, snapshot_date);
