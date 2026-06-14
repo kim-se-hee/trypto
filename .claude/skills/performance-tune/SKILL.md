@@ -45,7 +45,7 @@ arguments: [scenario]
 
 ```
 REPORT       = loadtest/tuning/<STEM>-<시작시각>.md   # 진단·개선 내역을 사이클마다 누적 기록
-MAX_CYCLES   = 5    # 진단 → 변경 → 재측정 사이클 상한
+MAX_CYCLES   = 3    # 진단 → 변경 → 재측정 사이클 상한
 OVERHEAD_MAX = 3%   # 계측만 반영한 사이클이 p99 를 이보다 나쁘게 하면 되돌림
 ```
 
