@@ -11,7 +11,7 @@
     SnapshotJob (스냅샷 생성)
         │
         ├─ RegretReportJob (리포트 갱신) ─┐
-        │                                 ├─ 병렬 실행
+        │                                ├─ 병렬 실행
         └─ RankingJob (순위 매기기) ──────┘
 ```
 

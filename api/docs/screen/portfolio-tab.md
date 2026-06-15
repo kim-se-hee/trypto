@@ -49,9 +49,9 @@
 
 | API | 문서 | 용도 |
 |-----|------|------|
-| `GET /api/rounds/active?userId=` | [active-round.md](../investmentround/active-round.md) | 거래소별 walletId 획득 |
-| `GET /api/users/{userId}/wallets/{walletId}/portfolio` | [my-holdings.md](../portfolio/my-holdings.md) | 보유 코인(coinSymbol, coinName 포함) + 기축통화 잔고 |
-| WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming.md) | 실시간 시세 |
+| `GET /api/rounds/active?userId=` | [active-round.md](../investmentround/active-round/index.md) | 거래소별 walletId 획득 |
+| `GET /api/users/{userId}/wallets/{walletId}/portfolio` | [my-holdings.md](../portfolio/my-holdings/index.md) | 보유 코인(coinSymbol, coinName 포함) + 기축통화 잔고 |
+| WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming/index.md) | 실시간 시세 |
 
 # 프론트 조합 흐름
 

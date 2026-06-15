@@ -1,6 +1,6 @@
 # 복기 분석 공통 비즈니스 규칙
 
-복기 리포트([regret-report.md](regret-report.md))와 복기 그래프([regret-chart.md](regret-chart.md))가 공통으로 참조하는 계산 규칙을 정의한다.
+복기 리포트([regret-report.md](regret-report/index.md))와 복기 그래프([regret-chart.md](regret-chart/index.md))가 공통으로 참조하는 계산 규칙을 정의한다.
 
 ---
 

@@ -23,14 +23,14 @@
 `GET /api/exchanges/{exchangeId}/coins` → 거래소 상장 코인 목록
 
 - 응답: `[{exchangeCoinId, coinId, coinSymbol, coinName}, ...]`
-- 상세: [find-exchange-coins.md](../marketdata/find-exchange-coins.md) (별도 브랜치에서 구현)
+- 상세: [find-exchange-coins.md](../marketdata/find-exchange-coins/index.md) (별도 브랜치에서 구현)
 
 ## 실시간 티커
 
 STOMP 토픽: `/topic/tickers.{exchangeId}`
 
 - 메시지: `{coinId, symbol, price, changeRate, quoteTurnover, timestamp}`
-- 상세: [live-ticker-streaming.md](../marketdata/live-ticker-streaming.md)
+- 상세: [live-ticker-streaming.md](../marketdata/live-ticker-streaming/index.md)
 
 # 프론트 조합 흐름
 

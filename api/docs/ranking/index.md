@@ -6,7 +6,7 @@ ranking 컨텍스트 — 수익률 랭킹과 고수 포트폴리오 열람.
 - [business-rules.md](business-rules.md) — 랭킹 산출 규칙
 
 ## 기능 명세
-- [ranking-list.md](ranking-list.md) — 랭킹 목록
-- [my-ranking.md](my-ranking.md) — 내 랭킹 조회
-- [ranking-stats.md](ranking-stats.md) — 랭킹 통계
-- [ranker-portfolio.md](ranker-portfolio.md) — 고수 포트폴리오 열람
+- [ranking-list/](ranking-list/index.md) — 랭킹 목록
+- [my-ranking/](my-ranking/index.md) — 내 랭킹 조회
+- [ranking-stats/](ranking-stats/index.md) — 랭킹 통계
+- [ranker-portfolio/](ranker-portfolio/index.md) — 고수 포트폴리오 열람

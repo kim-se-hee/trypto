@@ -6,5 +6,5 @@ wallet 컨텍스트 — 거래소별 지갑·잔고·입금 주소.
 - [business-rules.md](business-rules.md) — 잔고 처리 규칙
 
 ## 기능 명세
-- [wallet-assets.md](wallet-assets.md) — 지갑 잔고 조회
-- [deposit-address.md](deposit-address.md) — 입금 주소 발급/조회
+- [wallet-assets/](wallet-assets/index.md) — 지갑 잔고 조회
+- [deposit-address/](deposit-address/index.md) — 입금 주소 발급/조회

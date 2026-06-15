@@ -1,0 +1,10 @@
+포트폴리오 공개 여부 변경 — USER_FACING.
+
+- 단계: spec
+- 리뷰 회차: 0/3
+- QA 회차: 0/3
+
+## 산출물
+
+- [spec.md](spec.md)
+- [plan.md](plan.md)
