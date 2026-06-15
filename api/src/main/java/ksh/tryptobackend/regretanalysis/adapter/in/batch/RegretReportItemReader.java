@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.regretreport;
+package ksh.tryptobackend.regretanalysis.adapter.in.batch;
 
 import java.util.Iterator;
 import java.util.List;

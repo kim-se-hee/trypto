@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.regretreport;
+package ksh.tryptobackend.regretanalysis.adapter.in.batch;
 
 import ksh.tryptobackend.regretanalysis.application.port.in.GenerateRegretReportBatchUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.command.GenerateRegretReportCommand;

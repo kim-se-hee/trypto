@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.common;
+package ksh.tryptobackend.common.batch;
 
 import java.time.Duration;
 import org.springframework.batch.core.step.skip.SkipPolicy;

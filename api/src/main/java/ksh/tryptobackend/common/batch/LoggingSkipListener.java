@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.common;
+package ksh.tryptobackend.common.batch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.SkipListener;

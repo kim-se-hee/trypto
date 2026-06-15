@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.common;
+package ksh.tryptobackend.batch;
 
 import java.time.LocalDate;
 import java.time.ZoneId;

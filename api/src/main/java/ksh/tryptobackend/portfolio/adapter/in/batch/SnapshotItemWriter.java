@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.snapshot;
+package ksh.tryptobackend.portfolio.adapter.in.batch;
 
 import java.util.List;
 import ksh.tryptobackend.portfolio.application.port.in.SavePortfolioSnapshotsUseCase;

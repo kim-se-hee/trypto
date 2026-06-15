@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.regretreport;
+package ksh.tryptobackend.regretanalysis.adapter.in.batch;
 
 import java.util.ArrayList;
 import ksh.tryptobackend.regretanalysis.application.port.in.SaveRegretReportsUseCase;

@@ -1,7 +1,7 @@
-package ksh.tryptobackend.batch.snapshot;
+package ksh.tryptobackend.regretanalysis.adapter.in.batch;
 
-import ksh.tryptobackend.batch.common.LoggingSkipListener;
-import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotResult;
+import ksh.tryptobackend.common.batch.LoggingSkipListener;
+import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.GeneratedRegretReportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -16,7 +16,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @RequiredArgsConstructor
-public class SnapshotJobConfig {
+public class RegretReportJobConfig {
 
     private static final int CHUNK_SIZE = 10;
 
@@ -24,20 +24,20 @@ public class SnapshotJobConfig {
     private final PlatformTransactionManager transactionManager;
 
     @Bean
-    public Job snapshotJob(Step snapshotStep) {
-        return new JobBuilder("snapshot-job", jobRepository).start(snapshotStep).build();
+    public Job regretReportJob(Step regretReportStep) {
+        return new JobBuilder("regret-report-job", jobRepository).start(regretReportStep).build();
     }
 
     @Bean
-    public Step snapshotStep(
-            SnapshotItemReader reader,
-            SnapshotItemProcessor processor,
-            SnapshotItemWriter writer,
+    public Step regretReportStep(
+            RegretReportItemReader reader,
+            RegretReportItemProcessor processor,
+            RegretReportItemWriter writer,
             RetryPolicy batchRetryPolicy,
             SkipPolicy batchSkipPolicy,
             LoggingSkipListener<Object, Object> batchSkipListener) {
-        return new StepBuilder("snapshot-step", jobRepository)
-                .<SnapshotInput, SnapshotResult>chunk(CHUNK_SIZE)
+        return new StepBuilder("regret-report-step", jobRepository)
+                .<RegretReportInput, GeneratedRegretReportResult>chunk(CHUNK_SIZE)
                 .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)

@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.ranking;
+package ksh.tryptobackend.ranking.adapter.in.batch;
 
 import java.time.LocalDate;
 import ksh.tryptobackend.ranking.application.port.in.CalculateRankingUseCase;

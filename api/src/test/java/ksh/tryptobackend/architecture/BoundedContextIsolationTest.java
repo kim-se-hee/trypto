@@ -69,14 +69,14 @@ class BoundedContextIsolationTest {
     }
 
     @ArchTest
-    void batch_should_only_depend_on_context_use_cases(JavaClasses classes) {
+    void batch_orchestration_should_not_depend_on_any_context(JavaClasses classes) {
         noClasses()
                 .that()
                 .resideInAPackage(BATCH + "..")
                 .should()
                 .dependOnClassesThat()
-                .resideInAnyPackage(allContextForbiddenPackages())
-                .as("Batch should only depend on UseCase (port.in) of bounded contexts")
+                .resideInAnyPackage(allContextRootPackages())
+                .as("Batch orchestration coordinates Job beans only; it must not depend on any bounded context")
                 .check(classes);
     }
 

@@ -1,4 +1,4 @@
-package ksh.tryptobackend.batch.common;
+package ksh.tryptobackend.common.batch;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
