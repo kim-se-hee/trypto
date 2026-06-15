@@ -1,23 +1,15 @@
-# 개요
+## 도메인 모델
 
-미체결(PENDING) 상태인 지정가 주문을 취소한다. 주문 상태를 CAS UPDATE로 원자적으로 CANCELLED로 전이하고, lock된 잔고를 해제한 뒤, `trypto-engine` 에 `OrderCanceled` 이벤트를 발행해 엔진 오더북에서도 제거되도록 한다.
+### Order (수정)
 
-# 목적
+- 미체결에서 취소로의 도메인 상태 전이를 담당한다.
+- 잔고 해제 대상과 금액을 주문 정보(매수면 체결금액 + 수수료, 매도면 체결 수량)에서 끌어낸다.
 
-- 사용자가 아직 체결되지 않은 지정가 주문을 철회할 수 있게 한다
-- 주문 생성 시 lock된 잔고를 즉시 사용 가능 상태로 복원한다
-- 엔진 오더북에서 취소된 주문을 제거하여 이후 시세 수신 시 매칭되지 않도록 한다
+## 타 컨텍스트 의존성
 
-
-# 관련 비즈니스 로직
-
-## 소유권 검증
-
-취소 API에 `walletId`를 함께 전달받아, 주문의 `walletId`와 일치하는지 검증한다. 불일치 시 `ORDER_NOT_FOUND` 예외를 던진다 (주문의 존재 여부를 노출하지 않기 위해 403 대신 404 사용).
-
-## 멱등성
-
-이미 CANCELLED 상태인 주문에 대한 취소 요청은 예외 없이 현재 상태를 그대로 반환한다. 네트워크 재시도나 중복 요청에 안전하다.
+- MarketData.FindExchangeCoinMappingUseCase — 취소 시 잔고 해제 대상 코인 결정
+- MarketData.FindExchangeDetailUseCase — 기준 통화·수수료율 조회
+- Wallet.ManageWalletBalanceUseCase — 점유 잔고 해제
 
 ## 주문 상태 전이 (CAS UPDATE)
 
@@ -64,8 +56,6 @@ AFTER_COMMIT:
 
 ## 매칭과의 동시성 제어
 
-### CAS UPDATE
-
 취소 요청과 엔진의 체결 DB 쓰기가 동일 주문에 대해 동시에 발생할 수 있다. 양쪽 모두 `WHERE status = 'PENDING'` 조건의 CAS UPDATE를 사용하므로, DB 레벨에서 하나만 성공한다.
 
 - 체결 CAS가 먼저 성공하면: 취소 CAS가 실패 (affected rows = 0) → `ORDER_NOT_CANCELLABLE` (400)
@@ -79,7 +69,6 @@ AFTER_COMMIT:
 
 취소와 체결의 경합은 극히 드물고(사용자가 체결 직전에 취소 버튼을 누르는 경우), CAS UPDATE는 예외 없이 affected rows로 결과를 판단할 수 있어 가장 단순한 선택이다.
 
-
 ## 에러 처리
 
 | 상황 | 처리 |
@@ -89,61 +78,7 @@ AFTER_COMMIT:
 | CAS 실패 (이미 체결/취소/실패) | `ORDER_NOT_CANCELLABLE` (400) |
 | 엔진 이벤트 전송 실패 | 무시 (엔진이 이후 체결을 시도해도 orders CAS 가드로 방어) |
 
-# API 명세
-
-`POST /api/orders/{orderId}/cancel`
-
-## Path Parameter
-
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| orderId | Long | O | 취소할 주문 ID |
-
-## Request Body
-
-| 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
-| walletId | Long | O | 지갑 ID (소유권 검증용) |
-
-## Request
-
-```
-POST /api/orders/42/cancel
-
-{
-    "walletId": 1
-}
-```
-
-## Response
-
-```json
-{
-    "status": 200,
-    "code": "OK",
-    "message": "주문이 취소되었습니다.",
-    "data": {
-        "orderId": 42,
-        "status": "CANCELLED"
-    }
-}
-```
-
-## 응답 필드 상세
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| orderId | Long | 취소된 주문 ID |
-| status | String | 주문 상태 (`CANCELLED`) |
-
-## 에러 응답
-
-| code | status | 설명 |
-|------|--------|------|
-| ORDER_NOT_FOUND | 404 | 주문을 찾을 수 없거나 소유권 불일치 |
-| ORDER_NOT_CANCELLABLE | 400 | PENDING이 아닌 주문을 취소하려 함 (이미 FILLED, CANCELLED, FAILED) |
-
-# 시퀀스 다이어그램
+## 시퀀스 다이어그램
 
 ```mermaid
 sequenceDiagram
@@ -208,7 +143,7 @@ sequenceDiagram
     Publisher->>MQ: send(engine.inbox, event_type=OrderCanceled)
 ```
 
-## CAS 경합 시
+### CAS 경합 시
 
 ```mermaid
 sequenceDiagram
@@ -228,3 +163,69 @@ sequenceDiagram
     Note over Cancel: ORDER_NOT_CANCELLABLE (400)
     Cancel-->>Client: 400 ORDER_NOT_CANCELLABLE
 ```
+
+## task 목록
+
+- [ ] Order 도메인에 취소 상태 전이 추가
+- [ ] 취소 UseCase와 서비스 구현(소유권 검증·원자적 전이·잔고 해제)
+- [ ] 잔고 해제 대상 결정 연동(매핑·거래소 상세 조회)
+- [ ] 주문 취소 이벤트 발행(확정 직후)
+- [ ] 취소 REST 어댑터와 요청/응답 DTO
+
+## API 명세
+
+`POST /api/orders/{orderId}/cancel`
+
+### Path Parameter
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| orderId | Long | O | 취소할 주문 ID |
+
+### Request Body
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| walletId | Long | O | 지갑 ID (소유권 검증용) |
+
+### Request
+
+```
+POST /api/orders/42/cancel
+
+{
+    "walletId": 1
+}
+```
+
+### Response
+
+```json
+{
+    "status": 200,
+    "code": "OK",
+    "message": "주문이 취소되었습니다.",
+    "data": {
+        "orderId": 42,
+        "status": "CANCELLED"
+    }
+}
+```
+
+### 응답 필드 상세
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| orderId | Long | 취소된 주문 ID |
+| status | String | 주문 상태 (`CANCELLED`) |
+
+### 에러 응답
+
+| code | status | 설명 |
+|------|--------|------|
+| ORDER_NOT_FOUND | 404 | 주문을 찾을 수 없거나 소유권 불일치 |
+| ORDER_NOT_CANCELLABLE | 400 | PENDING이 아닌 주문을 취소하려 함 (이미 FILLED, CANCELLED, FAILED) |
+
+## 이벤트 컨트랙트
+
+취소 확정 직후 주문 취소 이벤트를 `engine.inbox` 큐로 발행한다. 채널 규약과 페이로드(OrderCanceled)는 [../../../../docs/contracts/engine-inbox.md](../../../../docs/contracts/engine-inbox.md) 참조.

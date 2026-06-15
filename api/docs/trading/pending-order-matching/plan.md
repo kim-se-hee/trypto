@@ -1,15 +1,19 @@
-# 개요
+매칭과 체결 쓰기는 별도 모듈인 **trypto-engine(이하 엔진)** 이 전담한다. `trypto-api` 는 주문/취소 이벤트를 엔진에 넘기고, 엔진이 돌려준 체결 결과를 사용자에게 STOMP 로 통지하는 역할만 한다. 체결 시 상태 전이·잔고 차감·보유 코인 갱신은 모두 엔진 프로세스가 수행하며, API DB 커밋은 주문 생성·취소까지만 담당한다.
 
-지정가 주문이 생성되면 PENDING 상태로 대기한다. 실시간 시세가 체결 조건에 도달하면 해당 주문을 FILLED로 전이시키고 잔고·Holding을 반영한다. 이 과정을 "미체결 주문 매칭"이라 한다.
+## 선행 구현 사항
 
-매칭과 체결 쓰기는 별도 모듈인 **trypto-engine(이하 엔진)** 이 전담한다. `trypto-api`는 주문/취소 이벤트를 엔진에 전달하고, 엔진에서 돌아온 체결 결과를 사용자에게 STOMP로 알리는 역할만 한다.
+- 지정가 주문 생성 ([place-order](../place-order/index.md)) — PENDING 상태 주문 생성, 잔고 lock 처리
+- 실시간 시세 수집 ([../../../../docs/contracts/ticker-exchange.md](../../../../docs/contracts/ticker-exchange.md), [../../../../docs/contracts/redis-marketdata.md](../../../../docs/contracts/redis-marketdata.md)) — 수집기가 Redis 캐싱 및 RabbitMQ fanout 으로 시세 이벤트 발행
 
-# 선행 구현 사항
+## 도메인 모델
 
-- 지정가 주문 생성 (place-order.md) — PENDING 상태 주문 생성, 잔고 lock 처리
-- 실시간 시세 수집 ([../../../docs/contracts/ticker-exchange.md](../../../docs/contracts/ticker-exchange.md), [../../../docs/contracts/redis-marketdata.md](../../../docs/contracts/redis-marketdata.md)) — 수집기가 Redis 캐싱 및 RabbitMQ fanout 으로 시세 이벤트 발행
+API 쪽은 매칭 자체의 도메인을 갖지 않는다. 체결 알림 수신·통지를 위한 모델만 둔다.
 
-# 아키텍처 개요
+### OrderFilledNotification / OrderFilledEvent (신규)
+
+- 엔진이 보낸 체결 결과(orderId, userId, 체결가, 수량, 체결시각)를 담아 실시간 통지 페이로드로 변환한다.
+
+## 아키텍처 개요
 
 ```
    [trypto-api]                         [trypto-collector]
@@ -69,17 +73,17 @@
 핵심 포인트:
 
 - **체결은 API에서 일어나지 않는다.** API DB 커밋은 주문 생성/취소까지만 담당하고, 체결 시 상태 전이·잔고 차감·Holding 갱신은 엔진 프로세스가 수행한다.
-- **엔진이 발행한 체결 이벤트는 모든 API 인스턴스가 동시에 수신하여 웹소켓 푸시한다.
+- **엔진이 발행한 체결 이벤트는 모든 API 인스턴스가 동시에 수신하여 웹소켓 푸시한다.**
 
-# 메시지 토폴로지
+## 메시지 토폴로지
 
-## engine.inbox (API → 엔진)
+### engine.inbox (API → 엔진)
 
 다음은 API 서버가 지켜야 할 발행 계약이다.
 
 - **Queue**: `engine.inbox` (단일 큐, 발행 순서대로 처리된다고 가정한다).
 - **Exchange**: default exchange 로 직접 큐에 전송 — `rabbitTemplate.send("", "engine.inbox", message)`.
-- **포맷**: `ObjectMapper` 로 직접 직렬화한 JSON 바이트. `Jackson2JsonMessageConverter` 는 쓰지 않는다 
+- **포맷**: `ObjectMapper` 로 직접 직렬화한 JSON 바이트. `Jackson2JsonMessageConverter` 는 쓰지 않는다
 - **라우팅 식별자**: AMQP 헤더 `event_type` 에 이벤트 종류를 담는다.
 
 API 가 발행하는 이벤트는 두 가지이다.
@@ -89,7 +93,7 @@ API 가 발행하는 이벤트는 두 가지이다.
 | `OrderPlaced` | trypto-api `EngineInboxPublisher` | 새 지정가 주문이 오더북에 올라가야 함 |
 | `OrderCanceled` | trypto-api `EngineInboxPublisher` | 오더북에서 해당 주문을 제거해야 함 |
 
-## order.filled.notification (엔진 → API)
+### order.filled.notification (엔진 → API)
 
 - **Exchange**: `order.filled.notification` (fanout).
 - **Queue**: API 인스턴스가 기동 시 `engine.filled.<uuid8자리>` 이름으로 auto-delete·non-durable 큐를 선언해 exchange 에 바인딩한다.
@@ -97,9 +101,9 @@ API 가 발행하는 이벤트는 두 가지이다.
 
 fanout + 서버별 전용 큐 구조인 이유는 STOMP 세션이 서버 단위로 고정되기 때문이다. 유저가 붙어있는 서버만 `convertAndSendToUser` 로 실제 푸시할 수 있으므로, 모든 API 인스턴스가 체결 이벤트를 받아서 자기 세션 여부를 확인해야 한다.
 
-# API 쪽 구현
+## API 쪽 구현
 
-## OrderPlaced / OrderCanceled 발행
+### OrderPlaced / OrderCanceled 발행
 
 `PlaceOrderService`, `CancelOrderService` 는 주문 상태 DB 커밋 직후 도메인 이벤트를 로컬 `ApplicationEventPublisher` 로 발행한다.
 
@@ -115,7 +119,7 @@ CancelOrderService → new OrderCanceledEvent(order)
 
 발행 메시지 포맷은 `OrderPlacedEngineMessage`, `OrderCanceledEngineMessage` 가 정의하며, 엔진 `OrderPlacedEvent` / `OrderCanceledEvent` 레코드와 필드 이름이 대칭이다.
 
-## 체결 결과 수신
+### 체결 결과 수신
 
 `EngineOrderFilledListener` 가 자기 서버 전용 큐에서 메세지를 소비하고 STOMP 메시지를 푸시한다.
 
@@ -126,7 +130,7 @@ CancelOrderService → new OrderCanceledEvent(order)
   - 입출금 탭: 해당 coinId 잔고만 로컬 갱신 (available/locked 조정)
 - STOMP 설정은 `/topic`, `/queue` 브로커와 `setUserDestinationPrefix("/user")` 를 사용한다.
 
-# 동시성·정합성 논리
+## 동시성·정합성 논리
 
 체결이 엔진 프로세스에서 일어나므로 API 의 주문 상태 변경(생성·취소)은 엔진의 체결과 경합할 수 있다. 이를 위해 주문의 상태를 변경하기 전에 주문의 상태가 PENDING인지 확인한다.
 
@@ -135,7 +139,7 @@ CancelOrderService → new OrderCanceledEvent(order)
 
 API 서버와 엔진이 같은 조건을 쓰므로 DB 레벨에서 하나만 성공한다.
 
-# 크로스 컨텍스트 의존
+## 타 컨텍스트 의존성
 
 | UseCase | 호출 위치 | 용도 |
 |---------|-----------|------|
@@ -146,9 +150,9 @@ API 서버와 엔진이 같은 조건을 쓰므로 DB 레벨에서 하나만 성
 
 체결 경로에서 API 가 크로스 컨텍스트 유스케이스를 호출할 일은 없다. 엔진이 walletId·coinId·lockedAmount 를 `OrderPlaced` 시점에 미리 받아 두었다가 체결 시 그대로 DB 업데이트에 쓰기 때문이다.
 
-# 시퀀스 다이어그램
+## 시퀀스 다이어그램
 
-## 주문 생성 → 엔진 등록
+### 주문 생성 → 엔진 등록
 
 ```mermaid
 sequenceDiagram
@@ -174,7 +178,7 @@ sequenceDiagram
     Engine->>Book: bookOf(pair).tryAdd(detail)
 ```
 
-## 시세 수신 → 체결
+### 시세 수신 → 체결
 
 ```mermaid
 sequenceDiagram
@@ -212,7 +216,7 @@ sequenceDiagram
     Listener->>STOMP: convertAndSendToUser(userId, /queue/events)
 ```
 
-## 취소와 체결 경합
+### 취소와 체결 경합
 
 ```mermaid
 sequenceDiagram
@@ -234,3 +238,16 @@ sequenceDiagram
         MySQL-->>Cancel: 0 rows → ORDER_NOT_CANCELLABLE 400
     end
 ```
+
+## task 목록
+
+- [ ] 체결 알림 수신 리스너(인스턴스별 전용 큐 구독)
+- [ ] 체결 통지 페이로드 변환과 실시간 통지 UseCase
+- [ ] 체결 통지 실시간 발신(사용자 세션 대상)
+- [ ] 중복 통지 멱등 처리(후속)
+
+## 이벤트 컨트랙트
+
+- 주문 접수/취소(API → 엔진) `engine.inbox`: [../../../../docs/contracts/engine-inbox.md](../../../../docs/contracts/engine-inbox.md)
+- 체결 통지(엔진 → API) `order.filled.notification`: [../../../../docs/contracts/outbox-events.md](../../../../docs/contracts/outbox-events.md)
+- 시세 tick 채널: [../../../../docs/contracts/ticker-exchange.md](../../../../docs/contracts/ticker-exchange.md), [../../../../docs/contracts/redis-marketdata.md](../../../../docs/contracts/redis-marketdata.md)
