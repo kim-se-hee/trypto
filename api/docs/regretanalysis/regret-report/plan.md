@@ -264,4 +264,4 @@ GET /api/rounds/1/regret?exchangeId=1
 
 ## 이벤트 컨트랙트
 
-메시지 큐를 사용하지 않는다. 리포트는 배치(RegretReportJob)가 사전 생성하며 API는 RDB 조회만 수행한다. 배치 상세는 [portfolio-snapshot-batch.md](../../batch/portfolio-snapshot-batch.md)를 참조한다.
+메시지 큐를 사용하지 않는다. 리포트는 배치(RegretReportJob)가 사전 생성하며 API는 RDB 조회만 수행한다. 배치 상세는 [regret-report-batch.md](../regret-report-batch.md)를 참조한다.

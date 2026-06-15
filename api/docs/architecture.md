@@ -52,9 +52,9 @@ ksh.tryptobackend/
 ├── marketdata/        # 시세, 거래소·코인 정보
 ├── regretanalysis/    # 후회 그래프, 투자 원칙 위반 분석
 ├── investmentround/   # 투자 라운드, 투자 원칙
-├── batch/             # Spring Batch Job/Step
+├── batch/             # 일배치 실행 순서 조정 (BatchScheduler). 각 Job/Step 은 소유 컨텍스트의 adapter.in.batch 에 있다
 ├── scheduler/         # 스케줄 트리거, 분산락
-└── common/            # 공통 설정, 예외, DTO, 공유 VO, 시더
+└── common/            # 공통 설정, 예외, DTO, 공유 VO, 시더, 배치 공통 부품(common/batch)
 ```
 
 각 도메인 내부는 adapter, application, domain 3개 영역으로 나눈다.
@@ -62,7 +62,7 @@ ksh.tryptobackend/
 ```
 trading/
 ├── adapter/
-│   ├── in/            # Controller (REST/WebSocket) — 인바운드 어댑터
+│   ├── in/            # Controller (REST/WebSocket), batch (Spring Batch Job/Step) — 인바운드 어댑터
 │   │   └── dto/
 │   │       ├── request/   # Request DTO
 │   │       └── response/  # Response DTO

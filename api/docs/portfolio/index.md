@@ -6,3 +6,6 @@ portfolio 컨텍스트 — 포트폴리오 스냅샷, 보유 자산 평가.
 
 ## 기능 명세
 - [my-holdings/](my-holdings/index.md) — 내 보유 자산 조회
+
+## 배치
+- [snapshot-batch.md](snapshot-batch.md) — 일별 포트폴리오 스냅샷 생성 (SnapshotJob)
