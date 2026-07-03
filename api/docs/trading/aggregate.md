@@ -1,14 +1,4 @@
-# Aggregate Root / Entity / Value Object
-
-| Aggregate Root | Entity | Value Object |
-|---|---|---|
-| Order, Holding, RuleViolation, OrderFillFailure | — | Side, OrderType, OrderStatus, OrderMode, Quantity, Price, Money, Fee, Fill, ExecutedFill, BalanceChange, ExchangeInfo, MarketInfo, TradingPair, MarketIdentifier, OrderAmountPolicy, RuleViolationRef, FilledOrder, FilledOrderCounts, CoinExchangeMapping, OrderFilledNotification, OrphanOrder, PriceCandidate, PriceCandidates |
-
-# 소유 관계
-
-- MarketInfo → TradingPair, ExchangeInfo
-- PriceCandidates → PriceCandidate
-
-# 도메인 이벤트
-
-- Order → OrderPlacedEvent, OrderFilledEvent, OrderCanceledEvent
+Order : 시장가·지정가 매수/매도 주문.
+Holding : 거래소·코인별 보유 자산.
+RuleViolation : 주문 시점에 감지된 투자 원칙 위반.
+OrderFillFailure : 체결에 실패한 주문 내역.
