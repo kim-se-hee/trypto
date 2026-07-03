@@ -1,17 +1,16 @@
 package ksh.tryptobackend.trading.domain.vo;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Objects;
 
-public record Fee(BigDecimal amount, BigDecimal rate) {
+public record Fee(Money amount, BigDecimal rate) {
 
-    public static Fee calculate(BigDecimal filledAmount, BigDecimal feeRate) {
-        BigDecimal feeAmount = filledAmount.multiply(feeRate).setScale(8, RoundingMode.FLOOR);
+    public static Fee calculate(Money filledAmount, BigDecimal feeRate) {
+        Money feeAmount = Money.of(filledAmount.value().multiply(feeRate));
         return new Fee(feeAmount, feeRate);
     }
 
-    public static Fee of(BigDecimal amount, BigDecimal rate) {
+    public static Fee of(Money amount, BigDecimal rate) {
         return new Fee(amount, rate);
     }
 
@@ -19,11 +18,11 @@ public record Fee(BigDecimal amount, BigDecimal rate) {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Fee fee)) return false;
-        return amount.compareTo(fee.amount) == 0 && rate.compareTo(fee.rate) == 0;
+        return amount.equals(fee.amount) && rate.compareTo(fee.rate) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(amount.stripTrailingZeros(), rate.stripTrailingZeros());
+        return Objects.hash(amount, rate.stripTrailingZeros());
     }
 }

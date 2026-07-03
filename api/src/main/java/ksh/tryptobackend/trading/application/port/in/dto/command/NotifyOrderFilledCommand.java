@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 
 public record NotifyOrderFilledCommand(
         Long orderId,
-        Long userId,
         BigDecimal executedPrice,
         BigDecimal quantity,
         LocalDateTime executedAt,

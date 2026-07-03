@@ -20,7 +20,6 @@ public class EngineOrderFilledListener {
         NotifyOrderFilledCommand command =
                 new NotifyOrderFilledCommand(
                         message.orderId(),
-                        message.userId(),
                         message.executedPrice(),
                         message.quantity(),
                         message.executedAt(),

@@ -9,8 +9,10 @@ import java.util.Optional;
 import ksh.tryptobackend.marketdata.application.port.in.FindTicksUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.TickResult;
 import ksh.tryptobackend.trading.application.port.in.CompensateOrphanOrdersUseCase;
+import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.service.OrphanOrderCompensator;
+import ksh.tryptobackend.trading.domain.vo.MarketIdentifier;
 import ksh.tryptobackend.trading.domain.vo.OrphanOrder;
 import ksh.tryptobackend.trading.domain.vo.PriceCandidate;
 import ksh.tryptobackend.trading.domain.vo.PriceCandidates;
@@ -26,6 +28,7 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final OrderQueryPort orderQueryPort;
+    private final MarketQueryPort marketQueryPort;
 
     private final FindTicksUseCase findTicksUseCase;
 
@@ -56,9 +59,10 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
     private boolean compensateOne(OrphanOrder orphan, Instant nowInstant) {
         try {
             Instant from = orphan.createdAt().atZone(KST).toInstant();
+            MarketIdentifier market = marketQueryPort.findMarketIdentifier(orphan.exchangeCoinId());
             List<TickResult> ticks =
                     findTicksUseCase.findTicks(
-                            orphan.exchangeName(), orphan.marketSymbol(), from, nowInstant);
+                            market.exchangeName(), market.marketSymbol(), from, nowInstant);
             PriceCandidates candidates = toPriceCandidates(ticks);
 
             Optional<PriceCandidate> matchedPrice = candidates.findFirstMatching(orphan);

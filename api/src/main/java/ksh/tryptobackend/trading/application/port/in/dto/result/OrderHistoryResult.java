@@ -25,11 +25,11 @@ public record OrderHistoryResult(
                 order.getExchangeCoinId(),
                 order.getSide(),
                 order.getOrderType(),
-                order.getFilledPrice(),
-                order.getPrice(),
+                order.getFilledPrice() != null ? order.getFilledPrice().value() : null,
+                order.getLimitPrice() != null ? order.getLimitPrice().value() : null,
                 order.getQuantity().value(),
-                order.getAmount(),
-                order.getFee() != null ? order.getFee().amount() : null,
+                order.getFilledAmount() != null ? order.getFilledAmount().value() : null,
+                order.getFee() != null ? order.getFee().amount().value() : null,
                 order.getCreatedAt(),
                 order.getFilledAt());
     }

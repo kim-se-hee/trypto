@@ -2,6 +2,7 @@ package ksh.tryptobackend.trading.application.port.out;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
@@ -11,9 +12,15 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 
 public interface OrderQueryPort {
 
+    Optional<Order> findByIdempotencyKey(String idempotencyKey);
+
+    Order getById(Long orderId);
+
+    Order getByIdWithLock(Long orderId);
+
     List<OrphanOrder> findOrphanOrders(LocalDateTime threshold);
 
-    List<FilledOrder> findFilledByWalletAndCoin(Long walletId, Long coinId);
+    List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId);
 
     List<Order> findByCursor(
             Long walletId,
