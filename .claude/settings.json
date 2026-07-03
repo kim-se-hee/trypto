@@ -1,42 +1,8 @@
 {
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/spotless-apply.sh\"",
-            "timeout": 60
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/tdd-state-record.sh\"",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/tdd-state-check.sh\"",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "SubagentStop": [
       {
-        "matcher": "task-implementer|review-applier",
+        "matcher": "task-implementer",
         "hooks": [
           {
             "type": "command",

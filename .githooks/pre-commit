@@ -1,0 +1,23 @@
+#!/bin/sh
+# 커밋 직전, 스테이징된 Java 가 속한 모듈에만 spotlessApply 를 돌리고
+# 포맷된 결과를 다시 스테이징한다.
+# 근거: 편집마다 도는 PostToolUse 포매터는 파일이 미완성인 순간(예: import 추가 직후,
+#       사용처는 다음 편집)에 removeUnusedImports 로 import 를 지워 컴파일을 깬다.
+#       커밋 시점엔 파일이 논리적으로 완성돼 있어 그 레이스가 사라진다.
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.java')
+[ -z "$staged" ] && exit 0
+
+modules=$(printf '%s\n' "$staged" | sed -nE 's#^(api|engine|collector)/.*#\1#p' | sort -u)
+for m in $modules; do
+  [ -f "$m/gradlew" ] || continue
+  ( cd "$m" && ./gradlew spotlessApply -q ) || {
+    echo "ERROR: [$m] spotlessApply 실패 — 커밋을 중단합니다." >&2
+    exit 1
+  }
+done
+
+# spotless 가 손댔을 수 있으니 원래 스테이징했던 파일만 다시 스테이징한다.
+# (부분 스테이징 git add -p 는 이 레포에서 쓰지 않으므로 전체 파일 재-add 가 안전하다)
+echo "$staged" | tr '\n' '\0' | xargs -0 git add --
+exit 0
