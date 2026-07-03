@@ -5,8 +5,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -21,13 +21,13 @@ public class MyHoldingsStepDefinition {
 
     private final CommonApiClient apiClient;
     private final JdbcTemplate jdbcTemplate;
-    private final MockHoldingAdapter holdingAdapter;
+    private final MockPositionAdapter holdingAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
 
     public MyHoldingsStepDefinition(
             CommonApiClient apiClient,
             JdbcTemplate jdbcTemplate,
-            MockHoldingAdapter holdingAdapter,
+            MockPositionAdapter holdingAdapter,
             MockLivePriceAdapter livePriceAdapter) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;

@@ -6,8 +6,8 @@ import java.util.Set;
 import javax.sql.DataSource;
 import ksh.tryptobackend.acceptance.mock.MockBtcPriceHistoryAdapter;
 import ksh.tryptobackend.acceptance.mock.MockCandleAdapter;
-import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -25,7 +25,7 @@ public class DatabaseCleanupHook {
     private final JdbcTemplate jdbcTemplate;
     private final DataSource dataSource;
     private final MockLivePriceAdapter mockLivePriceAdapter;
-    private final MockHoldingAdapter mockHoldingAdapter;
+    private final MockPositionAdapter mockHoldingAdapter;
     private final MockPriceChangeRateAdapter mockPriceChangeRateAdapter;
     private final MockCandleAdapter mockCandleAdapter;
     private final MockBtcPriceHistoryAdapter mockBtcPriceHistoryAdapter;

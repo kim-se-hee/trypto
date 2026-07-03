@@ -11,8 +11,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.portfolio.adapter.out.entity.PortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.entity.SnapshotDetailJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
@@ -33,7 +33,7 @@ public class SnapshotBatchStepDefinition {
     private final JobRepository jobRepository;
     private final PortfolioSnapshotJpaRepository snapshotRepository;
     private final SnapshotDetailJpaRepository detailRepository;
-    private final MockHoldingAdapter holdingAdapter;
+    private final MockPositionAdapter holdingAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
     private final JdbcTemplate jdbcTemplate;
 
@@ -45,7 +45,7 @@ public class SnapshotBatchStepDefinition {
             JobRepository jobRepository,
             PortfolioSnapshotJpaRepository snapshotRepository,
             SnapshotDetailJpaRepository detailRepository,
-            MockHoldingAdapter holdingAdapter,
+            MockPositionAdapter holdingAdapter,
             MockLivePriceAdapter livePriceAdapter,
             JdbcTemplate jdbcTemplate) {
         this.jobOperator = jobOperator;

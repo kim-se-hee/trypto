@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
-import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
+import ksh.tryptobackend.trading.adapter.out.persistence.repository.OrderJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,7 +30,7 @@ public class OrderStepDefinition {
     private static final Long BTC_COIN_ID = 2L;
     private final CommonApiClient apiClient;
     private final MockLivePriceAdapter livePriceAdapter;
-    private final MockHoldingAdapter holdingAdapter;
+    private final MockPositionAdapter holdingAdapter;
     private final MockPriceChangeRateAdapter priceChangeRateAdapter;
     private final OrderJpaRepository orderJpaRepository;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
@@ -44,7 +44,7 @@ public class OrderStepDefinition {
     public OrderStepDefinition(
             CommonApiClient apiClient,
             MockLivePriceAdapter livePriceAdapter,
-            MockHoldingAdapter holdingAdapter,
+            MockPositionAdapter holdingAdapter,
             MockPriceChangeRateAdapter priceChangeRateAdapter,
             OrderJpaRepository orderJpaRepository,
             WalletBalanceJpaRepository walletBalanceJpaRepository,
@@ -251,6 +251,57 @@ public class OrderStepDefinition {
                 .expectBody()
                 .jsonPath("$.data.content.length()")
                 .isEqualTo(count);
+    }
+
+    @Given("과매매 제한 규칙이 {int}회로 설정되어 있다")
+    public void 과매매_제한_규칙이_회로_설정되어_있다(int maxOrderCount) {
+        ensureUserRoundWallet();
+        jdbcTemplate.update(
+                "INSERT INTO investment_rule (round_id, rule_type, threshold_value, created_at)"
+                        + " VALUES (?, 'OVERTRADING_LIMIT', ?, NOW())",
+                ROUND_ID,
+                maxOrderCount);
+    }
+
+    @Then("주문에 룰 위반이 {int}건 기록되어 있다")
+    public void 주문에_룰_위반이_건_기록되어_있다(int count) {
+        Integer violationCount =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM rule_violation WHERE order_id = ?",
+                        Integer.class,
+                        lastOrderId);
+        assertThat(violationCount).isEqualTo(count);
+    }
+
+    @Then("지갑의 KRW 잠금 잔고는 {long}원이다")
+    public void 지갑의_KRW_잠금_잔고는_원이다(long locked) {
+        assertThat(lockedBalance(KRW_COIN_ID)).isEqualByComparingTo(new BigDecimal(locked));
+    }
+
+    @Then("지갑의 KRW 잠금 잔고는 {long}보다 크다")
+    public void 지갑의_KRW_잠금_잔고는_보다_크다(long locked) {
+        assertThat(lockedBalance(KRW_COIN_ID)).isGreaterThan(new BigDecimal(locked));
+    }
+
+    @Then("지갑의 BTC 사용 가능 잔고는 {long}보다 크다")
+    public void 지갑의_BTC_사용_가능_잔고는_보다_크다(long available) {
+        assertThat(availableBalance(BTC_COIN_ID)).isGreaterThan(new BigDecimal(available));
+    }
+
+    private BigDecimal lockedBalance(Long coinId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT locked FROM wallet_balance WHERE wallet_id = ? AND coin_id = ?",
+                BigDecimal.class,
+                WALLET_ID,
+                coinId);
+    }
+
+    private BigDecimal availableBalance(Long coinId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT available FROM wallet_balance WHERE wallet_id = ? AND coin_id = ?",
+                BigDecimal.class,
+                WALLET_ID,
+                coinId);
     }
 
     private Map<String, Object> createOrderBody(
