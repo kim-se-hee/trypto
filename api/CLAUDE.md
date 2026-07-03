@@ -47,8 +47,7 @@
 각 도메인 디렉토리에는 `index.md`, `aggregate.md`(Aggregate 구조·소유 관계), `dependency.md`(제공/의존 UseCase) 와 기능 명세가 함께 있다.
 
 - `docs/trading/` — 시장가/지정가 주문, 취소, 매칭
-- `docs/wallet/` — 지갑·잔고·입금 주소
-- `docs/transfer/` — 거래소 간 송금
+- `docs/wallet/` — 지갑·잔고·입금 주소·거래소 간 송금
 - `docs/portfolio/` — 보유 자산
 - `docs/ranking/` — 수익률 랭킹
 - `docs/marketdata/` — 시세, 거래소·코인 메타

@@ -53,8 +53,8 @@
 | `GET /api/users/{userId}/wallets/{walletId}/balances` | [wallet-assets.md](../wallet/wallet-assets/index.md) | 잔고 조회 |
 | `GET /api/withdrawal-fees` | [withdrawal-fee.md](../marketdata/withdrawal-fee/index.md) | 출금 수수료 (캐싱) |
 | `GET /api/wallets/{walletId}/deposit-address` | [deposit-address.md](../wallet/deposit-address/index.md) | 입금 주소 (캐싱) |
-| `POST /api/transfers` | [transfer.md](../transfer/transfer/index.md) | 송금 실행 |
-| `GET /api/wallets/{walletId}/transfers` | [transfer-history.md](../transfer/transfer-history/index.md) | 이체 내역 |
+| `POST /api/transfers` | [transfer.md](../wallet/transfer/index.md) | 송금 실행 |
+| `GET /api/wallets/{walletId}/transfers` | [transfer-history.md](../wallet/transfer-history/index.md) | 이체 내역 |
 | WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming/index.md) | 실시간 시세 |
 
 # WebSocket 의존

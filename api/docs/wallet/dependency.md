@@ -26,11 +26,20 @@
 ## GetWalletOwnerIdUseCase
 - `getWalletOwnerId(Long walletId) → Long`
 
+## TransferCoinUseCase
+- `transferCoin(TransferCoinCommand command) → Transfer`
+- 거래소 간 송금 실행 (검증 → 실패 판정 → 잔고 변동 → 저장)
+
+## FindTransferHistoryUseCase
+- `findTransferHistory(FindTransferHistoryQuery query) → TransferHistoryCursorResult`
+- 지갑 기준 송금 내역(입금/출금) 커서 조회
+
 # 의존
 
 ## MarketData
 - `FindExchangeDetailUseCase` — 거래소 정보 (입금 주소 발급)
 - `FindCoinInfoUseCase` — 기축통화 심볼 조회 (잔고 조회)
+- `FindCoinSymbolsUseCase` — 코인 심볼 조회 (송금 내역 응답 보강)
 
 ## InvestmentRound
 - `FindRoundInfoUseCase` — 잔고 조회 시 소유권 검증
