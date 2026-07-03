@@ -29,7 +29,7 @@ sequenceDiagram
     DbW->>Tx: execute(fillCommand) [단일 @Transactional]
     Tx->>DB: INSERT 체결 레코드
     Tx->>DB: HoldingIncrementalUpdater (평단·수량 증분)
-    Tx->>DB: 잔고 locked -= lockedAmount
+    Tx->>DB: 잔고 정산 (잠금 소진·차액 환불 + 반대 자산 지급)
     Tx->>DB: INSERT outbox(OrderFilledEvent)
     Relay->>DB: SELECT sent_at IS NULL LIMIT 256
     Relay->>Fanout: basicPublish(exchange, "", payload)
@@ -40,7 +40,8 @@ sequenceDiagram
 2. `FillTransactionExecutor`가 단일 `@Transactional` 내에서 다음을 순차 수행한다:
    - 체결 레코드 INSERT
    - `HoldingIncrementalUpdater`로 평단·수량 증분 업데이트
-   - 잔고 해제: `OrderPlaced.lockedAmount` / `lockedCoinId`를 그대로 사용해 `locked -= lockedAmount` UPDATE
+   - 잔고 정산: 잠긴 코인에서 `locked -= lockedAmount` 하고, 매수는 예약액과 실제 체결액(체결가 × 수량 + 수수료)의 차액을 `available`로 환불한다. 이어서 반대 자산을 지급한다 — 매수는 코인 수량을, 매도는 대금(체결금액 − 수수료)을 `available`에 더한다(UPSERT)
+   - 수수료 확정: `MarketRefResolver`가 참조 테이블에서 해석한 `feeRate`로 `fee = floor(floor(체결가 × 수량, 8) × feeRate, 8)`을 계산해 체결 UPDATE에 함께 기록한다
    - `outbox` 테이블에 `OrderFilledEvent` INSERT
 
 ---

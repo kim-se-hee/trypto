@@ -119,8 +119,8 @@ erDiagram
         datetime completed_at "완료 시각"
     }
 
-    HOLDING {
-        id holding_id PK "주 식별자"
+    POSITION {
+        id position_id PK "주 식별자"
         id wallet_id FK "지갑 ID (wallet_id + coin_id 복합 유니크)"
         id coin_id FK "코인 ID"
         number avg_buy_price "평균 매수가"
@@ -132,16 +132,10 @@ erDiagram
     ORDERS {
         id order_id PK "주 식별자"
         string idempotency_key UK "멱등 키"
-        id user_id FK "주문 유저 ID"
         id wallet_id FK "주문 지갑 ID"
         id exchange_coin_id FK "거래소-코인 ID"
-        id coin_id FK "코인 ID (비정규화)"
-        id base_coin_id FK "기축통화 코인 ID (비정규화)"
-        string exchange_name "거래소명 (비정규화, tick 매칭용)"
-        string market_symbol "거래쌍 심볼 (비정규화, tick 매칭용)"
         string order_type "MARKET LIMIT"
         string side "BUY SELL"
-        number order_amount "주문 금액"
         number quantity "주문 수량"
         number price "주문 가격 (지정가, nullable)"
         number filled_price "실제 체결가 (nullable)"
@@ -291,8 +285,8 @@ erDiagram
     WALLET ||--o{ TRANSFER : "from"
     WALLET ||--o{ TRANSFER : "to"
     COIN ||--o{ TRANSFER : ""
-    WALLET ||--o{ HOLDING : ""
-    COIN ||--o{ HOLDING : ""
+    WALLET ||--o{ POSITION : ""
+    COIN ||--o{ POSITION : ""
     WALLET ||--o{ ORDERS : ""
     EXCHANGE_COIN ||--o{ ORDERS : ""
     ORDERS ||--o{ ORDER_FILL_FAILURE : ""

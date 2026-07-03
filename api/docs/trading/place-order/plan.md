@@ -121,7 +121,7 @@ sequenceDiagram
         Note over Service,MySQL: STEP 09 보유 코인 갱신 (시장가만, SELECT FOR UPDATE)
     end
     Service->>HoldingPort: findForUpdate + save
-    HoldingPort->>MySQL: SELECT FOR UPDATE + UPDATE holding
+    HoldingPort->>MySQL: SELECT FOR UPDATE + UPDATE position
 
     rect rgb(60, 60, 60)
         Note over Service,Order: STEP 10 엔진 이벤트 발행 (지정가만, AFTER_COMMIT)
