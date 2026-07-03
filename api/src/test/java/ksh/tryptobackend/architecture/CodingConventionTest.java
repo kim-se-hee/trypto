@@ -9,6 +9,9 @@ import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaParameterizedType;
+import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -16,6 +19,9 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import java.util.List;
+import ksh.tryptobackend.common.dto.response.ApiResponseDto;
+import org.springframework.http.ResponseEntity;
 
 @AnalyzeClasses(
         packages = "ksh.tryptobackend",
@@ -122,6 +128,36 @@ class CodingConventionTest {
     }
 
     @ArchTest
+    void domain_services_should_be_interfaces(JavaClasses classes) {
+        classes()
+                .that()
+                .resideInAnyPackage(allContextPackages(DOMAIN_SERVICE))
+                .should()
+                .beInterfaces()
+                .as(
+                        "Domain services should be interfaces — implementations live in"
+                                + " adapter.out.service")
+                .check(classes);
+    }
+
+    @ArchTest
+    void event_listener_annotations_should_only_be_in_adapters(JavaClasses classes) {
+        noMethods()
+                .that()
+                .areDeclaredInClassesThat()
+                .resideInAnyPackage(
+                        merge(allContextPackages(APPLICATION), allContextPackages(DOMAIN)))
+                .should()
+                .beAnnotatedWith("org.springframework.transaction.event.TransactionalEventListener")
+                .orShould()
+                .beAnnotatedWith("org.springframework.context.event.EventListener")
+                .as(
+                        "@TransactionalEventListener/@EventListener must be declared in adapters,"
+                                + " not in application or domain")
+                .check(classes);
+    }
+
+    @ArchTest
     void usecases_should_declare_exactly_one_method(JavaClasses classes) {
         FreezingArchRule.freeze(
                         classes()
@@ -135,21 +171,51 @@ class CodingConventionTest {
     }
 
     @ArchTest
-    void controller_methods_should_return_response_entity(JavaClasses classes) {
-        FreezingArchRule.freeze(
-                        methods()
-                                .that()
-                                .areDeclaredInClassesThat()
-                                .areAnnotatedWith(
-                                        "org.springframework.web.bind.annotation.RestController")
-                                .and()
-                                .arePublic()
-                                .should()
-                                .haveRawReturnType("org.springframework.http.ResponseEntity")
-                                .as(
-                                        "@RestController public methods should return"
-                                                + " ResponseEntity (raw type)"))
+    void controller_methods_should_return_api_response_dto(JavaClasses classes) {
+        methods()
+                .that()
+                .areDeclaredInClassesThat()
+                .areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
+                .and()
+                .arePublic()
+                .should(returnApiResponseDtoOrWrapper())
+                .as(
+                        "@RestController public methods should return ApiResponseDto or"
+                                + " ResponseEntity<ApiResponseDto>")
                 .check(classes);
+    }
+
+    private static ArchCondition<JavaMethod> returnApiResponseDtoOrWrapper() {
+        return new ArchCondition<>("return ApiResponseDto or ResponseEntity<ApiResponseDto>") {
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                if (returnsApiResponseDto(method) || returnsApiResponseDtoWrapper(method)) {
+                    return;
+                }
+                events.add(
+                        SimpleConditionEvent.violated(
+                                method,
+                                method.getFullName()
+                                        + " should return ApiResponseDto or"
+                                        + " ResponseEntity<ApiResponseDto>"));
+            }
+        };
+    }
+
+    private static boolean returnsApiResponseDto(JavaMethod method) {
+        return method.getRawReturnType().isEquivalentTo(ApiResponseDto.class);
+    }
+
+    private static boolean returnsApiResponseDtoWrapper(JavaMethod method) {
+        if (!method.getRawReturnType().isEquivalentTo(ResponseEntity.class)) {
+            return false;
+        }
+        if (method.getReturnType() instanceof JavaParameterizedType parameterized) {
+            List<JavaType> typeArguments = parameterized.getActualTypeArguments();
+            return typeArguments.size() == 1
+                    && typeArguments.get(0).toErasure().isEquivalentTo(ApiResponseDto.class);
+        }
+        return false;
     }
 
     @ArchTest

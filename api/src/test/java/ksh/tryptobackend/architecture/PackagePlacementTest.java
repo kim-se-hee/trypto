@@ -4,6 +4,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -54,8 +56,8 @@ class PackagePlacementTest {
                 .that()
                 .areAnnotatedWith(RestController.class)
                 .should()
-                .resideInAnyPackage(allContextDirectPackages(".adapter.in"))
-                .as("Controllers should reside in adapter.in")
+                .resideInAnyPackage(allContextPackages(".adapter.in.web.."))
+                .as("Controllers should reside in adapter.in.web")
                 .check(classes);
     }
 
@@ -65,8 +67,8 @@ class PackagePlacementTest {
                 .that()
                 .areAnnotatedWith(Entity.class)
                 .should()
-                .resideInAnyPackage(allContextPackages(".adapter.out.entity.."))
-                .as("JPA entities should reside in adapter.out.entity")
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.entity.."))
+                .as("JPA entities should reside in adapter.out.persistence.entity")
                 .check(classes);
     }
 
@@ -76,8 +78,8 @@ class PackagePlacementTest {
                 .that()
                 .areAssignableTo(JpaRepository.class)
                 .should()
-                .resideInAnyPackage(allContextPackages(".adapter.out.repository.."))
-                .as("JPA repositories should reside in adapter.out.repository")
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.repository.."))
+                .as("JPA repositories should reside in adapter.out.persistence.repository")
                 .check(classes);
     }
 
@@ -101,5 +103,44 @@ class PackagePlacementTest {
                 .resideInAnyPackage(allContextDirectPackages(".domain"))
                 .as("Domain classes should reside in domain.model or domain.vo, not in domain root")
                 .check(classes);
+    }
+
+    @ArchTest
+    void events_should_reside_in_domain_event(JavaClasses classes) {
+        classes()
+                .that()
+                .haveSimpleNameEndingWith("Event")
+                .and()
+                .resideInAnyPackage(allContextPackages(".."))
+                .should()
+                .resideInAnyPackage(allContextPackages(".domain.event.."))
+                .as("Domain events should reside in domain.event")
+                .check(classes);
+    }
+
+    @ArchTest
+    void domain_service_impls_should_reside_in_adapter_out_service(JavaClasses classes) {
+        classes()
+                .that(implementDomainServiceInterface())
+                .should()
+                .resideInAnyPackage(allContextPackages(".adapter.out.service.."))
+                .as("Domain service implementations should reside in adapter.out.service")
+                .check(classes);
+    }
+
+    private static DescribedPredicate<JavaClass> implementDomainServiceInterface() {
+        return new DescribedPredicate<>("implement an interface residing in domain.service") {
+            @Override
+            public boolean test(JavaClass javaClass) {
+                if (javaClass.isInterface()) {
+                    return false;
+                }
+                return javaClass.getAllRawInterfaces().stream()
+                        .anyMatch(
+                                i ->
+                                        i.getPackageName().startsWith(BASE)
+                                                && i.getPackageName().contains(".domain.service"));
+            }
+        };
     }
 }

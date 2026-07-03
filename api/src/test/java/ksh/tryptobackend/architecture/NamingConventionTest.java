@@ -59,7 +59,7 @@ class NamingConventionTest {
     void controllers_should_end_with_Controller(JavaClasses classes) {
         classes()
                 .that()
-                .resideInAnyPackage(allContextDirectPackages(".adapter.in"))
+                .resideInAnyPackage(allContextPackages(".adapter.in.web.."))
                 .and()
                 .areAnnotatedWith(RestController.class)
                 .should()
@@ -69,17 +69,13 @@ class NamingConventionTest {
     }
 
     @ArchTest
-    void adapters_should_end_with_Adapter(JavaClasses classes) {
+    void domain_events_should_end_with_Event(JavaClasses classes) {
         classes()
                 .that()
-                .resideInAnyPackage(allContextDirectPackages(".adapter.out"))
-                .and()
-                .areNotInterfaces()
-                .and()
-                .areTopLevelClasses()
+                .resideInAnyPackage(allContextPackages(".domain.event.."))
                 .should()
-                .haveSimpleNameEndingWith("Adapter")
-                .as("Adapter classes should end with 'Adapter'")
+                .haveSimpleNameEndingWith("Event")
+                .as("Domain event classes should end with 'Event'")
                 .check(classes);
     }
 
@@ -87,7 +83,7 @@ class NamingConventionTest {
     void jpa_entities_should_end_with_JpaEntity(JavaClasses classes) {
         classes()
                 .that()
-                .resideInAnyPackage(allContextPackages(".adapter.out.entity.."))
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.entity.."))
                 .and()
                 .areNotAnnotatedWith(jakarta.persistence.Embeddable.class)
                 .and()
@@ -104,7 +100,7 @@ class NamingConventionTest {
     void repositories_should_end_with_JpaRepository(JavaClasses classes) {
         classes()
                 .that()
-                .resideInAnyPackage(allContextPackages(".adapter.out.repository.."))
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.repository.."))
                 .should()
                 .haveSimpleNameEndingWith("JpaRepository")
                 .as("Repository interfaces should end with 'JpaRepository'")
@@ -197,16 +193,34 @@ class NamingConventionTest {
     }
 
     @ArchTest
-    void adapters_should_match_port_naming(JavaClasses classes) {
+    void persistence_adapters_should_match_port_naming(JavaClasses classes) {
         classes()
                 .that()
-                .resideInAnyPackage(allContextDirectPackages(".adapter.out"))
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.."))
                 .and()
                 .areNotInterfaces()
                 .and()
                 .areTopLevelClasses()
-                .should(matchPortNaming())
-                .as("Adapter name should be Port name with 'Port' replaced by 'Adapter'")
+                .should(matchPortNamingWithTechPrefix())
+                .as(
+                        "Persistence adapter name should be a tech prefix followed by the Port name"
+                                + " with 'Port' replaced by 'Adapter' (e.g. JpaOrderQueryAdapter)")
+                .check(classes);
+    }
+
+    @ArchTest
+    void acl_adapters_should_match_port_naming(JavaClasses classes) {
+        classes()
+                .that()
+                .resideInAnyPackage(allContextPackages(".adapter.out.acl.."))
+                .and()
+                .areNotInterfaces()
+                .and()
+                .areTopLevelClasses()
+                .should(matchPortNamingWithPrefix("Acl"))
+                .as(
+                        "ACL adapter name should be 'Acl' followed by the Port name with 'Port'"
+                                + " replaced by 'Adapter' (e.g. AclMarketQueryAdapter)")
                 .check(classes);
     }
 
@@ -256,25 +270,57 @@ class NamingConventionTest {
         };
     }
 
-    private static ArchCondition<JavaClass> matchPortNaming() {
-        return new ArchCondition<>("have name matching implemented Port") {
+    private static String expectedAdapterBase(JavaClass port) {
+        String portName = port.getSimpleName();
+        return portName.substring(0, portName.length() - "Port".length()) + "Adapter";
+    }
+
+    private static ArchCondition<JavaClass> matchPortNamingWithTechPrefix() {
+        return new ArchCondition<>(
+                "have a tech prefix followed by the Port name with 'Port' replaced by 'Adapter'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 javaClass.getAllRawInterfaces().stream()
                         .filter(i -> i.getSimpleName().endsWith("Port"))
                         .forEach(
                                 port -> {
-                                    String portName = port.getSimpleName();
-                                    String expected =
-                                            portName.substring(0, portName.length() - 4)
-                                                    + "Adapter";
+                                    String base = expectedAdapterBase(port);
+                                    String actual = javaClass.getSimpleName();
+                                    if (!actual.endsWith(base)
+                                            || actual.length() <= base.length()) {
+                                        events.add(
+                                                SimpleConditionEvent.violated(
+                                                        javaClass,
+                                                        actual
+                                                                + " implements "
+                                                                + port.getSimpleName()
+                                                                + " but should be named {tech}"
+                                                                + base));
+                                    }
+                                });
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> matchPortNamingWithPrefix(String prefix) {
+        return new ArchCondition<>(
+                "have name '"
+                        + prefix
+                        + "' followed by the Port name with 'Port' replaced by 'Adapter'") {
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents events) {
+                javaClass.getAllRawInterfaces().stream()
+                        .filter(i -> i.getSimpleName().endsWith("Port"))
+                        .forEach(
+                                port -> {
+                                    String expected = prefix + expectedAdapterBase(port);
                                     if (!javaClass.getSimpleName().equals(expected)) {
                                         events.add(
                                                 SimpleConditionEvent.violated(
                                                         javaClass,
                                                         javaClass.getSimpleName()
                                                                 + " implements "
-                                                                + portName
+                                                                + port.getSimpleName()
                                                                 + " but should be named "
                                                                 + expected));
                                     }

@@ -34,7 +34,7 @@ class AnnotationRuleTest {
     void jpa_entities_should_not_use_setter_or_data(JavaClasses classes) {
         noClasses()
                 .that()
-                .resideInAnyPackage(allContextPackages(".adapter.out.entity.."))
+                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.entity.."))
                 .should()
                 .beAnnotatedWith("lombok.Setter")
                 .orShould()
