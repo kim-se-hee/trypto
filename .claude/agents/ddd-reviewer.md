@@ -63,13 +63,13 @@ tools:
 ### 하나의 도메인 개념을 이루는 값들을 VO로 묶지 않음
 
 - 원칙: 하나의 도메인 개념을 이루는 필드 묶음은 VO로 응집한다. 코드상 **항상 함께 이동하지 않아도**(로직마다 부분집합으로 흩어져 쓰여도) 개념이 하나면 묶는다. "항상 같이 다니는 값"만 기준으로 삼으면, 개념적으로 한 덩어리인데 로직마다 일부만 쓰이는 흔한 경우를 놓친다.
-- 예: 송금의 (chain, toAddress, toTag)는 도착지 조회엔 chain·toAddress만, 태그 판정엔 toTag만 쓰여 "항상 함께 쓰이는 것은" 아니지만 "도착지 정보"라는 한 개념이다. 
- 
+- 예: 송금의 (chain, toAddress, toTag)는 도착지 조회엔 chain·toAddress만, 태그 판정엔 toTag만 쓰여 "항상 함께 쓰이는 것은" 아니지만 "도착지 정보"라는 한 개념이다.
+
 
 ### 코드 이름에 유비쿼터스 언어를 쓰지 않음
 
 - 원칙 (ddd-guideline §8): 포트·도메인 서비스·VO·메서드 이름은 연동 대상·기술·CRUD 가 아니라 **도메인 의도**를 드러내야 한다.
-- 예: 출금 수수료 견적을 `MarketDataQueryPort.findWithdrawalPolicy()`(연동 대상 노출)로 두는 대신 `ExchangeWithdrawalService.quoteWithdrawal()` 처럼 도메인 행위로 명명한다. 
+- 예: 출금 수수료 견적을 `MarketDataQueryPort.findWithdrawalPolicy()`(연동 대상 노출)로 두는 대신 `ExchangeWithdrawalService.quoteWithdrawal()` 처럼 도메인 행위로 명명한다.
 
 ---
 

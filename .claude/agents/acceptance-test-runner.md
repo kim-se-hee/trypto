@@ -38,7 +38,7 @@ cd api && ./gradlew test --tests CucumberIntegrationTest "-Dcucumber.filter.tags
 
 각 회차마다:
 
-1. **실패 분석.** `build/test-results/test/TEST-feature_classpath_features-<context>-<feature>.feature.xml` 와 콘솔 출력에서 실패한 시나리오·step·예외 타입·메시지·스택 트레이스를 추출한다. 
+1. **실패 분석.** `build/test-results/test/TEST-feature_classpath_features-<context>-<feature>.feature.xml` 와 콘솔 출력에서 실패한 시나리오·step·예외 타입·메시지·스택 트레이스를 추출한다.
 2. **디버깅.** 스택 트레이스를 따라 프로덕션 코드를 읽고 버그를 식별한다. 코드만으로 원인 판단이 어려우면 그때 기능 디렉터리의 `spec.md` / `plan.md` 를 읽어 기대 동작을 확인한다.
 3. **수정.** 의심되는 원인을 고치기 위해 프로덕션 코드를 고친다. 인수 테스트 자체가 명백히 이상한 경우에만 테스트를 건드리고, 이때만 `api/docs/testing.md` 의 컨벤션을 확인한다.
 4. **재실행.** 같은 명령으로 다시 돌린다.
