@@ -1,0 +1,34 @@
+-- 포트폴리오 보유자산 조회(GET .../portfolio) 부하테스트용 시드 템플릿.
+-- reset.sh 가 my_holdings.js 시나리오일 때 base.sql.tmpl 뒤에 이어붙여 @WALLET_COUNT@ 를 치환해 base.sql 로 렌더한다.
+--
+-- 선행: base.sql(=base.sql.tmpl) 이 user/round/wallet/exchange_coin 을 1~@WALLET_COUNT@ 로 먼저 적재한다.
+--       holding.wallet_id 가 그 wallet 범위를 그대로 참조한다.
+--
+-- 조회 경로(GetMyHoldingsService → FindEvaluatedHoldings)가 밟는 부분:
+--   findActiveHoldings → SELECT * FROM holding WHERE wallet_id = ?  (total_quantity > 0 만 평가)
+--   getCurrentPrice    → Redis ticker:UPBIT:{symbol}/KRW           (reset.sh 가 별도로 시드)
+--
+-- 규모: 초기 서비스 수준으로 지갑마다 코인 3종(BTC/ETH/XRP)만 보유 → @WALLET_COUNT@ × 3 행.
+-- 모든 지갑에 동일 구성을 깔아 임의 지갑 n 을 뽑아도 보유자산 평가 경로를 항상 밟게 한다.
+
+SET SESSION cte_max_recursion_depth = 1000000;
+
+INSERT INTO holding
+  (wallet_id, coin_id, avg_buy_price, total_quantity, total_buy_amount, averaging_down_count, version)
+WITH RECURSIVE w AS (
+  SELECT 1 AS n UNION ALL SELECT n + 1 FROM w WHERE n < @WALLET_COUNT@
+)
+SELECT
+  w.n,
+  c.coin_id,
+  c.avg_buy_price,
+  c.qty,
+  c.avg_buy_price * c.qty,
+  0,
+  0
+FROM w
+CROSS JOIN (
+  SELECT 2 AS coin_id, 0.50000000     AS qty, 48000000.00000000 AS avg_buy_price  -- BTC
+  UNION ALL SELECT 3,   3.00000000,        5000000.00000000                       -- ETH
+  UNION ALL SELECT 4,   1000.00000000,     5000.00000000                          -- XRP
+) c;

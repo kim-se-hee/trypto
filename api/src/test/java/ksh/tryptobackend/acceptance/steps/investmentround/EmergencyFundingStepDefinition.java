@@ -1,7 +1,5 @@
 package ksh.tryptobackend.acceptance.steps.investmentround;
 
-import static ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType.DOMESTIC;
-
 import com.jayway.jsonpath.JsonPath;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -15,7 +13,6 @@ import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.investmentround.adapter.out.repository.EmergencyFundingJpaRepository;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRuleJpaRepository;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;

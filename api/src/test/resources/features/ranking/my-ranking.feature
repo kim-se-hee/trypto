@@ -1,4 +1,5 @@
 # language: ko
+@my-ranking
 기능: 내 랭킹 조회
 
   배경:

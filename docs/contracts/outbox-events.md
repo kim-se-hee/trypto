@@ -17,7 +17,6 @@
 ```json
 {
   "orderId":      12345,
-  "userId":       42,
   "executedPrice":"152300000",
   "quantity":     "0.0125",
   "executedAt":   "2025-12-31T23:59:01.500"

@@ -1,4 +1,5 @@
 # language: ko
+@ranking-stats
 기능: 랭킹 통계 조회
 
   배경:

@@ -1,11 +1,6 @@
 package ksh.tryptoengine.wal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ksh.tryptoengine.matching.OrderBookRegistry;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import ksh.tryptoengine.matching.OrderBookRegistry;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -32,9 +31,13 @@ public class SnapshotWriter {
     public void write(OrderBookRegistry registry, long lastSeq) throws IOException {
         Files.createDirectories(walDir);
         List<Snapshot.PairSnapshot> pairs = new ArrayList<>();
-        registry.books().forEach((pair, book) -> pairs.add(
-            new Snapshot.PairSnapshot(pair.exchangeCoinId(), new ArrayList<>(book.allOrders()))
-        ));
+        registry.books()
+                .forEach(
+                        (pair, book) ->
+                                pairs.add(
+                                        new Snapshot.PairSnapshot(
+                                                pair.exchangeCoinId(),
+                                                new ArrayList<>(book.allOrders()))));
         Snapshot snap = new Snapshot(lastSeq, pairs);
         Path tmp = walDir.resolve(SNAPSHOT_TMP_FILE);
         Path target = walDir.resolve(SNAPSHOT_FILE);
@@ -43,7 +46,11 @@ public class SnapshotWriter {
             fos.getFD().sync();
         }
         try {
-            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(
+                    tmp,
+                    target,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
         }

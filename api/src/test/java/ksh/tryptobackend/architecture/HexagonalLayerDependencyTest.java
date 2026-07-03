@@ -1,8 +1,12 @@
 package ksh.tryptobackend.architecture;
 
+import static com.tngtech.archunit.base.DescribedPredicate.describe;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static ksh.tryptobackend.architecture.ArchitectureConstants.*;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -55,6 +59,40 @@ class HexagonalLayerDependencyTest {
     }
 
     @ArchTest
+    void application_service_should_not_depend_on_usecase(JavaClasses classes) {
+        DescribedPredicate<JavaClass> aUseCase =
+                describe("a UseCase", jc -> jc.getSimpleName().endsWith("UseCase"));
+        noFields()
+                .that()
+                .areDeclaredInClassesThat()
+                .resideInAnyPackage(allContextPackages(SERVICE))
+                .should()
+                .haveRawType(aUseCase)
+                .as("Application services must not inject another UseCase — collaborate via ports")
+                .check(classes);
+    }
+
+    @ArchTest
+    void application_service_should_not_depend_on_service(JavaClasses classes) {
+        DescribedPredicate<JavaClass> anApplicationService =
+                describe(
+                        "an application service",
+                        jc ->
+                                jc.getSimpleName().endsWith("Service")
+                                        && jc.getPackageName().contains(".application.service"));
+        noFields()
+                .that()
+                .areDeclaredInClassesThat()
+                .resideInAnyPackage(allContextPackages(SERVICE))
+                .should()
+                .haveRawType(anApplicationService)
+                .as(
+                        "Application services must not inject another application service —"
+                                + " collaborate via ports or domain services")
+                .check(classes);
+    }
+
+    @ArchTest
     void adapter_in_should_not_depend_on_adapter_out(JavaClasses classes) {
         noClasses()
                 .that()
@@ -75,6 +113,18 @@ class HexagonalLayerDependencyTest {
                 .dependOnClassesThat()
                 .resideInAnyPackage(allContextPackages(".application.port.out.."))
                 .as("Adapter in should not depend on port out")
+                .check(classes);
+    }
+
+    @ArchTest
+    void adapter_in_should_not_depend_on_application_service(JavaClasses classes) {
+        noClasses()
+                .that()
+                .resideInAnyPackage(allContextPackages(ADAPTER_IN))
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(allContextPackages(SERVICE))
+                .as("Adapter in should depend on UseCase (port.in), not Service implementations")
                 .check(classes);
     }
 

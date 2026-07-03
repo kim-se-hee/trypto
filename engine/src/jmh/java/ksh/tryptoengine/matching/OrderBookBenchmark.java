@@ -1,5 +1,10 @@
 package ksh.tryptoengine.matching;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -14,18 +19,14 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
-import java.util.random.RandomGenerator;
-import java.util.random.RandomGeneratorFactory;
-
 @State(Scope.Benchmark)
 @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 2, time = 2)
 @Measurement(iterations = 3, time = 3)
-@Fork(value = 1, jvmArgsAppend = {"-Xms4g", "-Xmx10g"})
+@Fork(
+        value = 1,
+        jvmArgsAppend = {"-Xms4g", "-Xmx10g"})
 public class OrderBookBenchmark {
 
     private static final int PRICE_BUCKET_SIZE = 1024;
@@ -60,9 +61,8 @@ public class OrderBookBenchmark {
         nextOrderId = 1;
         for (int i = 0; i < bookSize; i++) {
             boolean bid = (i & 1) == 0;
-            BigDecimal price = bid
-                ? bidPrices[i & PRICE_BUCKET_MASK]
-                : askPrices[i & PRICE_BUCKET_MASK];
+            BigDecimal price =
+                    bid ? bidPrices[i & PRICE_BUCKET_MASK] : askPrices[i & PRICE_BUCKET_MASK];
             book.tryAdd(makeOrder(nextOrderId++, bid ? Side.BUY : Side.SELL, price));
         }
     }
@@ -71,9 +71,10 @@ public class OrderBookBenchmark {
     public boolean addOrder() {
         long id = nextOrderId++;
         boolean bid = (id & 1L) == 0;
-        BigDecimal price = bid
-            ? bidPrices[(int) id & PRICE_BUCKET_MASK]
-            : askPrices[(int) id & PRICE_BUCKET_MASK];
+        BigDecimal price =
+                bid
+                        ? bidPrices[(int) id & PRICE_BUCKET_MASK]
+                        : askPrices[(int) id & PRICE_BUCKET_MASK];
         return book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price));
     }
 
@@ -86,19 +87,15 @@ public class OrderBookBenchmark {
     public OrderDetail addAndRemove() {
         long id = nextOrderId++;
         boolean bid = (id & 1L) == 0;
-        BigDecimal price = bid
-            ? bidPrices[(int) id & PRICE_BUCKET_MASK]
-            : askPrices[(int) id & PRICE_BUCKET_MASK];
+        BigDecimal price =
+                bid
+                        ? bidPrices[(int) id & PRICE_BUCKET_MASK]
+                        : askPrices[(int) id & PRICE_BUCKET_MASK];
         book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price));
         return book.tryRemove(id);
     }
 
     private OrderDetail makeOrder(long id, Side side, BigDecimal price) {
-        return new OrderDetail(
-            id, 1L, 1L, side, pair,
-            1L, 2L,
-            price, ONE, ONE, 2L,
-            FIXED_TS
-        );
+        return new OrderDetail(id, 1L, 1L, side, pair, 1L, 2L, price, ONE, ONE, 2L, FIXED_TS);
     }
 }

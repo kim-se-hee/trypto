@@ -70,5 +70,33 @@ WITH RECURSIVE seq AS (
 )
 SELECT n, n, 1, 10000000000.00000000, 0.00000000 FROM seq;
 
+-- ===== 전 기능 부하 시드 확장 (기존 1~1000 / UPBIT 1:1 스파인 보존, 더하기만) =====
+
+-- 2번째 거래소 (송금: 같은 라운드 거래소 간 이체용). DOMESTIC + KRW 기축.
+INSERT INTO exchange_market (exchange_id, name, market_type, base_currency_coin_id, fee_rate)
+VALUES (2, 'BITHUMB', 'DOMESTIC', 1, 0.000500);
+
+-- 2번째 거래소 상장 코인 (exchange_coin_id 11~20 → coin 2~11)
+INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)
+SELECT 9 + c.coin_id, 2, c.coin_id, c.symbol FROM coin c WHERE c.coin_id BETWEEN 2 AND 11;
+
+-- 라운드당 2번째 지갑 (wallet 1001~2000 → round n, exchange 2): 송금 src/dst 쌍
+INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)
+WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000)
+SELECT 1000 + n, n, 2, 10000000000.00000000, NOW() FROM seq;
+
+-- 2번째 지갑 KRW 잔고 (balance_id 1001~2000)
+INSERT INTO wallet_balance (balance_id, wallet_id, coin_id, available, locked)
+WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000)
+SELECT 1000 + n, 1000 + n, 1, 10000000000.00000000, 0.00000000 FROM seq;
+
+-- 라운드 없는 유저 풀 (user 1001~1200): 라운드 생성 부하용 (start→end 자급자족, 동시성 여유로 200명)
+INSERT INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at)
+WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 200)
+SELECT 1000 + n, CONCAT('loadtest', 1000 + n, '@trypto.local'), CONCAT('loadtest', 1000 + n), true, NOW(), NOW() FROM seq;
+
+-- 긴급충전 부하용: 한도 0 → 100만(도메인 MAX_EMERGENCY_FUNDING_LIMIT), 충전 횟수 0 → 100만(run 중 소진 방지)
+UPDATE investment_round SET emergency_funding_limit = 1000000.00000000, emergency_charge_count = 1000000 WHERE round_id BETWEEN 1 AND 1000;
+
 -- TradingRules.inspect() 의 일일 주문 수 조회용 인덱스
 CREATE INDEX idx_orders_wallet_created ON orders (wallet_id, created_at);

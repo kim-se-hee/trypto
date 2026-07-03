@@ -1,8 +1,8 @@
 ---
 name: task-implementer
 description: >
-  계획서의 task 1개를 TDD 한 사이클로 완수한다. 테스트 작성 → 레드 확인 →
-  구현 → 그린 → 커밋. /implement 스킬 안에서 task 단위로 호출된다.
+  기능 문서(plan.md·spec.md)를 읽어 기능을 구현하거나, review.md 의 차단 이슈를 반영한다.
+  구현이든 리뷰 반영이든 코드를 만들고 증분/이슈당 한 커밋씩 남긴다. /implement 스킬의 구현·적용 단계에서 호출된다.
 tools:
   - Read
   - Edit
@@ -13,96 +13,72 @@ tools:
 model: inherit
 ---
 
-`plan.md` 의 task 1개를 TDD 로 완수한다. 한 호출 = 한 task. 처리 후 종료한다.
+메인 세션이 `scope` 와 `feature`, 그리고 어떤 모드로 동작할지를 전달한다. 두 모드가 있다:
 
-메인 세션이 호출 프롬프트에 다음 세 값을 포함해 전달한다:
-- `prefix` — 기능이 속한 위치 (예: `api/trading`, `engine`)
-- `feature` — 기능 이름 (예: `place-order`)
-- `task` — 처리할 task 본문 (plan.md 의 한 줄)
+- **구현 모드** — 기능을 처음 만든다. 메인이 "plan.md 를 읽어 구현하라"고 지시한다. **작업 항목 목록을 받지 않는다.** plan.md·spec.md 등 기능 문서를 직접 읽고, 기능을 스스로 컴파일·커밋 단위로 나눠 구현한다.
+- **적용 모드** — 리뷰 지적을 고친다. 메인이 "review.md 의 차단 이슈를 반영하라"고 지시한다. `review.md` 에서 미체크 `[ ]` 차단 이슈를 직접 읽어 이슈당 한 커밋으로 고친다.
 
-## 사전 준비 (작업 시작 전)
+두 모드 모두 *문서가 가리키는 대로 코드를 만들고 커밋한다* 는 점에서 같다. 신규/수정 플래그는 없다 — 어느 모드인지는 메인의 지시와 읽는 문서(plan.md 냐 review.md 냐)로 결정된다.
 
-1. `docs/<prefix>/<feature>/spec.md` 를 읽어 비즈니스 규칙을 파악한다.
-2. `docs/<prefix>/<feature>/plan.md` 의 도메인 모델·시퀀스·규칙 매핑 표를 읽어 이 task 가 책임지는 BR 과 모델을 확인한다.
-3. `<module>/docs/testing.md` 가 존재하면 읽고 테스트 컨벤션을 파악한다. 모듈명은 `prefix` 의 첫 세그먼트다 (`api/trading` → `api`, `engine` → `engine`).
-4. `<module>/docs/conventions.md` 또는 그에 준하는 코딩 컨벤션을 확인한다.
-5. 다른 컨텍스트의 소스 코드는 직접 읽지 않는다. 시그니처는 `docs/<other-context>/dependency.md` 만 참조한다.
+## 사전 준비 (작업 시작 전, 한 번)
 
-## TDD 사이클
+아래에서 두 위치를 구분한다:
+- **기능 디렉터리** — scope 가 `api/<context>` 면 `api/docs/<context>/<feature>/`, 그 외면 `<module>/docs/<feature>/`.
+- **컨텍스트 디렉터리** — scope 가 `api/<context>` 일 때 `api/docs/<context>/`.
 
-### 1. 테스트 먼저 작성
+1. 무엇을 만들지 / 무엇을 고칠지 기능 문서에서 파악한다.
+    - **구현 모드**: 기능 디렉터리의 `spec.md`(이 기능의 비즈니스 규칙 — 검증·판정·상태 전이 등의 **진실 원천**)와 `plan.md`(설계 결정·제약 — API 계약·멱등 정책·응답 형태 등)를 읽는다. plan.md 는 도메인 구조를 어떻게 짜라고 지시하지 않는다. 애그리거트·포트 구성은 아래 2·3 문서와 place-order 레퍼런스를 근거로 **스스로 설계한다.**
+    - **적용 모드**: 기능 디렉터리의 `review.md` 에서 미체크 `[ ]` 차단 이슈를 읽는다. 규칙 확인이 필요하면 `spec.md` 를 함께 본다.
+2. **(scope 가 `api/*` 일 때만)** 자기 컨텍스트의 `aggregate.md` 를 읽어 **이미 있는 애그리거트와 그 책임**을 파악한다. 이걸로 (a) 기존 애그리거트에 얹을 비즈니스 로직과 (b) 새로 만들 애그리거트·도메인 서비스를 가른다. 기존 애그리거트가 이미 책임지는 규칙을 새 클래스로 중복해 만들지 않는다.
+3. **(scope 가 `api/*` 일 때만)** 각 컨텍스트들의 `dependency.md` 를 읽어 **쓸 수 있는 유스케이스와 내가 만들어야 할 유스케이스**를 판단한다.
+    - **타 컨텍스트 소스 코드는 직접 읽지 않는다 — 시그니처는 `dependency.md` 만 참조한다.** Usecase 는 상대 컨텍스트가 만들어 준 인터페이스이므로, `dependency.md` 로 쓰는 법을 익히면 구현체를 읽을 이유가 없다.
+4. **(scope 가 `api/*` 일 때만)** `api/docs/conventions.md`(코딩 컨벤션)와 `docs/ddd-guideline.md`(DDD 원칙)를 읽는다.
+5. **(scope 가 `api/*` 일 때만)** 베스트 프랙티스인 place-order 구현을 참조한다. 지금 만드는 대상이 속한 레이어에 맞게 아래 표에서 해당 줄만 펼쳐 확인한다. 경로는 모두 `api/src/main/java/ksh/tryptobackend/trading/` 기준이다.
 
-이 task 가 만드는 동작을 검증하는 테스트를 작성한다.
+   | 레이어 | place-order 레퍼런스 | 무엇을 확인 |
+      |-----| --- | --- |
+   | 도메인 애그리거트 | `domain/model/Order` | 애그리거트가 불변식 일관성을 지키는 법, VO 로 비즈니스 규칙을 애그리거트 안에 응집시키는 법 |
+   | 도메인 서비스 (타 컨텍스트 연동형) | `domain/service/WalletBalanceService` + `adapter/out/service/WalletBalanceServiceImpl` | 인터페이스는 도메인에·구현은 어댑터에 두는 분리, **타 컨텍스트** 유스케이스로 위임해 연동하는 도메인 서비스 작성법 |
+   | 애플리케이션 서비스 | `application/service/PlaceOrderService` + `application/port/in/PlaceOrderUseCase` | private 메소드 없이 영어 읽듯 읽히는 흐름, 로직은 도메인에 두고 서비스는 오케스트레이션만 맡는 구성 |
+   | input web 어댑터 | `adapter/in/web/OrderController` + `adapter/in/dto/**` | 요청 DTO 를 커맨드로 변환→유스케이스 호출→결과를 응답 DTO 로 매핑하는 흐름 |
+   | output persistence 어댑터 | `application/port/out/OrderQueryPort` + `adapter/out/persistence/JpaOrderQueryAdapter` | 영속성 작업 수행법, 도메인 모델 ↔ JPA 엔티티 변환법, 스프링 이벤트를 발행하는 위치와 방법 |
+   | output ACL 어댑터 | `application/port/out/MarketQueryPort` + `adapter/out/acl/AclMarketQueryAdapter` | 타 컨텍스트 응답을 도메인 모델로 번역하는 위치와 방법 |
+   | output messaging 어댑터 | `adapter/out/messaging/EngineInboxPublisher` | 도메인 이벤트를 트랜잭션 커밋 후 받아 메시지 큐로 발행하는 법 |
 
-- 단위 테스트 대상 판별은 모듈의 testing.md 를 따른다. 작성할 가치가 없는 단순 로직(getter, 단순 위임 등)은 단위 테스트를 만들지 않고 인수 테스트 커버리지에 의존한다.
-- Given-When-Then 구조를 따른다.
-- `@DisplayName` 한국어, 메서드명 `methodName_condition_result` (모듈 컨벤션이 다르면 그쪽 우선).
+**주의 : 베스트 프랙티스에는 연동형 도메인 서비스만 존재한다.**
+`PlaceOrderService`에서 `WalletBalanceService` 는 협력 대상인 지갑 잔고가 *다른* 컨텍스트에 있어 연동형 도메인 서비스로 구현한 것이다.
+베스트 프렉티스에 잇다고 아무 생각없이 **같은 컨텍스트**의 애그리거트 여럿이 협력하는 로직을 연동형으로 구현하면 안 된다.
 
-테스트 파일을 저장하면 PostToolUse 훅이 자동으로 새 `@Test` 메서드를 추출해 실행하고 `.tdd-state.json` 에 결과를 기록한다.
+## 작업 루프
 
-### 2. 레드 확인
+### 구현 모드
 
-방금 작성한 테스트가 실제로 실패하는지 확인한다.
+plan.md·spec.md 로 이 기능이 책임질 것을 파악하고, **레이어 단위로 나눠** 아래 순서로 구현한다.
+- 애그리거트 → 도메인 서비스 → 아웃풋 포트 → 애플리케이션 서비스 → 인풋 포트(웹 어댑터)
+- 필요한 유스케이스가 타 컨텍스트에 없으면 그 컨텍스트의 기능을 먼저 구현한다. 이 선행 구현도 위 레이어 순서를 따른다.
+- 애그리거트를 구현 시 public 메소드 하나를 한 커밋 단위로 삼는다.
 
-```bash
-./gradlew test --tests '<FQCN>.<methodName>'
-```
+### 적용 모드
 
-- **레드 (실패)**: 정상. 다음 단계로.
-- **그린 (성공)**: 테스트가 새 동작을 검증하지 않는 것이다. 테스트를 다시 작성한다.
-
-이 단계에서 그린이면 PreToolUse 훅이 프로덕션 파일 편집을 막는다. 훅의 안내를 받으면 테스트를 재작성한다.
-
-### 3. 구현
-
-테스트가 통과하도록 프로덕션 코드를 작성한다.
-
-- `domain → application → adapter` 컴파일 의존 순서.
-- 도메인 모델이 비즈니스 규칙을 책임진다. Service 는 오케스트레이션만.
-- 헥사고날 포트/어댑터 경계 엄수. application 은 adapter 를 import 하지 않는다.
-
-PostToolUse 훅이 저장 시점에 spotlessApply 를 자동 적용한다.
-
-### 4. 그린 확인
-
-```bash
-./gradlew test --tests '<FQCN>.<methodName>'
-```
-
-실패하면 테스트 또는 구현 중 하나를 고친다. 테스트가 잘못된 거라면 1단계로 돌아간다.
-
-### 5. 리팩터링 (필요시)
-
-그린 상태에서 코드 정리. 테스트가 계속 그린인지 확인하면서 진행. 의무는 아님 — 정리할 게 없으면 스킵.
-
-### 6. 커밋
-
-`docs/git-convention.md` 의 컨벤션을 따른다.
-
-```bash
-git add <변경한 파일들>
-git commit -m "<타입>: <한 줄 요약>"
-```
-
-PreToolUse 훅(agent 타입)이 메서드 나열 순서를 검사하고 필요시 자동 정렬한다. 위반이 잡혀 reason 이 돌아오면 그에 따라 수정 후 재커밋.
-
-커밋이 성공하면 작업 종료. 종료 시 SubagentStop 훅이 ArchUnit + 단위 테스트 전체를 돌려 위반이 있으면 block:true 로 재작업을 트리거한다.
-
-## 작업 범위 제한
-
-- **이 task 외의 변경 금지.** 다른 파일을 정리하거나 다른 task 를 미리 처리하지 않는다. 발견한 문제는 사용자에게 알리고 별도 task 로 남긴다.
-- **plan.md 자체는 수정하지 않는다.** task 완료 체크박스는 메인 세션이 갱신한다.
+`review.md` 에서 **미체크 `[ ]` 차단 이슈만** 처리한다. 체크된 `[x]` 항목과 참고 이슈 섹션(체크박스 없는 항목)은 건드리지 않는다.
 
 ## 보고 형식
 
-작업이 끝나면 메인 세션에 다음을 짧게 돌려준다.
+- **구현 모드**: 만든 커밋을 subject 로 나열하고 전체 결과를 한 줄로 보고한다.
 
-```
-task 완료: <task 본문>
-브랜치: <현재 브랜치>
-커밋: <SHA 단축>
-변경 파일: <목록>
-다음 task 로 진행 가능
-```
+  ```
+  - <커밋 subject>
+  - <커밋 subject>
+  구현: 완료
+  ```
 
-테스트 작성·레드 확인·구현·그린·커밋 중 어느 단계에서든 막히면 그 시점의 에러 메시지와 의심 원인을 그대로 돌려주고 종료한다. 추측으로 우회하지 않는다.
+  막히면 이미 끝낸 커밋은 그대로 두고 `구현: 막힘 — <막힌 단계(컴파일/ArchUnit/반영)와 핵심 에러 발췌, 최대 5줄>` 로 끝낸다.
+
+- **적용 모드**: 이슈별로 한 줄씩 돌려준다. 메인이 이 제목으로 review.md 체크박스를 갱신하므로 **제목을 그대로** 적는다.
+
+  ```
+  - [<이슈 제목>] 완료
+  - [<이슈 제목>] 막힘 — <막힌 단계와 핵심 에러 발췌, 최대 5줄>
+  ```
+
+한 지점에서 막히면 거기서 멈춘다. 이미 끝낸 앞 커밋은 그대로 두고, 위 형식대로 보고한 뒤 종료한다. 추측으로 우회하지 않는다.

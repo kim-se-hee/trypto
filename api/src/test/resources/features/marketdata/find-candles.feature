@@ -1,4 +1,5 @@
 # language: ko
+@find-candles
 기능: 캔들 차트 데이터 조회
 
   시나리오: 캔들 데이터 정상 조회

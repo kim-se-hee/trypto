@@ -1,13 +1,12 @@
 package ksh.tryptoengine.matching;
 
 import jakarta.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -20,14 +19,14 @@ public class ExchangeCoinResolver {
     @PostConstruct
     void preload() {
         jdbc.query(
-            "SELECT ec.exchange_coin_id, em.name AS exchange_name, ec.display_name " +
-                "FROM exchange_coin ec " +
-                "JOIN exchange_market em ON em.exchange_id = ec.exchange_id",
-            rs -> {
-                cache.put(key(rs.getString("exchange_name"), rs.getString("display_name")),
-                    rs.getLong("exchange_coin_id"));
-            }
-        );
+                "SELECT ec.exchange_coin_id, em.name AS exchange_name, ec.display_name "
+                        + "FROM exchange_coin ec "
+                        + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id",
+                rs -> {
+                    cache.put(
+                            key(rs.getString("exchange_name"), rs.getString("display_name")),
+                            rs.getLong("exchange_coin_id"));
+                });
         log.info("ExchangeCoinResolver loaded {} mappings", cache.size());
     }
 
@@ -39,12 +38,14 @@ public class ExchangeCoinResolver {
 
     private Long lazyLoad(String exchange, String displayName) {
         try {
-            Long id = jdbc.queryForObject(
-                "SELECT ec.exchange_coin_id FROM exchange_coin ec " +
-                    "JOIN exchange_market em ON em.exchange_id = ec.exchange_id " +
-                    "WHERE em.name=? AND ec.display_name=?",
-                Long.class, exchange, displayName
-            );
+            Long id =
+                    jdbc.queryForObject(
+                            "SELECT ec.exchange_coin_id FROM exchange_coin ec "
+                                    + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id "
+                                    + "WHERE em.name=? AND ec.display_name=?",
+                            Long.class,
+                            exchange,
+                            displayName);
             cache.put(key(exchange, displayName), id);
             return id;
         } catch (Exception e) {

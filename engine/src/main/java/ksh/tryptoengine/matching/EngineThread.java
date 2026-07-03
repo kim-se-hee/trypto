@@ -3,12 +3,16 @@ package ksh.tryptoengine.matching;
 import io.micrometer.core.instrument.Gauge;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import ksh.tryptoengine.dbwriter.DbWriterThread;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import ksh.tryptoengine.consumer.EngineInboundEvent;
-import ksh.tryptoengine.dbwriter.FillCommand;
 import ksh.tryptoengine.consumer.OrderCanceledEvent;
 import ksh.tryptoengine.consumer.OrderPlacedEvent;
 import ksh.tryptoengine.consumer.TickReceivedEvent;
+import ksh.tryptoengine.dbwriter.DbWriterThread;
+import ksh.tryptoengine.dbwriter.FillCommand;
 import ksh.tryptoengine.metrics.EngineMetrics;
 import ksh.tryptoengine.wal.SnapshotWriter;
 import ksh.tryptoengine.wal.WalRecovery;
@@ -17,11 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Component
@@ -33,6 +32,7 @@ public class EngineThread {
     private final SnapshotWriter snapshotWriter;
     private final DbWriterThread dbWriter;
     private final ExchangeCoinResolver exchangeCoinResolver;
+    private final MarketRefResolver marketRefResolver;
     private final EngineMetrics metrics;
     private final OrderBookRegistry orderBookRegistry = new OrderBookRegistry();
     private final BlockingQueue<EngineInboundEvent> inbox = new LinkedBlockingQueue<>(16384);
@@ -51,8 +51,8 @@ public class EngineThread {
         walWriter.setSequence(lastSeq);
         walWriter.start();
         Gauge.builder("engine.queue.size", inbox, BlockingQueue::size)
-            .description("Engine inbox depth")
-            .register(metrics.registry());
+                .description("Engine inbox depth")
+                .register(metrics.registry());
         thread = new Thread(this::loop, "engine-core");
         thread.setDaemon(false);
         thread.start();
@@ -103,13 +103,29 @@ public class EngineThread {
     }
 
     private void onPlaced(OrderPlacedEvent e) {
+        MarketRefResolver.MarketRef ref = marketRefResolver.resolve(e.exchangeCoinId());
+        if (ref == null) {
+            log.error(
+                    "market ref missing, order skipped orderId={} exchangeCoinId={}",
+                    e.orderId(),
+                    e.exchangeCoinId());
+            return;
+        }
         TradingPair pair = new TradingPair(e.exchangeCoinId());
-        OrderDetail detail = new OrderDetail(
-            e.orderId(), e.userId(), e.walletId(),
-            Side.valueOf(e.side()), pair,
-            e.coinId(), e.baseCoinId(),
-            e.price(), e.quantity(), e.lockedAmount(), e.lockedCoinId(), e.placedAt()
-        );
+        OrderDetail detail =
+                new OrderDetail(
+                        e.orderId(),
+                        e.walletId(),
+                        Side.valueOf(e.side()),
+                        pair,
+                        ref.coinId(),
+                        ref.baseCoinId(),
+                        e.price(),
+                        e.quantity(),
+                        ref.feeRate(),
+                        e.lockedAmount(),
+                        e.lockedCoinId(),
+                        e.placedAt());
         OrderBook book = orderBookRegistry.bookOf(pair);
         if (!book.tryAdd(detail)) {
             log.debug("duplicate OrderPlaced ignored orderId={}", e.orderId());

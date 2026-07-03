@@ -1,27 +1,27 @@
 package ksh.tryptoengine.wal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ksh.tryptoengine.dbwriter.DbWriterThread;
-import ksh.tryptoengine.matching.OrderBookRegistry;
-import ksh.tryptoengine.matching.ExchangeCoinResolver;
-import ksh.tryptoengine.matching.OrderBook;
-import ksh.tryptoengine.matching.OrderDetail;
-import ksh.tryptoengine.matching.Side;
-import ksh.tryptoengine.matching.TradingPair;
-import ksh.tryptoengine.dbwriter.FillCommand;
-import ksh.tryptoengine.consumer.OrderCanceledEvent;
-import ksh.tryptoengine.consumer.OrderPlacedEvent;
-import ksh.tryptoengine.consumer.TickReceivedEvent;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import ksh.tryptoengine.consumer.OrderCanceledEvent;
+import ksh.tryptoengine.consumer.OrderPlacedEvent;
+import ksh.tryptoengine.consumer.TickReceivedEvent;
+import ksh.tryptoengine.dbwriter.DbWriterThread;
+import ksh.tryptoengine.dbwriter.FillCommand;
+import ksh.tryptoengine.matching.ExchangeCoinResolver;
+import ksh.tryptoengine.matching.MarketRefResolver;
+import ksh.tryptoengine.matching.OrderBook;
+import ksh.tryptoengine.matching.OrderBookRegistry;
+import ksh.tryptoengine.matching.OrderDetail;
+import ksh.tryptoengine.matching.Side;
+import ksh.tryptoengine.matching.TradingPair;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -29,14 +29,19 @@ public class WalRecovery {
 
     private final ObjectMapper mapper;
     private final ExchangeCoinResolver resolver;
+    private final MarketRefResolver marketRefResolver;
     private final DbWriterThread dbWriter;
     private final Path walDir;
 
-    public WalRecovery(ObjectMapper mapper, ExchangeCoinResolver resolver,
-                       DbWriterThread dbWriter,
-                       @Value("${engine.wal.dir}") String walDir) {
+    public WalRecovery(
+            ObjectMapper mapper,
+            ExchangeCoinResolver resolver,
+            MarketRefResolver marketRefResolver,
+            DbWriterThread dbWriter,
+            @Value("${engine.wal.dir}") String walDir) {
         this.mapper = mapper;
         this.resolver = resolver;
+        this.marketRefResolver = marketRefResolver;
         this.dbWriter = dbWriter;
         this.walDir = Path.of(walDir);
     }
@@ -83,7 +88,9 @@ public class WalRecovery {
                 try {
                     rec = mapper.readValue(line, WalRecord.class);
                 } catch (IOException e) {
-                    log.warn("WAL line parse failed (likely truncated tail); stop replay file={}", file.getFileName());
+                    log.warn(
+                            "WAL line parse failed (likely truncated tail); stop replay file={}",
+                            file.getFileName());
                     break;
                 }
                 if (rec.sequence() > skipUpTo) {
@@ -103,15 +110,30 @@ public class WalRecovery {
         switch (rec.eventType()) {
             case "OrderPlaced" -> {
                 OrderPlacedEvent p = mapper.treeToValue(rec.event(), OrderPlacedEvent.class);
+                MarketRefResolver.MarketRef ref = marketRefResolver.resolve(p.exchangeCoinId());
+                if (ref == null) {
+                    log.error(
+                            "market ref missing, replay skipped orderId={} exchangeCoinId={}",
+                            p.orderId(),
+                            p.exchangeCoinId());
+                    return;
+                }
                 TradingPair pair = new TradingPair(p.exchangeCoinId());
                 OrderBook book = registry.bookOf(pair);
-                book.tryAdd(new OrderDetail(
-                    p.orderId(), p.userId(), p.walletId(),
-                    Side.valueOf(p.side()), pair,
-                    p.coinId(), p.baseCoinId(),
-                    p.price(), p.quantity(), p.lockedAmount(), p.lockedCoinId(),
-                    p.placedAt()
-                ));
+                book.tryAdd(
+                        new OrderDetail(
+                                p.orderId(),
+                                p.walletId(),
+                                Side.valueOf(p.side()),
+                                pair,
+                                ref.coinId(),
+                                ref.baseCoinId(),
+                                p.price(),
+                                p.quantity(),
+                                ref.feeRate(),
+                                p.lockedAmount(),
+                                p.lockedCoinId(),
+                                p.placedAt()));
             }
             case "OrderCanceled" -> {
                 OrderCanceledEvent c = mapper.treeToValue(rec.event(), OrderCanceledEvent.class);
@@ -130,7 +152,8 @@ public class WalRecovery {
                     dbWriter.offer(new FillCommand(o, t.tradePrice(), ts, matchedAt));
                 }
             }
-            default -> log.warn("unknown wal event type={} seq={}", rec.eventType(), rec.sequence());
+            default ->
+                    log.warn("unknown wal event type={} seq={}", rec.eventType(), rec.sequence());
         }
     }
 }

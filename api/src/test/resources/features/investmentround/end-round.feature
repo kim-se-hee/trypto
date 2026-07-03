@@ -1,4 +1,5 @@
 # language: ko
+@end-round
 기능: 투자 라운드 종료
 
   배경:

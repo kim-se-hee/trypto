@@ -7,14 +7,9 @@ public record OrphanOrder(
         Long orderId,
         Long walletId,
         Long exchangeCoinId,
-        Long coinId,
-        Long baseCoinId,
-        String exchangeName,
-        String marketSymbol,
         Side side,
         BigDecimal price,
         BigDecimal quantity,
-        BigDecimal amount,
         LocalDateTime createdAt) {
 
     public boolean matches(BigDecimal candidatePrice) {
@@ -25,13 +20,5 @@ public record OrphanOrder(
 
     public boolean isBuy() {
         return side == Side.BUY;
-    }
-
-    public Long lockedCoinId() {
-        return isBuy() ? baseCoinId : coinId;
-    }
-
-    public BigDecimal lockedAmount() {
-        return isBuy() ? amount : quantity;
     }
 }

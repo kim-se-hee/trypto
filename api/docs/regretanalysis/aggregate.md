@@ -1,22 +1,5 @@
-# Aggregate Root / Entity / Value Object
-
-| Aggregate Root | Entity | Value Object |
-|---|---|---|
-| RegretReport | RuleImpact, ViolationDetail, ViolationDetails, AssetSnapshot, ViolatedOrder, ViolatedOrders | ImpactGap, ThresholdUnit, AssetTimeline, BtcBenchmark, BtcDailyPrice, BtcDailyPrices, CumulativeLossTimeline, ViolationMarkers, ViolationLossContext, AnalysisRound, AnalysisRoundStatus, AnalysisRule, AnalysisRules, AnalysisExchange, ActiveRoundExchange, TradeSide, OrderExecution, OrderExecutions, CurrentPrices, RuleBreach |
-
-Strategy: `ViolationLossStrategy` (enum)
-
-# 소유 관계
-
-- RegretReport → RuleImpact, ViolationDetails
-- RuleImpact → ImpactGap
-- ViolationDetails → ViolationDetail
-- ViolatedOrders → ViolatedOrder
-- ViolatedOrder → ViolationLossStrategy, ViolationLossContext
-- AssetTimeline → AssetSnapshot
-- CumulativeLossTimeline → DailyLoss (inner record)
-- ViolationMarkers → ViolationMarker (inner record)
-- BtcBenchmark → BtcDailyPrice
-- BtcDailyPrices → BtcDailyPrice
-- AnalysisRules → AnalysisRule
-- OrderExecutions → OrderExecution
+RegretReport : 라운드 종료 후 투자 원칙 위반이 수익에 끼친 영향을 되짚는 후회 리포트.
+RuleImpact : 개별 투자 원칙 위반이 수익률에 끼친 영향.
+ViolationDetail : 원칙 위반 한 건의 상세 내역.
+AssetSnapshot : 후회 그래프를 그리기 위한 시점별 자산 스냅샷.
+ViolatedOrder : 원칙을 위반한 주문.

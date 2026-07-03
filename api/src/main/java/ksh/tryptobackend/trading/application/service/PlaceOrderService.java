@@ -1,16 +1,17 @@
 package ksh.tryptobackend.trading.application.service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.application.port.in.PlaceOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
-import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
+import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
+import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
+import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
-import ksh.tryptobackend.trading.domain.service.Balances;
-import ksh.tryptobackend.trading.domain.service.OrderService;
-import ksh.tryptobackend.trading.domain.service.TradingContextResolver;
-import ksh.tryptobackend.trading.domain.service.TradingRules;
-import ksh.tryptobackend.trading.domain.vo.TradingContext;
+import ksh.tryptobackend.trading.domain.service.WalletBalanceService;
+import ksh.tryptobackend.trading.domain.vo.BalanceChange;
+import ksh.tryptobackend.trading.domain.vo.MarketInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,29 +19,25 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PlaceOrderService implements PlaceOrderUseCase {
 
-    private final OrderService orderService;
-    private final TradingContextResolver tradingContextResolver;
-    private final Balances balances;
-    private final TradingRules rules;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OrderQueryPort orderQueryPort;
+    private final OrderCommandPort orderCommandPort;
+    private final MarketQueryPort marketQueryPort;
+    private final WalletBalanceService walletBalanceService;
+    private final Clock clock;
 
     @Override
     @Transactional
     public Order placeOrder(PlaceOrderCommand cmd) {
-        Order duplicate = orderService.findDuplicate(cmd.idempotencyKey());
+        Order duplicate = orderQueryPort.findByIdempotencyKey(cmd.idempotencyKey()).orElse(null);
         if (duplicate != null) return duplicate;
 
-        TradingContext ctx = tradingContextResolver.resolve(cmd);
-        Order order = Order.create(cmd, ctx);
+        MarketInfo marketInfo = marketQueryPort.findByExchangeCoinId(cmd.exchangeCoinId());
+        LocalDateTime now = LocalDateTime.now(clock);
+        Order order = Order.create(cmd, marketInfo, now);
 
-        balances.validateFor(order, ctx);
-        rules.inspect(order, ctx);
+        BalanceChange reservation = order.planReservation(marketInfo.tradingPair());
+        walletBalanceService.apply(order.getWalletId(), reservation);
 
-        Order saved = orderService.save(order, ctx);
-
-        if (saved.shouldForwardToEngine()) {
-            eventPublisher.publishEvent(new OrderPlacedEvent(saved));
-        }
-        return saved;
+        return orderCommandPort.save(order);
     }
 }

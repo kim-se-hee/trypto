@@ -13,9 +13,7 @@ import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEn
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
-import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 
 public class RoundStepDefinition {
 

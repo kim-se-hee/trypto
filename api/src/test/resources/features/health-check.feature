@@ -1,4 +1,5 @@
 # language: ko
+@health-check
 기능: 헬스체크
 
   시나리오: API 서버 헬스체크

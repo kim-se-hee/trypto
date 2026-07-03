@@ -112,6 +112,24 @@ public class WalletCommandAdapter implements WalletCommandPort {
                 .execute();
     }
 
+    @Override
+    @Transactional
+    public void consumeLocked(Long walletId, Long coinId, BigDecimal amount) {
+        long count =
+                queryFactory
+                        .update(balance)
+                        .set(balance.locked, balance.locked.subtract(amount))
+                        .where(
+                                balance.walletId
+                                        .eq(walletId)
+                                        .and(balance.coinId.eq(coinId))
+                                        .and(balance.locked.goe(amount)))
+                        .execute();
+        if (count == 0) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+    }
+
     private void createBalanceWithAvailable(Long walletId, Long coinId, BigDecimal amount) {
         try {
             balanceRepository.saveAndFlush(

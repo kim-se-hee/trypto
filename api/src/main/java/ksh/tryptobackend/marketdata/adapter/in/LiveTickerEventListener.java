@@ -49,15 +49,16 @@ public class LiveTickerEventListener {
         Long exchangeId = null;
         long earliestTimestamp = Long.MAX_VALUE;
         for (TickerBatchMessage.Item item : batch.tickers()) {
-            LiveTickerResult resolved = resolveLiveTickerUseCase
-                    .resolve(
-                            batch.exchange(),
-                            item.symbol(),
-                            item.currentPrice(),
-                            item.changeRate(),
-                            item.quoteTurnover(),
-                            item.timestamp())
-                    .orElse(null);
+            LiveTickerResult resolved =
+                    resolveLiveTickerUseCase
+                            .resolve(
+                                    batch.exchange(),
+                                    item.symbol(),
+                                    item.currentPrice(),
+                                    item.changeRate(),
+                                    item.quoteTurnover(),
+                                    item.timestamp())
+                            .orElse(null);
             if (resolved == null) {
                 continue;
             }
@@ -67,20 +68,18 @@ public class LiveTickerEventListener {
             if (resolved.timestamp() != null && resolved.timestamp() < earliestTimestamp) {
                 earliestTimestamp = resolved.timestamp();
             }
-            responses.add(new TickerResponse(
-                    resolved.coinId(),
-                    resolved.symbol(),
-                    resolved.price(),
-                    resolved.changeRate(),
-                    resolved.quoteTurnover(),
-                    resolved.timestamp()));
+            responses.add(
+                    new TickerResponse(
+                            resolved.coinId(),
+                            resolved.symbol(),
+                            resolved.price(),
+                            resolved.changeRate(),
+                            resolved.quoteTurnover(),
+                            resolved.timestamp()));
         }
         if (responses.isEmpty() || exchangeId == null) {
             return;
         }
-        // batch 안에서 가장 오래된 collector publish 시각을 헤더에 실어 보낸다.
-        // OutboundLatencyInterceptor 가 socket write 직전에 이 헤더를 읽어
-        // "수집기 publish → api outbound 직전" e2e 시간을 Timer 로 기록한다 (worst-case).
         Map<String, Object> headers = Map.of(PUBLISHED_AT_MS_HEADER, earliestTimestamp);
         messagingTemplate.convertAndSend(TOPIC_PREFIX + exchangeId, responses, headers);
     }

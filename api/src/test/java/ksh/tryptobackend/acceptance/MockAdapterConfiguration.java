@@ -2,8 +2,8 @@ package ksh.tryptobackend.acceptance;
 
 import ksh.tryptobackend.acceptance.mock.MockBtcPriceHistoryAdapter;
 import ksh.tryptobackend.acceptance.mock.MockCandleAdapter;
-import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
@@ -22,8 +22,8 @@ public class MockAdapterConfiguration {
 
     @Bean
     @Primary
-    public MockHoldingAdapter mockHoldingAdapter() {
-        return new MockHoldingAdapter();
+    public MockPositionAdapter mockHoldingAdapter() {
+        return new MockPositionAdapter();
     }
 
     @Bean

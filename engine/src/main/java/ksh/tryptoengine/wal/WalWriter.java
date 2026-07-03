@@ -4,15 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PreDestroy;
-import ksh.tryptoengine.consumer.EngineInboundEvent;
-import ksh.tryptoengine.consumer.OrderCanceledEvent;
-import ksh.tryptoengine.consumer.OrderPlacedEvent;
-import ksh.tryptoengine.consumer.TickReceivedEvent;
-import ksh.tryptoengine.metrics.EngineMetrics;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,6 +17,14 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import ksh.tryptoengine.consumer.EngineInboundEvent;
+import ksh.tryptoengine.consumer.OrderCanceledEvent;
+import ksh.tryptoengine.consumer.OrderPlacedEvent;
+import ksh.tryptoengine.consumer.TickReceivedEvent;
+import ksh.tryptoengine.metrics.EngineMetrics;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -46,7 +45,8 @@ public class WalWriter {
     private FileOutputStream out;
     private BufferedWriter writer;
 
-    public WalWriter(ObjectMapper mapper, EngineMetrics metrics, @Value("${engine.wal.dir}") String walDir) {
+    public WalWriter(
+            ObjectMapper mapper, EngineMetrics metrics, @Value("${engine.wal.dir}") String walDir) {
         this.mapper = mapper;
         this.metrics = metrics;
         this.walDir = Path.of(walDir);
@@ -215,7 +215,8 @@ public class WalWriter {
         if (!running) return;
         try {
             flush();
-        } catch (Exception ignore) { }
+        } catch (Exception ignore) {
+        }
         running = false;
         if (thread != null) thread.interrupt();
         try {
@@ -225,6 +226,7 @@ public class WalWriter {
         }
         try {
             if (writer != null) writer.close();
-        } catch (IOException ignore) { }
+        } catch (IOException ignore) {
+        }
     }
 }

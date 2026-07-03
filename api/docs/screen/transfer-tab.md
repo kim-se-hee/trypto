@@ -47,15 +47,15 @@
 
 | API | 문서 | 용도 |
 |-----|------|------|
-| `GET /api/rounds/active?userId=` | [active-round.md](../investmentround/active-round.md) | walletId 목록 |
-| `GET /api/exchanges/{exchangeId}/coins` | [find-exchange-coins.md](../marketdata/find-exchange-coins.md) | 코인 심볼·이름 (캐싱) |
-| `GET /api/exchanges/{exchangeId}/coins/{coinId}/chains` | [find-coin-chains.md](../marketdata/find-coin-chains.md) | 체인 목록 (캐싱) |
-| `GET /api/users/{userId}/wallets/{walletId}/balances` | [wallet-assets.md](../wallet/wallet-assets.md) | 잔고 조회 |
-| `GET /api/withdrawal-fees` | [withdrawal-fee.md](../marketdata/withdrawal-fee.md) | 출금 수수료 (캐싱) |
-| `GET /api/wallets/{walletId}/deposit-address` | [deposit-address.md](../wallet/deposit-address.md) | 입금 주소 (캐싱) |
-| `POST /api/transfers` | [transfer.md](../transfer/transfer.md) | 송금 실행 |
-| `GET /api/wallets/{walletId}/transfers` | [transfer-history.md](../transfer/transfer-history.md) | 이체 내역 |
-| WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming.md) | 실시간 시세 |
+| `GET /api/rounds/active?userId=` | [active-round.md](../investmentround/active-round/index.md) | walletId 목록 |
+| `GET /api/exchanges/{exchangeId}/coins` | [find-exchange-coins.md](../marketdata/find-exchange-coins/index.md) | 코인 심볼·이름 (캐싱) |
+| `GET /api/exchanges/{exchangeId}/coins/{coinId}/chains` | [find-coin-chains.md](../marketdata/find-coin-chains/index.md) | 체인 목록 (캐싱) |
+| `GET /api/users/{userId}/wallets/{walletId}/balances` | [wallet-assets.md](../wallet/wallet-assets/index.md) | 잔고 조회 |
+| `GET /api/withdrawal-fees` | [withdrawal-fee.md](../marketdata/withdrawal-fee/index.md) | 출금 수수료 (캐싱) |
+| `GET /api/wallets/{walletId}/deposit-address` | [deposit-address.md](../wallet/deposit-address/index.md) | 입금 주소 (캐싱) |
+| `POST /api/transfers` | [transfer.md](../wallet/transfer/index.md) | 송금 실행 |
+| `GET /api/wallets/{walletId}/transfers` | [transfer-history.md](../wallet/transfer-history/index.md) | 이체 내역 |
+| WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming/index.md) | 실시간 시세 |
 
 # WebSocket 의존
 

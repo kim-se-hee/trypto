@@ -1,5 +1,5 @@
 # language: ko
-@exchange-coins
+@find-exchange-coins
 기능: 거래소 상장 코인 목록 조회
 
   배경:

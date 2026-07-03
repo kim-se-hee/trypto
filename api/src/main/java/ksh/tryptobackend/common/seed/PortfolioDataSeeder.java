@@ -152,11 +152,7 @@ class PortfolioDataSeeder {
             BigDecimal ratio =
                     new BigDecimal("100")
                             .divide(new BigDecimal(coinCount), 4, RoundingMode.HALF_UP);
-            details.forEach(
-                    d -> {
-                        // assetRatio is final in SnapshotDetail, so we create with correct ratio
-                        // above
-                    });
+            details.forEach(d -> {});
         }
 
         return details;

@@ -36,4 +36,10 @@ public class ManageWalletBalanceService implements ManageWalletBalanceUseCase {
     public void unlockBalance(Long walletId, Long coinId, BigDecimal amount) {
         walletCommandPort.unlockBalance(walletId, coinId, amount);
     }
+
+    @Override
+    @Transactional
+    public void consumeLocked(Long walletId, Long coinId, BigDecimal amount) {
+        walletCommandPort.consumeLocked(walletId, coinId, amount);
+    }
 }

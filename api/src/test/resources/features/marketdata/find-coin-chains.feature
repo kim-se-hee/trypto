@@ -1,5 +1,5 @@
 # language: ko
-@coin-chains
+@find-coin-chains
 기능: 코인 체인 목록 조회
 
   배경:

@@ -47,7 +47,7 @@
 
 ## 포트폴리오 스냅샷
 
-스냅샷은 별도 SnapshotJob이 매일 23:59 KST에 선행 생성한다. 거래소별로 1행씩 저장되며, 랭킹 배치는 이를 전 거래소 KRW 합산하여 수익률을 계산한다. 상세는 [portfolio-snapshot-batch.md](../batch/portfolio-snapshot-batch.md)를 참조한다.
+스냅샷은 별도 SnapshotJob이 매일 23:59 KST에 선행 생성한다. 거래소별로 1행씩 저장되며, 랭킹 배치는 이를 전 거래소 KRW 합산하여 수익률을 계산한다. 상세는 [snapshot-batch.md](../portfolio/snapshot-batch.md)를 참조한다.
 
 # 포트폴리오 열람
 

@@ -1,0 +1,31 @@
+-- 출금 수수료 조회(GET /api/withdrawal-fees?exchangeId&coinId&chain) 부하테스트용 시드 템플릿.
+-- reset.sh 가 withdrawal_fee.js 시나리오일 때 이 파일을 그대로 적재한다(치환 변수 없음).
+--
+-- 선행:
+--   base.sql → coin(1~11) / exchange_market(1=UPBIT) 적재.
+--   여기서는 거래소 1~2 × 코인 2~11 조합으로 수수료 행을 채운다(exchange 2 행은 미래 확장분).
+--
+-- 조회 경로(WithdrawalFeeQueryAdapter.findByExchangeIdAndCoinIdAndChain):
+--   WHERE exchange_id=? AND coin_id=? AND chain=?  → 단건 Optional 조회.
+--
+-- 체인명 통일:
+--   별도 coin-chains 시드가 없어 모든 행의 chain 을 'BTC' 한 종류로 통일한다.
+--   k6 시나리오는 항상 chain=BTC 로 보내므로 coinId 2~11 전건이 1행에 적중한다(전건 404 해소).
+--
+-- 값:
+--   fee            = 코인별 소액 고정 수수료(coin_id 로 약간 다르게 둬 행 식별이 쉽게).
+--   min_withdrawal = fee 의 10배(현실적인 최소 출금량 가정).
+
+INSERT INTO withdrawal_fee
+  (withdrawal_fee_id, exchange_id, coin_id, chain, fee, min_withdrawal)
+WITH RECURSIVE
+  e AS (SELECT 1 AS ex UNION ALL SELECT ex + 1 FROM e WHERE ex < 2),
+  c AS (SELECT 2 AS cn UNION ALL SELECT cn + 1 FROM c WHERE cn < 11)
+SELECT
+  (e.ex - 1) * 10 + (c.cn - 1)        AS withdrawal_fee_id,
+  e.ex                                AS exchange_id,
+  c.cn                                AS coin_id,
+  'BTC'                               AS chain,
+  (0.0005 + c.cn * 0.0001)           AS fee,
+  (0.0005 + c.cn * 0.0001) * 10      AS min_withdrawal
+FROM e CROSS JOIN c;

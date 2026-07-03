@@ -78,34 +78,12 @@ class PriceCandidatesTest {
 
     private OrphanOrder buyOrder(BigDecimal price) {
         return new OrphanOrder(
-                1L,
-                1L,
-                1L,
-                2L,
-                1L,
-                "upbit",
-                "BTC/KRW",
-                Side.BUY,
-                price,
-                bd("1"),
-                bd("100"),
-                LocalDateTime.of(2026, 4, 21, 0, 0, 0));
+                1L, 1L, 1L, Side.BUY, price, bd("1"), LocalDateTime.of(2026, 4, 21, 0, 0, 0));
     }
 
     private OrphanOrder sellOrder(BigDecimal price) {
         return new OrphanOrder(
-                1L,
-                1L,
-                1L,
-                2L,
-                1L,
-                "upbit",
-                "BTC/KRW",
-                Side.SELL,
-                price,
-                bd("1"),
-                bd("1"),
-                LocalDateTime.of(2026, 4, 21, 0, 0, 0));
+                1L, 1L, 1L, Side.SELL, price, bd("1"), LocalDateTime.of(2026, 4, 21, 0, 0, 0));
     }
 
     private static BigDecimal bd(String v) {

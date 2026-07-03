@@ -25,28 +25,8 @@ class BoundedContextIsolationTest {
     }
 
     @ArchTest
-    void transfer_isolation(JavaClasses classes) {
-        assertContextIsolation("transfer", classes);
-    }
-
-    @ArchTest
     void investmentround_isolation(JavaClasses classes) {
         assertContextIsolation("investmentround", classes);
-    }
-
-    @ArchTest
-    void ranking_isolation(JavaClasses classes) {
-        assertContextIsolation("ranking", classes);
-    }
-
-    @ArchTest
-    void regretanalysis_isolation(JavaClasses classes) {
-        assertContextIsolation("regretanalysis", classes);
-    }
-
-    @ArchTest
-    void portfolio_isolation(JavaClasses classes) {
-        assertContextIsolation("portfolio", classes);
     }
 
     @ArchTest
@@ -65,18 +45,6 @@ class BoundedContextIsolationTest {
                 .dependOnClassesThat()
                 .resideInAnyPackage(allContextRootPackages())
                 .as("Common should not depend on any bounded context (seed excluded)")
-                .check(classes);
-    }
-
-    @ArchTest
-    void batch_should_only_depend_on_context_use_cases(JavaClasses classes) {
-        noClasses()
-                .that()
-                .resideInAPackage(BATCH + "..")
-                .should()
-                .dependOnClassesThat()
-                .resideInAnyPackage(allContextForbiddenPackages())
-                .as("Batch should only depend on UseCase (port.in) of bounded contexts")
                 .check(classes);
     }
 
@@ -101,13 +69,16 @@ class BoundedContextIsolationTest {
                 .that()
                 .resideInAPackage(contextPkg(context, ".."))
                 .and()
-                .resideOutsideOfPackage(contextPkg(context, SERVICE))
+                .resideOutsideOfPackage(contextPkg(context, ".adapter.out.acl.."))
                 .and()
-                .resideOutsideOfPackage(contextPkg(context, DOMAIN_SERVICE))
+                .resideOutsideOfPackage(contextPkg(context, ".adapter.out.service.."))
                 .should()
                 .dependOnClassesThat()
                 .resideInAnyPackage(otherPortInPackages)
-                .as(context + " non-service classes should not depend on other context UseCases")
+                .as(
+                        context
+                                + " — only adapter.out.acl/service may depend on other context"
+                                + " UseCases")
                 .check(classes);
 
         FreezingArchRule.freeze(

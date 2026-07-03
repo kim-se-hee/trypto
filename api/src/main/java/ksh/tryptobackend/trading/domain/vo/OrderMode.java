@@ -6,59 +6,48 @@ import ksh.tryptobackend.trading.domain.model.Order;
 public enum OrderMode {
     MARKET_BUY {
         @Override
-        public Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId) {
-            return venue.baseCurrencyCoinId();
-        }
-
-        @Override
-        public List<BalanceChange> planBalanceChanges(
-                Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planSettlementChanges(Order order, TradingPair pair) {
             return List.of(
-                    new BalanceChange.Deduct(
-                            venue.baseCurrencyCoinId(), order.getSettlementDebit()),
-                    new BalanceChange.Add(tradeCoinId, order.getQuantity().value()));
+                    new BalanceChange.ConsumeLocked(
+                            pair.quoteCoinId(), order.getSettlementDebit().value()),
+                    new BalanceChange.AddAvailable(
+                            pair.tradedCoinId(), order.getQuantity().value()));
         }
     },
 
     MARKET_SELL {
         @Override
-        public Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId) {
-            return tradeCoinId;
-        }
-
-        @Override
-        public List<BalanceChange> planBalanceChanges(
-                Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planSettlementChanges(Order order, TradingPair pair) {
             return List.of(
-                    new BalanceChange.Deduct(tradeCoinId, order.getQuantity().value()),
-                    new BalanceChange.Add(venue.baseCurrencyCoinId(), order.getSettlementCredit()));
+                    new BalanceChange.ConsumeLocked(
+                            pair.tradedCoinId(), order.getQuantity().value()),
+                    new BalanceChange.AddAvailable(
+                            pair.quoteCoinId(), order.getSettlementCredit().value()));
         }
     },
 
     LIMIT_BUY {
         @Override
-        public Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId) {
-            return venue.baseCurrencyCoinId();
-        }
-
-        @Override
-        public List<BalanceChange> planBalanceChanges(
-                Order order, TradingVenue venue, Long tradeCoinId) {
+        public List<BalanceChange> planSettlementChanges(Order order, TradingPair pair) {
             return List.of(
-                    new BalanceChange.Lock(venue.baseCurrencyCoinId(), order.getSettlementDebit()));
+                    new BalanceChange.ConsumeLocked(
+                            pair.quoteCoinId(), order.getSettlementDebit().value()),
+                    new BalanceChange.Unlock(
+                            pair.quoteCoinId(),
+                            order.getReservedDebit().minus(order.getSettlementDebit()).value()),
+                    new BalanceChange.AddAvailable(
+                            pair.tradedCoinId(), order.getQuantity().value()));
         }
     },
 
     LIMIT_SELL {
         @Override
-        public Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId) {
-            return tradeCoinId;
-        }
-
-        @Override
-        public List<BalanceChange> planBalanceChanges(
-                Order order, TradingVenue venue, Long tradeCoinId) {
-            return List.of(new BalanceChange.Lock(tradeCoinId, order.getQuantity().value()));
+        public List<BalanceChange> planSettlementChanges(Order order, TradingPair pair) {
+            return List.of(
+                    new BalanceChange.ConsumeLocked(
+                            pair.tradedCoinId(), order.getQuantity().value()),
+                    new BalanceChange.AddAvailable(
+                            pair.quoteCoinId(), order.getSettlementCredit().value()));
         }
     };
 
@@ -69,8 +58,5 @@ public enum OrderMode {
         };
     }
 
-    public abstract Long resolveBalanceCoinId(TradingVenue venue, Long tradeCoinId);
-
-    public abstract List<BalanceChange> planBalanceChanges(
-            Order order, TradingVenue venue, Long tradeCoinId);
+    public abstract List<BalanceChange> planSettlementChanges(Order order, TradingPair pair);
 }

@@ -1,16 +1,16 @@
 ---
 description: >
-  기능 e2e 테스트 작성·실행·수정 워크플로우. /qa <prefix> <feature> 로 호출하면
+  기능 e2e 테스트 작성·실행·수정 워크플로우. /qa <scope> <feature> 로 호출하면
   도커 컴포즈로 환경을 띄우고, 인수 테스트 기반 e2e 시나리오를 작성·실행한 뒤
   실패 시 프로덕션 코드를 수정하는 루프를 돈다.
-arguments: [prefix, feature]
+arguments: [scope, feature]
 ---
 
-`/qa` 는 `docs/<prefix>/<feature>/` 의 인수 테스트들을 사용자 여정으로 변환해 검증하느 단계다
+`/qa` 는 `docs/<scope>/<feature>/` 의 인수 테스트들을 사용자 여정으로 변환해 검증하느 단계다
 
 ## 입력
 
-- `$prefix` — 기능이 속한 위치
+- `$scope` — 기능이 속한 위치
   - api 모듈: `api/<context>` (예: `api/trading`)
   - 그 외 모듈: 모듈명 그대로 (예: `engine`, `collector`, `frontend`)
 - `$feature` — 기능 이름 (kebab-case)
@@ -25,8 +25,8 @@ arguments: [prefix, feature]
 
 ## 사전 제약
 
-- `docs/<prefix>/<feature>/spec.md`, `plan.md` 가 존재해야 한다.
-- `docs/<prefix>/<feature>/index.md` 의 `단계` 가 `review` 여야 한다. 그 외 단계면 종료한다.
+- `docs/<scope>/<feature>/spec.md`, `plan.md` 가 존재해야 한다.
+- `docs/<scope>/<feature>/index.md` 의 `단계` 가 `review` 여야 한다. 그 외 단계면 종료한다.
 - `@<feature>` 태그가 붙은 인수 테스트(`.feature` 파일) 가 존재해야 한다.
 - 모듈 정책상 인수 테스트를 두지 않는 모듈(`<module>/docs/testing.md` 의 `**인수 테스트**` 섹션이 `작성하지 않는다`) 이라면 `/qa` 를 적용하지 않는다 — 종료.
 
@@ -202,7 +202,7 @@ docker volume rm -f trypto_mysql-data trypto_redis-data trypto_rabbitmq-data try
 ### 10. 보고
 
 ```
-QA 완료: docs/<prefix>/<feature>/
+QA 완료: docs/<scope>/<feature>/
 
 e2e 파일: e2e/<feature>.spec.ts
 시나리오: 해피 패스 1 + 실패 분기 N

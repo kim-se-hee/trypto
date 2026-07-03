@@ -1,0 +1,72 @@
+-- 랭커 포트폴리오 열람(GET /api/rankings/{userId}/portfolio) 부하테스트용 시드 템플릿.
+-- reset.sh 가 ranker_portfolio.js 시나리오일 때 ranking.sql.tmpl 적재 뒤에 이어붙여
+-- @SNAPSHOT_USERS@ / @SNAPSHOT_DAYS@ 를 치환해 렌더한다.
+--
+-- 선행:
+--   loadtest.sql     → coin / exchange_market(1=UPBIT) / user(portfolio_public=true) /
+--                      investment_round(ACTIVE) 적재. user n → round n 1:1 매핑.
+--   ranking.sql.tmpl → ranking 적재. rank = user_id 라 user 1~100 이 곧 상위 100위(열람 가능 구간)다.
+--
+-- 조회 경로(GetRankerPortfolioService)가 밟는 쿼리와 인덱스:
+--   findLatestReferenceDate              SELECT MAX(reference_date) FROM ranking WHERE period=?
+--                                        → idx_ranking_period_date_rank (ranking.sql.tmpl 가 생성)
+--   findByUserIdAndPeriodAndReferenceDate WHERE user_id=? AND period=? AND reference_date=?
+--                                        → 아래 idx_ranking_user_period_date
+--   findLatestSnapshotDetails            portfolio_snapshot_detail JOIN portfolio_snapshot
+--                                        WHERE user_id=? AND round_id=? AND snapshot_date=MAX(snapshot_date)
+--                                        → 아래 idx_snapshot_user_round_date, idx_snapshot_detail_snapshot
+--
+-- 적재 규모: 상위 @SNAPSHOT_USERS@명 × 최근 @SNAPSHOT_DAYS@일 × (스냅샷 1행/일 + 코인 5종).
+-- k6 는 userId 1~@SNAPSHOT_USERS@ 를 랜덤으로 뽑아 상위 100위 포트폴리오만 열람한다.
+
+SET SESSION cte_max_recursion_depth = 1000000;
+
+-- ranking 의 유저 단건 조회용 인덱스. (period, reference_date, rank) 인덱스는
+-- user_id 단건 조회를 받쳐주지 못해 별도로 만든다.
+CREATE INDEX idx_ranking_user_period_date ON ranking (user_id, period, reference_date);
+
+-- portfolio_snapshot — 거래소 1(UPBIT) 1행/일. 조회는 MAX(snapshot_date) 최신 1일만 읽지만,
+-- 과거 일자는 MAX 서브쿼리가 실제 range 를 해소하도록 깔아 비용을 현실화한다.
+-- snapshot_id 는 (user-1)*@SNAPSHOT_DAYS@ + day + 1 로 결정해 detail 이 그대로 참조한다.
+INSERT INTO portfolio_snapshot
+  (snapshot_id, user_id, round_id, exchange_id,
+   total_asset, total_asset_krw, total_investment, total_investment_krw,
+   total_profit, total_profit_rate, snapshot_date)
+WITH RECURSIVE
+  u AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM u WHERE n < @SNAPSHOT_USERS@),
+  d AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM d WHERE k < @SNAPSHOT_DAYS@ - 1)
+SELECT
+  (u.n - 1) * @SNAPSHOT_DAYS@ + d.k + 1   AS snapshot_id,
+  u.n                                     AS user_id,
+  u.n                                     AS round_id,
+  1                                       AS exchange_id,
+  100000000.00000000                      AS total_asset,
+  100000000.00000000                      AS total_asset_krw,
+  100000000.00000000                      AS total_investment,
+  100000000.00000000                      AS total_investment_krw,
+  0.00000000                              AS total_profit,
+  0.0000                                  AS total_profit_rate,
+  DATE_SUB(CURDATE(), INTERVAL d.k DAY)   AS snapshot_date
+FROM u CROSS JOIN d;
+
+CREATE INDEX idx_snapshot_user_round_date ON portfolio_snapshot (user_id, round_id, snapshot_date);
+
+-- portfolio_snapshot_detail — 스냅샷마다 코인 5종(KRW + BTC/ETH/XRP/SOL). asset_ratio 합 = 100.
+INSERT INTO portfolio_snapshot_detail
+  (snapshot_id, coin_id, quantity, avg_buy_price, current_price, profit_rate, asset_ratio)
+WITH RECURSIVE
+  u AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM u WHERE n < @SNAPSHOT_USERS@),
+  d AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM d WHERE k < @SNAPSHOT_DAYS@ - 1)
+SELECT
+  (u.n - 1) * @SNAPSHOT_DAYS@ + d.k + 1 AS snapshot_id,
+  c.coin_id, c.quantity, c.avg_buy_price, c.current_price, c.profit_rate, c.asset_ratio
+FROM u CROSS JOIN d
+CROSS JOIN (
+  SELECT 1 AS coin_id, 20000000.00000000 AS quantity, 1.00000000        AS avg_buy_price, 1.00000000        AS current_price,  0.0000 AS profit_rate, 20.0000 AS asset_ratio  -- KRW
+  UNION ALL SELECT 2,  0.80000000,         48000000.00000000,  50000000.00000000,   4.1700,  40.0000  -- BTC
+  UNION ALL SELECT 3,  5.00000000,          5000000.00000000,   5200000.00000000,   4.0000,  25.0000  -- ETH
+  UNION ALL SELECT 4,  1000.00000000,          5000.00000000,      4800.00000000,  -4.0000,  10.0000  -- XRP
+  UNION ALL SELECT 5,  50.00000000,          300000.00000000,    330000.00000000,  10.0000,   5.0000  -- SOL
+) c;
+
+CREATE INDEX idx_snapshot_detail_snapshot ON portfolio_snapshot_detail (snapshot_id);

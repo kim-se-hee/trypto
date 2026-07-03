@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import ksh.tryptobackend.transfer.adapter.out.entity.TransferJpaEntity;
-import ksh.tryptobackend.transfer.adapter.out.repository.TransferJpaRepository;
-import ksh.tryptobackend.transfer.domain.model.Transfer;
-import ksh.tryptobackend.transfer.domain.vo.TransferStatus;
+import ksh.tryptobackend.wallet.adapter.out.entity.TransferJpaEntity;
+import ksh.tryptobackend.wallet.adapter.out.repository.TransferJpaRepository;
+import ksh.tryptobackend.wallet.domain.model.Transfer;
+import ksh.tryptobackend.wallet.domain.vo.TransferStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,6 @@ class TransferDataSeeder {
     void seed(SeedContext ctx) {
         List<TransferJpaEntity> transfers = new ArrayList<>();
 
-        // 최리플 - 3개 거래소 간 송금
         transfers.addAll(createTransfersForUser(ctx, "최리플", "BTC"));
         transfers.addAll(createTransfersForUser(ctx, "최리플", "XRP"));
 

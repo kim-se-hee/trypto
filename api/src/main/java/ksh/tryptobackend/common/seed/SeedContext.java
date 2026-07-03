@@ -7,12 +7,10 @@ import java.util.Map;
 
 class SeedContext {
 
-    // MarketDataIdResolver에서 가져온 ID 맵
     final Map<String, Long> coinIdBySymbol = new HashMap<>();
     final Map<String, Long> exchangeIdByName = new HashMap<>();
     final Map<String, Long> exchangeCoinIdByKey = new HashMap<>();
 
-    // 시더가 생성하면서 축적하는 ID
     final Map<String, Long> userIdByNickname = new HashMap<>();
     final Map<Long, Long> activeRoundIdByUserId = new HashMap<>();
     final Map<Long, List<Long>> walletIdsByRoundId = new HashMap<>();

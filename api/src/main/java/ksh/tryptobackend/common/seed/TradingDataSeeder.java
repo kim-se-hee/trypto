@@ -8,20 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import ksh.tryptobackend.trading.adapter.out.entity.HoldingJpaEntity;
-import ksh.tryptobackend.trading.adapter.out.entity.OrderFillFailureJpaEntity;
-import ksh.tryptobackend.trading.adapter.out.entity.OrderJpaEntity;
-import ksh.tryptobackend.trading.adapter.out.repository.HoldingJpaRepository;
-import ksh.tryptobackend.trading.adapter.out.repository.OrderFillFailureJpaRepository;
-import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
-import ksh.tryptobackend.trading.domain.model.Holding;
+import ksh.tryptobackend.trading.adapter.out.persistence.entity.OrderFillFailureJpaEntity;
+import ksh.tryptobackend.trading.adapter.out.persistence.entity.OrderJpaEntity;
+import ksh.tryptobackend.trading.adapter.out.persistence.entity.PositionJpaEntity;
+import ksh.tryptobackend.trading.adapter.out.persistence.entity.RuleViolationJpaEntity;
+import ksh.tryptobackend.trading.adapter.out.persistence.repository.OrderFillFailureJpaRepository;
+import ksh.tryptobackend.trading.adapter.out.persistence.repository.OrderJpaRepository;
+import ksh.tryptobackend.trading.adapter.out.persistence.repository.PositionJpaRepository;
+import ksh.tryptobackend.trading.adapter.out.persistence.repository.RuleViolationJpaRepository;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.model.OrderFillFailure;
+import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
-import ksh.tryptobackend.trading.domain.vo.Fee;
-import ksh.tryptobackend.trading.domain.vo.MarketIdentifier;
+import ksh.tryptobackend.trading.domain.vo.Holding;
+import ksh.tryptobackend.trading.domain.vo.Money;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
+import ksh.tryptobackend.trading.domain.vo.Price;
 import ksh.tryptobackend.trading.domain.vo.Quantity;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +55,9 @@ class TradingDataSeeder {
                     "APT", new BigDecimal("18000"));
 
     private final OrderJpaRepository orderRepository;
-    private final HoldingJpaRepository holdingRepository;
+    private final PositionJpaRepository positionRepository;
     private final OrderFillFailureJpaRepository failureRepository;
+    private final RuleViolationJpaRepository ruleViolationRepository;
 
     private final Random random = new Random(42);
 
@@ -74,7 +78,6 @@ class TradingDataSeeder {
         LocalDateTime now = LocalDateTime.now();
         int count = 0;
 
-        // 김비트 - 다양한 코인, 빈번 거래, 룰 위반
         count +=
                 createOrdersForUser(
                         ctx,
@@ -85,39 +88,30 @@ class TradingDataSeeder {
                         3,
                         now);
 
-        // 이더리움 - 소수 코인, 안정적
         count +=
                 createOrdersForUser(ctx, "이더리움", "BITHUMB", new String[] {"ETH", "BTC"}, 5, 0, now);
 
-        // 박솔라나 - 해외 코인
         count +=
                 createOrdersForUser(
                         ctx, "박솔라나", "BINANCE", new String[] {"SOL", "APT", "ATOM"}, 8, 0, now);
 
-        // 최리플 - 3개 거래소
         count += createOrdersForUser(ctx, "최리플", "UPBIT", new String[] {"XRP", "BTC"}, 5, 0, now);
         count += createOrdersForUser(ctx, "최리플", "BITHUMB", new String[] {"XRP", "ETH"}, 4, 0, now);
         count += createOrdersForUser(ctx, "최리플", "BINANCE", new String[] {"XRP", "SOL"}, 4, 0, now);
 
-        // 정도지 - 파산
         count += createOrdersForUser(ctx, "정도지", "UPBIT", new String[] {"DOGE"}, 10, 2, now);
 
-        // 한에이다 - 소액 1~2건
         count += createOrdersForUser(ctx, "한에이다", "UPBIT", new String[] {"ADA"}, 2, 0, now);
 
-        // 강링크 - 손실 후 회복
         count +=
                 createOrdersForUser(ctx, "강링크", "BITHUMB", new String[] {"LINK", "BTC"}, 8, 1, now);
 
-        // 윤닷
         count += createOrdersForUser(ctx, "윤닷", "UPBIT", new String[] {"DOT", "ETH"}, 6, 0, now);
 
-        // 송아톰 - 룰 위반 전문
         count +=
                 createOrdersForUser(
                         ctx, "송아톰", "UPBIT", new String[] {"ATOM", "BTC", "ETH"}, 12, 5, now);
 
-        // 임앱트 - 고수
         count +=
                 createOrdersForUser(
                         ctx,
@@ -160,6 +154,7 @@ class TradingDataSeeder {
 
         List<Long> ruleIds = ctx.ruleIdsByRoundId.getOrDefault(roundId, List.of());
         List<OrderJpaEntity> orders = new ArrayList<>();
+        List<RuleViolation> violationsByOrderIndex = new ArrayList<>();
         int violationsAdded = 0;
 
         String baseSymbol = "BINANCE".equals(exchangeName) ? "USDT" : "KRW";
@@ -192,40 +187,49 @@ class TradingDataSeeder {
                             ? createdAt
                             : createdAt.plusMinutes(random.nextInt(1, 60));
 
-            List<RuleViolation> violations = new ArrayList<>();
+            RuleViolation violation = null;
             if (violationsAdded < violationCount && !ruleIds.isEmpty()) {
                 Long ruleId = ruleIds.get(violationsAdded % ruleIds.size());
-                violations.add(new RuleViolation(ruleId, "시드 데이터 룰 위반", createdAt));
+                violation = RuleViolation.create(ruleId, "시드 데이터 룰 위반", createdAt);
                 violationsAdded++;
             }
+            violationsByOrderIndex.add(violation);
 
             Order order =
                     Order.reconstitute(
                             null,
                             UUID.randomUUID().toString(),
-                            userId,
                             walletId,
                             exchangeCoinId,
-                            coinId,
-                            baseCoinId,
-                            MarketIdentifier.of(exchangeName, coin, baseSymbol),
                             side,
                             orderType,
-                            amount,
-                            new Quantity(quantity),
+                            Quantity.of(quantity),
                             orderType == OrderType.LIMIT ? orderPrice : null,
+                            FEE_RATE,
                             orderPrice,
-                            Fee.of(feeAmount, FEE_RATE),
+                            feeAmount,
                             status,
                             createdAt,
-                            filledAt,
-                            violations);
+                            filledAt);
             orders.add(OrderJpaEntity.fromDomain(order));
         }
 
         List<OrderJpaEntity> saved = orderRepository.saveAll(orders);
         saved.forEach(entity -> ctx.addOrderId(walletId, entity.getId()));
+        saveViolations(saved, violationsByOrderIndex);
         return saved.size();
+    }
+
+    private void saveViolations(List<OrderJpaEntity> saved, List<RuleViolation> violations) {
+        List<RuleViolationJpaEntity> entities = new ArrayList<>();
+        for (int i = 0; i < saved.size() && i < violations.size(); i++) {
+            RuleViolation violation = violations.get(i);
+            if (violation != null) {
+                entities.add(
+                        RuleViolationJpaEntity.fromOrderViolation(saved.get(i).getId(), violation));
+            }
+        }
+        ruleViolationRepository.saveAll(entities);
     }
 
     private int seedAllHoldings(SeedContext ctx) {
@@ -251,7 +255,7 @@ class TradingDataSeeder {
     }
 
     private int seedHoldingsForAllWallets(SeedContext ctx) {
-        List<HoldingJpaEntity> holdings = new ArrayList<>();
+        List<PositionJpaEntity> holdings = new ArrayList<>();
 
         for (var entry : ctx.walletIdsByRoundId.entrySet()) {
             for (Long walletId : entry.getValue()) {
@@ -279,29 +283,30 @@ class TradingDataSeeder {
                         BigDecimal buyAmount =
                                 price.multiply(qty).setScale(8, RoundingMode.HALF_UP);
 
-                        HoldingJpaEntity entity = new HoldingJpaEntity(walletId, coinId);
-                        Holding holding =
-                                Holding.builder()
+                        PositionJpaEntity entity = new PositionJpaEntity(walletId, coinId);
+                        Position position =
+                                Position.builder()
                                         .walletId(walletId)
                                         .coinId(coinId)
-                                        .avgBuyPrice(price)
-                                        .totalQuantity(qty)
-                                        .totalBuyAmount(buyAmount)
+                                        .holding(
+                                                new Holding(
+                                                        Price.of(price),
+                                                        Quantity.of(qty),
+                                                        Money.of(buyAmount)))
                                         .averagingDownCount(random.nextInt(0, 3))
                                         .build();
-                        entity.updateFrom(holding);
+                        entity.updateFrom(position);
                         holdings.add(entity);
                     }
                 }
             }
         }
 
-        holdingRepository.saveAll(holdings);
+        positionRepository.saveAll(holdings);
         return holdings.size();
     }
 
     private void seedOrderFillFailures(SeedContext ctx) {
-        // 정도지의 주문에 대한 체결 실패 기록
         Long userId = ctx.userIdByNickname.get("정도지");
         if (userId == null) return;
 

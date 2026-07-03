@@ -2,126 +2,110 @@ package ksh.tryptobackend.trading.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import ksh.tryptobackend.common.domain.model.AggregateRoot;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderCommand;
+import ksh.tryptobackend.trading.domain.event.OrderCanceledEvent;
+import ksh.tryptobackend.trading.domain.event.OrderFilledEvent;
+import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
+import ksh.tryptobackend.trading.domain.vo.BalanceChange;
+import ksh.tryptobackend.trading.domain.vo.ExchangeInfo;
 import ksh.tryptobackend.trading.domain.vo.Fee;
-import ksh.tryptobackend.trading.domain.vo.MarketIdentifier;
+import ksh.tryptobackend.trading.domain.vo.Fill;
+import ksh.tryptobackend.trading.domain.vo.MarketInfo;
+import ksh.tryptobackend.trading.domain.vo.Money;
+import ksh.tryptobackend.trading.domain.vo.OrderMode;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
+import ksh.tryptobackend.trading.domain.vo.Price;
 import ksh.tryptobackend.trading.domain.vo.Quantity;
 import ksh.tryptobackend.trading.domain.vo.Side;
-import ksh.tryptobackend.trading.domain.vo.TradingContext;
-import ksh.tryptobackend.trading.domain.vo.TradingVenue;
+import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder(access = lombok.AccessLevel.PRIVATE)
-public class Order {
+public class Order extends AggregateRoot {
 
-    private final Long id;
+    private Long id;
     private final String idempotencyKey;
-    private final Long userId;
     private final Long walletId;
     private final Long exchangeCoinId;
-    private final Long coinId;
-    private final Long baseCoinId;
-    private final MarketIdentifier marketIdentifier;
     private final Side side;
     private final OrderType orderType;
-    private BigDecimal amount;
     private final Quantity quantity;
-    private final BigDecimal price;
-    private BigDecimal filledPrice;
-    private Fee fee;
-    private OrderStatus status;
+    private final Price limitPrice;
+    private final BigDecimal feeRate;
     private final LocalDateTime createdAt;
-    private LocalDateTime filledAt;
-    @Builder.Default private final List<RuleViolation> violations = new ArrayList<>();
 
-    public static Order create(PlaceOrderCommand cmd, TradingContext ctx) {
-        return switch (cmd.orderType()) {
-            case MARKET ->
-                    cmd.side() == Side.BUY
-                            ? createMarketBuyOrder(cmd, ctx)
-                            : createMarketSellOrder(cmd, ctx);
-            case LIMIT ->
-                    cmd.side() == Side.BUY
-                            ? createLimitBuyOrder(cmd, ctx)
-                            : createLimitSellOrder(cmd, ctx);
-        };
+    private Fill fill;
+    private OrderStatus status;
+
+    public static Order create(PlaceOrderCommand cmd, MarketInfo marketInfo, LocalDateTime now) {
+        ExchangeInfo exchange = marketInfo.exchangeInfo();
+        Price referencePrice = resolveReferencePrice(cmd, marketInfo);
+        Quantity quantity = resolveQuantity(cmd, referencePrice, exchange);
+        Fill fill = resolveFill(cmd, quantity, referencePrice, exchange, now);
+
+        Order order =
+                Order.builder()
+                        .idempotencyKey(cmd.idempotencyKey())
+                        .walletId(cmd.walletId())
+                        .exchangeCoinId(cmd.exchangeCoinId())
+                        .side(cmd.side())
+                        .orderType(cmd.orderType())
+                        .quantity(quantity)
+                        .limitPrice(cmd.orderType() == OrderType.LIMIT ? referencePrice : null)
+                        .feeRate(exchange.feeRate())
+                        .fill(fill)
+                        .status(fill != null ? OrderStatus.FILLED : OrderStatus.PENDING)
+                        .createdAt(now)
+                        .build();
+
+        order.registerEvent(OrderPlacedEvent.of(order, marketInfo));
+        if (order.isFilled()) {
+            order.registerEvent(OrderFilledEvent.of(order, marketInfo));
+        }
+        return order;
     }
 
-    public static Order reconstitute(
-            Long id,
-            String idempotencyKey,
-            Long userId,
-            Long walletId,
-            Long exchangeCoinId,
-            Long coinId,
-            Long baseCoinId,
-            MarketIdentifier marketIdentifier,
-            Side side,
-            OrderType orderType,
-            BigDecimal amount,
-            Quantity quantity,
-            BigDecimal price,
-            BigDecimal filledPrice,
-            Fee fee,
-            OrderStatus status,
-            LocalDateTime createdAt,
-            LocalDateTime filledAt,
-            List<RuleViolation> violations) {
-        return Order.builder()
-                .id(id)
-                .idempotencyKey(idempotencyKey)
-                .userId(userId)
-                .walletId(walletId)
-                .exchangeCoinId(exchangeCoinId)
-                .coinId(coinId)
-                .baseCoinId(baseCoinId)
-                .marketIdentifier(marketIdentifier)
-                .side(side)
-                .orderType(orderType)
-                .amount(amount)
-                .quantity(quantity)
-                .price(price)
-                .filledPrice(filledPrice)
-                .fee(fee)
-                .status(status)
-                .createdAt(createdAt)
-                .filledAt(filledAt)
-                .violations(violations != null ? new ArrayList<>(violations) : new ArrayList<>())
-                .build();
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new IllegalStateException("이미 식별자가 부여된 주문입니다 id=" + this.id);
+        }
+        this.id = id;
     }
 
-    public void addViolations(List<RuleViolation> newViolations) {
-        this.violations.addAll(newViolations);
-    }
-
-    public void fill(LocalDateTime now) {
+    public void fill(BigDecimal executionPrice, LocalDateTime now) {
         if (!isPending()) {
             throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
         }
+        Price price = Price.of(executionPrice);
+        Money feeAmount = Fee.calculate(price.times(quantity), feeRate).amount();
+        this.fill = new Fill(price, feeAmount, now);
         this.status = OrderStatus.FILLED;
-        this.filledAt = now;
-    }
-
-    public boolean isPending() {
-        return this.status == OrderStatus.PENDING;
     }
 
     public void cancel() {
-        if (this.status == OrderStatus.CANCELLED) {
+        if (isAlreadyCancelled()) {
             return;
         }
         if (!isCancellable()) {
             throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
         }
         this.status = OrderStatus.CANCELLED;
+        registerEvent(new OrderCanceledEvent(this));
+    }
+
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
+
+    public boolean isFilled() {
+        return this.status == OrderStatus.FILLED;
     }
 
     public boolean isMarketOrder() {
@@ -136,20 +120,8 @@ public class Order {
         return this.side == Side.BUY;
     }
 
-    public boolean shouldForwardToEngine() {
+    public boolean awaitsMatching() {
         return isLimitOrder() && isPending();
-    }
-
-    public Long getLockedCoinId() {
-        return isBuyOrder() ? baseCoinId : coinId;
-    }
-
-    public BigDecimal getLockedAmount() {
-        return isBuyOrder() ? getSettlementDebit() : quantity.value();
-    }
-
-    public boolean isOwnedBy(Long walletId) {
-        return this.walletId.equals(walletId);
     }
 
     public boolean isCancellable() {
@@ -160,128 +132,121 @@ public class Order {
         return this.status == OrderStatus.CANCELLED;
     }
 
-    public BigDecimal getFilledAmount() {
-        return quantity.value().multiply(filledPrice != null ? filledPrice : price);
+    public boolean isOwnedBy(Long walletId) {
+        return this.walletId.equals(walletId);
     }
 
-    public BigDecimal getSettlementDebit() {
-        return getFilledAmount().add(fee.amount());
+    public BigDecimal lockAmount() {
+        if (!isBuyOrder()) return quantity.value();
+        return isMarketOrder() ? getSettlementDebit().value() : getReservedDebit().value();
     }
 
-    public BigDecimal getSettlementCredit() {
-        return getFilledAmount().subtract(fee.amount());
+    public Money getFilledAmount() {
+        return fill != null ? fill.filledPrice().times(quantity) : null;
     }
 
-    public void validateSufficientBalance(BigDecimal available) {
-        BigDecimal required = side == Side.BUY ? getSettlementDebit() : quantity.value();
-        if (required.compareTo(available) > 0) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+    public Money getReservedDebit() {
+        Money notional = limitPrice.times(quantity);
+        return notional.plus(Fee.calculate(notional, feeRate).amount());
+    }
+
+    public Money getSettlementDebit() {
+        return getFilledAmount().plus(fill.fee());
+    }
+
+    public Money getSettlementCredit() {
+        return getFilledAmount().minus(fill.fee());
+    }
+
+    public BalanceChange planReservation(TradingPair pair) {
+        return new BalanceChange.Lock(pair.lockedCoinId(side), lockAmount());
+    }
+
+    public List<BalanceChange> planSettlementChanges(TradingPair pair) {
+        return OrderMode.of(orderType, side).planSettlementChanges(this, pair);
+    }
+
+    public BalanceChange planCancellationRefund(TradingPair pair) {
+        return new BalanceChange.Unlock(pair.lockedCoinId(side), lockAmount());
+    }
+
+    public Price getFilledPrice() {
+        return fill != null ? fill.filledPrice() : null;
+    }
+
+    public Fee getFee() {
+        return fill != null ? Fee.of(fill.fee(), feeRate) : null;
+    }
+
+    public LocalDateTime getFilledAt() {
+        return fill != null ? fill.filledAt() : null;
+    }
+
+    private static Price resolveReferencePrice(PlaceOrderCommand cmd, MarketInfo marketInfo) {
+        if (cmd.orderType() == OrderType.MARKET) {
+            return marketInfo.currentPrice();
         }
-    }
-
-    private static Order createMarketBuyOrder(PlaceOrderCommand cmd, TradingContext ctx) {
-        ctx.venue().validateOrderAmount(cmd.amount());
-        Quantity quantity = Quantity.fromAmountAndPrice(cmd.amount(), ctx.currentPrice());
-        BigDecimal filledAmount = quantity.value().multiply(ctx.currentPrice());
-        Fee fee = ctx.venue().calculateFee(filledAmount);
-
-        return createOrder(
-                cmd,
-                ctx,
-                Side.BUY,
-                OrderType.MARKET,
-                filledAmount,
-                quantity,
-                null,
-                ctx.currentPrice(),
-                fee);
-    }
-
-    private static Order createMarketSellOrder(PlaceOrderCommand cmd, TradingContext ctx) {
-        BigDecimal filledAmount = cmd.amount().multiply(ctx.currentPrice());
-        Fee fee = ctx.venue().calculateFee(filledAmount);
-
-        return createOrder(
-                cmd,
-                ctx,
-                Side.SELL,
-                OrderType.MARKET,
-                filledAmount,
-                new Quantity(cmd.amount()),
-                null,
-                ctx.currentPrice(),
-                fee);
-    }
-
-    private static Order createLimitBuyOrder(PlaceOrderCommand cmd, TradingContext ctx) {
         if (cmd.price() == null) {
             throw new CustomException(ErrorCode.PRICE_REQUIRED_FOR_LIMIT);
         }
-        ctx.venue().validateOrderAmount(cmd.amount());
-        Quantity quantity = Quantity.fromAmountAndPrice(cmd.amount(), cmd.price());
-        BigDecimal filledAmount = quantity.value().multiply(cmd.price());
-        Fee fee = ctx.venue().calculateFee(filledAmount);
-
-        return createOrder(
-                cmd,
-                ctx,
-                Side.BUY,
-                OrderType.LIMIT,
-                filledAmount,
-                quantity,
-                cmd.price(),
-                cmd.price(),
-                fee);
+        return Price.of(cmd.price());
     }
 
-    private static Order createLimitSellOrder(PlaceOrderCommand cmd, TradingContext ctx) {
-        if (cmd.price() == null) {
-            throw new CustomException(ErrorCode.PRICE_REQUIRED_FOR_LIMIT);
+    private static Quantity resolveQuantity(
+            PlaceOrderCommand cmd, Price referencePrice, ExchangeInfo exchange) {
+        if (cmd.side() == Side.SELL) {
+            return Quantity.of(cmd.amount());
         }
-        BigDecimal filledAmount = cmd.amount().multiply(cmd.price());
-        Fee fee = ctx.venue().calculateFee(filledAmount);
-
-        return createOrder(
-                cmd,
-                ctx,
-                Side.SELL,
-                OrderType.LIMIT,
-                filledAmount,
-                new Quantity(cmd.amount()),
-                cmd.price(),
-                cmd.price(),
-                fee);
+        exchange.validateOrderAmount(cmd.amount());
+        return Quantity.from(cmd.amount(), referencePrice);
     }
 
-    private static Order createOrder(
+    private static Fill resolveFill(
             PlaceOrderCommand cmd,
-            TradingContext ctx,
+            Quantity quantity,
+            Price referencePrice,
+            ExchangeInfo exchange,
+            LocalDateTime now) {
+        if (cmd.orderType() == OrderType.LIMIT) {
+            return null;
+        }
+        Fee fee = exchange.calculateFee(referencePrice.times(quantity));
+        return new Fill(referencePrice, fee.amount(), now);
+    }
+
+    public static Order reconstitute(
+            Long id,
+            String idempotencyKey,
+            Long walletId,
+            Long exchangeCoinId,
             Side side,
             OrderType orderType,
-            BigDecimal amount,
             Quantity quantity,
-            BigDecimal price,
+            BigDecimal limitPrice,
+            BigDecimal feeRate,
             BigDecimal filledPrice,
-            Fee fee) {
-        TradingVenue venue = ctx.venue();
+            BigDecimal feeAmount,
+            OrderStatus status,
+            LocalDateTime createdAt,
+            LocalDateTime filledAt) {
+        Price price = (limitPrice != null) ? Price.of(limitPrice) : null;
+        Fill fill =
+                (filledPrice != null)
+                        ? new Fill(Price.of(filledPrice), Money.of(feeAmount), filledAt)
+                        : null;
         return Order.builder()
-                .idempotencyKey(cmd.idempotencyKey())
-                .userId(ctx.userId())
-                .walletId(cmd.walletId())
-                .exchangeCoinId(cmd.exchangeCoinId())
-                .coinId(ctx.coinId())
-                .baseCoinId(venue.baseCurrencyCoinId())
-                .marketIdentifier(ctx.marketIdentifier())
+                .id(id)
+                .idempotencyKey(idempotencyKey)
+                .walletId(walletId)
+                .exchangeCoinId(exchangeCoinId)
                 .side(side)
                 .orderType(orderType)
-                .amount(amount)
                 .quantity(quantity)
-                .price(price)
-                .filledPrice(filledPrice)
-                .fee(fee)
-                .status(orderType == OrderType.MARKET ? OrderStatus.FILLED : OrderStatus.PENDING)
-                .createdAt(ctx.now())
-                .filledAt(orderType == OrderType.MARKET ? ctx.now() : null)
+                .limitPrice(price)
+                .feeRate(feeRate)
+                .fill(fill)
+                .status(status)
+                .createdAt(createdAt)
                 .build();
     }
 }

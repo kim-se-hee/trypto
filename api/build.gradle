@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.diffplug.spotless' version '7.0.2'
+    id 'checkstyle'
 }
 
 group = 'ksh'
@@ -21,14 +22,28 @@ configurations {
     }
 }
 
+sourceSets {
+    checkstyleRules {
+        java {
+            srcDir 'config/checkstyle/java'
+        }
+    }
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    checkstyleRulesImplementation 'com.puppycrawl.tools:checkstyle:10.20.1'
+    checkstyle 'com.puppycrawl.tools:checkstyle:10.20.1'
+    checkstyle sourceSets.checkstyleRules.output
+
     implementation 'org.springframework.boot:spring-boot-h2console'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework:spring-aspects'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
@@ -91,4 +106,28 @@ spotless {
         endWithNewline()
         toggleOffOn()
     }
+}
+
+checkstyle {
+    toolVersion = '10.20.1'
+    configFile = file("$projectDir/config/checkstyle/checkstyle.xml")
+}
+
+tasks.named('checkstyleMain') {
+    include '**/application/service/**'
+}
+
+tasks.named('checkstyleTest') {
+    enabled = false
+}
+
+tasks.register('checkstyleNoComments', Checkstyle) {
+    source 'src/main/java'
+    include '**/*.java'
+    classpath = files()
+    configFile = file("$projectDir/config/checkstyle/no-comments.xml")
+}
+
+tasks.named('check') {
+    dependsOn 'checkstyleNoComments'
 }

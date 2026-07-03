@@ -73,7 +73,6 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
 
         Map<String, String> symbolToName = new LinkedHashMap<>();
 
-        // 해외 거래소 먼저 처리
         marketMetaMap.forEach(
                 (exchangeName, entries) -> {
                     if (!domesticExchanges.contains(exchangeName)) {
@@ -83,7 +82,6 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
                     }
                 });
 
-        // 국내 거래소로 덮어쓰기 (한국어명 우선)
         marketMetaMap.forEach(
                 (exchangeName, entries) -> {
                     if (domesticExchanges.contains(exchangeName)) {
@@ -93,7 +91,6 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
                     }
                 });
 
-        // quote 심볼 추가 (KRW, USDT 등)
         marketMetaMap.values().stream()
                 .flatMap(List::stream)
                 .map(MarketMetaEntry::quote)
