@@ -25,7 +25,6 @@ class TransferDataSeeder {
     void seed(SeedContext ctx) {
         List<TransferJpaEntity> transfers = new ArrayList<>();
 
-        // 최리플 - 3개 거래소 간 송금
         transfers.addAll(createTransfersForUser(ctx, "최리플", "BTC"));
         transfers.addAll(createTransfersForUser(ctx, "최리플", "XRP"));
 

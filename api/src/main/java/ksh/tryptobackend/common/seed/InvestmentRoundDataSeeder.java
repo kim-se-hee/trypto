@@ -46,7 +46,6 @@ class InvestmentRoundDataSeeder {
         LocalDateTime monthAgo = now.minusDays(30);
         List<InvestmentRoundJpaEntity> rounds = new ArrayList<>();
 
-        // 1. 김비트 - 고수익, 룰 위반 다수
         rounds.add(
                 createRound(
                         ctx,
@@ -65,7 +64,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.OVERTRADING_LIMIT, new BigDecimal("10"))),
                         List.of()));
 
-        // 2. 이더리움 - 안정적, 룰 위반 없음
         rounds.add(
                 createRound(
                         ctx,
@@ -82,7 +80,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.PROFIT_TAKE, new BigDecimal("10"))),
                         List.of()));
 
-        // 3. 박솔라나 - 해외 코인
         rounds.add(
                 createRound(
                         ctx,
@@ -99,7 +96,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"))),
                         List.of()));
 
-        // 4. 최리플 - 3개 거래소
         rounds.add(
                 createRound(
                         ctx,
@@ -117,7 +113,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.OVERTRADING_LIMIT, new BigDecimal("15"))),
                         List.of()));
 
-        // 5. 정도지 - 파산
         rounds.add(
                 createRound(
                         ctx,
@@ -132,7 +127,6 @@ class InvestmentRoundDataSeeder {
                         List.of(rule(RuleType.LOSS_CUT, new BigDecimal("-20"))),
                         List.of()));
 
-        // 6. 한에이다 - 최근 시작, 소액
         rounds.add(
                 createRound(
                         ctx,
@@ -149,7 +143,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.PROFIT_TAKE, new BigDecimal("10"))),
                         List.of()));
 
-        // 7. 강링크 - 긴급충전 사용
         Long linkExchangeId = ctx.getExchangeId("BITHUMB");
         List<EmergencyFunding> fundings = new ArrayList<>();
         if (linkExchangeId != null) {
@@ -177,7 +170,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("2"))),
                         fundings));
 
-        // 8. 윤닷 - 종료된 라운드 + 새 라운드
         rounds.add(
                 createRound(
                         ctx,
@@ -208,7 +200,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.CHASE_BUY_BAN, new BigDecimal("10"))),
                         List.of()));
 
-        // 9. 송아톰 - 룰 위반 전문
         rounds.add(
                 createRound(
                         ctx,
@@ -228,7 +219,6 @@ class InvestmentRoundDataSeeder {
                                 rule(RuleType.OVERTRADING_LIMIT, new BigDecimal("5"))),
                         List.of()));
 
-        // 10. 임앱트 - 고수
         rounds.add(
                 createRound(
                         ctx,

@@ -80,9 +80,6 @@ public class LiveTickerEventListener {
         if (responses.isEmpty() || exchangeId == null) {
             return;
         }
-        // batch 안에서 가장 오래된 collector publish 시각을 헤더에 실어 보낸다.
-        // OutboundLatencyInterceptor 가 socket write 직전에 이 헤더를 읽어
-        // "수집기 publish → api outbound 직전" e2e 시간을 Timer 로 기록한다 (worst-case).
         Map<String, Object> headers = Map.of(PUBLISHED_AT_MS_HEADER, earliestTimestamp);
         messagingTemplate.convertAndSend(TOPIC_PREFIX + exchangeId, responses, headers);
     }

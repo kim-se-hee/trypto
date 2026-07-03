@@ -78,7 +78,6 @@ class TradingDataSeeder {
         LocalDateTime now = LocalDateTime.now();
         int count = 0;
 
-        // 김비트 - 다양한 코인, 빈번 거래, 룰 위반
         count +=
                 createOrdersForUser(
                         ctx,
@@ -89,39 +88,30 @@ class TradingDataSeeder {
                         3,
                         now);
 
-        // 이더리움 - 소수 코인, 안정적
         count +=
                 createOrdersForUser(ctx, "이더리움", "BITHUMB", new String[] {"ETH", "BTC"}, 5, 0, now);
 
-        // 박솔라나 - 해외 코인
         count +=
                 createOrdersForUser(
                         ctx, "박솔라나", "BINANCE", new String[] {"SOL", "APT", "ATOM"}, 8, 0, now);
 
-        // 최리플 - 3개 거래소
         count += createOrdersForUser(ctx, "최리플", "UPBIT", new String[] {"XRP", "BTC"}, 5, 0, now);
         count += createOrdersForUser(ctx, "최리플", "BITHUMB", new String[] {"XRP", "ETH"}, 4, 0, now);
         count += createOrdersForUser(ctx, "최리플", "BINANCE", new String[] {"XRP", "SOL"}, 4, 0, now);
 
-        // 정도지 - 파산
         count += createOrdersForUser(ctx, "정도지", "UPBIT", new String[] {"DOGE"}, 10, 2, now);
 
-        // 한에이다 - 소액 1~2건
         count += createOrdersForUser(ctx, "한에이다", "UPBIT", new String[] {"ADA"}, 2, 0, now);
 
-        // 강링크 - 손실 후 회복
         count +=
                 createOrdersForUser(ctx, "강링크", "BITHUMB", new String[] {"LINK", "BTC"}, 8, 1, now);
 
-        // 윤닷
         count += createOrdersForUser(ctx, "윤닷", "UPBIT", new String[] {"DOT", "ETH"}, 6, 0, now);
 
-        // 송아톰 - 룰 위반 전문
         count +=
                 createOrdersForUser(
                         ctx, "송아톰", "UPBIT", new String[] {"ATOM", "BTC", "ETH"}, 12, 5, now);
 
-        // 임앱트 - 고수
         count +=
                 createOrdersForUser(
                         ctx,
@@ -317,7 +307,6 @@ class TradingDataSeeder {
     }
 
     private void seedOrderFillFailures(SeedContext ctx) {
-        // 정도지의 주문에 대한 체결 실패 기록
         Long userId = ctx.userIdByNickname.get("정도지");
         if (userId == null) return;
 

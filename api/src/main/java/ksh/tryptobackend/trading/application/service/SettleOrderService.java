@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 체결된 주문을 정산한다 — 잠긴 잔고 소진/환불(wallet)과 보유 포지션 갱신을 한 트랜잭션으로 함께 반영한다. */
 @Service
 @RequiredArgsConstructor
 public class SettleOrderService implements SettleOrderUseCase {

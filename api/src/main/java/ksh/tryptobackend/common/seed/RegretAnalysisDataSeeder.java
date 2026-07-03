@@ -28,10 +28,8 @@ class RegretAnalysisDataSeeder {
     void seed(SeedContext ctx) {
         List<RegretReportJpaEntity> reports = new ArrayList<>();
 
-        // 김비트 - 룰 위반 다수
         reports.addAll(createReports(ctx, "김비트", "UPBIT"));
 
-        // 송아톰 - 룰 위반 전문
         reports.addAll(createReports(ctx, "송아톰", "UPBIT"));
 
         reportRepository.saveAll(reports);
