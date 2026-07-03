@@ -9,17 +9,14 @@
       "WebFetch(*)"
     ]
   },
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
-  },
   "hooks": {
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
-            "command": "[console]::beep(1000, 200)"
+            "command": "[console]::beep(1000, 200)",
+            "shell": "powershell"
           }
         ]
       }
@@ -30,11 +27,18 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
-            "command": "[console]::beep(1500, 200)"
+            "command": "[console]::beep(1500, 200)",
+            "shell": "powershell"
           }
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "disabledMcpjsonServers": [
+    "shadcn",
+    "playwright"
+  ]
 }
