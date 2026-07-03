@@ -49,15 +49,16 @@ public class LiveTickerEventListener {
         Long exchangeId = null;
         long earliestTimestamp = Long.MAX_VALUE;
         for (TickerBatchMessage.Item item : batch.tickers()) {
-            LiveTickerResult resolved = resolveLiveTickerUseCase
-                    .resolve(
-                            batch.exchange(),
-                            item.symbol(),
-                            item.currentPrice(),
-                            item.changeRate(),
-                            item.quoteTurnover(),
-                            item.timestamp())
-                    .orElse(null);
+            LiveTickerResult resolved =
+                    resolveLiveTickerUseCase
+                            .resolve(
+                                    batch.exchange(),
+                                    item.symbol(),
+                                    item.currentPrice(),
+                                    item.changeRate(),
+                                    item.quoteTurnover(),
+                                    item.timestamp())
+                            .orElse(null);
             if (resolved == null) {
                 continue;
             }
@@ -67,13 +68,14 @@ public class LiveTickerEventListener {
             if (resolved.timestamp() != null && resolved.timestamp() < earliestTimestamp) {
                 earliestTimestamp = resolved.timestamp();
             }
-            responses.add(new TickerResponse(
-                    resolved.coinId(),
-                    resolved.symbol(),
-                    resolved.price(),
-                    resolved.changeRate(),
-                    resolved.quoteTurnover(),
-                    resolved.timestamp()));
+            responses.add(
+                    new TickerResponse(
+                            resolved.coinId(),
+                            resolved.symbol(),
+                            resolved.price(),
+                            resolved.changeRate(),
+                            resolved.quoteTurnover(),
+                            resolved.timestamp()));
         }
         if (responses.isEmpty() || exchangeId == null) {
             return;

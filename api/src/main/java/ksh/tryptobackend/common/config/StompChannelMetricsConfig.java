@@ -47,10 +47,7 @@ public class StompChannelMetricsConfig {
                     bean.getClass().getName());
             return;
         }
-        Gauge.builder(
-                        prefix + ".queue.size",
-                        tpe,
-                        e -> e.getThreadPoolExecutor().getQueue().size())
+        Gauge.builder(prefix + ".queue.size", tpe, e -> e.getThreadPoolExecutor().getQueue().size())
                 .description("STOMP 채널 executor 의 대기 큐 크기")
                 .register(meterRegistry);
         Gauge.builder(prefix + ".active", tpe, ThreadPoolTaskExecutor::getActiveCount)

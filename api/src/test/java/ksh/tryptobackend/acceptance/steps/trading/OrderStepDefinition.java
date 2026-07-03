@@ -2,7 +2,6 @@ package ksh.tryptobackend.acceptance.steps.trading;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -14,9 +13,7 @@ import ksh.tryptobackend.acceptance.mock.MockHoldingAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
-import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import ksh.tryptobackend.trading.adapter.out.repository.OrderJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
@@ -119,8 +116,7 @@ public class OrderStepDefinition {
             jdbcTemplate.update(
                     "INSERT INTO investment_round (round_id, version, user_id, round_number,"
                         + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
-                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE',"
-                        + " NOW())",
+                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', NOW())",
                     ROUND_ID,
                     USER_ID);
         }
