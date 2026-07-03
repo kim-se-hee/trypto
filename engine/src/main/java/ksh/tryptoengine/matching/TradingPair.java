@@ -1,4 +1,3 @@
 package ksh.tryptoengine.matching;
 
-public record TradingPair(Long exchangeCoinId) {
-}
+public record TradingPair(Long exchangeCoinId) {}

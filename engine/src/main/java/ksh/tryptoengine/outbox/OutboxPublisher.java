@@ -1,13 +1,6 @@
 package ksh.tryptoengine.outbox;
 
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -18,6 +11,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -29,20 +28,22 @@ public class OutboxPublisher {
     private final ExecutorService pool;
 
     public OutboxPublisher(
-        RabbitTemplate rabbit,
-        JdbcTemplate jdbc,
-        @Value("${engine.outbox.fanout-exchange}") String fanoutExchange,
-        @Value("${engine.outbox.publisher-threads:4}") int threads
-    ) {
+            RabbitTemplate rabbit,
+            JdbcTemplate jdbc,
+            @Value("${engine.outbox.fanout-exchange}") String fanoutExchange,
+            @Value("${engine.outbox.publisher-threads:4}") int threads) {
         this.rabbit = rabbit;
         this.jdbc = jdbc;
         this.fanoutExchange = fanoutExchange;
         AtomicInteger seq = new AtomicInteger();
-        this.pool = Executors.newFixedThreadPool(threads, r -> {
-            Thread t = new Thread(r, "outbox-publisher-" + seq.incrementAndGet());
-            t.setDaemon(false);
-            return t;
-        });
+        this.pool =
+                Executors.newFixedThreadPool(
+                        threads,
+                        r -> {
+                            Thread t = new Thread(r, "outbox-publisher-" + seq.incrementAndGet());
+                            t.setDaemon(false);
+                            return t;
+                        });
     }
 
     public void publishAsync(List<Long> ids, List<OrderFilledEvent> events) {
@@ -66,22 +67,24 @@ public class OutboxPublisher {
         try {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             jdbc.batchUpdate(
-                "UPDATE outbox SET sent_at = ? WHERE id = ? AND sent_at IS NULL",
-                new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setTimestamp(1, now);
-                        ps.setLong(2, sent.get(i));
-                    }
+                    "UPDATE outbox SET sent_at = ? WHERE id = ? AND sent_at IS NULL",
+                    new BatchPreparedStatementSetter() {
+                        @Override
+                        public void setValues(PreparedStatement ps, int i) throws SQLException {
+                            ps.setTimestamp(1, now);
+                            ps.setLong(2, sent.get(i));
+                        }
 
-                    @Override
-                    public int getBatchSize() {
-                        return sent.size();
-                    }
-                }
-            );
+                        @Override
+                        public int getBatchSize() {
+                            return sent.size();
+                        }
+                    });
         } catch (Exception e) {
-            log.warn("hook sent_at update failed size={}, polling will retry remaining", sent.size(), e);
+            log.warn(
+                    "hook sent_at update failed size={}, polling will retry remaining",
+                    sent.size(),
+                    e);
         }
     }
 

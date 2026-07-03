@@ -2,16 +2,14 @@ package ksh.tryptoengine.dbwriter;
 
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PreDestroy;
-import ksh.tryptoengine.dbwriter.FillCommand;
-import ksh.tryptoengine.metrics.EngineMetrics;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import ksh.tryptoengine.metrics.EngineMetrics;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component

@@ -1,5 +1,10 @@
 package ksh.tryptoengine.matching;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -14,18 +19,14 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
-import java.util.random.RandomGenerator;
-import java.util.random.RandomGeneratorFactory;
-
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 2, time = 2)
 @Measurement(iterations = 3, time = 3)
-@Fork(value = 1, jvmArgsAppend = {"-Xms4g", "-Xmx10g"})
+@Fork(
+        value = 1,
+        jvmArgsAppend = {"-Xms4g", "-Xmx10g"})
 public class MixedWorkloadBenchmark {
 
     private static final int PRICE_SIZE = 1024;
@@ -107,9 +108,8 @@ public class MixedWorkloadBenchmark {
             case 0 -> {
                 long id = nextOrderId++;
                 boolean bid = (id & 1L) == 0;
-                BigDecimal price = bid
-                    ? bidPrices[(int) id & PRICE_MASK]
-                    : askPrices[(int) id & PRICE_MASK];
+                BigDecimal price =
+                        bid ? bidPrices[(int) id & PRICE_MASK] : askPrices[(int) id & PRICE_MASK];
                 if (book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price))) {
                     pushActive(id);
                 }
