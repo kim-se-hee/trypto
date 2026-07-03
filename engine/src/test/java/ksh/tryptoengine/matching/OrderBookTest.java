@@ -1,12 +1,11 @@
 package ksh.tryptoengine.matching;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class OrderBookTest {
 
@@ -65,11 +64,17 @@ class OrderBookTest {
 
     private OrderDetail order(Long id, Side side, String price, String qty) {
         return new OrderDetail(
-            id, 10L, 20L, side, pair, 2L, 1L,
-            new BigDecimal(price), new BigDecimal(qty),
-            new BigDecimal(qty).multiply(new BigDecimal(price)),
-            side == Side.BUY ? 1L : 2L,
-            LocalDateTime.now()
-        );
+                id,
+                20L,
+                side,
+                pair,
+                2L,
+                1L,
+                new BigDecimal(price),
+                new BigDecimal(qty),
+                new BigDecimal("0.0005"),
+                new BigDecimal(qty).multiply(new BigDecimal(price)),
+                side == Side.BUY ? 1L : 2L,
+                LocalDateTime.now());
     }
 }
