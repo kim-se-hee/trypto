@@ -45,7 +45,7 @@ const QUICK_RATIO_BUTTONS = [10, 25, 50, 100];
 const STATUS_STYLES: Record<OrderStatus, { text: string; className: string }> = {
   FILLED: { text: "체결", className: "bg-positive/15 text-positive" },
   PENDING: { text: "대기", className: "bg-warning/15 text-warning" },
-  CANCELLED: { text: "취소", className: "bg-muted text-muted-foreground" },
+  CANCELED: { text: "취소", className: "bg-muted text-muted-foreground" },
   FAILED: { text: "실패", className: "bg-destructive/15 text-destructive" },
 };
 
