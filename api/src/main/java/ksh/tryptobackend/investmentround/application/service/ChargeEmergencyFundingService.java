@@ -2,10 +2,10 @@ package ksh.tryptobackend.investmentround.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import ksh.tryptobackend.common.domain.vo.IdempotencyResourceType;
+import ksh.tryptobackend.common.idempotency.IdempotencyKeyCommandPort;
+import ksh.tryptobackend.common.idempotency.IdempotencyResourceType;
 import ksh.tryptobackend.investmentround.application.port.in.ChargeEmergencyFundingUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.ChargeEmergencyFundingCommand;
-import ksh.tryptobackend.investmentround.application.port.out.IdempotencyKeyCommandPort;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.MarketDataQueryPort;
@@ -32,8 +32,9 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
     @Transactional
     public InvestmentRound charge(ChargeEmergencyFundingCommand command) {
         LocalDateTime now = LocalDateTime.now(clock);
+        String idempotencyKey = command.idempotencyKey().toString();
         idempotencyKeyCommandPort.preempt(
-                command.idempotencyKey(), IdempotencyResourceType.EMERGENCY_FUNDING, now);
+                idempotencyKey, IdempotencyResourceType.EMERGENCY_FUNDING, now);
 
         InvestmentRound round = investmentRoundQueryPort.getByIdWithLock(command.roundId());
         round.validateOwnedBy(command.userId());
@@ -44,7 +45,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
         walletBalanceService.addAvailable(walletId, baseCurrencyCoinId, command.amount());
 
         InvestmentRound saved = investmentRoundCommandPort.save(round);
-        idempotencyKeyCommandPort.linkResource(command.idempotencyKey(), saved.latestFundingId());
+        idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.latestFundingId());
         return saved;
     }
 }

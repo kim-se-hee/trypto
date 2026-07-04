@@ -1,4 +1,4 @@
-package ksh.tryptobackend.investmentround.adapter.out.entity;
+package ksh.tryptobackend.common.idempotency;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,13 +10,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
-import java.util.UUID;
-import ksh.tryptobackend.common.domain.vo.IdempotencyResourceType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(
@@ -35,9 +31,8 @@ public class IdempotencyKeyJpaEntity {
     @Column(name = "idempotency_key_id")
     private Long id;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "idempotency_key", nullable = false, length = 36)
-    private UUID idempotencyKey;
+    @Column(name = "idempotency_key", nullable = false, length = 64)
+    private String idempotencyKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "resource_type", nullable = false, length = 40)
@@ -50,7 +45,7 @@ public class IdempotencyKeyJpaEntity {
     private LocalDateTime createdAt;
 
     public static IdempotencyKeyJpaEntity preempt(
-            UUID idempotencyKey, IdempotencyResourceType resourceType, LocalDateTime now) {
+            String idempotencyKey, IdempotencyResourceType resourceType, LocalDateTime now) {
         IdempotencyKeyJpaEntity entity = new IdempotencyKeyJpaEntity();
         entity.idempotencyKey = idempotencyKey;
         entity.resourceType = resourceType;
