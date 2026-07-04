@@ -141,7 +141,7 @@ erDiagram
         number filled_price "실제 체결가 (nullable)"
         number fee "수수료 (nullable)"
         number fee_rate "수수료율"
-        string status "FILLED PENDING CANCELLED FAILED"
+        string status "FILLED PENDING CANCELED FAILED"
         datetime created_at "주문 시각"
         datetime filled_at "체결 시각 (nullable)"
     }
