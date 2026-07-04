@@ -1,6 +1,6 @@
-package ksh.tryptobackend.investmentround.adapter.out.repository;
+package ksh.tryptobackend.investmentround.adapter.out.persistence.repository;
 
-import ksh.tryptobackend.investmentround.adapter.out.entity.EmergencyFundingJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.EmergencyFundingJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EmergencyFundingJpaRepository

@@ -1,9 +1,9 @@
-package ksh.tryptobackend.investmentround.adapter.out.repository;
+package ksh.tryptobackend.investmentround.adapter.out.persistence.repository;
 
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
-import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

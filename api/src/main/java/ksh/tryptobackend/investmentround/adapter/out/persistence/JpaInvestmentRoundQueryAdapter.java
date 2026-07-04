@@ -1,11 +1,11 @@
-package ksh.tryptobackend.investmentround.adapter.out;
+package ksh.tryptobackend.investmentround.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
-import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRoundJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
-public class InvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class JpaInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final InvestmentRoundJpaRepository repository;
 

@@ -1,15 +1,15 @@
-package ksh.tryptobackend.investmentround.adapter.out;
+package ksh.tryptobackend.investmentround.adapter.out.persistence;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
-import ksh.tryptobackend.investmentround.adapter.out.entity.QEmergencyFundingJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.QEmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EmergencyFundingQueryAdapter implements EmergencyFundingQueryPort {
+public class JpaEmergencyFundingQueryAdapter implements EmergencyFundingQueryPort {
 
     private final JPAQueryFactory queryFactory;
 

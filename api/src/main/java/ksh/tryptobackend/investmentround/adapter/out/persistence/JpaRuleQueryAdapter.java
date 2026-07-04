@@ -1,8 +1,8 @@
-package ksh.tryptobackend.investmentround.adapter.out;
+package ksh.tryptobackend.investmentround.adapter.out.persistence;
 
 import java.util.List;
-import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRuleJpaEntity;
-import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRuleJpaRepository;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRuleJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRuleJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.RuleQueryPort;
 import ksh.tryptobackend.investmentround.domain.model.Rule;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RuleQueryAdapter implements RuleQueryPort {
+public class JpaRuleQueryAdapter implements RuleQueryPort {
 
     private final InvestmentRuleJpaRepository repository;
 

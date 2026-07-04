@@ -1,4 +1,4 @@
-package ksh.tryptobackend.investmentround.adapter.out.entity;
+package ksh.tryptobackend.investmentround.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

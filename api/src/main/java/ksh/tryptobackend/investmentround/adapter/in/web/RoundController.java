@@ -1,4 +1,4 @@
-package ksh.tryptobackend.investmentround.adapter.in;
+package ksh.tryptobackend.investmentround.adapter.in.web;
 
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;

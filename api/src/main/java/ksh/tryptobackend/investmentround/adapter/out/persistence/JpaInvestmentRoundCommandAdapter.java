@@ -1,9 +1,9 @@
-package ksh.tryptobackend.investmentround.adapter.out;
+package ksh.tryptobackend.investmentround.adapter.out.persistence;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
-import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRoundJpaEntity;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class InvestmentRoundCommandAdapter implements InvestmentRoundCommandPort {
+public class JpaInvestmentRoundCommandAdapter implements InvestmentRoundCommandPort {
 
     private final InvestmentRoundJpaRepository repository;
 
