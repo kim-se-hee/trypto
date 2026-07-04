@@ -20,10 +20,10 @@ public record StartRoundResult(
     public static StartRoundResult from(
             InvestmentRound round, List<StartRoundWalletResult> wallets) {
         List<StartRoundRuleResult> ruleResults =
-                round.getRules().stream().map(StartRoundRuleResult::from).toList();
+                round.getRules().rules().stream().map(StartRoundRuleResult::from).toList();
 
         return new StartRoundResult(
-                round.getRoundId(),
+                round.getId(),
                 round.getRoundNumber(),
                 round.getStatus(),
                 round.getInitialSeed(),

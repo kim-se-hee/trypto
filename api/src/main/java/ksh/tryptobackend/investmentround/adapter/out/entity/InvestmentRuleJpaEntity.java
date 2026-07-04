@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.common.domain.vo.RuleType;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
+import ksh.tryptobackend.investmentround.domain.model.Rule;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,23 +40,16 @@ public class InvestmentRuleJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    public static InvestmentRuleJpaEntity fromDomain(RuleSetting rule) {
+    public static InvestmentRuleJpaEntity fromDomain(Rule rule) {
         InvestmentRuleJpaEntity entity = new InvestmentRuleJpaEntity();
-        entity.id = rule.getRuleId();
-        entity.roundId = rule.getRoundId();
-        entity.ruleType = rule.getRuleType();
-        entity.thresholdValue = rule.getThresholdValue();
-        entity.createdAt = rule.getCreatedAt();
+        entity.id = rule.id();
+        entity.ruleType = rule.ruleType();
+        entity.thresholdValue = rule.thresholdValue();
+        entity.createdAt = rule.createdAt();
         return entity;
     }
 
-    public RuleSetting toRoundDomain() {
-        return RuleSetting.builder()
-                .ruleId(id)
-                .roundId(roundId)
-                .ruleType(ruleType)
-                .thresholdValue(thresholdValue)
-                .createdAt(createdAt)
-                .build();
+    public Rule toRoundDomain() {
+        return Rule.of(id, ruleType, thresholdValue, createdAt);
     }
 }

@@ -1,6 +1,7 @@
 package ksh.tryptobackend.investmentround.adapter.out;
 
-import java.util.Optional;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
@@ -17,9 +18,15 @@ public class InvestmentRoundCommandAdapter implements InvestmentRoundCommandPort
 
     @Override
     public InvestmentRound save(InvestmentRound round) {
-        InvestmentRoundJpaEntity saved =
-                repository.save(InvestmentRoundJpaEntity.fromDomain(round));
-        return saved.toDomain();
+        if (round.getId() == null) {
+            return repository.save(InvestmentRoundJpaEntity.fromDomain(round)).toDomain();
+        }
+        InvestmentRoundJpaEntity entity =
+                repository
+                        .findById(round.getId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        entity.updateFrom(round);
+        return repository.saveAndFlush(entity).toDomain();
     }
 
     @Override
@@ -30,10 +37,5 @@ public class InvestmentRoundCommandAdapter implements InvestmentRoundCommandPort
     @Override
     public long countByUserId(Long userId) {
         return repository.countByUserId(userId);
-    }
-
-    @Override
-    public Optional<InvestmentRound> findById(Long roundId) {
-        return repository.findById(roundId).map(InvestmentRoundJpaEntity::toDomain);
     }
 }

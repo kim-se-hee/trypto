@@ -2,19 +2,40 @@ package ksh.tryptobackend.investmentround.adapter.out;
 
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
+import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 public class InvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final InvestmentRoundJpaRepository repository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public InvestmentRound getById(Long roundId) {
+        return repository
+                .findById(roundId)
+                .map(InvestmentRoundJpaEntity::toDomain)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+    }
+
+    @Override
+    public InvestmentRound getByIdWithLock(Long roundId) {
+        return repository
+                .findWithLockById(roundId)
+                .map(InvestmentRoundJpaEntity::toDomain)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+    }
 
     @Override
     public Optional<RoundOverview> findActiveRoundByUserId(Long userId) {

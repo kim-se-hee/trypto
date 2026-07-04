@@ -61,7 +61,7 @@ public class InvestmentRoundJpaEntity {
 
     public static InvestmentRoundJpaEntity fromDomain(InvestmentRound round) {
         InvestmentRoundJpaEntity entity = new InvestmentRoundJpaEntity();
-        entity.id = round.getRoundId();
+        entity.id = round.getId();
         entity.version = round.getVersion();
         entity.userId = round.getUserId();
         entity.roundNumber = round.getRoundNumber();
@@ -72,12 +72,27 @@ public class InvestmentRoundJpaEntity {
         entity.startedAt = round.getStartedAt();
         entity.endedAt = round.getEndedAt();
 
-        entity.rules = round.getRules().stream().map(InvestmentRuleJpaEntity::fromDomain).toList();
+        entity.rules =
+                round.getRules().rules().stream()
+                        .map(InvestmentRuleJpaEntity::fromDomain)
+                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         entity.fundings =
-                round.getFundings().stream().map(EmergencyFundingJpaEntity::fromDomain).toList();
+                round.getFundings().values().stream()
+                        .map(EmergencyFundingJpaEntity::fromDomain)
+                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         return entity;
+    }
+
+    public void updateFrom(InvestmentRound round) {
+        this.emergencyChargeCount = round.getEmergencyChargeCount();
+        this.status = round.getStatus();
+        this.endedAt = round.getEndedAt();
+        round.getFundings().values().stream()
+                .filter(funding -> funding.id() == null)
+                .map(EmergencyFundingJpaEntity::fromDomain)
+                .forEach(this.fundings::add);
     }
 
     public InvestmentRound toDomain() {

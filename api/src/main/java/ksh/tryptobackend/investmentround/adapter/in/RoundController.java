@@ -2,6 +2,9 @@ package ksh.tryptobackend.investmentround.adapter.in;
 
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.DuplicateRequestException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.adapter.in.dto.request.ChargeEmergencyFundingRequest;
 import ksh.tryptobackend.investmentround.adapter.in.dto.request.EndRoundRequest;
 import ksh.tryptobackend.investmentround.adapter.in.dto.request.GetActiveRoundRequest;
@@ -12,10 +15,11 @@ import ksh.tryptobackend.investmentround.adapter.in.dto.response.GetActiveRoundR
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.StartRoundResponse;
 import ksh.tryptobackend.investmentround.application.port.in.ChargeEmergencyFundingUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.EndRoundUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.GetActiveRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.StartRoundUseCase;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.ChargeEmergencyFundingResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ public class RoundController {
     private final EndRoundUseCase endRoundUseCase;
     private final GetActiveRoundUseCase getActiveRoundUseCase;
     private final ChargeEmergencyFundingUseCase chargeEmergencyFundingUseCase;
+    private final FindRoundInfoUseCase findRoundInfoUseCase;
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<StartRoundResponse>> createRound(
@@ -65,10 +70,22 @@ public class RoundController {
     @PostMapping("/{roundId}/emergency-funding")
     public ResponseEntity<ApiResponseDto<ChargeEmergencyFundingResponse>> chargeEmergencyFunding(
             @PathVariable Long roundId, @Valid @RequestBody ChargeEmergencyFundingRequest request) {
-        ChargeEmergencyFundingResult result =
-                chargeEmergencyFundingUseCase.chargeEmergencyFunding(request.toCommand(roundId));
-        return ResponseEntity.ok(
-                ApiResponseDto.success(
-                        "긴급 자금을 투입했습니다.", ChargeEmergencyFundingResponse.from(result)));
+        int remainingChargeCount;
+        try {
+            InvestmentRound round =
+                    chargeEmergencyFundingUseCase.charge(request.toCommand(roundId));
+            remainingChargeCount = round.getEmergencyChargeCount();
+        } catch (DuplicateRequestException e) {
+            remainingChargeCount =
+                    findRoundInfoUseCase
+                            .findById(roundId)
+                            .map(RoundInfoResult::emergencyChargeCount)
+                            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        }
+
+        ChargeEmergencyFundingResponse response =
+                ChargeEmergencyFundingResponse.of(
+                        roundId, request.exchangeId(), request.amount(), remainingChargeCount);
+        return ResponseEntity.ok(ApiResponseDto.success("긴급 자금을 투입했습니다.", response));
     }
 }

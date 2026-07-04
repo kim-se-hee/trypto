@@ -1,4 +1,4 @@
-package ksh.tryptobackend.investmentround.domain.model;
+package ksh.tryptobackend.investmentround.domain.vo;
 
 import java.time.LocalDateTime;
 

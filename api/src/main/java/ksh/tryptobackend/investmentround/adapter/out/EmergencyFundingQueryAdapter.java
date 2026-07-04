@@ -2,13 +2,8 @@ package ksh.tryptobackend.investmentround.adapter.out;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
-import java.util.Optional;
-import java.util.UUID;
-import ksh.tryptobackend.investmentround.adapter.out.entity.EmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.entity.QEmergencyFundingJpaEntity;
-import ksh.tryptobackend.investmentround.adapter.out.repository.EmergencyFundingJpaRepository;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
-import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +11,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EmergencyFundingQueryAdapter implements EmergencyFundingQueryPort {
 
-    private final EmergencyFundingJpaRepository repository;
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -41,13 +35,5 @@ public class EmergencyFundingQueryAdapter implements EmergencyFundingQueryPort {
                         .where(e.roundId.eq(roundId), e.exchangeId.eq(exchangeId))
                         .fetchOne();
         return result != null ? result : BigDecimal.ZERO;
-    }
-
-    @Override
-    public Optional<EmergencyFunding> findByRoundIdAndIdempotencyKey(
-            Long roundId, UUID idempotencyKey) {
-        return repository
-                .findByRoundIdAndIdempotencyKey(roundId, idempotencyKey)
-                .map(EmergencyFundingJpaEntity::toDomain);
     }
 }

@@ -8,8 +8,8 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetActive
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundWalletResult;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQueryPort;
-import ksh.tryptobackend.investmentround.application.port.out.RuleSettingQueryPort;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
+import ksh.tryptobackend.investmentround.application.port.out.RuleQueryPort;
+import ksh.tryptobackend.investmentround.domain.model.Rule;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
 import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetActiveRoundService implements GetActiveRoundUseCase {
 
     private final InvestmentRoundQueryPort investmentRoundQueryPort;
-    private final RuleSettingQueryPort ruleSettingQueryPort;
+    private final RuleQueryPort ruleQueryPort;
 
     private final FindWalletUseCase findWalletUseCase;
 
@@ -30,7 +30,7 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
     @Transactional(readOnly = true)
     public GetActiveRoundResult getActiveRound(GetActiveRoundQuery query) {
         RoundOverview round = getActiveRound(query.userId());
-        List<RuleSetting> rules = ruleSettingQueryPort.findByRoundId(round.roundId());
+        List<Rule> rules = ruleQueryPort.findByRoundId(round.roundId());
         List<GetActiveRoundWalletResult> wallets = toWalletResults(round.roundId());
 
         return GetActiveRoundResult.from(round, rules, wallets);

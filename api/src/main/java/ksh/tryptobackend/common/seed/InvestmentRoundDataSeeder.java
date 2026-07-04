@@ -4,13 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.investmentround.adapter.out.entity.InvestmentRoundJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
+import ksh.tryptobackend.investmentround.domain.model.Rule;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -147,12 +146,8 @@ class InvestmentRoundDataSeeder {
         List<EmergencyFunding> fundings = new ArrayList<>();
         if (linkExchangeId != null) {
             fundings.add(
-                    EmergencyFunding.builder()
-                            .exchangeId(linkExchangeId)
-                            .amount(new BigDecimal("300000"))
-                            .idempotencyKey(UUID.randomUUID())
-                            .createdAt(now.minusDays(15))
-                            .build());
+                    EmergencyFunding.create(
+                            linkExchangeId, new BigDecimal("300000"), now.minusDays(15)));
         }
         rounds.add(
                 createRound(
@@ -277,7 +272,7 @@ class InvestmentRoundDataSeeder {
             RoundStatus status,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            List<RuleSetting> rules,
+            List<Rule> rules,
             List<EmergencyFunding> fundings) {
         Long userId = ctx.userIdByNickname.get(nickname);
         InvestmentRound round =
@@ -307,11 +302,7 @@ class InvestmentRoundDataSeeder {
         }
     }
 
-    private RuleSetting rule(RuleType type, BigDecimal threshold) {
-        return RuleSetting.builder()
-                .ruleType(type)
-                .thresholdValue(threshold)
-                .createdAt(LocalDateTime.now())
-                .build();
+    private Rule rule(RuleType type, BigDecimal threshold) {
+        return Rule.of(null, type, threshold, LocalDateTime.now());
     }
 }

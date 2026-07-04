@@ -6,25 +6,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(
-        name = "emergency_funding",
-        uniqueConstraints = {
-            @UniqueConstraint(
-                    name = "uk_emergency_funding_round_idempotency",
-                    columnNames = {"round_id", "idempotency_key"})
-        })
+@Table(name = "emergency_funding")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EmergencyFundingJpaEntity {
@@ -43,32 +33,18 @@ public class EmergencyFundingJpaEntity {
     @Column(name = "amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal amount;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "idempotency_key", nullable = false, length = 36)
-    private UUID idempotencyKey;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     public static EmergencyFundingJpaEntity fromDomain(EmergencyFunding funding) {
         EmergencyFundingJpaEntity entity = new EmergencyFundingJpaEntity();
-        entity.id = funding.getFundingId();
-        entity.roundId = funding.getRoundId();
-        entity.exchangeId = funding.getExchangeId();
-        entity.amount = funding.getAmount();
-        entity.idempotencyKey = funding.getIdempotencyKey();
-        entity.createdAt = funding.getCreatedAt();
+        entity.exchangeId = funding.exchangeId();
+        entity.amount = funding.amount();
+        entity.createdAt = funding.createdAt();
         return entity;
     }
 
     public EmergencyFunding toDomain() {
-        return EmergencyFunding.builder()
-                .fundingId(id)
-                .roundId(roundId)
-                .exchangeId(exchangeId)
-                .amount(amount)
-                .idempotencyKey(idempotencyKey)
-                .createdAt(createdAt)
-                .build();
+        return EmergencyFunding.reconstitute(id, exchangeId, amount, createdAt);
     }
 }

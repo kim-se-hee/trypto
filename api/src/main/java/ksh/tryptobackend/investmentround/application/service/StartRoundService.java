@@ -14,7 +14,7 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRou
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundWalletResult;
 import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundCommandPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
+import ksh.tryptobackend.investmentround.domain.model.Rule;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocation;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAllocations;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAmountPolicy;
@@ -48,13 +48,15 @@ public class StartRoundService implements StartRoundUseCase {
         SeedAllocations seedAllocations = resolveSeedAllocations(command.seeds());
 
         InvestmentRound round =
-                createRound(command.userId(), command.emergencyFundingLimit(), seedAllocations);
-
-        addRules(round, command.rules());
+                createRound(
+                        command.userId(),
+                        command.emergencyFundingLimit(),
+                        seedAllocations,
+                        command.rules());
 
         InvestmentRound savedRound = investmentRoundCommandPort.save(round);
-        initializeWallets(savedRound.getRoundId(), seedAllocations);
-        List<StartRoundWalletResult> wallets = toWalletResults(savedRound.getRoundId());
+        initializeWallets(savedRound.getId(), seedAllocations);
+        List<StartRoundWalletResult> wallets = toWalletResults(savedRound.getId());
 
         return StartRoundResult.from(savedRound, wallets);
     }
@@ -91,31 +93,26 @@ public class StartRoundService implements StartRoundUseCase {
     }
 
     private InvestmentRound createRound(
-            Long userId, BigDecimal emergencyFundingLimit, SeedAllocations seedAllocations) {
+            Long userId,
+            BigDecimal emergencyFundingLimit,
+            SeedAllocations seedAllocations,
+            List<StartRoundRuleCommand> ruleCommands) {
         long previousRoundCount = investmentRoundCommandPort.countByUserId(userId);
         return InvestmentRound.start(
                 userId,
                 previousRoundCount,
                 seedAllocations.totalAmount(),
                 emergencyFundingLimit,
+                toRules(ruleCommands),
                 LocalDateTime.now(clock));
     }
 
-    private void addRules(InvestmentRound round, List<StartRoundRuleCommand> ruleCommands) {
+    private List<Rule> toRules(List<StartRoundRuleCommand> ruleCommands) {
         List<StartRoundRuleCommand> commands = ruleCommands == null ? List.of() : ruleCommands;
-        if (commands.isEmpty()) {
-            return;
-        }
-
         LocalDateTime now = LocalDateTime.now(clock);
-        List<RuleSetting> rules =
-                commands.stream()
-                        .map(
-                                rule ->
-                                        RuleSetting.create(
-                                                null, rule.ruleType(), rule.thresholdValue(), now))
-                        .toList();
-        round.addRules(rules);
+        return commands.stream()
+                .map(rule -> Rule.create(rule.ruleType(), rule.thresholdValue(), now))
+                .toList();
     }
 
     private void initializeWallets(Long roundId, SeedAllocations seedAllocations) {

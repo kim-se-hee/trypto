@@ -7,6 +7,6 @@ import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 public record EndRoundResponse(Long roundId, RoundStatus status, LocalDateTime endedAt) {
 
     public static EndRoundResponse from(InvestmentRound round) {
-        return new EndRoundResponse(round.getRoundId(), round.getStatus(), round.getEndedAt());
+        return new EndRoundResponse(round.getId(), round.getStatus(), round.getEndedAt());
     }
 }

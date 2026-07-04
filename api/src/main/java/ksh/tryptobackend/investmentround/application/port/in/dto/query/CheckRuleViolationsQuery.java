@@ -2,14 +2,19 @@ package ksh.tryptobackend.investmentround.application.port.in.dto.query;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import ksh.tryptobackend.investmentround.domain.vo.RuleEvaluationInput;
 
 public record CheckRuleViolationsQuery(
         Long walletId,
+        Long exchangeCoinId,
         boolean buyOrder,
-        BigDecimal changeRate,
-        BigDecimal avgBuyPrice,
-        BigDecimal totalQuantity,
+        boolean atLoss,
         int averagingDownCount,
-        BigDecimal currentPrice,
         long todayOrderCount,
-        LocalDateTime now) {}
+        LocalDateTime now) {
+
+    public RuleEvaluationInput toRuleEvaluationInput(BigDecimal changeRate) {
+        return new RuleEvaluationInput(
+                buyOrder, changeRate, atLoss, averagingDownCount, todayOrderCount, now);
+    }
+}

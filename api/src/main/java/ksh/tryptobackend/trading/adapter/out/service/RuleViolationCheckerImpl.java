@@ -1,14 +1,12 @@
 package ksh.tryptobackend.trading.adapter.out.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import ksh.tryptobackend.investmentround.application.port.in.CheckRuleViolationsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.CheckRuleViolationsQuery;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.RuleViolationResult;
-import ksh.tryptobackend.marketdata.application.port.in.GetPriceChangeRateUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.RuleViolationCheckResult;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.application.port.out.PositionQueryPort;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
@@ -24,7 +22,6 @@ public class RuleViolationCheckerImpl implements RuleViolationChecker {
 
     private final PositionQueryPort positionQueryPort;
     private final OrderQueryPort orderQueryPort;
-    private final GetPriceChangeRateUseCase getPriceChangeRateUseCase;
     private final CheckRuleViolationsUseCase checkRuleViolationsUseCase;
 
     @Override
@@ -33,12 +30,11 @@ public class RuleViolationCheckerImpl implements RuleViolationChecker {
                 positionQueryPort
                         .findByWalletIdAndCoinId(event.walletId(), event.coinId())
                         .orElseGet(() -> Position.empty(event.walletId(), event.coinId()));
-        BigDecimal changeRate = getPriceChangeRateUseCase.getChangeRate(event.exchangeCoinId());
         long todayOrderCount = countTodayOrders(event.walletId(), event.createdAt());
 
         CheckRuleViolationsQuery query =
-                RuleViolationTranslator.toQuery(event, position, changeRate, todayOrderCount);
-        List<RuleViolationResult> results = checkRuleViolationsUseCase.checkViolations(query);
+                RuleViolationTranslator.toQuery(event, position, todayOrderCount);
+        List<RuleViolationCheckResult> results = checkRuleViolationsUseCase.checkViolations(query);
         return RuleViolationTranslator.toRuleViolations(results);
     }
 

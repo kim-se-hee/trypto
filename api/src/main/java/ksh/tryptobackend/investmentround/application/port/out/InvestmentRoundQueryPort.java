@@ -2,6 +2,7 @@ package ksh.tryptobackend.investmentround.application.port.out;
 
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
 
 public interface InvestmentRoundQueryPort {
@@ -11,4 +12,8 @@ public interface InvestmentRoundQueryPort {
     Optional<RoundOverview> findRoundInfoById(Long roundId);
 
     List<RoundOverview> findAllActiveRounds();
+
+    InvestmentRound getById(Long roundId);
+
+    InvestmentRound getByIdWithLock(Long roundId);
 }
