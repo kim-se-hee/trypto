@@ -67,8 +67,13 @@ class PackagePlacementTest {
                 .that()
                 .areAnnotatedWith(Entity.class)
                 .should()
-                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.entity.."))
-                .as("JPA entities should reside in adapter.out.persistence.entity")
+                .resideInAnyPackage(
+                        merge(
+                                allContextPackages(".adapter.out.persistence.entity.."),
+                                new String[] {COMMON + ".idempotency.."}))
+                .as(
+                        "JPA entities should reside in adapter.out.persistence.entity or"
+                                + " common.idempotency")
                 .check(classes);
     }
 
@@ -78,8 +83,13 @@ class PackagePlacementTest {
                 .that()
                 .areAssignableTo(JpaRepository.class)
                 .should()
-                .resideInAnyPackage(allContextPackages(".adapter.out.persistence.repository.."))
-                .as("JPA repositories should reside in adapter.out.persistence.repository")
+                .resideInAnyPackage(
+                        merge(
+                                allContextPackages(".adapter.out.persistence.repository.."),
+                                new String[] {COMMON + ".idempotency.."}))
+                .as(
+                        "JPA repositories should reside in adapter.out.persistence.repository or"
+                                + " common.idempotency")
                 .check(classes);
     }
 
@@ -91,8 +101,11 @@ class PackagePlacementTest {
                 .and()
                 .areInterfaces()
                 .should()
-                .resideInAnyPackage(allContextDirectPackages(PORT_OUT))
-                .as("Port interfaces should reside in application.port.out")
+                .resideInAnyPackage(
+                        merge(
+                                allContextDirectPackages(PORT_OUT),
+                                new String[] {COMMON + ".idempotency"}))
+                .as("Port interfaces should reside in application.port.out or common.idempotency")
                 .check(classes);
     }
 
