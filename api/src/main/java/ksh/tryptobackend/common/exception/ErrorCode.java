@@ -26,6 +26,7 @@ public enum ErrorCode {
     DUPLICATE_EXCHANGE(400, "duplicate.exchange"),
     INVALID_EMERGENCY_FUNDING_LIMIT(400, "invalid.emergency.funding.limit"),
     INVALID_RULE_THRESHOLD(400, "invalid.rule.threshold"),
+    DUPLICATE_RULE_TYPE(400, "duplicate.rule.type"),
     EMERGENCY_FUNDING_DISABLED(400, "emergency.funding.disabled"),
     EMERGENCY_FUNDING_CHANCE_EXHAUSTED(400, "emergency.funding.chance.exhausted"),
     INVALID_EMERGENCY_FUNDING_AMOUNT(400, "invalid.emergency.funding.amount"),
