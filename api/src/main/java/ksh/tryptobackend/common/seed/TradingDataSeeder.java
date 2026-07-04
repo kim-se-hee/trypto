@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 import ksh.tryptobackend.trading.adapter.out.persistence.entity.OrderFillFailureJpaEntity;
 import ksh.tryptobackend.trading.adapter.out.persistence.entity.OrderJpaEntity;
 import ksh.tryptobackend.trading.adapter.out.persistence.entity.PositionJpaEntity;
@@ -198,7 +197,6 @@ class TradingDataSeeder {
             Order order =
                     Order.reconstitute(
                             null,
-                            UUID.randomUUID().toString(),
                             walletId,
                             exchangeCoinId,
                             side,

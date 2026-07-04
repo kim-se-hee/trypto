@@ -31,7 +31,6 @@ import lombok.Getter;
 public class Order extends AggregateRoot {
 
     private Long id;
-    private final String idempotencyKey;
     private final Long walletId;
     private final Long exchangeCoinId;
     private final Side side;
@@ -52,7 +51,6 @@ public class Order extends AggregateRoot {
 
         Order order =
                 Order.builder()
-                        .idempotencyKey(cmd.idempotencyKey())
                         .walletId(cmd.walletId())
                         .exchangeCoinId(cmd.exchangeCoinId())
                         .side(cmd.side())
@@ -216,7 +214,6 @@ public class Order extends AggregateRoot {
 
     public static Order reconstitute(
             Long id,
-            String idempotencyKey,
             Long walletId,
             Long exchangeCoinId,
             Side side,
@@ -236,7 +233,6 @@ public class Order extends AggregateRoot {
                         : null;
         return Order.builder()
                 .id(id)
-                .idempotencyKey(idempotencyKey)
                 .walletId(walletId)
                 .exchangeCoinId(exchangeCoinId)
                 .side(side)

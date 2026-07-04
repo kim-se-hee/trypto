@@ -10,8 +10,6 @@ import org.springframework.data.jpa.repository.Lock;
 
 public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> {
 
-    Optional<OrderJpaEntity> findByIdempotencyKey(String idempotencyKey);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<OrderJpaEntity> findWithLockById(Long orderId);
 
