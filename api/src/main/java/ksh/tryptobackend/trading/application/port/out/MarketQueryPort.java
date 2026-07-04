@@ -8,7 +8,7 @@ public interface MarketQueryPort {
 
     MarketInfo findByExchangeCoinId(Long exchangeCoinId);
 
-    TradingPair findTradingPair(Long exchangeCoinId);
+    TradingPair getTradingPair(Long exchangeCoinId);
 
     MarketIdentifier findMarketIdentifier(Long exchangeCoinId);
 }

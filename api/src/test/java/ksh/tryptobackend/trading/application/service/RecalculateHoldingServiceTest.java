@@ -124,7 +124,7 @@ class RecalculateHoldingServiceTest {
     private void givenFills(List<FilledOrder> fills) {
         given(orderQueryPort.findFilledByWalletAndExchangeCoin(WALLET_ID, EXCHANGE_COIN_ID))
                 .willReturn(fills);
-        given(marketQueryPort.findTradingPair(EXCHANGE_COIN_ID))
+        given(marketQueryPort.getTradingPair(EXCHANGE_COIN_ID))
                 .willReturn(new TradingPair(COIN_ID, 1L));
     }
 

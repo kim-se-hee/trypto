@@ -87,15 +87,19 @@ public class Order extends AggregateRoot {
         this.status = OrderStatus.FILLED;
     }
 
-    public void cancel() {
-        if (isAlreadyCancelled()) {
-            return;
+    public List<BalanceChange> cancel(Long requesterWalletId, TradingPair pair) {
+        if (!ownedBy(requesterWalletId)) {
+            throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
         }
-        if (!isCancellable()) {
+        if (isCanceled()) {
+            return List.of();
+        }
+        if (!isPending()) {
             throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
         }
-        this.status = OrderStatus.CANCELLED;
-        registerEvent(new OrderCanceledEvent(this));
+        this.status = OrderStatus.CANCELED;
+        registerEvent(OrderCanceledEvent.of(this));
+        return planCancellationRefund(pair);
     }
 
     public boolean isPending() {
@@ -122,15 +126,11 @@ public class Order extends AggregateRoot {
         return isLimitOrder() && isPending();
     }
 
-    public boolean isCancellable() {
-        return this.status == OrderStatus.PENDING;
+    public boolean isCanceled() {
+        return this.status == OrderStatus.CANCELED;
     }
 
-    public boolean isAlreadyCancelled() {
-        return this.status == OrderStatus.CANCELLED;
-    }
-
-    public boolean isOwnedBy(Long walletId) {
+    public boolean ownedBy(Long walletId) {
         return this.walletId.equals(walletId);
     }
 
@@ -164,8 +164,8 @@ public class Order extends AggregateRoot {
         return OrderMode.of(orderType, side).planSettlementChanges(this, pair);
     }
 
-    public BalanceChange planCancellationRefund(TradingPair pair) {
-        return new BalanceChange.Unlock(pair.lockedCoinId(side), lockAmount());
+    private List<BalanceChange> planCancellationRefund(TradingPair pair) {
+        return List.of(new BalanceChange.Unlock(pair.lockedCoinId(side), lockAmount()));
     }
 
     public Price getFilledPrice() {

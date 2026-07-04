@@ -39,7 +39,7 @@ public class OrphanOrderCompensator {
         LocalDateTime filledAt = LocalDateTime.ofInstant(match.time(), KST);
         order.fill(match.price(), filledAt);
 
-        TradingPair pair = marketQueryPort.findTradingPair(order.getExchangeCoinId());
+        TradingPair pair = marketQueryPort.getTradingPair(order.getExchangeCoinId());
         walletBalanceService.applyAll(order.getWalletId(), order.planSettlementChanges(pair));
         orderCommandPort.save(order);
         recalculateHoldingUseCase.recalculate(order.getWalletId(), order.getExchangeCoinId());

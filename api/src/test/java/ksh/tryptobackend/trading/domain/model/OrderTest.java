@@ -233,7 +233,7 @@ class OrderTest {
     class CancelTest {
 
         @Test
-        @DisplayName("PENDING 지정가 주문 취소 - 상태가 CANCELLED로 바뀌고 취소 이벤트가 등록된다")
+        @DisplayName("PENDING 지정가 주문 취소 - 상태가 CANCELED로 바뀌고 취소 이벤트가 등록된다")
         void cancel_pendingOrder_cancelled() {
             Order order =
                     Order.create(
@@ -246,9 +246,9 @@ class OrderTest {
                             NOW);
             order.pullDomainEvents();
 
-            order.cancel();
+            order.cancel(1L, PAIR);
 
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
             assertThat(order.pullDomainEvents())
                     .hasSize(1)
                     .first()
@@ -264,7 +264,7 @@ class OrderTest {
                             ctx(new BigDecimal("100274000")),
                             NOW);
 
-            assertThatThrownBy(order::cancel).isInstanceOf(CustomException.class);
+            assertThatThrownBy(() -> order.cancel(1L, PAIR)).isInstanceOf(CustomException.class);
         }
     }
 

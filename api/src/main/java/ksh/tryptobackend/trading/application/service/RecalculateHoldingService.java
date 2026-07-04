@@ -25,7 +25,7 @@ public class RecalculateHoldingService implements RecalculateHoldingUseCase {
     public void recalculate(Long walletId, Long exchangeCoinId) {
         List<FilledOrder> filledOrders =
                 orderQueryPort.findFilledByWalletAndExchangeCoin(walletId, exchangeCoinId);
-        TradingPair pair = marketQueryPort.findTradingPair(exchangeCoinId);
+        TradingPair pair = marketQueryPort.getTradingPair(exchangeCoinId);
         Position position =
                 positionCommandPort
                         .findByWalletIdAndCoinId(walletId, pair.tradedCoinId())

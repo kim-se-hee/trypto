@@ -44,7 +44,7 @@ public class AclMarketQueryAdapter implements MarketQueryPort {
     }
 
     @Override
-    public TradingPair findTradingPair(Long exchangeCoinId) {
+    public TradingPair getTradingPair(Long exchangeCoinId) {
         ExchangeCoinMappingResult mapping = getMapping(exchangeCoinId);
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());
         return new TradingPair(mapping.coinId(), detail.baseCurrencyCoinId());
