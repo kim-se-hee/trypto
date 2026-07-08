@@ -11,11 +11,11 @@ import ksh.tryptobackend.trading.domain.event.OrderCanceledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderFilledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
-import ksh.tryptobackend.trading.domain.vo.ExchangeInfo;
-import ksh.tryptobackend.trading.domain.vo.Fee;
 import ksh.tryptobackend.trading.domain.vo.Fill;
+import ksh.tryptobackend.trading.domain.vo.InterpretedOrderInput;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
 import ksh.tryptobackend.trading.domain.vo.Money;
+import ksh.tryptobackend.trading.domain.vo.OrderInput;
 import ksh.tryptobackend.trading.domain.vo.OrderMode;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
 import ksh.tryptobackend.trading.domain.vo.OrderType;
@@ -30,186 +30,41 @@ import lombok.Getter;
 @Builder(access = lombok.AccessLevel.PRIVATE)
 public class Order extends AggregateRoot {
 
-    private Long id;
     private final Long walletId;
     private final Long exchangeCoinId;
-    private final Side side;
-    private final OrderType orderType;
+    private final OrderMode mode;
     private final Quantity quantity;
     private final Price limitPrice;
     private final BigDecimal feeRate;
     private final LocalDateTime createdAt;
 
+    private Long id;
     private Fill fill;
     private OrderStatus status;
 
     public static Order create(PlaceOrderCommand cmd, MarketInfo marketInfo, LocalDateTime now) {
-        ExchangeInfo exchange = marketInfo.exchangeInfo();
-        Price referencePrice = resolveReferencePrice(cmd, marketInfo);
-        Quantity quantity = resolveQuantity(cmd, referencePrice, exchange);
-        Fill fill = resolveFill(cmd, quantity, referencePrice, exchange, now);
+        OrderMode mode = OrderMode.of(cmd.orderType(), cmd.side());
+        InterpretedOrderInput interpreted =
+                mode.interpret(new OrderInput(cmd.volume(), cmd.price()), marketInfo);
 
         Order order =
                 Order.builder()
                         .walletId(cmd.walletId())
                         .exchangeCoinId(cmd.exchangeCoinId())
-                        .side(cmd.side())
-                        .orderType(cmd.orderType())
-                        .quantity(quantity)
-                        .limitPrice(cmd.orderType() == OrderType.LIMIT ? referencePrice : null)
-                        .feeRate(exchange.feeRate())
-                        .fill(fill)
-                        .status(fill != null ? OrderStatus.FILLED : OrderStatus.PENDING)
+                        .mode(mode)
+                        .quantity(interpreted.quantity())
+                        .limitPrice(interpreted.limitPrice())
+                        .feeRate(marketInfo.exchangeInfo().feeRate())
+                        .status(OrderStatus.PENDING)
                         .createdAt(now)
                         .build();
 
         order.registerEvent(OrderPlacedEvent.of(order, marketInfo));
-        if (order.isFilled()) {
+        if (order.isMarketOrder()) {
+            order.fill(marketInfo.currentPrice(), now);
             order.registerEvent(OrderFilledEvent.of(order, marketInfo));
         }
         return order;
-    }
-
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new IllegalStateException("이미 식별자가 부여된 주문입니다 id=" + this.id);
-        }
-        this.id = id;
-    }
-
-    public void fill(BigDecimal executionPrice, LocalDateTime now) {
-        if (!isPending()) {
-            throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
-        }
-        Price price = Price.of(executionPrice);
-        Money feeAmount = Fee.calculate(price.times(quantity), feeRate).amount();
-        this.fill = new Fill(price, feeAmount, now);
-        this.status = OrderStatus.FILLED;
-    }
-
-    public List<BalanceChange> cancel(Long requesterWalletId, TradingPair pair) {
-        if (!ownedBy(requesterWalletId)) {
-            throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
-        }
-        if (isCanceled()) {
-            return List.of();
-        }
-        if (!isPending()) {
-            throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
-        }
-        this.status = OrderStatus.CANCELED;
-        registerEvent(OrderCanceledEvent.of(this));
-        return planCancellationRefund(pair);
-    }
-
-    public boolean isPending() {
-        return this.status == OrderStatus.PENDING;
-    }
-
-    public boolean isFilled() {
-        return this.status == OrderStatus.FILLED;
-    }
-
-    public boolean isMarketOrder() {
-        return this.orderType == OrderType.MARKET;
-    }
-
-    public boolean isLimitOrder() {
-        return this.orderType == OrderType.LIMIT;
-    }
-
-    public boolean isBuyOrder() {
-        return this.side == Side.BUY;
-    }
-
-    public boolean awaitsMatching() {
-        return isLimitOrder() && isPending();
-    }
-
-    public boolean isCanceled() {
-        return this.status == OrderStatus.CANCELED;
-    }
-
-    public boolean ownedBy(Long walletId) {
-        return this.walletId.equals(walletId);
-    }
-
-    public BigDecimal lockAmount() {
-        if (!isBuyOrder()) return quantity.value();
-        return isMarketOrder() ? getSettlementDebit().value() : getReservedDebit().value();
-    }
-
-    public Money getFilledAmount() {
-        return fill != null ? fill.filledPrice().times(quantity) : null;
-    }
-
-    public Money getReservedDebit() {
-        Money notional = limitPrice.times(quantity);
-        return notional.plus(Fee.calculate(notional, feeRate).amount());
-    }
-
-    public Money getSettlementDebit() {
-        return getFilledAmount().plus(fill.fee());
-    }
-
-    public Money getSettlementCredit() {
-        return getFilledAmount().minus(fill.fee());
-    }
-
-    public BalanceChange planReservation(TradingPair pair) {
-        return new BalanceChange.Lock(pair.lockedCoinId(side), lockAmount());
-    }
-
-    public List<BalanceChange> planSettlementChanges(TradingPair pair) {
-        return OrderMode.of(orderType, side).planSettlementChanges(this, pair);
-    }
-
-    private List<BalanceChange> planCancellationRefund(TradingPair pair) {
-        return List.of(new BalanceChange.Unlock(pair.lockedCoinId(side), lockAmount()));
-    }
-
-    public Price getFilledPrice() {
-        return fill != null ? fill.filledPrice() : null;
-    }
-
-    public Fee getFee() {
-        return fill != null ? Fee.of(fill.fee(), feeRate) : null;
-    }
-
-    public LocalDateTime getFilledAt() {
-        return fill != null ? fill.filledAt() : null;
-    }
-
-    private static Price resolveReferencePrice(PlaceOrderCommand cmd, MarketInfo marketInfo) {
-        if (cmd.orderType() == OrderType.MARKET) {
-            return marketInfo.currentPrice();
-        }
-        if (cmd.price() == null) {
-            throw new CustomException(ErrorCode.PRICE_REQUIRED_FOR_LIMIT);
-        }
-        return Price.of(cmd.price());
-    }
-
-    private static Quantity resolveQuantity(
-            PlaceOrderCommand cmd, Price referencePrice, ExchangeInfo exchange) {
-        if (cmd.side() == Side.SELL) {
-            return Quantity.of(cmd.amount());
-        }
-        exchange.validateOrderAmount(cmd.amount());
-        return Quantity.from(cmd.amount(), referencePrice);
-    }
-
-    private static Fill resolveFill(
-            PlaceOrderCommand cmd,
-            Quantity quantity,
-            Price referencePrice,
-            ExchangeInfo exchange,
-            LocalDateTime now) {
-        if (cmd.orderType() == OrderType.LIMIT) {
-            return null;
-        }
-        Fee fee = exchange.calculateFee(referencePrice.times(quantity));
-        return new Fill(referencePrice, fee.amount(), now);
     }
 
     public static Order reconstitute(
@@ -235,8 +90,7 @@ public class Order extends AggregateRoot {
                 .id(id)
                 .walletId(walletId)
                 .exchangeCoinId(exchangeCoinId)
-                .side(side)
-                .orderType(orderType)
+                .mode(OrderMode.of(orderType, side))
                 .quantity(quantity)
                 .limitPrice(price)
                 .feeRate(feeRate)
@@ -244,5 +98,102 @@ public class Order extends AggregateRoot {
                 .status(status)
                 .createdAt(createdAt)
                 .build();
+    }
+
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new IllegalStateException("이미 식별자가 부여된 주문입니다 id=" + this.id);
+        }
+        this.id = id;
+    }
+
+    public void fill(Price executionPrice, LocalDateTime now) {
+        if (!isPending()) {
+            throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
+        }
+        if (!mode.canFillAt(limitPrice, executionPrice)) {
+            throw new CustomException(ErrorCode.INVALID_FILL_PRICE);
+        }
+        this.fill = Fill.settle(executionPrice, quantity, feeRate, now);
+        this.status = OrderStatus.FILLED;
+    }
+
+    public List<BalanceChange> cancel(Long requesterWalletId, TradingPair pair) {
+        if (!ownedBy(requesterWalletId)) {
+            throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
+        }
+        if (isCanceled()) {
+            return List.of();
+        }
+        if (!isPending()) {
+            throw new CustomException(ErrorCode.ORDER_NOT_CANCELLABLE);
+        }
+        this.status = OrderStatus.CANCELED;
+        registerEvent(OrderCanceledEvent.of(this));
+        return planCancellationRefund(pair);
+    }
+
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
+
+    public boolean isMarketOrder() {
+        return mode.orderType() == OrderType.MARKET;
+    }
+
+    public boolean awaitsMatching() {
+        return isLimitOrder() && isPending();
+    }
+
+    public Side getSide() {
+        return mode.side();
+    }
+
+    public OrderType getOrderType() {
+        return mode.orderType();
+    }
+
+    public BigDecimal lockAmount() {
+        return mode.lockAmount(quantity, limitPrice, feeRate, fill);
+    }
+
+    public BalanceChange planReservation(TradingPair pair) {
+        return new BalanceChange.Lock(pair.lockedCoinId(mode.side()), lockAmount());
+    }
+
+    public List<BalanceChange> planSettlementChanges(TradingPair pair) {
+        return mode.planSettlementChanges(quantity, limitPrice, feeRate, fill, pair);
+    }
+
+    public Money getFilledAmount() {
+        return fill != null ? fill.filledPrice().times(quantity) : null;
+    }
+
+    public Price getFilledPrice() {
+        return fill != null ? fill.filledPrice() : null;
+    }
+
+    public Money getFeeAmount() {
+        return fill != null ? fill.fee() : null;
+    }
+
+    public LocalDateTime getFilledAt() {
+        return fill != null ? fill.filledAt() : null;
+    }
+
+    private boolean ownedBy(Long walletId) {
+        return this.walletId.equals(walletId);
+    }
+
+    private boolean isCanceled() {
+        return this.status == OrderStatus.CANCELED;
+    }
+
+    private List<BalanceChange> planCancellationRefund(TradingPair pair) {
+        return List.of(new BalanceChange.Unlock(pair.lockedCoinId(mode.side()), lockAmount()));
+    }
+
+    private boolean isLimitOrder() {
+        return mode.orderType() == OrderType.LIMIT;
     }
 }

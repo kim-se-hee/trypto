@@ -13,12 +13,6 @@ public record OrphanOrder(
         LocalDateTime createdAt) {
 
     public boolean matches(BigDecimal candidatePrice) {
-        return isBuy()
-                ? candidatePrice.compareTo(price) <= 0
-                : candidatePrice.compareTo(price) >= 0;
-    }
-
-    public boolean isBuy() {
-        return side == Side.BUY;
+        return side.canFillAt(Price.of(price), Price.of(candidatePrice));
     }
 }

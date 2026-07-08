@@ -72,7 +72,7 @@ public class OrderJpaEntity {
         entity.quantity = order.getQuantity().value();
         entity.price = order.getLimitPrice() != null ? order.getLimitPrice().value() : null;
         entity.filledPrice = order.getFilledPrice() != null ? order.getFilledPrice().value() : null;
-        entity.fee = order.getFee() != null ? order.getFee().amount().value() : null;
+        entity.fee = order.getFeeAmount() != null ? order.getFeeAmount().value() : null;
         entity.feeRate = order.getFeeRate();
         entity.status = order.getStatus();
         entity.createdAt = order.getCreatedAt();

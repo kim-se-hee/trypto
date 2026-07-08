@@ -8,6 +8,7 @@ import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.OrphanOrder;
+import ksh.tryptobackend.trading.domain.vo.Price;
 import ksh.tryptobackend.trading.domain.vo.PriceCandidate;
 import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class OrphanOrderCompensator {
         }
 
         LocalDateTime filledAt = LocalDateTime.ofInstant(match.time(), KST);
-        order.fill(match.price(), filledAt);
+        order.fill(Price.of(match.price()), filledAt);
 
         TradingPair pair = marketQueryPort.getTradingPair(order.getExchangeCoinId());
         walletBalanceService.applyAll(order.getWalletId(), order.planSettlementChanges(pair));

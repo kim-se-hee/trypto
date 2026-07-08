@@ -10,5 +10,5 @@ public record PlaceOrderCommand(
         Long exchangeCoinId,
         Side side,
         OrderType orderType,
-        BigDecimal price,
-        BigDecimal amount) {}
+        BigDecimal volume,
+        BigDecimal price) {}
