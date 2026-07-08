@@ -2,8 +2,8 @@
 
 ### Order (신규)
 
-- 주문 유형·방향 조합으로 주문 모드를 정한다.
-- 금액 제한 검증, 체결 수량·수수료 계산, 잔고 충분 검증을 도메인 내부에서 수행한다.
+- 주문 유형·방향 조합으로 주문 모드(OrderMode)를 정한다. 모드가 volume/price 입력 해석(필수·금지 판정, 수량 결정), 주문 금액 제한 검증, 잔고 점유·정산 계획을 책임진다.
+- 체결 수량·수수료 계산, 잔고 충분 검증을 도메인 내부에서 수행한다.
 - 시장가는 생성 즉시 체결 상태, 지정가는 미체결 상태로 만들어진다.
 - 지정가 주문만 엔진으로 전달해야 하는지를 스스로 판단한다.
 
@@ -169,19 +169,23 @@ sequenceDiagram
 | exchangeCoinId | Long       | O   | 거래소-코인 ID                       |
 | side           | String     | O   | `BUY` \| `SELL`                 |
 | orderType      | String     | O   | `MARKET` \| `LIMIT`             |
-| price          | BigDecimal | 조건부 | 지정가 (LIMIT일 때 필수, MARKET일 때 무시) |
-| amount         | BigDecimal | O   | 매수: 주문 총액, 매도: 주문 수량            |
+| volume         | BigDecimal | 조건부 | 주문 수량(코인)                       |
+| price          | BigDecimal | 조건부 | 지정가: 단가, 시장가 매수: 주문 총액(기준 통화)   |
 
-#### `amount` 필드 규칙
+#### `volume`/`price` 조합 규칙
 
-| side | amount 의미 | 단위                          |
-|------|-----------|-----------------------------|
-| BUY  | 주문 총액     | 기준 통화 (국내: KRW, 바이낸스: USDT) |
-| SELL | 주문 수량     | 코인                          |
+| 주문     | volume     | price     |
+|--------|------------|-----------|
+| 시장가 매수 | 사용 안 함     | 필수 — 주문 총액 |
+| 시장가 매도 | 필수 — 주문 수량 | 사용 안 함    |
+| 지정가 매수 | 필수 — 주문 수량 | 필수 — 단가   |
+| 지정가 매도 | 필수 — 주문 수량 | 필수 — 단가   |
+
+"사용 안 함"인 값이 요청에 담겨 오면 주문을 거부한다.
 
 ### Request
 
-**지정가 매수** — 빗썸에서 BTC를 1억원에 50만원어치 매수
+**지정가 매수** — 빗썸에서 BTC를 1억원에 0.005개 매수
 
 ```json
 {
@@ -190,8 +194,8 @@ sequenceDiagram
   "exchangeCoinId": 7,
   "side": "BUY",
   "orderType": "LIMIT",
-  "price": 100000000,
-  "amount": 500000
+  "volume": 0.005,
+  "price": 100000000
 }
 ```
 
@@ -225,7 +229,10 @@ sequenceDiagram
 | INSUFFICIENT_BALANCE     | 400    | 잔고 부족             |
 | BELOW_MIN_ORDER_AMOUNT   | 400    | 최소 주문 금액 미달       |
 | ABOVE_MAX_ORDER_AMOUNT   | 400    | 최대 주문 금액 초과       |
-| PRICE_REQUIRED_FOR_LIMIT | 400    | 지정가 주문 시 price 누락 |
+| VOLUME_REQUIRED          | 400    | 필수인 volume 누락      |
+| PRICE_REQUIRED           | 400    | 필수인 price 누락       |
+| VOLUME_NOT_ALLOWED       | 400    | 시장가 매수에 volume 전송  |
+| PRICE_NOT_ALLOWED        | 400    | 시장가 매도에 price 전송   |
 | WALLET_NOT_FOUND         | 404    | 지갑을 찾을 수 없음       |
 | EXCHANGE_COIN_NOT_FOUND  | 404    | 거래소-코인을 찾을 수 없음   |
 | INVESTMENT_RULE_NOT_FOUND | 404   | 투자 원칙을 찾을 수 없음   |
