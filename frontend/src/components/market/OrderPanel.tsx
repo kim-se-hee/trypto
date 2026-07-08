@@ -312,10 +312,15 @@ export function OrderPanel({
     const parsedQuantity = parseNumber(quantity);
     const parsedPrice = parseNumber(price);
 
-    const requestAmount = side === "BUY" ? parsedAmount : parsedQuantity;
+    const isMarketBuy = orderType === "market" && isBuy;
 
-    if (requestAmount <= 0) {
-      setSubmitError(side === "BUY" ? "주문 총액을 입력해 주세요." : "주문 수량을 입력해 주세요.");
+    if (isMarketBuy && parsedAmount <= 0) {
+      setSubmitError("주문 총액을 입력해 주세요.");
+      return;
+    }
+
+    if (!isMarketBuy && parsedQuantity <= 0) {
+      setSubmitError("주문 수량을 입력해 주세요.");
       return;
     }
 
@@ -334,8 +339,8 @@ export function OrderPanel({
         exchangeCoinId: orderTargetIds.exchangeCoinId,
         side,
         orderType: orderType === "limit" ? "LIMIT" : "MARKET",
-        price: orderType === "limit" ? parsedPrice : undefined,
-        amount: requestAmount,
+        volume: isMarketBuy ? undefined : parsedQuantity,
+        price: orderType === "limit" ? parsedPrice : isMarketBuy ? parsedAmount : undefined,
       });
 
       setPrice("");

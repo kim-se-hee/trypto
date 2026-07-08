@@ -31,8 +31,8 @@ export interface PlaceOrderRequest {
   exchangeCoinId: number;
   side: OrderSide;
   orderType: OrderType;
+  volume?: number;
   price?: number;
-  amount: number;
 }
 
 export interface PlaceOrderResult {
