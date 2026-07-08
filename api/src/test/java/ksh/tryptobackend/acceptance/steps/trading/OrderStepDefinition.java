@@ -136,29 +136,29 @@ public class OrderStepDefinition {
     }
 
     @When("시장가 매수 주문을 {long}원으로 요청한다")
-    public void 시장가_매수_주문을_원으로_요청한다(long amount) {
-        Map<String, Object> body = createOrderBody("BUY", "MARKET", amount, null);
+    public void 시장가_매수_주문을_원으로_요청한다(long totalPrice) {
+        Map<String, Object> body = createOrderBody("BUY", "MARKET", null, totalPrice);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
     @When("시장가 매도 주문을 {double}개로 요청한다")
-    public void 시장가_매도_주문을_개로_요청한다(double amount) {
-        Map<String, Object> body = createOrderBody("SELL", "MARKET", amount, null);
+    public void 시장가_매도_주문을_개로_요청한다(double volume) {
+        Map<String, Object> body = createOrderBody("SELL", "MARKET", volume, null);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
-    @When("지정가 매수 주문을 {long}원에 가격 {long}원으로 요청한다")
-    public void 지정가_매수_주문을_원에_가격_원으로_요청한다(long amount, long price) {
-        Map<String, Object> body = createOrderBody("BUY", "LIMIT", amount, price);
+    @When("지정가 매수 주문을 {double}개에 가격 {long}원으로 요청한다")
+    public void 지정가_매수_주문을_개에_가격_원으로_요청한다(double volume, long price) {
+        Map<String, Object> body = createOrderBody("BUY", "LIMIT", volume, price);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
     @When("지정가 매도 주문을 {double}개에 가격 {long}원으로 요청한다")
-    public void 지정가_매도_주문을_개에_가격_원으로_요청한다(double amount, long price) {
-        Map<String, Object> body = createOrderBody("SELL", "LIMIT", amount, price);
+    public void 지정가_매도_주문을_개에_가격_원으로_요청한다(double volume, long price) {
+        Map<String, Object> body = createOrderBody("SELL", "LIMIT", volume, price);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
@@ -173,7 +173,7 @@ public class OrderStepDefinition {
             body.put("exchangeCoinId", EXCHANGE_COIN_ID);
             body.put("side", "BUY");
             body.put("orderType", "MARKET");
-            body.put("amount", amount);
+            body.put("price", amount);
             apiClient.post("/api/orders", body);
             extractOrderIdIfSuccess();
             if (i == 0) {
@@ -305,14 +305,16 @@ public class OrderStepDefinition {
     }
 
     private Map<String, Object> createOrderBody(
-            String side, String orderType, Number amount, Long price) {
+            String side, String orderType, Number volume, Number price) {
         Map<String, Object> body = new HashMap<>();
         body.put("clientOrderId", UUID.randomUUID().toString());
         body.put("walletId", WALLET_ID);
         body.put("exchangeCoinId", EXCHANGE_COIN_ID);
         body.put("side", side);
         body.put("orderType", orderType);
-        body.put("amount", amount);
+        if (volume != null) {
+            body.put("volume", volume);
+        }
         if (price != null) {
             body.put("price", price);
         }

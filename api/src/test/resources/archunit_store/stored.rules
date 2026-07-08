@@ -1,8 +1,9 @@
 #
-#Thu Jun 11 19:08:49 KST 2026
+#Thu Jul 09 04:52:48 KST 2026
 @RestController\ public\ methods\ should\ not\ directly\ return\ domain\ or\ Result\ DTO=80ed3eb7-5fa7-4745-9045-b8c0a4f1e5bd
 @RestController\ public\ methods\ should\ return\ ResponseEntity\ (raw\ type)=f0538393-c3f5-4b11-bc43-d017702769fa
 Application\ and\ domain\ should\ not\ depend\ on\ adapter\ Request/Response\ DTOs=318c9b46-1196-4293-9c82-bfb2372a032c
+Domain\ VO\ should\ not\ depend\ on\ domain\ model\ \u2014\ pass\ values\ into\ VO\ methods\ instead\ of\ aggregates=37f1fbd0-5032-45cd-9571-069970acc4a6
 Output\ Port\ should\ not\ depend\ on\ port.out.dto\ \u2014\ return\ domain\ model/VO\ instead=4f0332f9-0d04-4bf3-be26-2c0bd28f1b5f
 Service\ should\ not\ depend\ on\ port.out.dto\ \u2014\ use\ domain\ model/VO\ instead=e0acc953-23b6-4453-88e6-9fa9c0a42902
 UseCases\ should\ declare\ exactly\ one\ method=9b3f011b-3137-47df-a958-1d0de4980b2b
