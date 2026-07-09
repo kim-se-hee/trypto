@@ -8,10 +8,13 @@ public record Nickname(String value) {
     private static final int MIN_LENGTH = 2;
     private static final int MAX_LENGTH = 20;
 
-    public static Nickname of(String value) {
+    public Nickname {
         if (value.length() < MIN_LENGTH || value.length() > MAX_LENGTH) {
             throw new CustomException(ErrorCode.INVALID_NICKNAME_LENGTH);
         }
+    }
+
+    public static Nickname of(String value) {
         return new Nickname(value);
     }
 

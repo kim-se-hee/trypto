@@ -28,7 +28,7 @@ public class User {
         return User.builder()
                 .userId(userId)
                 .email(email)
-                .nickname(new Nickname(nickname))
+                .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
