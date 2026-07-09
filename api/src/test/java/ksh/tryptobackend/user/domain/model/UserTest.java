@@ -31,7 +31,7 @@ class UserTest {
             user.changeNickname("새닉네임");
 
             // Then
-            assertThat(user.getNickname()).isEqualTo("새닉네임");
+            assertThat(user.getNickname().value()).isEqualTo("새닉네임");
         }
 
         @Test
@@ -41,7 +41,7 @@ class UserTest {
             user.changeNickname("가나");
 
             // Then
-            assertThat(user.getNickname()).isEqualTo("가나");
+            assertThat(user.getNickname().value()).isEqualTo("가나");
         }
 
         @Test
@@ -54,7 +54,7 @@ class UserTest {
             user.changeNickname(twentyChars);
 
             // Then
-            assertThat(user.getNickname()).isEqualTo(twentyChars);
+            assertThat(user.getNickname().value()).isEqualTo(twentyChars);
         }
 
         @Test

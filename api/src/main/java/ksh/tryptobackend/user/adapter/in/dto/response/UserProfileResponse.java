@@ -14,7 +14,7 @@ public record UserProfileResponse(
         return new UserProfileResponse(
                 user.getUserId(),
                 user.getEmail(),
-                user.getNickname(),
+                user.getNickname().value(),
                 user.isPortfolioPublic(),
                 user.getCreatedAt());
     }

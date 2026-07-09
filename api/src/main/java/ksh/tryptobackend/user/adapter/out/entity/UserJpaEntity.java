@@ -42,7 +42,7 @@ public class UserJpaEntity {
         UserJpaEntity entity = new UserJpaEntity();
         entity.id = user.getUserId();
         entity.email = user.getEmail();
-        entity.nickname = user.getNickname();
+        entity.nickname = user.getNickname().value();
         entity.portfolioPublic = user.isPortfolioPublic();
         entity.createdAt = user.getCreatedAt();
         entity.updatedAt = user.getUpdatedAt();
@@ -50,7 +50,7 @@ public class UserJpaEntity {
     }
 
     public void updateFromDomain(User user) {
-        this.nickname = user.getNickname();
+        this.nickname = user.getNickname().value();
         this.portfolioPublic = user.isPortfolioPublic();
     }
 

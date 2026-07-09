@@ -28,6 +28,6 @@ public class FindUserPublicInfoService implements FindUserPublicInfoUseCase {
 
     private UserPublicInfoResult toResult(User user) {
         return new UserPublicInfoResult(
-                user.getUserId(), user.getNickname(), user.isPortfolioPublic());
+                user.getUserId(), user.getNickname().value(), user.isPortfolioPublic());
     }
 }
