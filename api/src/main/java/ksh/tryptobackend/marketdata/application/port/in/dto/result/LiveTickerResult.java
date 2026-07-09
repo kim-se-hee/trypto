@@ -1,6 +1,8 @@
 package ksh.tryptobackend.marketdata.application.port.in.dto.result;
 
 import java.math.BigDecimal;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
+import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
 
 public record LiveTickerResult(
         Long exchangeId,
@@ -9,4 +11,17 @@ public record LiveTickerResult(
         BigDecimal price,
         BigDecimal changeRate,
         BigDecimal quoteTurnover,
-        Long timestamp) {}
+        Long timestamp) {
+
+    public static LiveTickerResult of(
+            ExchangeCoinMapping mapping, ResolveLiveTickerCommand.ExternalTicker ticker) {
+        return new LiveTickerResult(
+                mapping.exchangeId(),
+                mapping.coinId(),
+                mapping.coinSymbol(),
+                ticker.currentPrice(),
+                ticker.changeRate(),
+                ticker.quoteTurnover(),
+                ticker.timestamp());
+    }
+}

@@ -1,13 +1,13 @@
 package ksh.tryptobackend.marketdata.adapter.in;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import ksh.tryptobackend.common.config.RabbitMqConfig;
 import ksh.tryptobackend.common.dto.messages.TickerBatchMessage;
 import ksh.tryptobackend.marketdata.adapter.in.dto.response.TickerResponse;
 import ksh.tryptobackend.marketdata.application.port.in.ResolveLiveTickerUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerBatchResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -34,7 +34,7 @@ public class LiveTickerEventListener {
             return;
         }
         try {
-            broadcast(batch);
+            resolveLiveTickerUseCase.resolve(toCommand(batch)).ifPresent(this::broadcast);
         } catch (Exception e) {
             log.error(
                     "시세 배치 브로드캐스트 실패: exchange={}, size={}",
@@ -44,43 +44,25 @@ public class LiveTickerEventListener {
         }
     }
 
-    private void broadcast(TickerBatchMessage batch) {
-        List<TickerResponse> responses = new ArrayList<>(batch.tickers().size());
-        Long exchangeId = null;
-        long earliestTimestamp = Long.MAX_VALUE;
-        for (TickerBatchMessage.Item item : batch.tickers()) {
-            LiveTickerResult resolved =
-                    resolveLiveTickerUseCase
-                            .resolve(
-                                    batch.exchange(),
-                                    item.symbol(),
-                                    item.currentPrice(),
-                                    item.changeRate(),
-                                    item.quoteTurnover(),
-                                    item.timestamp())
-                            .orElse(null);
-            if (resolved == null) {
-                continue;
-            }
-            if (exchangeId == null) {
-                exchangeId = resolved.exchangeId();
-            }
-            if (resolved.timestamp() != null && resolved.timestamp() < earliestTimestamp) {
-                earliestTimestamp = resolved.timestamp();
-            }
-            responses.add(
-                    new TickerResponse(
-                            resolved.coinId(),
-                            resolved.symbol(),
-                            resolved.price(),
-                            resolved.changeRate(),
-                            resolved.quoteTurnover(),
-                            resolved.timestamp()));
-        }
-        if (responses.isEmpty() || exchangeId == null) {
-            return;
-        }
-        Map<String, Object> headers = Map.of(PUBLISHED_AT_MS_HEADER, earliestTimestamp);
-        messagingTemplate.convertAndSend(TOPIC_PREFIX + exchangeId, responses, headers);
+    private ResolveLiveTickerCommand toCommand(TickerBatchMessage batch) {
+        List<ResolveLiveTickerCommand.ExternalTicker> tickers =
+                batch.tickers().stream()
+                        .map(
+                                item ->
+                                        new ResolveLiveTickerCommand.ExternalTicker(
+                                                item.symbol(),
+                                                item.currentPrice(),
+                                                item.changeRate(),
+                                                item.quoteTurnover(),
+                                                item.timestamp()))
+                        .toList();
+        return new ResolveLiveTickerCommand(batch.exchange(), tickers);
+    }
+
+    private void broadcast(LiveTickerBatchResult batch) {
+        List<TickerResponse> responses =
+                batch.tickers().stream().map(TickerResponse::from).toList();
+        Map<String, Object> headers = Map.of(PUBLISHED_AT_MS_HEADER, batch.earliestTimestamp());
+        messagingTemplate.convertAndSend(TOPIC_PREFIX + batch.exchangeId(), responses, headers);
     }
 }
