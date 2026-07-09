@@ -16,4 +16,9 @@ public class GetAvailableBalanceService implements GetAvailableBalanceUseCase {
     public BigDecimal getAvailableBalance(Long walletId, Long coinId) {
         return walletQueryPort.getAvailableBalance(walletId, coinId);
     }
+
+    @Override
+    public BigDecimal getTotalBalance(Long walletId, Long coinId) {
+        return walletQueryPort.getTotalBalance(walletId, coinId);
+    }
 }

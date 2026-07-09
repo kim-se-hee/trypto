@@ -18,4 +18,6 @@ public interface WalletQueryPort {
     List<Wallet> findByExchangeId(Long exchangeId);
 
     BigDecimal getAvailableBalance(Long walletId, Long coinId);
+
+    BigDecimal getTotalBalance(Long walletId, Long coinId);
 }

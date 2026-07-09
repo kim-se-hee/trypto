@@ -5,4 +5,6 @@ import java.math.BigDecimal;
 public interface GetAvailableBalanceUseCase {
 
     BigDecimal getAvailableBalance(Long walletId, Long coinId);
+
+    BigDecimal getTotalBalance(Long walletId, Long coinId);
 }

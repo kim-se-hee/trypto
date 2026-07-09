@@ -62,4 +62,12 @@ public class WalletQueryAdapter implements WalletQueryPort {
                 .map(WalletBalanceJpaEntity::getAvailable)
                 .orElse(BigDecimal.ZERO);
     }
+
+    @Override
+    public BigDecimal getTotalBalance(Long walletId, Long coinId) {
+        return balanceRepository
+                .findByWalletIdAndCoinId(walletId, coinId)
+                .map(b -> b.getAvailable().add(b.getLocked()))
+                .orElse(BigDecimal.ZERO);
+    }
 }
