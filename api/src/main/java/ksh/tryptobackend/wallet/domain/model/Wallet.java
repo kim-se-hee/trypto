@@ -2,6 +2,8 @@ package ksh.tryptobackend.wallet.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -23,5 +25,11 @@ public class Wallet {
                 .seedAmount(seedAmount)
                 .createdAt(createdAt)
                 .build();
+    }
+
+    public void verifyOwnedBy(Long requesterId, Long ownerId) {
+        if (!ownerId.equals(requesterId)) {
+            throw new CustomException(ErrorCode.WALLET_NOT_OWNED);
+        }
     }
 }
