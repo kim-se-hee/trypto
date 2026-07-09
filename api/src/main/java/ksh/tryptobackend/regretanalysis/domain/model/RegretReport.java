@@ -60,9 +60,11 @@ public class RegretReport {
     }
 
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
-        return violationDetails.stream()
-                .map(ViolationDetail::getLossAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sum =
+                violationDetails.stream()
+                        .map(ViolationDetail::getLossAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.max(BigDecimal.ZERO);
     }
 
     private static BigDecimal calculateRuleFollowedRate(
