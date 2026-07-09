@@ -5,6 +5,4 @@ import ksh.tryptobackend.user.domain.model.User;
 public interface UserCommandPort {
 
     User save(User user);
-
-    void updatePortfolioVisibility(Long userId, boolean portfolioPublic);
 }

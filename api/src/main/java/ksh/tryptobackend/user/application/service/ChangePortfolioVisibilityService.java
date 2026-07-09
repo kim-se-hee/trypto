@@ -21,15 +21,11 @@ public class ChangePortfolioVisibilityService implements ChangePortfolioVisibili
     @Override
     @Transactional
     public User changePortfolioVisibility(ChangePortfolioVisibilityCommand command) {
-        User user = getUser(command.userId());
+        User user =
+                userQueryPort
+                        .findById(command.userId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.changePortfolioVisibility(command.portfolioPublic());
-        userCommandPort.updatePortfolioVisibility(command.userId(), command.portfolioPublic());
-        return user;
-    }
-
-    private User getUser(Long userId) {
-        return userQueryPort
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return userCommandPort.save(user);
     }
 }
