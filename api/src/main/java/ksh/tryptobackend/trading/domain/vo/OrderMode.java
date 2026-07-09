@@ -15,9 +15,14 @@ public enum OrderMode {
         }
 
         @Override
-        public BigDecimal lockAmount(
-                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill) {
-            return settlementDebit(quantity, fill).value();
+        public BalanceChange.Lock planReservation(
+                Quantity quantity,
+                Price limitPrice,
+                BigDecimal feeRate,
+                Fill fill,
+                TradingPair pair) {
+            return new BalanceChange.Lock(
+                    pair.quoteCoinId(), settlementDebit(quantity, fill).value());
         }
 
         @Override
@@ -44,9 +49,13 @@ public enum OrderMode {
         }
 
         @Override
-        public BigDecimal lockAmount(
-                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill) {
-            return quantity.value();
+        public BalanceChange.Lock planReservation(
+                Quantity quantity,
+                Price limitPrice,
+                BigDecimal feeRate,
+                Fill fill,
+                TradingPair pair) {
+            return new BalanceChange.Lock(pair.tradedCoinId(), quantity.value());
         }
 
         @Override
@@ -75,9 +84,14 @@ public enum OrderMode {
         }
 
         @Override
-        public BigDecimal lockAmount(
-                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill) {
-            return reservedDebit(quantity, limitPrice, feeRate).value();
+        public BalanceChange.Lock planReservation(
+                Quantity quantity,
+                Price limitPrice,
+                BigDecimal feeRate,
+                Fill fill,
+                TradingPair pair) {
+            return new BalanceChange.Lock(
+                    pair.quoteCoinId(), reservedDebit(quantity, limitPrice, feeRate).value());
         }
 
         @Override
@@ -108,9 +122,13 @@ public enum OrderMode {
         }
 
         @Override
-        public BigDecimal lockAmount(
-                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill) {
-            return quantity.value();
+        public BalanceChange.Lock planReservation(
+                Quantity quantity,
+                Price limitPrice,
+                BigDecimal feeRate,
+                Fill fill,
+                TradingPair pair) {
+            return new BalanceChange.Lock(pair.tradedCoinId(), quantity.value());
         }
 
         @Override
@@ -156,8 +174,8 @@ public enum OrderMode {
         return true;
     }
 
-    public abstract BigDecimal lockAmount(
-            Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill);
+    public abstract BalanceChange.Lock planReservation(
+            Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair);
 
     public abstract List<BalanceChange> planSettlementChanges(
             Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair);

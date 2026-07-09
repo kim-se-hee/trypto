@@ -153,12 +153,8 @@ public class Order extends AggregateRoot {
         return mode.orderType();
     }
 
-    public BigDecimal lockAmount() {
-        return mode.lockAmount(quantity, limitPrice, feeRate, fill);
-    }
-
-    public BalanceChange planReservation(TradingPair pair) {
-        return new BalanceChange.Lock(pair.lockedCoinId(mode.side()), lockAmount());
+    public BalanceChange.Lock planReservation(TradingPair pair) {
+        return mode.planReservation(quantity, limitPrice, feeRate, fill, pair);
     }
 
     public List<BalanceChange> planSettlementChanges(TradingPair pair) {
@@ -190,7 +186,8 @@ public class Order extends AggregateRoot {
     }
 
     private List<BalanceChange> planCancellationRefund(TradingPair pair) {
-        return List.of(new BalanceChange.Unlock(pair.lockedCoinId(mode.side()), lockAmount()));
+        BalanceChange.Lock lock = planReservation(pair);
+        return List.of(new BalanceChange.Unlock(lock.coinId(), lock.amount()));
     }
 
     private boolean isLimitOrder() {
