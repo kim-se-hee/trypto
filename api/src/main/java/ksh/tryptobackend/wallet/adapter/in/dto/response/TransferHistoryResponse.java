@@ -2,8 +2,7 @@ package ksh.tryptobackend.wallet.adapter.in.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
-import ksh.tryptobackend.wallet.domain.model.Transfer;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryResult;
 import ksh.tryptobackend.wallet.domain.vo.TransferStatus;
 import ksh.tryptobackend.wallet.domain.vo.TransferType;
 
@@ -17,16 +16,15 @@ public record TransferHistoryResponse(
         LocalDateTime createdAt,
         LocalDateTime completedAt) {
 
-    public static TransferHistoryResponse from(
-            Transfer transfer, Long viewerWalletId, Map<Long, String> coinSymbolMap) {
+    public static TransferHistoryResponse from(TransferHistoryResult result) {
         return new TransferHistoryResponse(
-                transfer.getTransferId(),
-                transfer.resolveType(viewerWalletId),
-                transfer.getCoinId(),
-                coinSymbolMap.get(transfer.getCoinId()),
-                transfer.getAmount(),
-                transfer.getStatus(),
-                transfer.getCreatedAt(),
-                transfer.getCompletedAt());
+                result.transferId(),
+                result.type(),
+                result.coinId(),
+                result.coinSymbol(),
+                result.amount(),
+                result.status(),
+                result.createdAt(),
+                result.completedAt());
     }
 }

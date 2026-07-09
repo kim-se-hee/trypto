@@ -10,6 +10,7 @@ import ksh.tryptobackend.wallet.application.port.in.FindTransferHistoryUseCase;
 import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryCursorResult;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryResult;
 import ksh.tryptobackend.wallet.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
@@ -35,9 +36,7 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
         boolean hasNext = transfers.size() > query.size();
         List<Transfer> pagedTransfers = hasNext ? transfers.subList(0, query.size()) : transfers;
 
-        Map<Long, String> coinSymbolMap = resolveCoinSymbols(pagedTransfers);
-
-        return buildCursorResult(pagedTransfers, coinSymbolMap, hasNext);
+        return buildCursorResult(pagedTransfers, query.walletId(), hasNext);
     }
 
     private void validateWalletOwnership(Long walletId, Long userId) {
@@ -58,8 +57,16 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
     }
 
     private TransferHistoryCursorResult buildCursorResult(
-            List<Transfer> transfers, Map<Long, String> coinSymbolMap, boolean hasNext) {
+            List<Transfer> transfers, Long viewerWalletId, boolean hasNext) {
+        Map<Long, String> coinSymbols = resolveCoinSymbols(transfers);
+        List<TransferHistoryResult> content =
+                transfers.stream()
+                        .map(
+                                transfer ->
+                                        TransferHistoryResult.from(
+                                                transfer, viewerWalletId, coinSymbols))
+                        .toList();
         Long nextCursor = hasNext ? transfers.getLast().getTransferId() : null;
-        return new TransferHistoryCursorResult(transfers, coinSymbolMap, nextCursor, hasNext);
+        return new TransferHistoryCursorResult(content, nextCursor, hasNext);
     }
 }

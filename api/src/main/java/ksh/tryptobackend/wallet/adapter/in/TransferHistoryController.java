@@ -29,12 +29,7 @@ public class TransferHistoryController {
                 findTransferHistoryUseCase.findTransferHistory(request.toQuery(walletId));
         CursorPageResponseDto<TransferHistoryResponse> response =
                 CursorPageResponseDto.of(
-                        result.transfers().stream()
-                                .map(
-                                        transfer ->
-                                                TransferHistoryResponse.from(
-                                                        transfer, walletId, result.coinSymbolMap()))
-                                .toList(),
+                        result.content().stream().map(TransferHistoryResponse::from).toList(),
                         result.nextCursor(),
                         result.hasNext());
         return ApiResponseDto.success("송금 내역을 조회했습니다.", response);
