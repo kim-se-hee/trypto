@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerBatchResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
@@ -23,27 +26,33 @@ class ResolveLiveTickerServiceTest {
     @InjectMocks private ResolveLiveTickerService sut;
 
     @Test
-    @DisplayName("매핑이 존재하면 LiveTickerResult를 반환한다")
-    void resolve_withMapping_returnsResult() {
+    @DisplayName("매핑이 존재하면 배치 결과를 반환한다")
+    void resolve_withMapping_returnsBatch() {
         // Given
         ExchangeCoinMapping mapping = new ExchangeCoinMapping(10L, 1L, 5L, "BTC");
         when(exchangeCoinMappingCacheQueryPort.resolve("Upbit", "BTC/KRW"))
                 .thenReturn(Optional.of(mapping));
+        ResolveLiveTickerCommand command =
+                new ResolveLiveTickerCommand(
+                        "Upbit",
+                        List.of(
+                                new ResolveLiveTickerCommand.ExternalTicker(
+                                        "BTC/KRW",
+                                        new BigDecimal("50000000"),
+                                        new BigDecimal("2.3"),
+                                        new BigDecimal("1000000000"),
+                                        1709913600000L)));
 
         // When
-        Optional<LiveTickerResult> result =
-                sut.resolve(
-                        "Upbit",
-                        "BTC/KRW",
-                        new BigDecimal("50000000"),
-                        new BigDecimal("2.3"),
-                        new BigDecimal("1000000000"),
-                        1709913600000L);
+        Optional<LiveTickerBatchResult> result = sut.resolve(command);
 
         // Then
         assertThat(result).isPresent();
-        LiveTickerResult ticker = result.get();
-        assertThat(ticker.exchangeId()).isEqualTo(1L);
+        LiveTickerBatchResult batch = result.get();
+        assertThat(batch.exchangeId()).isEqualTo(1L);
+        assertThat(batch.earliestTimestamp()).isEqualTo(1709913600000L);
+        assertThat(batch.tickers()).hasSize(1);
+        LiveTickerResult ticker = batch.tickers().get(0);
         assertThat(ticker.coinId()).isEqualTo(5L);
         assertThat(ticker.symbol()).isEqualTo("BTC");
         assertThat(ticker.price()).isEqualByComparingTo(new BigDecimal("50000000"));
@@ -58,16 +67,19 @@ class ResolveLiveTickerServiceTest {
         // Given
         when(exchangeCoinMappingCacheQueryPort.resolve("Unknown", "XYZ/KRW"))
                 .thenReturn(Optional.empty());
+        ResolveLiveTickerCommand command =
+                new ResolveLiveTickerCommand(
+                        "Unknown",
+                        List.of(
+                                new ResolveLiveTickerCommand.ExternalTicker(
+                                        "XYZ/KRW",
+                                        new BigDecimal("1000"),
+                                        new BigDecimal("0.1"),
+                                        new BigDecimal("500000"),
+                                        1709913600000L)));
 
         // When
-        Optional<LiveTickerResult> result =
-                sut.resolve(
-                        "Unknown",
-                        "XYZ/KRW",
-                        new BigDecimal("1000"),
-                        new BigDecimal("0.1"),
-                        new BigDecimal("500000"),
-                        1709913600000L);
+        Optional<LiveTickerBatchResult> result = sut.resolve(command);
 
         // Then
         assertThat(result).isEmpty();
