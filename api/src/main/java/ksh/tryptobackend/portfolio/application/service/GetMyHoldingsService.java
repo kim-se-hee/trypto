@@ -46,7 +46,7 @@ public class GetMyHoldingsService implements GetMyHoldingsUseCase {
         ExchangeDetailResult exchange = findExchangeDetail(wallet.exchangeId());
 
         BigDecimal baseCurrencyBalance =
-                getAvailableBalanceUseCase.getAvailableBalance(
+                getAvailableBalanceUseCase.getTotalBalance(
                         query.walletId(), exchange.baseCurrencyCoinId());
 
         List<EvaluatedHoldingResult> evaluatedHoldings =
