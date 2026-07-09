@@ -37,7 +37,6 @@
 # 의존
 
 ## MarketData
-- `FindExchangeDetailUseCase` — 거래소 정보 (입금 주소 발급)
 - `FindCoinInfoUseCase` — 기축통화 심볼 조회 (잔고 조회)
 - `FindCoinSymbolsUseCase` — 코인 심볼 조회 (송금 내역 응답 보강)
 

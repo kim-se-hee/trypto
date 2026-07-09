@@ -19,7 +19,7 @@
 |------|------|------------------|
 | 총 잔고 (balance) | available + frozen | 포트폴리오 탭 "보유 KRW" |
 | 사용 가능 잔고 (available) | 즉시 주문에 사용할 수 있는 금액 | 주문 화면            |
-| 동결 잔고 (frozen) | 미체결 지정가 주문 동결 + 동결 송금(FROZEN 상태 이체)에 묶인 금액 | 표시 x             |
+| 동결 잔고 (frozen) | 미체결 지정가 주문 동결에 묶인 금액 | 표시 x             |
 
 - 포트폴리오 탭의 "보유 KRW"는 **총 잔고**다. 동결 금액도 사용자 자산이므로 포함한다.
 - 주문 화면에서는 **사용 가능 잔고**를 별도로 표시하여 실제 주문 가능 금액을 보여준다.
@@ -124,9 +124,8 @@ STOMP user destination: `/user/queue/events`
 
 송금은 사용자가 직접 트리거하는 동기 API 호출이므로 WebSocket 이벤트 없이 API 응답으로 갱신한다.
 
-- 송금 API 응답의 `status`, `fee`를 확인한다
-- SUCCESS: `baseCurrencyBalance -= amount + fee` (프론트가 요청 시 보낸 amount + 응답의 fee로 계산)
-- FROZEN: `baseCurrencyBalance`는 변경 없음 (동결은 총 잔고에 포함)
+- 송금 API 응답의 `status`를 확인한다
+- SUCCESS: `baseCurrencyBalance -= amount`
 - 목적지 거래소 잔고는 탭 전환 시 fresh fetch로 반영된다
 
 # 현재가 실시간 갱신 전략

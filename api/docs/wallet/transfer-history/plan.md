@@ -30,30 +30,18 @@
         "type": "WITHDRAW",
         "coinId": 1,
         "coinSymbol": "BTC",
-        "chain": "ERC-20",
-        "toAddress": "0xinvalidaddress",
-        "toTag": null,
         "amount": 0.005,
-        "fee": 0.0008,
-        "status": "FROZEN",
-        "failureReason": "WRONG_ADDRESS",
-        "frozenUntil": "2026-03-04T14:30:00",
+        "status": "SUCCESS",
         "createdAt": "2026-03-03T14:30:00",
-        "completedAt": null
+        "completedAt": "2026-03-03T14:30:00"
       },
       {
         "transferId": 1,
         "type": "DEPOSIT",
         "coinId": 1,
         "coinSymbol": "BTC",
-        "chain": "Bitcoin",
-        "toAddress": "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
-        "toTag": null,
         "amount": 0.005,
-        "fee": 0,
         "status": "SUCCESS",
-        "failureReason": null,
-        "frozenUntil": null,
         "createdAt": "2026-03-03T14:00:00",
         "completedAt": "2026-03-03T14:00:00"
       }
@@ -70,9 +58,7 @@
 |------|------|
 | type | `DEPOSIT`: 입금 (해당 지갑이 도착지), `WITHDRAW`: 출금 (해당 지갑이 출발지) |
 | coinSymbol | 코인 심볼 (예: BTC, ETH). marketdata 컨텍스트에서 coinId로 조회한다 |
-| fee | 입금(DEPOSIT)인 경우 0. 수수료는 출발 지갑에서 부담한다 |
-| frozenUntil | FROZEN 상태일 때만 값이 있다. 이 시각 이후 자동 반환된다 |
-| completedAt | 송금이 완료(SUCCESS) 또는 반환(REFUNDED)된 시각. FROZEN 상태이면 null |
+| completedAt | 송금이 완료(SUCCESS)된 시각 |
 | nextCursor | 다음 페이지의 커서 값. 마지막 페이지이면 null |
 | hasNext | 다음 페이지 존재 여부 |
 

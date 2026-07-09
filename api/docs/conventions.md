@@ -138,7 +138,7 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - 컬렉션과 관련된 비지니스 로직이 있거나 구현을 감추고 싶다면 일급 컬렉션을 만들어 가독성과 응집성을 높인다.
 - 하나의 도메인 개념을 이루는 필드 묶음은 VO로 추출한다. 필드들이 코드상 항상 함께 이동하지 않아도(로직마다 부분집합으로 흩어져 쓰여도) 개념이 하나면 묶는다.
   - 판별 리트머스: 그 묶음에 도메인 언어로 이름을 붙일 수 있는가. 어떤 판정 메서드가 묶음의 일부와 원시 타입을 나란히 파라미터로 받고 있다면 묶음이 쪼개져 있다는 신호다.
-  - 예: 송금의 (chain, toAddress, toTag)는 resolve엔 chain·toAddress만, 태그 판정엔 toTag만 쓰이지만 "도착지 지정"이라는 한 개념이므로 VO로 묶는다.
+  - 예: 주문 입력의 `OrderInput(volume, price)`는 수량 검증엔 volume만, 가격 검증엔 price만 쓰이지만 "주문 입력값"이라는 한 개념이므로 VO로 묶는다.
 - VO는 불변 객체로 만든다. 모든 필드 `final`
 - VO는 `equals()`/`hashCode()`를 반드시 구현한다
 - 외부에 공개할 필요가 없고 애그리거트 내부에서만 사용하는 메소드는 private으로 만든다.
