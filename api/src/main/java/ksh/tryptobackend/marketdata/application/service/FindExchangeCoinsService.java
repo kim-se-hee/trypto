@@ -1,9 +1,6 @@
 package ksh.tryptobackend.marketdata.application.service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinsUseCase;
@@ -12,8 +9,8 @@ import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.TickerSnapshotQueryPort;
-import ksh.tryptobackend.marketdata.domain.model.Coin;
-import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
+import ksh.tryptobackend.marketdata.domain.model.ExchangeCoins;
+import ksh.tryptobackend.marketdata.domain.vo.CoinSymbols;
 import ksh.tryptobackend.marketdata.domain.vo.TickerSnapshots;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,49 +28,20 @@ public class FindExchangeCoinsService implements FindExchangeCoinsUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<ExchangeCoinListResult> findByExchangeId(Long exchangeId) {
-        validateExchangeExists(exchangeId);
-        List<ExchangeCoin> exchangeCoins = exchangeCoinQueryPort.findByExchangeId(exchangeId);
-        Map<Long, Coin> coinMap = findCoinMap(exchangeCoins);
-        TickerSnapshots tickerSnapshots = findTickerSnapshots(exchangeCoins);
-        return toResults(exchangeCoins, coinMap, tickerSnapshots);
-    }
-
-    private void validateExchangeExists(Long exchangeId) {
         if (!exchangeQueryPort.existsById(exchangeId)) {
             throw new CustomException(ErrorCode.EXCHANGE_NOT_FOUND);
         }
-    }
-
-    private Map<Long, Coin> findCoinMap(List<ExchangeCoin> exchangeCoins) {
-        Set<Long> coinIds =
-                exchangeCoins.stream().map(ExchangeCoin::coinId).collect(Collectors.toSet());
-        return coinQueryPort.findByIds(coinIds).stream()
-                .collect(Collectors.toMap(Coin::coinId, coin -> coin));
-    }
-
-    private TickerSnapshots findTickerSnapshots(List<ExchangeCoin> exchangeCoins) {
-        Set<Long> exchangeCoinIds =
-                exchangeCoins.stream()
-                        .map(ExchangeCoin::exchangeCoinId)
-                        .collect(Collectors.toSet());
-        return tickerSnapshotQueryPort.findByExchangeCoinIds(exchangeCoinIds);
-    }
-
-    private List<ExchangeCoinListResult> toResults(
-            List<ExchangeCoin> exchangeCoins,
-            Map<Long, Coin> coinMap,
-            TickerSnapshots tickerSnapshots) {
-        return exchangeCoins.stream().map(ec -> toResult(ec, coinMap, tickerSnapshots)).toList();
-    }
-
-    private ExchangeCoinListResult toResult(
-            ExchangeCoin exchangeCoin, Map<Long, Coin> coinMap, TickerSnapshots tickerSnapshots) {
-        Coin coin = coinMap.get(exchangeCoin.coinId());
-        return new ExchangeCoinListResult(
-                exchangeCoin.exchangeCoinId(),
-                exchangeCoin.coinId(),
-                coin.symbol(),
-                exchangeCoin.displayName(),
-                tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId()));
+        ExchangeCoins exchangeCoins = exchangeCoinQueryPort.findByExchangeId(exchangeId);
+        CoinSymbols coinSymbols = coinQueryPort.findSymbolsByIds(exchangeCoins.coinIds());
+        TickerSnapshots tickerSnapshots =
+                tickerSnapshotQueryPort.findByExchangeCoinIds(exchangeCoins.exchangeCoinIds());
+        return exchangeCoins.values().stream()
+                .map(
+                        exchangeCoin ->
+                                ExchangeCoinListResult.of(
+                                        exchangeCoin,
+                                        coinSymbols.getSymbol(exchangeCoin.coinId()),
+                                        tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId())))
+                .toList();
     }
 }
