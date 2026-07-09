@@ -27,6 +27,10 @@ public class Wallet {
                 .build();
     }
 
+    public boolean isOwnedBy(Long requesterId, Long ownerId) {
+        return ownerId.equals(requesterId);
+    }
+
     public void verifyOwnedBy(Long requesterId, Long ownerId) {
         if (!ownerId.equals(requesterId)) {
             throw new CustomException(ErrorCode.WALLET_NOT_OWNED);

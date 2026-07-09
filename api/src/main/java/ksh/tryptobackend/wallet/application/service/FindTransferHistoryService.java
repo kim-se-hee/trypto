@@ -47,7 +47,7 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
                         .findById(walletId)
                         .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
         Long ownerId = investmentRoundQueryPort.getOwnerId(wallet.getRoundId());
-        if (!ownerId.equals(userId)) {
+        if (!wallet.isOwnedBy(userId, ownerId)) {
             throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
         }
     }
