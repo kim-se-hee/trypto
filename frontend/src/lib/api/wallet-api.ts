@@ -14,24 +14,9 @@ export interface WalletBalancesResponse {
   balances: WalletBalanceItem[];
 }
 
-export interface DepositAddressResponse {
-  depositAddressId: number;
-  walletId: number;
-  address: string;
-}
-
 export function getWalletBalances(
   userId: number,
   walletId: number,
 ): Promise<WalletBalancesResponse> {
   return apiGet<WalletBalancesResponse>(`/api/users/${userId}/wallets/${walletId}/balances`);
-}
-
-export function getDepositAddress(
-  walletId: number,
-  coinId: number,
-): Promise<DepositAddressResponse> {
-  return apiGet<DepositAddressResponse>(`/api/wallets/${walletId}/deposit-address`, {
-    coinId,
-  });
 }

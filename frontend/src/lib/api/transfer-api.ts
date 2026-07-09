@@ -11,9 +11,6 @@ export interface CreateTransferRequest {
 export interface TransferCoinResponse {
   transferId: number;
   status: string;
-  fee: number;
-  failureReason: string | null;
-  frozenUntil: string | null;
 }
 
 export interface TransferHistoryItem {
@@ -21,14 +18,8 @@ export interface TransferHistoryItem {
   type: "DEPOSIT" | "WITHDRAW";
   coinId: number;
   coinSymbol: string;
-  chain: string;
-  toAddress: string;
-  toTag: string | null;
   amount: number;
-  fee: number;
   status: string;
-  failureReason: string | null;
-  frozenUntil: string | null;
   createdAt: string;
   completedAt: string | null;
 }

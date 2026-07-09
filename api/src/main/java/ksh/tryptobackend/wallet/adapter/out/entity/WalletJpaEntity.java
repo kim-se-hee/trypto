@@ -40,15 +40,6 @@ public class WalletJpaEntity {
     @Column(name = "seed_amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal seedAmount;
 
-    @Column(name = "wallet_address", length = 255)
-    private String walletAddress;
-
-    @Column(name = "wallet_tag", length = 255)
-    private String walletTag;
-
-    @Column(name = "chain", length = 50)
-    private String chain;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

@@ -298,56 +298,7 @@ test.describe("입출금", () => {
   });
 });
 
-// ── 10단계: 입금 주소 조회 ──
-
-test.describe("입금 주소 조회", () => {
-  test("입출금 페이지 로드", async () => {
-    await page.goto(`${BASE_URL}/wallet`);
-    await expect(page.getByRole("heading", { name: "입출금" })).toBeVisible();
-    await expect(page.getByText("보유 자산")).toBeVisible();
-  });
-
-  test("BTC 코인 선택 시 상세 모달 표시", async () => {
-    await page.evaluate(() => {
-      const items = document.querySelectorAll('[class*="cursor-pointer"]');
-      const btcItem = Array.from(items).find(
-        (e) => e.textContent?.includes("BTC") && e.textContent?.includes("비트코인")
-      );
-      btcItem?.scrollIntoView();
-      (btcItem as HTMLElement)?.click();
-    });
-    await page.waitForTimeout(500);
-    await expect(page.getByText("BTC").first()).toBeVisible();
-    await expect(page.getByText("잔고 상세").first()).toBeVisible();
-  });
-
-  test("입금 버튼 클릭 시 입금 주소 표시", async () => {
-    await page.evaluate(() => {
-      const buttons = document.querySelectorAll("button");
-      const depositBtn = Array.from(buttons).find(
-        (b) =>
-          b.textContent?.trim() === "입금" ||
-          (b.textContent?.includes("입금") &&
-            !b.textContent?.includes("출금") &&
-            !b.textContent?.includes("내역"))
-      );
-      (depositBtn as HTMLElement)?.click();
-    });
-    await page.waitForTimeout(1000);
-
-    await expect(page.getByText("BTC 입금")).toBeVisible();
-    await expect(page.getByText("입금 주소")).toBeVisible();
-  });
-
-  test("입금 주소 복사 버튼 표시", async () => {
-    await expect(page.locator("button", { hasText: "주소 복사" })).toBeVisible();
-
-    await page.locator("button", { hasText: "확인" }).click();
-    await page.waitForTimeout(500);
-  });
-});
-
-// ── 11단계: 거래소 간 송금 ──
+// ── 10단계: 거래소 간 송금 ──
 
 test.describe("거래소 간 송금", () => {
   test("출금 모달 열기", async () => {

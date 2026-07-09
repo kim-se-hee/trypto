@@ -21,7 +21,6 @@ public enum ErrorCode {
     ORDER_NOT_CANCELLABLE(400, "order.not.cancellable"),
     ORDER_NOT_FILLABLE(400, "order.not.fillable"),
     INVALID_FILL_PRICE(400, "invalid.fill.price"),
-    BASE_CURRENCY_NOT_TRANSFERABLE(400, "base.currency.not.transferable"),
     BELOW_MIN_WITHDRAWAL(400, "below.min.withdrawal"),
     SAME_WALLET_TRANSFER(400, "same.wallet.transfer"),
     DIFFERENT_ROUND_TRANSFER(400, "different.round.transfer"),
@@ -57,8 +56,6 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "user.not.found"),
     REPORT_NOT_FOUND(404, "report.not.found"),
     SNAPSHOT_NOT_FOUND(404, "snapshot.not.found"),
-
-    WITHDRAWAL_FEE_NOT_FOUND(404, "withdrawal.fee.not.found"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 
