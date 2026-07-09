@@ -1,14 +1,3 @@
-## 도메인 모델
-
-- `Candle`: time(Instant), open(double), high(double), low(double), close(double)
-- `CandleInterval`: enum (`ONE_MINUTE`, `ONE_HOUR`, `FOUR_HOURS`, `ONE_DAY`, `ONE_WEEK`, `ONE_MONTH`)
-  - `measurement()` 메서드로 InfluxDB measurement 이름을 반환한다 (예: `ONE_DAY` → `"candle_1d"`)
-  - `of(String)` 팩토리 메서드로 문자열(`"1d"`)을 enum으로 변환한다
-
-## 타 컨텍스트 의존성
-
-없음 (marketdata 컨텍스트 단독. InfluxDB 직접 조회)
-
 ## InfluxDB 조회 구조
 
 measurement는 주기별로 분리되어 있다 (`candle_1m`, `candle_1h`, `candle_4h`, `candle_1d`, `candle_1w`, `candle_1M`).
@@ -23,23 +12,11 @@ interval 파라미터를 measurement 이름으로 매핑하여 쿼리한다.
 | `1w` | `candle_1w` |
 | `1M` | `candle_1M` |
 
-### 쿼리 예시
 
-```sql
--- 최근 90개 일봉
-SELECT open, high, low, close
-FROM candle_1d
-WHERE exchange = 'UPBIT' AND coin = 'BTC'
-ORDER BY time DESC
-LIMIT 90
+## 커시 기반 페이징 적용
 
--- 커서 기반 과거 스크롤
-SELECT open, high, low, close
-FROM candle_1d
-WHERE exchange = 'UPBIT' AND coin = 'BTC' AND time < '2026-03-10T00:00:00Z'
-ORDER BY time DESC
-LIMIT 90
-```
+차트를 과거 방향으로 넘기면 과거 캔들을 조회해 이어 붙여야 한다. 이때 캔들을 오프셋 대신 커서 기반으로 페이징 조회한다.
+
 
 ## 포트/어댑터
 
