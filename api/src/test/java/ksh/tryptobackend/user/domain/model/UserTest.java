@@ -104,6 +104,6 @@ class UserTest {
 
     private static User createUser(String nickname) {
         return User.reconstitute(
-                1L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
+                1L, 0L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
     }
 }

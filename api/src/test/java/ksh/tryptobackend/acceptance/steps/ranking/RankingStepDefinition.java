@@ -81,8 +81,8 @@ public class RankingStepDefinition {
     private void insertUser(Long userId, String nickname, boolean portfolioPublic) {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT INTO user (user_id, email, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO user (user_id, version, email, nickname, portfolio_public, created_at,"
+                        + " updated_at) VALUES (?, 0, ?, ?, ?, ?, ?)",
                 userId,
                 nickname + "@test.com",
                 nickname,
