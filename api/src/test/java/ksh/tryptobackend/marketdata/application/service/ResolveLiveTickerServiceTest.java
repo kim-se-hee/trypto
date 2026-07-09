@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ExternalTickerCommand;
 import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerBatchResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
@@ -36,7 +37,7 @@ class ResolveLiveTickerServiceTest {
                 new ResolveLiveTickerCommand(
                         "Upbit",
                         List.of(
-                                new ResolveLiveTickerCommand.ExternalTicker(
+                                new ExternalTickerCommand(
                                         "BTC/KRW",
                                         new BigDecimal("50000000"),
                                         new BigDecimal("2.3"),
@@ -71,7 +72,7 @@ class ResolveLiveTickerServiceTest {
                 new ResolveLiveTickerCommand(
                         "Unknown",
                         List.of(
-                                new ResolveLiveTickerCommand.ExternalTicker(
+                                new ExternalTickerCommand(
                                         "XYZ/KRW",
                                         new BigDecimal("1000"),
                                         new BigDecimal("0.1"),
