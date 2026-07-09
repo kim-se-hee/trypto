@@ -50,8 +50,10 @@ public class TransferCoinService implements TransferCoinUseCase {
                 walletQueryPort.getAvailableBalance(command.fromWalletId(), command.coinId());
         Transfer transfer = Transfer.create(command, sourceAvailable, LocalDateTime.now(clock));
 
-        walletCommandPort.deductBalance(command.fromWalletId(), command.coinId(), command.amount());
-        walletCommandPort.addBalance(command.toWalletId(), command.coinId(), command.amount());
+        walletCommandPort.deductBalance(
+                transfer.getFromWalletId(), transfer.getCoinId(), transfer.getAmount());
+        walletCommandPort.addBalance(
+                transfer.getToWalletId(), transfer.getCoinId(), transfer.getAmount());
         return transferCommandPort.save(transfer);
     }
 }
