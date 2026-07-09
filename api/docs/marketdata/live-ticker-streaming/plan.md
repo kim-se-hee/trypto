@@ -87,14 +87,6 @@
 | 마켓 탭 | price, changeRate, quoteTurnover | 코인 목록 실시간 시세 표시 |
 | 포트폴리오 투자 현황 | price | 보유 코인 실시간 평가 |
 
-## task 목록
-
-- [ ] RabbitMQ `ticker.exchange` fanout exchange 와 인스턴스별 anonymous 큐(`ticker.marketdata.{uuid}`) 선언
-- [ ] `tickerMarketdataListener` RabbitMQ 리스너로 TickerBatchMessage 소비
-- [ ] 배치 내 각 티커를 외부 식별자(거래소+심볼) → 내부 코인 매핑으로 변환
-- [ ] 변환 결과를 거래소별 STOMP 토픽(`/topic/tickers.{exchangeId}`)에 배열 1 프레임으로 브로드캐스트
-- [ ] `MarketdataWarmupInitializer` 로 ApplicationReadyEvent 에서 매핑 캐시 워밍업 후 리스너 시작
-
 ## 이벤트 컨트랙트
 
 시세 이벤트는 RabbitMQ `ticker.exchange` fanout exchange 로 수신한다. TickerBatchMessage 채널 규약과 페이로드 스키마 단일 소스는 [docs/contracts/ticker-exchange.md](../../../../docs/contracts/ticker-exchange.md) 참조.
