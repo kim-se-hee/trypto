@@ -113,7 +113,7 @@ public class GetRegretChartService implements GetRegretChartUseCase {
                 findExchangeDetailUseCase
                         .findExchangeDetail(exchangeId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-        String currency = result.domestic() ? "KRW" : "USD";
+        String currency = result.domestic() ? "KRW" : "USDT";
         return new AnalysisExchange(exchangeId, result.name(), currency);
     }
 

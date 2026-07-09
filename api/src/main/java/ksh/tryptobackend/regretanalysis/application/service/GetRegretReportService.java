@@ -89,7 +89,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     }
 
     private AnalysisExchange toAnalysisExchange(Long exchangeId, ExchangeDetailResult result) {
-        String currency = result.domestic() ? "KRW" : "USD";
+        String currency = result.domestic() ? "KRW" : "USDT";
         return new AnalysisExchange(exchangeId, result.name(), currency);
     }
 
