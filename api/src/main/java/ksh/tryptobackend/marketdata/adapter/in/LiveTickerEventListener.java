@@ -6,6 +6,7 @@ import ksh.tryptobackend.common.config.RabbitMqConfig;
 import ksh.tryptobackend.common.dto.messages.TickerBatchMessage;
 import ksh.tryptobackend.marketdata.adapter.in.dto.response.TickerResponse;
 import ksh.tryptobackend.marketdata.application.port.in.ResolveLiveTickerUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ExternalTickerCommand;
 import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerBatchResult;
 import lombok.RequiredArgsConstructor;
@@ -45,11 +46,11 @@ public class LiveTickerEventListener {
     }
 
     private ResolveLiveTickerCommand toCommand(TickerBatchMessage batch) {
-        List<ResolveLiveTickerCommand.ExternalTicker> tickers =
+        List<ExternalTickerCommand> tickers =
                 batch.tickers().stream()
                         .map(
                                 item ->
-                                        new ResolveLiveTickerCommand.ExternalTicker(
+                                        new ExternalTickerCommand(
                                                 item.symbol(),
                                                 item.currentPrice(),
                                                 item.changeRate(),
