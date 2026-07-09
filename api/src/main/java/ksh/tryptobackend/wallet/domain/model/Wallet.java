@@ -32,4 +32,10 @@ public class Wallet {
             throw new CustomException(ErrorCode.WALLET_NOT_OWNED);
         }
     }
+
+    public void verifySameRoundAs(Wallet other) {
+        if (!roundId.equals(other.roundId)) {
+            throw new CustomException(ErrorCode.DIFFERENT_ROUND_TRANSFER);
+        }
+    }
 }
