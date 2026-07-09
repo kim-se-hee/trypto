@@ -6,7 +6,6 @@ import java.util.Set;
 import ksh.tryptobackend.user.application.port.in.FindUserPublicInfoUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.result.UserPublicInfoResult;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
-import ksh.tryptobackend.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,16 +17,11 @@ public class FindUserPublicInfoService implements FindUserPublicInfoUseCase {
 
     @Override
     public Optional<UserPublicInfoResult> findByUserId(Long userId) {
-        return userQueryPort.findById(userId).map(this::toResult);
+        return userQueryPort.findById(userId).map(UserPublicInfoResult::from);
     }
 
     @Override
     public List<UserPublicInfoResult> findByUserIds(Set<Long> userIds) {
-        return userQueryPort.findByIds(userIds).stream().map(this::toResult).toList();
-    }
-
-    private UserPublicInfoResult toResult(User user) {
-        return new UserPublicInfoResult(
-                user.getUserId(), user.getNickname().value(), user.isPortfolioPublic());
+        return userQueryPort.findByIds(userIds).stream().map(UserPublicInfoResult::from).toList();
     }
 }
