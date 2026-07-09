@@ -22,6 +22,6 @@ public class UserCommandAdapter implements UserCommandPort {
                         .findById(user.getUserId())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         entity.updateFromDomain(user);
-        return entity.toDomain();
+        return userJpaRepository.saveAndFlush(entity).toDomain();
     }
 }
