@@ -5,7 +5,7 @@ import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("tradingAclWalletQueryAdapter")
 @RequiredArgsConstructor
 public class AclWalletQueryAdapter implements WalletQueryPort {
 

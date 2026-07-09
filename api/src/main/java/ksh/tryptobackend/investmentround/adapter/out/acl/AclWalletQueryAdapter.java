@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** wallet 컨텍스트 조회를 investmentround 로 번역하는 ACL 어댑터. */
-@Component
+@Component("investmentroundAclWalletQueryAdapter")
 @RequiredArgsConstructor
 public class AclWalletQueryAdapter implements WalletQueryPort {
 

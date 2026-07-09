@@ -6,7 +6,7 @@ import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("investmentroundWalletBalanceServiceImpl")
 @RequiredArgsConstructor
 public class WalletBalanceServiceImpl implements WalletBalanceService {
 
