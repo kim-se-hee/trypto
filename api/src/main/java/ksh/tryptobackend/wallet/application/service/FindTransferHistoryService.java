@@ -7,13 +7,15 @@ import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.application.port.in.FindTransferHistoryUseCase;
-import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryCursorResult;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryResult;
+import ksh.tryptobackend.wallet.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
+import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private final TransferQueryPort transferQueryPort;
+    private final WalletQueryPort walletQueryPort;
+    private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final MarketDataQueryPort marketDataQueryPort;
-
-    private final GetWalletOwnerIdUseCase getWalletOwnerIdUseCase;
 
     @Override
     @Transactional(readOnly = true)
@@ -40,8 +42,12 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
     }
 
     private void validateWalletOwnership(Long walletId, Long userId) {
-        Long ownerUserId = getWalletOwnerIdUseCase.getWalletOwnerId(walletId);
-        if (!ownerUserId.equals(userId)) {
+        Wallet wallet =
+                walletQueryPort
+                        .findById(walletId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        Long ownerId = investmentRoundQueryPort.getOwnerId(wallet.getRoundId());
+        if (!ownerId.equals(userId)) {
             throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
         }
     }
