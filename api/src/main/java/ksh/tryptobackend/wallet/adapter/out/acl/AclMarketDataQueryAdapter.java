@@ -1,9 +1,11 @@
 package ksh.tryptobackend.wallet.adapter.out.acl;
 
+import java.util.Map;
 import java.util.Set;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinInfoUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
@@ -18,11 +20,17 @@ public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindCoinInfoUseCase findCoinInfoUseCase;
+    private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
 
     @Override
     public BaseCurrency getBaseCurrency(Long exchangeId) {
         Long coinId = getBaseCurrencyCoinId(exchangeId);
         return new BaseCurrency(coinId, resolveSymbol(coinId));
+    }
+
+    @Override
+    public Map<Long, String> findCoinSymbols(Set<Long> coinIds) {
+        return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
     }
 
     private Long getBaseCurrencyCoinId(Long exchangeId) {
