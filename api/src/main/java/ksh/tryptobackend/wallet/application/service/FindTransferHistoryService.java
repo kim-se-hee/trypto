@@ -6,11 +6,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
 import ksh.tryptobackend.wallet.application.port.in.FindTransferHistoryUseCase;
 import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryCursorResult;
+import ksh.tryptobackend.wallet.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private final TransferQueryPort transferQueryPort;
+    private final MarketDataQueryPort marketDataQueryPort;
 
     private final GetWalletOwnerIdUseCase getWalletOwnerIdUseCase;
-
-    private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,7 +54,7 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private Map<Long, String> resolveCoinSymbols(List<Transfer> transfers) {
         Set<Long> coinIds = transfers.stream().map(Transfer::getCoinId).collect(Collectors.toSet());
-        return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
+        return marketDataQueryPort.findCoinSymbols(coinIds);
     }
 
     private TransferHistoryCursorResult buildCursorResult(
