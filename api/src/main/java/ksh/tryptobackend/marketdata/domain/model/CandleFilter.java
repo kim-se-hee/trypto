@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.regex.Pattern;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.marketdata.application.port.in.dto.query.FindCandlesQuery;
 
 public record CandleFilter(
         String exchange, String coin, CandleInterval interval, int limit, Instant cursor) {
@@ -13,18 +12,24 @@ public record CandleFilter(
     private static final String MARKET_SYMBOL_SEPARATOR = "/";
     private static final int DEFAULT_LIMIT = 60;
 
-    public static void validateIdentifiers(FindCandlesQuery query) {
-        validateIdentifier(query.exchange(), ErrorCode.INVALID_EXCHANGE_NAME);
-        validateIdentifier(query.coin(), ErrorCode.INVALID_COIN_SYMBOL);
+    public static void validateIdentifiers(String exchange, String coin) {
+        validateIdentifier(exchange, ErrorCode.INVALID_EXCHANGE_NAME);
+        validateIdentifier(coin, ErrorCode.INVALID_COIN_SYMBOL);
     }
 
-    public static CandleFilter of(FindCandlesQuery query, String baseCurrencySymbol) {
+    public static CandleFilter of(
+            String exchange,
+            String coin,
+            String interval,
+            Integer limit,
+            String cursor,
+            String baseCurrencySymbol) {
         return new CandleFilter(
-                query.exchange(),
-                query.coin() + MARKET_SYMBOL_SEPARATOR + baseCurrencySymbol,
-                CandleInterval.of(query.interval()),
-                query.limit() != null ? query.limit() : DEFAULT_LIMIT,
-                parseCursor(query.cursor()));
+                exchange,
+                coin + MARKET_SYMBOL_SEPARATOR + baseCurrencySymbol,
+                CandleInterval.of(interval),
+                limit != null ? limit : DEFAULT_LIMIT,
+                parseCursor(cursor));
     }
 
     private static void validateIdentifier(String value, ErrorCode errorCode) {

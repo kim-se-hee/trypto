@@ -22,12 +22,19 @@ public class FindCandlesService implements FindCandlesUseCase {
 
     @Override
     public List<Candle> findCandles(FindCandlesQuery query) {
-        CandleFilter.validateIdentifiers(query);
+        CandleFilter.validateIdentifiers(query.exchange(), query.coin());
         ExchangeSummary exchange =
                 exchangeQueryPort
                         .findExchangeSummaryByName(query.exchange())
                         .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-        CandleFilter filter = CandleFilter.of(query, exchange.baseCurrencySymbol());
+        CandleFilter filter =
+                CandleFilter.of(
+                        query.exchange(),
+                        query.coin(),
+                        query.interval(),
+                        query.limit(),
+                        query.cursor(),
+                        exchange.baseCurrencySymbol());
         return candleQueryPort.findByFilter(filter);
     }
 }
