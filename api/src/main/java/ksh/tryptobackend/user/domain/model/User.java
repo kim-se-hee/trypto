@@ -12,14 +12,29 @@ import lombok.Getter;
 public class User {
 
     private final Long userId;
+    private final Long version;
     private final String email;
     private Nickname nickname;
     private boolean portfolioPublic;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
+    public static User create(
+            String email, String nickname, boolean portfolioPublic, LocalDateTime now) {
+        return User.builder()
+                .userId(null)
+                .version(null)
+                .email(email)
+                .nickname(Nickname.of(nickname))
+                .portfolioPublic(portfolioPublic)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
     public static User reconstitute(
             Long userId,
+            Long version,
             String email,
             String nickname,
             boolean portfolioPublic,
@@ -27,6 +42,7 @@ public class User {
             LocalDateTime updatedAt) {
         return User.builder()
                 .userId(userId)
+                .version(version)
                 .email(email)
                 .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)

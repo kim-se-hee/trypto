@@ -57,7 +57,7 @@ class UserDataSeeder {
 
     private UserJpaEntity toEntity(
             String nickname, String email, boolean portfolioPublic, LocalDateTime now) {
-        User user = User.reconstitute(null, email, nickname, portfolioPublic, now, now);
+        User user = User.create(email, nickname, portfolioPublic, now);
         return UserJpaEntity.fromDomain(user);
     }
 }

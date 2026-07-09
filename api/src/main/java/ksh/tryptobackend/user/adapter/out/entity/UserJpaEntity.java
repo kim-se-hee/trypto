@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.user.domain.model.User;
 import lombok.AccessLevel;
@@ -22,6 +23,10 @@ public class UserJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
@@ -41,6 +46,7 @@ public class UserJpaEntity {
     public static UserJpaEntity fromDomain(User user) {
         UserJpaEntity entity = new UserJpaEntity();
         entity.id = user.getUserId();
+        entity.version = user.getVersion();
         entity.email = user.getEmail();
         entity.nickname = user.getNickname().value();
         entity.portfolioPublic = user.isPortfolioPublic();
@@ -55,6 +61,7 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return User.reconstitute(id, email, nickname, portfolioPublic, createdAt, updatedAt);
+        return User.reconstitute(
+                id, version, email, nickname, portfolioPublic, createdAt, updatedAt);
     }
 }
