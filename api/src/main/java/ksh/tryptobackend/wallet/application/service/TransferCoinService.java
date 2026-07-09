@@ -1,18 +1,18 @@
 package ksh.tryptobackend.wallet.application.service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
-import ksh.tryptobackend.wallet.application.port.in.GetAvailableBalanceUseCase;
-import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
 import ksh.tryptobackend.wallet.application.port.out.TransferCommandPort;
+import ksh.tryptobackend.wallet.application.port.out.WalletCommandPort;
+import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
-import ksh.tryptobackend.wallet.domain.vo.TransferBalanceChange;
-import ksh.tryptobackend.wallet.domain.vo.TransferWallet;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,73 +22,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransferCoinService implements TransferCoinUseCase {
 
     private final TransferCommandPort transferCommandPort;
-
-    private final FindWalletUseCase findWalletUseCase;
-    private final GetAvailableBalanceUseCase getAvailableBalanceUseCase;
-    private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
+    private final WalletQueryPort walletQueryPort;
+    private final WalletCommandPort walletCommandPort;
 
     private final Clock clock;
 
     @Override
     @Transactional
     public Transfer transferCoin(TransferCoinCommand command) {
-        return transferCommandPort
-                .findByIdempotencyKey(command.idempotencyKey())
-                .orElseGet(() -> executeTransfer(command));
-    }
+        Optional<Transfer> completed =
+                transferCommandPort.findByIdempotencyKey(command.idempotencyKey());
+        if (completed.isPresent()) {
+            return completed.orElseThrow();
+        }
 
-    private Transfer executeTransfer(TransferCoinCommand command) {
-        TransferWallet fromWallet = getWallet(command.fromWalletId());
-        TransferWallet toWallet = getWallet(command.toWalletId());
-        validateSameRound(fromWallet, toWallet);
-        validateSufficientBalance(command);
+        Wallet source =
+                walletQueryPort
+                        .findById(command.fromWalletId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        Wallet destination =
+                walletQueryPort
+                        .findById(command.toWalletId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        source.verifySameRoundAs(destination);
 
-        Transfer transfer =
-                Transfer.create(
-                        command.idempotencyKey(),
-                        command.fromWalletId(),
-                        command.toWalletId(),
-                        command.coinId(),
-                        command.amount(),
-                        LocalDateTime.now(clock));
-        applyBalanceChanges(transfer);
+        BigDecimal sourceAvailable =
+                walletQueryPort.getAvailableBalance(command.fromWalletId(), command.coinId());
+        Transfer transfer = Transfer.create(command, sourceAvailable, LocalDateTime.now(clock));
+
+        walletCommandPort.deductBalance(command.fromWalletId(), command.coinId(), command.amount());
+        walletCommandPort.addBalance(command.toWalletId(), command.coinId(), command.amount());
         return transferCommandPort.save(transfer);
-    }
-
-    private TransferWallet getWallet(Long walletId) {
-        return findWalletUseCase
-                .findById(walletId)
-                .map(r -> new TransferWallet(r.walletId(), r.roundId(), r.exchangeId()))
-                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
-    }
-
-    private void validateSameRound(TransferWallet fromWallet, TransferWallet toWallet) {
-        if (!fromWallet.roundId().equals(toWallet.roundId())) {
-            throw new CustomException(ErrorCode.DIFFERENT_ROUND_TRANSFER);
-        }
-    }
-
-    private void validateSufficientBalance(TransferCoinCommand command) {
-        var available =
-                getAvailableBalanceUseCase.getAvailableBalance(
-                        command.fromWalletId(), command.coinId());
-        if (available.compareTo(command.amount()) < 0) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
-    }
-
-    private void applyBalanceChanges(Transfer transfer) {
-        for (TransferBalanceChange change : transfer.planBalanceChanges()) {
-            applyBalanceChange(change);
-        }
-    }
-
-    private void applyBalanceChange(TransferBalanceChange change) {
-        switch (change) {
-            case TransferBalanceChange.Deduct d ->
-                    manageWalletBalanceUseCase.deductBalance(d.walletId(), d.coinId(), d.amount());
-            case TransferBalanceChange.Add a ->
-                    manageWalletBalanceUseCase.addBalance(a.walletId(), a.coinId(), a.amount());
-        }
     }
 }
