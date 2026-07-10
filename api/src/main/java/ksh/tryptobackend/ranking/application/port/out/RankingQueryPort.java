@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
+import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 
 public interface RankingQueryPort {
@@ -13,8 +14,8 @@ public interface RankingQueryPort {
     List<RankingSummary> findRankings(
             RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size);
 
-    List<RankingSummary> findAllRankings(RankingPeriod period, LocalDate referenceDate);
-
     Optional<RankingSummary> findByUserIdAndPeriodAndReferenceDate(
             Long userId, RankingPeriod period, LocalDate referenceDate);
+
+    RankingStats getRankingStats(RankingPeriod period, LocalDate referenceDate);
 }

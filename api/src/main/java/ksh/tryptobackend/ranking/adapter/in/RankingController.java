@@ -18,7 +18,7 @@ import ksh.tryptobackend.ranking.application.port.in.GetRankingsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.MyRankingResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankerPortfolioResult;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingCursorResult;
-import ksh.tryptobackend.ranking.domain.vo.RankingStats;
+import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -59,7 +59,7 @@ public class RankingController {
     @GetMapping("/stats")
     public ApiResponseDto<RankingStatsResponse> getRankingStats(
             @Valid @ModelAttribute GetRankingStatsRequest request) {
-        RankingStats result = getRankingStatsUseCase.getRankingStats(request.toQuery());
+        RankingStatsResult result = getRankingStatsUseCase.getRankingStats(request.toQuery());
         return ApiResponseDto.success("랭킹 통계를 조회했습니다.", RankingStatsResponse.from(result));
     }
 
