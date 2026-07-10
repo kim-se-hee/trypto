@@ -2,7 +2,6 @@ package ksh.tryptobackend.wallet.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
@@ -16,7 +15,6 @@ import lombok.Getter;
 public class Transfer {
 
     private final Long transferId;
-    private final UUID idempotencyKey;
     private final Long fromWalletId;
     private final Long toWalletId;
     private final Long coinId;
@@ -28,7 +26,6 @@ public class Transfer {
     public static Transfer create(TransferCoinCommand command, LocalDateTime createdAt) {
         validateDifferentWallet(command.fromWalletId(), command.toWalletId());
         return Transfer.builder()
-                .idempotencyKey(command.idempotencyKey())
                 .fromWalletId(command.fromWalletId())
                 .toWalletId(command.toWalletId())
                 .coinId(command.coinId())

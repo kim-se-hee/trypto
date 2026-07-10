@@ -2,6 +2,8 @@ package ksh.tryptobackend.wallet.adapter.in;
 
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
+import ksh.tryptobackend.common.exception.DuplicateRequestException;
+import ksh.tryptobackend.common.idempotency.IdempotencyKeyQueryPort;
 import ksh.tryptobackend.wallet.adapter.in.dto.request.TransferCoinRequest;
 import ksh.tryptobackend.wallet.adapter.in.dto.response.TransferCoinResponse;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
@@ -20,12 +22,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransferController {
 
     private final TransferCoinUseCase transferCoinUseCase;
+    private final IdempotencyKeyQueryPort idempotencyKeyQueryPort;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<TransferCoinResponse> createTransfer(
             @Valid @RequestBody TransferCoinRequest request) {
-        Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand());
-        return ApiResponseDto.created("송금이 요청되었습니다.", TransferCoinResponse.from(transfer));
+        TransferCoinResponse response;
+        try {
+            Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand());
+            response = TransferCoinResponse.from(transfer);
+        } catch (DuplicateRequestException e) {
+            Long transferId =
+                    idempotencyKeyQueryPort
+                            .findResourceId(request.idempotencyKey().toString())
+                            .orElseThrow(
+                                    () ->
+                                            new IllegalStateException(
+                                                    "중복 송금 요청에는 연결된 리소스 ID 가 있어야 한다: "
+                                                            + request.idempotencyKey()));
+            response = TransferCoinResponse.duplicate(transferId);
+        }
+        return ApiResponseDto.created("송금이 요청되었습니다.", response);
     }
 }

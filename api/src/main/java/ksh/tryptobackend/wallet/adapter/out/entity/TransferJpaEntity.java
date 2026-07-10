@@ -11,7 +11,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
 import ksh.tryptobackend.wallet.domain.vo.TransferStatus;
 import lombok.AccessLevel;
@@ -35,13 +34,6 @@ public class TransferJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "transfer_id")
     private Long id;
-
-    @Column(
-            name = "idempotency_key",
-            nullable = false,
-            unique = true,
-            columnDefinition = "BINARY(16)")
-    private UUID idempotencyKey;
 
     @Column(name = "from_wallet_id", nullable = false)
     private Long fromWalletId;
@@ -68,7 +60,6 @@ public class TransferJpaEntity {
     public static TransferJpaEntity fromDomain(Transfer transfer) {
         TransferJpaEntity entity = new TransferJpaEntity();
         entity.id = transfer.getTransferId();
-        entity.idempotencyKey = transfer.getIdempotencyKey();
         entity.fromWalletId = transfer.getFromWalletId();
         entity.toWalletId = transfer.getToWalletId();
         entity.coinId = transfer.getCoinId();
@@ -82,7 +73,6 @@ public class TransferJpaEntity {
     public Transfer toDomain() {
         return Transfer.builder()
                 .transferId(id)
-                .idempotencyKey(idempotencyKey)
                 .fromWalletId(fromWalletId)
                 .toWalletId(toWalletId)
                 .coinId(coinId)

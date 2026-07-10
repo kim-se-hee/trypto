@@ -10,6 +10,8 @@ public interface WalletQueryPort {
 
     Optional<Wallet> findById(Long walletId);
 
+    Wallet getById(Long walletId);
+
     List<Wallet> findByRoundId(Long roundId);
 
     List<Wallet> findByRoundIds(List<Long> roundIds);

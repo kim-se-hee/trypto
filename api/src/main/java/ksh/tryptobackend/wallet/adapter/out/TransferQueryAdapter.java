@@ -3,11 +3,8 @@ package ksh.tryptobackend.wallet.adapter.out;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import ksh.tryptobackend.wallet.adapter.out.entity.QTransferJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.entity.TransferJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.TransferJpaRepository;
 import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
 import ksh.tryptobackend.wallet.domain.vo.TransferType;
@@ -19,14 +16,6 @@ import org.springframework.stereotype.Component;
 public class TransferQueryAdapter implements TransferQueryPort {
 
     private final JPAQueryFactory queryFactory;
-    private final TransferJpaRepository transferRepository;
-
-    @Override
-    public Optional<Transfer> findByIdempotencyKey(UUID idempotencyKey) {
-        return transferRepository
-                .findByIdempotencyKey(idempotencyKey)
-                .map(TransferJpaEntity::toDomain);
-    }
 
     @Override
     public List<Transfer> findByCursor(

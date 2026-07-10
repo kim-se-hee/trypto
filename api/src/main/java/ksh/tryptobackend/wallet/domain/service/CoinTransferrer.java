@@ -1,14 +1,14 @@
 package ksh.tryptobackend.wallet.domain.service;
 
 import java.math.BigDecimal;
-import ksh.tryptobackend.wallet.domain.model.WalletBalance;
+import ksh.tryptobackend.wallet.domain.model.TransferBalances;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CoinTransferrer {
 
-    public void transfer(WalletBalance source, WalletBalance destination, BigDecimal amount) {
-        source.deductAvailable(amount);
-        destination.addAvailable(amount);
+    public void transfer(TransferBalances balances, BigDecimal amount) {
+        balances.source().deductAvailable(amount);
+        balances.destination().addAvailable(amount);
     }
 }

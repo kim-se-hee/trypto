@@ -14,6 +14,7 @@ public record TransferCoinRequest(
         @NotNull @Positive BigDecimal amount) {
 
     public TransferCoinCommand toCommand() {
-        return new TransferCoinCommand(idempotencyKey, fromWalletId, toWalletId, coinId, amount);
+        return new TransferCoinCommand(
+                idempotencyKey.toString(), fromWalletId, toWalletId, coinId, amount);
     }
 }

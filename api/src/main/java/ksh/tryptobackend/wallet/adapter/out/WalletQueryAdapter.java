@@ -2,6 +2,8 @@ package ksh.tryptobackend.wallet.adapter.out;
 
 import java.util.List;
 import java.util.Optional;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
@@ -25,6 +27,12 @@ public class WalletQueryAdapter implements WalletQueryPort {
     @Override
     public Optional<Wallet> findById(Long walletId) {
         return walletRepository.findById(walletId).map(WalletJpaEntity::toDomain);
+    }
+
+    @Override
+    public Wallet getById(Long walletId) {
+        return findById(walletId)
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     @Override

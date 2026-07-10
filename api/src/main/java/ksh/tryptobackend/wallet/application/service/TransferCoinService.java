@@ -2,21 +2,17 @@ package ksh.tryptobackend.wallet.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.common.idempotency.IdempotencyKeyCommandPort;
+import ksh.tryptobackend.common.idempotency.IdempotencyResourceType;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
 import ksh.tryptobackend.wallet.application.port.out.TransferCommandPort;
-import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletBalanceCommandPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletBalanceQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
+import ksh.tryptobackend.wallet.domain.model.TransferBalances;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
-import ksh.tryptobackend.wallet.domain.model.WalletBalance;
-import ksh.tryptobackend.wallet.domain.model.WalletBalances;
 import ksh.tryptobackend.wallet.domain.service.CoinTransferrer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TransferCoinService implements TransferCoinUseCase {
 
-    private final TransferQueryPort transferQueryPort;
+    private final IdempotencyKeyCommandPort idempotencyKeyCommandPort;
     private final TransferCommandPort transferCommandPort;
     private final WalletQueryPort walletQueryPort;
     private final WalletBalanceQueryPort walletBalanceQueryPort;
@@ -39,34 +35,24 @@ public class TransferCoinService implements TransferCoinUseCase {
     @Override
     @Transactional
     public Transfer transferCoin(TransferCoinCommand command) {
-        Optional<Transfer> completed =
-                transferQueryPort.findByIdempotencyKey(command.idempotencyKey());
-        if (completed.isPresent()) {
-            return completed.orElseThrow();
-        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        String idempotencyKey = command.idempotencyKey();
+        idempotencyKeyCommandPort.preempt(idempotencyKey, IdempotencyResourceType.TRANSFER, now);
 
-        Wallet source =
-                walletQueryPort
-                        .findById(command.fromWalletId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
-        Wallet destination =
-                walletQueryPort
-                        .findById(command.toWalletId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        Wallet source = walletQueryPort.getById(command.fromWalletId());
+        Wallet destination = walletQueryPort.getById(command.toWalletId());
         source.verifySameRoundAs(destination);
 
-        Transfer transfer = Transfer.create(command, LocalDateTime.now(clock));
+        Transfer transfer = Transfer.create(command, now);
 
-        List<WalletBalance> lockedBalances =
-                walletBalanceQueryPort.getAllByCoinIdAndWalletIdsWithLock(
-                        command.coinId(), List.of(command.fromWalletId(), command.toWalletId()));
-        WalletBalances balances = new WalletBalances(lockedBalances);
-        coinTransferrer.transfer(
-                balances.getByWalletId(command.fromWalletId()),
-                balances.getByWalletId(command.toWalletId()),
-                command.amount());
+        TransferBalances balances =
+                walletBalanceQueryPort.getTransferBalancesWithLock(
+                        command.coinId(), command.fromWalletId(), command.toWalletId());
+        coinTransferrer.transfer(balances, command.amount());
 
-        walletBalanceCommandPort.saveAll(lockedBalances);
-        return transferCommandPort.save(transfer);
+        walletBalanceCommandPort.saveAll(balances.toList());
+        Transfer saved = transferCommandPort.save(transfer);
+        idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.getTransferId());
+        return saved;
     }
 }
