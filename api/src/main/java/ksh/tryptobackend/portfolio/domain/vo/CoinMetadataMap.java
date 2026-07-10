@@ -5,31 +5,31 @@ import java.util.Objects;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 
-public class CoinSnapshotMap {
+public class CoinMetadataMap {
 
-    private final Map<Long, CoinSnapshot> values;
+    private final Map<Long, CoinMetadata> values;
 
-    public CoinSnapshotMap(Map<Long, CoinSnapshot> values) {
+    public CoinMetadataMap(Map<Long, CoinMetadata> values) {
         this.values = Map.copyOf(values);
     }
 
-    public CoinSnapshot getCoinSnapshot(Long coinId) {
-        CoinSnapshot snapshot = values.get(coinId);
-        if (snapshot == null) {
+    public CoinMetadata getMetadata(Long coinId) {
+        CoinMetadata metadata = values.get(coinId);
+        if (metadata == null) {
             throw new CustomException(ErrorCode.COIN_NOT_FOUND);
         }
-        return snapshot;
+        return metadata;
     }
 
     public String getSymbol(Long coinId) {
-        return getCoinSnapshot(coinId).symbol();
+        return getMetadata(coinId).symbol();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CoinSnapshotMap that = (CoinSnapshotMap) o;
+        CoinMetadataMap that = (CoinMetadataMap) o;
         return Objects.equals(values, that.values);
     }
 
