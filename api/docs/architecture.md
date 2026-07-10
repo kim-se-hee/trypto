@@ -75,7 +75,8 @@ trading/
 │   │   │       ├── query/     # Query (읽기 요청)
 │   │   │       └── result/    # Result (읽기 응답)
 │   │   └── out/       # Repository/External Port 인터페이스 — 아웃바운드 포트
-│   └── service/       # UseCase 구현체
+│   ├── service/       # UseCase 구현체
+│   └── support/       # 응용 서비스 간 재사용 협력자 (UseCase/Service 아님)
 └── domain/
     ├── model/         # Entity, Aggregate Root
     ├── vo/            # Value Object
@@ -83,6 +84,8 @@ trading/
     ├── event/         # 도메인 이벤트 (선택, 필요 시)
     └── strategy/      # 도메인 전략 (선택, 필요 시)
 ```
+
+`application/support` 는 여러 응용 서비스가 공유하는 재사용 로직을 담되, UseCase 도 Service 도 아닌 순수 협력자를 두는 위치다. ArchUnit 규칙 `application_service_should_not_depend_on_service`·`application_service_should_not_depend_on_usecase` 는 응용 서비스가 다른 서비스나 UseCase 를 주입하는 것을 금지한다. 같은 컨텍스트의 조회·판정 로직을 여러 서비스가 공유해야 할 때, 그 로직을 협력자(`@Component`)로 뽑아 `support` 에 두고 각 서비스가 이 협력자를 주입하면 위 규칙을 위반하지 않으면서 중복을 없앤다. `RuleViolationReader`(거래소 지갑 해석 + 위반 조회 합성), `ActiveHoldingReader`(활성 보유 조회) 가 그 예다.
 
 common 패키지는 공통 설정, 공유 VO, DTO, 예외, 시더를 관리한다.
 
