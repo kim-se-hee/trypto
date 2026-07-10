@@ -39,6 +39,7 @@ public enum ErrorCode {
     PORTFOLIO_PRIVATE(403, "portfolio.private"),
 
     WALLET_NOT_FOUND(404, "wallet.not.found"),
+    WALLET_BALANCE_NOT_FOUND(404, "wallet.balance.not.found"),
     EXCHANGE_COIN_NOT_FOUND(404, "exchange.coin.not.found"),
     EXCHANGE_NOT_FOUND(404, "exchange.not.found"),
     COIN_NOT_FOUND(404, "coin.not.found"),
