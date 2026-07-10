@@ -53,12 +53,12 @@ public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
         return BtcDailyPrices.of(prices);
     }
 
-    private BtcDailyPrice toBtcDailyPrice(BtcDailyPriceResult result) {
-        return new BtcDailyPrice(result.date(), result.closePrice());
-    }
-
     private AnalysisExchange toAnalysisExchange(Long exchangeId, ExchangeDetailResult result) {
         String currency = result.domestic() ? DOMESTIC_CURRENCY : OVERSEAS_CURRENCY;
         return new AnalysisExchange(exchangeId, result.name(), currency);
+    }
+
+    private BtcDailyPrice toBtcDailyPrice(BtcDailyPriceResult result) {
+        return new BtcDailyPrice(result.date(), result.closePrice());
     }
 }
