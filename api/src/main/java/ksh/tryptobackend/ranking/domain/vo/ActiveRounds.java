@@ -2,6 +2,7 @@ package ksh.tryptobackend.ranking.domain.vo;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 public class ActiveRounds {
 
@@ -16,10 +17,23 @@ public class ActiveRounds {
     }
 
     public EligibleRounds toEligibleRounds(RoundTradeCounts tradeCounts, LocalDate snapshotDate) {
-        List<EligibleRound> eligibleRounds =
+        List<EligibleRound> eligible =
                 rounds.stream()
                         .map(round -> round.toEligibleRound(tradeCounts.getCount(round.roundId())))
                         .toList();
-        return EligibleRounds.of(eligibleRounds, snapshotDate);
+        return EligibleRounds.of(eligible, snapshotDate);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ActiveRounds that = (ActiveRounds) o;
+        return Objects.equals(rounds, that.rounds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rounds);
     }
 }

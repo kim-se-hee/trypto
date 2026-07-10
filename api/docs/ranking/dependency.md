@@ -16,7 +16,7 @@ ranking 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 않
 - `CountTradesByRoundIdsUseCase` — 라운드별 체결 수 조회
 
 ### PortfolioQueryPort ← Portfolio (`AclPortfolioQueryAdapter`)
-소비 UseCase 를 `Holdings`·`SnapshotSummaries` 로 번역한다.
+소비 UseCase 를 `Holdings`·`SnapshotSummaries` 로 번역한다. 동일 클래스명이 타 컨텍스트에 있어 빈 이름은 `rankingAclPortfolioQueryAdapter` 로 둔다.
 - `FindSnapshotDetailsUseCase` — 스냅샷 상세(보유 자산) 조회
 - `FindSnapshotSummariesUseCase` — 스냅샷 요약 조회
 

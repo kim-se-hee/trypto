@@ -34,7 +34,11 @@ public class CalculateRankingService implements CalculateRankingUseCase {
     public void calculateRanking(CalculateRankingCommand command) {
         LocalDate snapshotDate = command.snapshotDate();
 
-        EligibleRounds eligibleRounds = findEligibleRounds(snapshotDate);
+        ActiveRounds activeRounds = investmentRoundQueryPort.findActiveRounds();
+        RoundTradeCounts roundTradeCounts =
+                tradingQueryPort.countTradesByRoundIds(activeRounds.roundIds());
+        EligibleRounds eligibleRounds =
+                activeRounds.toEligibleRounds(roundTradeCounts, snapshotDate);
         if (eligibleRounds.isEmpty()) {
             return;
         }
@@ -50,12 +54,5 @@ public class CalculateRankingService implements CalculateRankingUseCase {
                     candidates.toRankings(period, snapshotDate, LocalDateTime.now(clock));
             rankingCommandPort.replaceByPeriodAndDate(rankings, period, snapshotDate);
         }
-    }
-
-    private EligibleRounds findEligibleRounds(LocalDate snapshotDate) {
-        ActiveRounds activeRounds = investmentRoundQueryPort.findActiveRounds();
-        RoundTradeCounts roundTradeCounts =
-                tradingQueryPort.countTradesByRoundIds(activeRounds.roundIds());
-        return activeRounds.toEligibleRounds(roundTradeCounts, snapshotDate);
     }
 }

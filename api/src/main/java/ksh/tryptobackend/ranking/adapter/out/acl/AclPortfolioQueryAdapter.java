@@ -14,7 +14,7 @@ import ksh.tryptobackend.ranking.domain.vo.SnapshotSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("rankingAclPortfolioQueryAdapter")
 @RequiredArgsConstructor
 public class AclPortfolioQueryAdapter implements PortfolioQueryPort {
 
