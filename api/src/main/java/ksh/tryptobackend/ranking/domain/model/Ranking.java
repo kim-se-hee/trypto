@@ -11,8 +11,6 @@ import lombok.Getter;
 @Builder
 public class Ranking {
 
-    private static final int TOP_RANK_THRESHOLD = 100;
-
     private final Long id;
     private final Long userId;
     private final Long roundId;
@@ -42,9 +40,5 @@ public class Ranking {
                 .referenceDate(referenceDate)
                 .createdAt(createdAt)
                 .build();
-    }
-
-    public static boolean isTop100(int rank) {
-        return rank <= TOP_RANK_THRESHOLD;
     }
 }
