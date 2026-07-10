@@ -1,6 +1,7 @@
 package ksh.tryptobackend.wallet.adapter.out;
 
 import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
@@ -21,6 +22,13 @@ public class WalletBalanceQueryAdapter implements WalletBalanceQueryPort {
         return walletBalanceRepository.findByWalletId(walletId).stream()
                 .map(WalletBalanceJpaEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<WalletBalance> findByWalletIdAndCoinId(Long walletId, Long coinId) {
+        return walletBalanceRepository
+                .findByWalletIdAndCoinId(walletId, coinId)
+                .map(WalletBalanceJpaEntity::toDomain);
     }
 
     @Override

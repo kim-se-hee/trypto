@@ -1,11 +1,8 @@
 package ksh.tryptobackend.wallet.adapter.out;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
@@ -17,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class WalletQueryAdapter implements WalletQueryPort {
 
     private final WalletJpaRepository walletRepository;
-    private final WalletBalanceJpaRepository balanceRepository;
 
     @Override
     public Optional<Wallet> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
@@ -53,21 +49,5 @@ public class WalletQueryAdapter implements WalletQueryPort {
         return walletRepository.findByExchangeId(exchangeId).stream()
                 .map(WalletJpaEntity::toDomain)
                 .toList();
-    }
-
-    @Override
-    public BigDecimal getAvailableBalance(Long walletId, Long coinId) {
-        return balanceRepository
-                .findByWalletIdAndCoinId(walletId, coinId)
-                .map(WalletBalanceJpaEntity::getAvailable)
-                .orElse(BigDecimal.ZERO);
-    }
-
-    @Override
-    public BigDecimal getTotalBalance(Long walletId, Long coinId) {
-        return balanceRepository
-                .findByWalletIdAndCoinId(walletId, coinId)
-                .map(b -> b.getAvailable().add(b.getLocked()))
-                .orElse(BigDecimal.ZERO);
     }
 }

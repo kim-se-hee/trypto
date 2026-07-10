@@ -59,6 +59,10 @@ public class WalletBalance {
         this.locked = locked.subtract(amount);
     }
 
+    public BigDecimal totalBalance() {
+        return available.add(locked);
+    }
+
     private void validateSufficient(BigDecimal balance, BigDecimal amount) {
         if (balance.compareTo(amount) < 0) {
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
