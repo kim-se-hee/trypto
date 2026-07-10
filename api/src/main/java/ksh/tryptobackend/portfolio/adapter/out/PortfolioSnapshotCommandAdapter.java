@@ -1,8 +1,8 @@
 package ksh.tryptobackend.portfolio.adapter.out;
 
 import java.util.List;
-import ksh.tryptobackend.portfolio.adapter.out.entity.PortfolioSnapshotJpaEntity;
-import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.PortfolioSnapshotJpaEntity;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.PortfolioSnapshotJpaRepository;
 import ksh.tryptobackend.portfolio.application.port.out.PortfolioSnapshotCommandPort;
 import ksh.tryptobackend.portfolio.domain.model.PortfolioSnapshot;
 import lombok.RequiredArgsConstructor;

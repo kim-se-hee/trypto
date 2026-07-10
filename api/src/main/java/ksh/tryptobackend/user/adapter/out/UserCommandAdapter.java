@@ -2,8 +2,8 @@ package ksh.tryptobackend.user.adapter.out;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
-import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.domain.model.User;
 import lombok.RequiredArgsConstructor;

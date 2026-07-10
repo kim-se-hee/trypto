@@ -1,8 +1,8 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
 import java.math.BigDecimal;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCommandPort;
 import ksh.tryptobackend.marketdata.domain.model.Exchange;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;

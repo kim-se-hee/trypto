@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
+import ksh.tryptobackend.ranking.adapter.out.persistence.entity.QRankingJpaEntity;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 import ksh.tryptobackend.ranking.domain.vo.RankingStats;

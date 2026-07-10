@@ -1,7 +1,7 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
-import ksh.tryptobackend.marketdata.adapter.out.entity.CoinJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.repository.CoinJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.CoinJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.CoinJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.CoinCommandPort;
 import ksh.tryptobackend.marketdata.domain.model.Coin;
 import lombok.RequiredArgsConstructor;
