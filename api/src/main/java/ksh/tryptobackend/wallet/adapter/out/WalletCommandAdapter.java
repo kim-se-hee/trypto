@@ -2,7 +2,6 @@ package ksh.tryptobackend.wallet.adapter.out;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.adapter.out.entity.QWalletBalanceJpaEntity;
@@ -29,25 +28,8 @@ public class WalletCommandAdapter implements WalletCommandPort {
             QWalletBalanceJpaEntity.walletBalanceJpaEntity;
 
     @Override
-    public Long createWallet(
-            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
-        Wallet wallet = Wallet.create(roundId, exchangeId, seedAmount, createdAt);
-        WalletJpaEntity saved = walletRepository.save(WalletJpaEntity.fromDomain(wallet));
-        return saved.getId();
-    }
-
-    @Override
-    public Long createWalletWithBalance(
-            Long roundId,
-            Long exchangeId,
-            Long baseCurrencyCoinId,
-            BigDecimal initialAmount,
-            LocalDateTime createdAt) {
-        Long walletId = createWallet(roundId, exchangeId, initialAmount, createdAt);
-        balanceRepository.save(
-                new WalletBalanceJpaEntity(
-                        walletId, baseCurrencyCoinId, initialAmount, BigDecimal.ZERO));
-        return walletId;
+    public Wallet save(Wallet wallet) {
+        return walletRepository.save(WalletJpaEntity.fromDomain(wallet)).toDomain();
     }
 
     @Override
