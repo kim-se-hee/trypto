@@ -25,9 +25,7 @@ public class Transfer {
     private final LocalDateTime createdAt;
     private final LocalDateTime completedAt;
 
-    public static Transfer create(
-            TransferCoinCommand command, BigDecimal sourceAvailable, LocalDateTime createdAt) {
-        validateSufficientBalance(sourceAvailable, command.amount());
+    public static Transfer create(TransferCoinCommand command, LocalDateTime createdAt) {
         validateDifferentWallet(command.fromWalletId(), command.toWalletId());
         return Transfer.builder()
                 .idempotencyKey(command.idempotencyKey())
@@ -43,12 +41,6 @@ public class Transfer {
 
     public TransferType resolveType(Long viewerWalletId) {
         return fromWalletId.equals(viewerWalletId) ? TransferType.WITHDRAW : TransferType.DEPOSIT;
-    }
-
-    private static void validateSufficientBalance(BigDecimal sourceAvailable, BigDecimal amount) {
-        if (sourceAvailable.compareTo(amount) < 0) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
     }
 
     private static void validateDifferentWallet(Long fromWalletId, Long toWalletId) {

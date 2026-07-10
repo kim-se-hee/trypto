@@ -30,7 +30,7 @@ class TransferTest {
         void create_success() {
             TransferCoinCommand command = command(TO_WALLET_ID, new BigDecimal("1.5"));
 
-            Transfer transfer = Transfer.create(command, new BigDecimal("2.0"), CREATED_AT);
+            Transfer transfer = Transfer.create(command, CREATED_AT);
 
             assertThat(transfer.getStatus()).isEqualTo(TransferStatus.SUCCESS);
             assertThat(transfer.getCompletedAt()).isEqualTo(CREATED_AT);
@@ -38,24 +38,11 @@ class TransferTest {
         }
 
         @Test
-        @DisplayName("가용 잔고 부족 — INSUFFICIENT_BALANCE 예외")
-        void create_insufficientBalance_throwsException() {
-            TransferCoinCommand command = command(TO_WALLET_ID, new BigDecimal("1.5"));
-
-            assertThatThrownBy(() -> Transfer.create(command, new BigDecimal("1.0"), CREATED_AT))
-                    .isInstanceOf(CustomException.class)
-                    .satisfies(
-                            e ->
-                                    assertThat(((CustomException) e).getErrorCode())
-                                            .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
-        }
-
-        @Test
         @DisplayName("같은 지갑 송금 — SAME_WALLET_TRANSFER 예외")
         void create_sameWallet_throwsException() {
             TransferCoinCommand command = command(FROM_WALLET_ID, new BigDecimal("1.0"));
 
-            assertThatThrownBy(() -> Transfer.create(command, new BigDecimal("2.0"), CREATED_AT))
+            assertThatThrownBy(() -> Transfer.create(command, CREATED_AT))
                     .isInstanceOf(CustomException.class)
                     .satisfies(
                             e ->

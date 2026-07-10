@@ -12,6 +12,13 @@ public class WalletBalances {
         this.values = List.copyOf(values);
     }
 
+    public WalletBalance getByWalletId(Long walletId) {
+        return values.stream()
+                .filter(balance -> balance.getWalletId().equals(walletId))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_BALANCE_NOT_FOUND));
+    }
+
     public WalletBalance getByCoinId(Long coinId) {
         return values.stream()
                 .filter(balance -> balance.getCoinId().equals(coinId))
