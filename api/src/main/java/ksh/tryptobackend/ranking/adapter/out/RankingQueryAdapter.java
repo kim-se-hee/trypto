@@ -3,14 +3,12 @@ package ksh.tryptobackend.ranking.adapter.out;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.ranking.adapter.out.entity.QRankingJpaEntity;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
-import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -92,20 +90,6 @@ public class RankingQueryAdapter implements RankingQueryPort {
                         .fetchOne();
 
         return Optional.ofNullable(result);
-    }
-
-    @Override
-    public RankingStats getRankingStats(RankingPeriod period, LocalDate referenceDate) {
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                RankingStats.class,
-                                ranking.count(),
-                                ranking.profitRate.max(),
-                                ranking.profitRate.avg().castToNum(BigDecimal.class)))
-                .from(ranking)
-                .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)))
-                .fetchOne();
     }
 
     private BooleanExpression cursorRankGt(Integer cursorRank) {
