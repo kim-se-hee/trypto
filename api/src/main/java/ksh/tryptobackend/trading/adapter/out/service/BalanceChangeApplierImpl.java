@@ -4,8 +4,8 @@ import java.util.List;
 import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.wallet.application.port.in.ApplyBalanceChangesUseCase;
+import ksh.tryptobackend.wallet.application.port.in.dto.BalanceChangeType;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeItem;
-import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

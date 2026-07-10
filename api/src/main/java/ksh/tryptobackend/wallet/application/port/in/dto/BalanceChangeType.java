@@ -1,4 +1,4 @@
-package ksh.tryptobackend.wallet.application.port.in.dto.command;
+package ksh.tryptobackend.wallet.application.port.in.dto;
 
 import java.math.BigDecimal;
 import ksh.tryptobackend.wallet.domain.model.WalletBalance;
