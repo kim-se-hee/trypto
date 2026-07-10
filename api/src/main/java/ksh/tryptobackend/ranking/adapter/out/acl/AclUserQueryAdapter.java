@@ -1,9 +1,10 @@
 package ksh.tryptobackend.ranking.adapter.out.acl;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.ranking.application.port.out.UserQueryPort;
 import ksh.tryptobackend.ranking.domain.vo.UserProfile;
 import ksh.tryptobackend.ranking.domain.vo.UserProfiles;
@@ -27,8 +28,11 @@ public class AclUserQueryAdapter implements UserQueryPort {
     }
 
     @Override
-    public Optional<UserProfile> findByUserId(Long userId) {
-        return findUserPublicInfoUseCase.findByUserId(userId).map(this::toProfile);
+    public UserProfile getByUserId(Long userId) {
+        return findUserPublicInfoUseCase
+                .findByUserId(userId)
+                .map(this::toProfile)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private UserProfile toProfile(UserPublicInfoResult result) {
