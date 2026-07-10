@@ -3,8 +3,12 @@ package ksh.tryptobackend.common.seed;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeCoinJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
@@ -22,9 +26,12 @@ class WalletDataSeeder {
 
     private static final BigDecimal DEFAULT_SEED = new BigDecimal("10000000");
     private static final BigDecimal LARGE_SEED = new BigDecimal("50000000");
+    private static final BigDecimal INITIAL_CASH_BALANCE = new BigDecimal("5000000");
 
     private final WalletJpaRepository walletRepository;
     private final WalletBalanceJpaRepository balanceRepository;
+    private final ExchangeJpaRepository exchangeRepository;
+    private final ExchangeCoinJpaRepository exchangeCoinRepository;
 
     @Transactional
     void seed(SeedContext ctx) {
@@ -98,15 +105,38 @@ class WalletDataSeeder {
     }
 
     private int seedBalances(SeedContext ctx) {
-        Long krwCoinId = ctx.getCoinId("KRW");
-        if (krwCoinId == null) return 0;
+        Map<Long, Long> baseCurrencyCoinIdByExchangeId = new HashMap<>();
+        exchangeRepository
+                .findAll()
+                .forEach(
+                        exchange ->
+                                baseCurrencyCoinIdByExchangeId.put(
+                                        exchange.getId(), exchange.getBaseCurrencyCoinId()));
+
+        Map<Long, List<Long>> tradableCoinIdsByExchangeId = new HashMap<>();
+        for (Long exchangeId : baseCurrencyCoinIdByExchangeId.keySet()) {
+            tradableCoinIdsByExchangeId.put(
+                    exchangeId,
+                    exchangeCoinRepository.findByExchangeId(exchangeId).stream()
+                            .map(ExchangeCoinJpaEntity::getCoinId)
+                            .toList());
+        }
 
         List<WalletBalanceJpaEntity> balances = new ArrayList<>();
-        for (Map.Entry<Long, List<Long>> entry : ctx.walletIdsByRoundId.entrySet()) {
-            for (Long walletId : entry.getValue()) {
+        for (Map.Entry<Long, Long> entry : ctx.exchangeIdByWalletId.entrySet()) {
+            Long walletId = entry.getKey();
+            Long exchangeId = entry.getValue();
+            Long baseCurrencyCoinId = baseCurrencyCoinIdByExchangeId.get(exchangeId);
+            if (baseCurrencyCoinId == null) continue;
+
+            balances.add(
+                    new WalletBalanceJpaEntity(
+                            walletId, baseCurrencyCoinId, INITIAL_CASH_BALANCE, BigDecimal.ZERO));
+            for (Long coinId : tradableCoinIdsByExchangeId.get(exchangeId)) {
+                if (coinId.equals(baseCurrencyCoinId)) continue;
                 balances.add(
                         new WalletBalanceJpaEntity(
-                                walletId, krwCoinId, new BigDecimal("5000000"), BigDecimal.ZERO));
+                                walletId, coinId, BigDecimal.ZERO, BigDecimal.ZERO));
             }
         }
 
