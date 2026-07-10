@@ -56,6 +56,22 @@ public class RankingQueryAdapter implements RankingQueryPort {
     }
 
     @Override
+    public List<RankingSummary> findAllRankings(RankingPeriod period, LocalDate referenceDate) {
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                RankingSummary.class,
+                                ranking.rank,
+                                ranking.userId,
+                                ranking.profitRate,
+                                ranking.tradeCount))
+                .from(ranking)
+                .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)))
+                .orderBy(ranking.rank.asc())
+                .fetch();
+    }
+
+    @Override
     public Optional<RankingSummary> findByUserIdAndPeriodAndReferenceDate(
             Long userId, RankingPeriod period, LocalDate referenceDate) {
         RankingSummary result =
