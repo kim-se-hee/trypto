@@ -1,8 +1,8 @@
 package ksh.tryptobackend.ranking.application.port.in;
 
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingStatsQuery;
-import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
+import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 
 public interface GetRankingStatsUseCase {
-    RankingStatsResult getRankingStats(GetRankingStatsQuery query);
+    RankingStats getRankingStats(GetRankingStatsQuery query);
 }

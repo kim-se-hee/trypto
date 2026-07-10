@@ -1,12 +1,12 @@
 package ksh.tryptobackend.ranking.adapter.in.dto.response;
 
 import java.math.BigDecimal;
-import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
+import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 
 public record RankingStatsResponse(
         long totalParticipants, BigDecimal maxProfitRate, BigDecimal avgProfitRate) {
-    public static RankingStatsResponse from(RankingStatsResult result) {
+    public static RankingStatsResponse from(RankingStats stats) {
         return new RankingStatsResponse(
-                result.totalParticipants(), result.maxProfitRate(), result.avgProfitRate());
+                stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate());
     }
 }
