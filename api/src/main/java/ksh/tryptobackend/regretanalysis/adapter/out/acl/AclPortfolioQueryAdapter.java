@@ -1,6 +1,8 @@
 package ksh.tryptobackend.regretanalysis.adapter.out.acl;
 
 import java.util.List;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.portfolio.application.port.in.FindSnapshotsUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotInfoResult;
 import ksh.tryptobackend.regretanalysis.application.port.out.PortfolioQueryPort;
@@ -22,6 +24,14 @@ public class AclPortfolioQueryAdapter implements PortfolioQueryPort {
                         .map(this::toAssetSnapshot)
                         .toList();
         return AssetTimeline.of(snapshots);
+    }
+
+    @Override
+    public AssetSnapshot getLatestSnapshot(Long roundId, Long exchangeId) {
+        return findSnapshotsUseCase
+                .findLatestByRoundIdAndExchangeId(roundId, exchangeId)
+                .map(this::toAssetSnapshot)
+                .orElseThrow(() -> new CustomException(ErrorCode.SNAPSHOT_NOT_FOUND));
     }
 
     private AssetSnapshot toAssetSnapshot(SnapshotInfoResult result) {
