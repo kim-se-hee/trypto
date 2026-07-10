@@ -12,17 +12,17 @@ import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.Investme
 import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
-import ksh.tryptobackend.regretanalysis.adapter.out.entity.RegretReportJpaEntity;
-import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.entity.RegretReportJpaEntity;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
-import ksh.tryptobackend.wallet.adapter.out.entity.WalletJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletJpaEntity;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
 import org.springframework.jdbc.core.JdbcTemplate;
 

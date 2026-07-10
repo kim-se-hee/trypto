@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
-import ksh.tryptobackend.portfolio.adapter.out.repository.SnapshotDetailJpaRepository;
-import ksh.tryptobackend.ranking.adapter.out.entity.RankingJpaEntity;
-import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.PortfolioSnapshotJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.SnapshotDetailJpaRepository;
+import ksh.tryptobackend.ranking.adapter.out.persistence.entity.RankingJpaEntity;
+import ksh.tryptobackend.ranking.adapter.out.persistence.repository.RankingJpaRepository;
 import ksh.tryptobackend.ranking.domain.vo.RankingPeriod;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
@@ -170,12 +170,10 @@ public class RankingBatchStepDefinition {
                         walletId);
         for (int i = 0; i < count; i++) {
             jdbcTemplate.update(
-                    "INSERT INTO orders (idempotency_key, wallet_id, exchange_coin_id, coin_id,"
-                            + " base_coin_id, order_type, side, quantity, price, filled_price,"
-                            + " fee, fee_rate, status, created_at, filled_at) VALUES (?, ?, 10, 2,"
-                            + " 1, 'MARKET', 'BUY', 0.001, NULL, 50000000, 50, 0.0005, 'FILLED',"
-                            + " ?, ?)",
-                    java.util.UUID.randomUUID().toString(),
+                    "INSERT INTO orders (wallet_id, exchange_coin_id, order_type, side, quantity,"
+                            + " price, filled_price, fee, fee_rate, status, created_at, filled_at)"
+                            + " VALUES (?, 10, 'MARKET', 'BUY', 0.001, NULL, 50000000, 50, 0.0005,"
+                            + " 'FILLED', ?, ?)",
                     walletId,
                     LocalDateTime.now(),
                     LocalDateTime.now());

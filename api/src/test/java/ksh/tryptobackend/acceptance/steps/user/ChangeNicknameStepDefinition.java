@@ -6,8 +6,8 @@ import io.cucumber.java.en.When;
 import java.time.LocalDateTime;
 import java.util.Map;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
-import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.domain.model.User;
 
 public class ChangeNicknameStepDefinition {

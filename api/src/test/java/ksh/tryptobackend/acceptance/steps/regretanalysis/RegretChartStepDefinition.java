@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.mock.MockBtcPriceHistoryAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class RegretChartStepDefinition {

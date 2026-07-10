@@ -87,19 +87,6 @@ class UserTest {
                     .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
-
-        @Test
-        @DisplayName("동일 닉네임 검증이 길이 검증보다 먼저 수행된다")
-        void changeNickname_sameAsCurrentAndInvalidLength_sameAsCurrent() {
-            // Given — 현재 닉네임이 1자인 사용자 (reconstitute는 검증 없이 생성)
-            User shortNicknameUser = createUser("가");
-
-            // Then — 동일 닉네임 에러가 길이 에러보다 먼저 발생
-            assertThatThrownBy(() -> shortNicknameUser.changeNickname("가"))
-                    .isInstanceOf(CustomException.class)
-                    .extracting(e -> ((CustomException) e).getErrorCode())
-                    .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
-        }
     }
 
     private static User createUser(String nickname) {

@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class TransferStepDefinition {
@@ -53,7 +53,7 @@ public class TransferStepDefinition {
 
     private void createZeroBalance(Long walletId, Long coinId) {
         walletBalanceJpaRepository.save(
-                new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
+                new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
                         walletId, coinId, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 
@@ -63,7 +63,7 @@ public class TransferStepDefinition {
     @Given("출금 지갑에 BTC 잔고가 {double}개 있다")
     public void 출금_지갑에_BTC_잔고가_개_있다(double amount) {
         walletBalanceJpaRepository.save(
-                new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
+                new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
                         FROM_WALLET_ID,
                         COIN_ID,
                         new BigDecimal(String.valueOf(amount)),

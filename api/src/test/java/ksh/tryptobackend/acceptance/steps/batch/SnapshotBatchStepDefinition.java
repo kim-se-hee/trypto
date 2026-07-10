@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
-import ksh.tryptobackend.portfolio.adapter.out.entity.PortfolioSnapshotJpaEntity;
-import ksh.tryptobackend.portfolio.adapter.out.entity.SnapshotDetailJpaEntity;
-import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
-import ksh.tryptobackend.portfolio.adapter.out.repository.SnapshotDetailJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.PortfolioSnapshotJpaEntity;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.SnapshotDetailJpaEntity;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.PortfolioSnapshotJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.SnapshotDetailJpaRepository;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
@@ -145,12 +145,11 @@ public class SnapshotBatchStepDefinition {
             Long roundId = Long.valueOf(row.get("roundId"));
             Long exchangeId = Long.valueOf(row.get("exchangeId"));
             jdbcTemplate.update(
-                    "INSERT INTO emergency_funding (round_id, exchange_id, amount, idempotency_key,"
-                            + " created_at) VALUES (?, ?, ?, ?, ?)",
+                    "INSERT INTO emergency_funding (round_id, exchange_id, amount, created_at)"
+                            + " VALUES (?, ?, ?, ?)",
                     roundId,
                     exchangeId,
                     new BigDecimal(amount),
-                    java.util.UUID.randomUUID().toString(),
                     LocalDateTime.now());
         }
     }

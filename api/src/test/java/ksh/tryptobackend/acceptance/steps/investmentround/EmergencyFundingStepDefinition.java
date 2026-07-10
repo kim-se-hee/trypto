@@ -13,9 +13,9 @@ import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.EmergencyFundingJpaRepository;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRoundJpaRepository;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.InvestmentRuleJpaRepository;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletJpaRepository;
 
 public class EmergencyFundingStepDefinition {
 
