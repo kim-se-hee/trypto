@@ -1,8 +1,6 @@
 package ksh.tryptobackend.regretanalysis.application.service;
 
 import java.time.Clock;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.regretanalysis.application.port.in.GenerateRegretReportUseCase;
@@ -51,12 +49,10 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
                         command.userId(),
                         command.roundId(),
                         command.exchangeId(),
-                        snapshot.getTotalProfitRate(),
-                        snapshot.getTotalInvestment(),
+                        snapshot,
                         impacts,
                         details,
                         command.startedAt().toLocalDate(),
-                        LocalDate.now(clock),
-                        LocalDateTime.now(clock)));
+                        clock));
     }
 }
