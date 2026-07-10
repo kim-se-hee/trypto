@@ -6,7 +6,6 @@ import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
-import ksh.tryptobackend.trading.domain.vo.OrphanOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
 public interface OrderQueryPort {
@@ -14,8 +13,6 @@ public interface OrderQueryPort {
     Order getById(Long orderId);
 
     Order getByIdWithLock(Long orderId);
-
-    List<OrphanOrder> findOrphanOrders(LocalDateTime threshold);
 
     List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId);
 
