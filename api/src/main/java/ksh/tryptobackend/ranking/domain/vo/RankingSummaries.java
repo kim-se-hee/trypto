@@ -1,6 +1,7 @@
 package ksh.tryptobackend.ranking.domain.vo;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,5 +36,18 @@ public class RankingSummaries {
 
     public List<RankingSummary> toList() {
         return summaries;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RankingSummaries that = (RankingSummaries) o;
+        return hasNext == that.hasNext && Objects.equals(summaries, that.summaries);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(summaries, hasNext);
     }
 }
