@@ -19,12 +19,10 @@ trading 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 않
 ## ACL 출력 포트 (읽기 번역)
 
 ### MarketQueryPort ← MarketData (`TradingAclMarketQueryAdapter`)
-소비 UseCase 를 `MarketInfo`·`TradingPair`·`MarketIdentifier`·`Price`·`CoinExchangeMapping`·`PriceCandidates` 로 번역한다.
+소비 UseCase 를 `MarketInfo`·`TradingPair`·`Price`·`CoinExchangeMapping` 로 번역한다.
 - `GetLivePriceUseCase` — 현재가 조회
 - `FindExchangeDetailUseCase` — 거래소 상세(수수료율·기준통화) 조회
 - `FindExchangeCoinMappingUseCase` — 거래소-코인 매핑
-- `FindCoinInfoUseCase` — 코인 심볼
-- `FindTicksUseCase` — 가격 후보용 tick 이력
 
 ### WalletQueryPort ← Wallet (`TradingAclWalletQueryAdapter`)
 소비 UseCase 를 `WalletRef` 로 번역한다.
