@@ -1,5 +1,8 @@
 package ksh.tryptobackend.ranking.domain.vo;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -7,12 +10,18 @@ import java.util.stream.Collectors;
 
 public class RankingSummaries {
 
+    private static final int PROFIT_RATE_SCALE = 4;
+
     private final List<RankingSummary> summaries;
     private final boolean hasNext;
 
     private RankingSummaries(List<RankingSummary> summaries, boolean hasNext) {
         this.summaries = summaries;
         this.hasNext = hasNext;
+    }
+
+    public static RankingSummaries of(List<RankingSummary> summaries) {
+        return new RankingSummaries(List.copyOf(summaries), false);
     }
 
     public static RankingSummaries fromOverflow(List<RankingSummary> fetched, int requestedSize) {
@@ -36,6 +45,27 @@ public class RankingSummaries {
 
     public List<RankingSummary> toList() {
         return summaries;
+    }
+
+    public RankingStats toStats() {
+        return new RankingStats(summaries.size(), maxProfitRate(), avgProfitRate());
+    }
+
+    private BigDecimal maxProfitRate() {
+        return summaries.stream()
+                .map(RankingSummary::profitRate)
+                .max(Comparator.naturalOrder())
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private BigDecimal avgProfitRate() {
+        return summaries.stream()
+                .map(RankingSummary::profitRate)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(
+                        BigDecimal.valueOf(summaries.size()),
+                        PROFIT_RATE_SCALE,
+                        RoundingMode.HALF_UP);
     }
 
     @Override
