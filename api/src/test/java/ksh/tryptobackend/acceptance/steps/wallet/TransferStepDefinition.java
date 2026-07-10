@@ -47,6 +47,14 @@ public class TransferStepDefinition {
         createRound(ROUND_ID);
         createWallet(FROM_WALLET_ID, ROUND_ID, EXCHANGE_ID_1);
         createWallet(TO_WALLET_ID, ROUND_ID, EXCHANGE_ID_2);
+        // 프로덕션에선 지갑 생성 시 모든 코인 잔고가 0으로 사전 생성된다. 도착 지갑 잔고 행도 동일하게 준비한다.
+        createZeroBalance(TO_WALLET_ID, COIN_ID);
+    }
+
+    private void createZeroBalance(Long walletId, Long coinId) {
+        walletBalanceJpaRepository.save(
+                new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
+                        walletId, coinId, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 
     @Given("송금용 코인이 등록되어 있다")

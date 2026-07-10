@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.wallet.adapter.out.entity.TransferJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.repository.TransferJpaRepository;
@@ -53,7 +52,6 @@ public class TransferHistoryStepDefinition {
         LocalDateTime withdrawCreatedAt = now.minusHours(3);
         saveTransfer(
                 Transfer.builder()
-                        .idempotencyKey(UUID.randomUUID())
                         .fromWalletId(WALLET_ID)
                         .toWalletId(OTHER_WALLET_ID)
                         .coinId(COIN_ID)
@@ -67,7 +65,6 @@ public class TransferHistoryStepDefinition {
         LocalDateTime depositCreatedAt = now.minusHours(2);
         saveTransfer(
                 Transfer.builder()
-                        .idempotencyKey(UUID.randomUUID())
                         .fromWalletId(OTHER_WALLET_ID)
                         .toWalletId(WALLET_ID)
                         .coinId(COIN_ID)
