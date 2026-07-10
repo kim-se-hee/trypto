@@ -24,6 +24,7 @@ public class PortfolioHoldings {
 
     public List<HoldingSnapshot> toHoldingSnapshots(CoinMetadataMap coinMetadata) {
         return holdings.stream()
+                .filter(holding -> coinMetadata.hasMetadata(holding.coinId()))
                 .map(holding -> holding.toSnapshot(coinMetadata.getMetadata(holding.coinId())))
                 .toList();
     }

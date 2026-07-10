@@ -13,6 +13,10 @@ public class CoinMetadataMap {
         this.values = Map.copyOf(values);
     }
 
+    public boolean hasMetadata(Long coinId) {
+        return values.containsKey(coinId);
+    }
+
     public CoinMetadata getMetadata(Long coinId) {
         CoinMetadata metadata = values.get(coinId);
         if (metadata == null) {
