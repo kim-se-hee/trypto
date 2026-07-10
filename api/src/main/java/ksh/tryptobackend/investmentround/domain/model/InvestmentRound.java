@@ -101,10 +101,10 @@ public class InvestmentRound {
     }
 
     public void end(LocalDateTime endedAt) {
-        if (status == RoundStatus.ENDED) {
+        if (isEnded()) {
             return;
         }
-        if (status != RoundStatus.ACTIVE) {
+        if (!isActive()) {
             throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
         }
         this.status = RoundStatus.ENDED;
@@ -147,5 +147,9 @@ public class InvestmentRound {
 
     public Long latestFundingId() {
         return fundings.latestId();
+    }
+
+    private boolean isActive() {
+        return status == RoundStatus.ACTIVE;
     }
 }
