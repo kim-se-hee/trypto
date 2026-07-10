@@ -9,6 +9,7 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
 import ksh.tryptobackend.wallet.application.port.out.TransferCommandPort;
+import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletCommandPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TransferCoinService implements TransferCoinUseCase {
 
+    private final TransferQueryPort transferQueryPort;
     private final TransferCommandPort transferCommandPort;
     private final WalletQueryPort walletQueryPort;
     private final WalletCommandPort walletCommandPort;
@@ -31,7 +33,7 @@ public class TransferCoinService implements TransferCoinUseCase {
     @Transactional
     public Transfer transferCoin(TransferCoinCommand command) {
         Optional<Transfer> completed =
-                transferCommandPort.findByIdempotencyKey(command.idempotencyKey());
+                transferQueryPort.findByIdempotencyKey(command.idempotencyKey());
         if (completed.isPresent()) {
             return completed.orElseThrow();
         }
