@@ -38,15 +38,15 @@ model: inherit
    | 레이어 | place-order 레퍼런스 | 무엇을 확인 |
       |-----| --- | --- |
    | 도메인 애그리거트 | `domain/model/Order` | 애그리거트가 불변식 일관성을 지키는 법, VO 로 비즈니스 규칙을 애그리거트 안에 응집시키는 법 |
-   | 도메인 서비스 (타 컨텍스트 연동형) | `domain/service/WalletBalanceService` + `adapter/out/service/WalletBalanceServiceImpl` | 인터페이스는 도메인에·구현은 어댑터에 두는 분리, **타 컨텍스트** 유스케이스로 위임해 연동하는 도메인 서비스 작성법 |
+   | 도메인 서비스 (타 컨텍스트 연동형) | `domain/service/BalanceChangeApplier` + `adapter/out/service/BalanceChangeApplierImpl` | 인터페이스는 도메인에·구현은 어댑터에 두는 분리, **타 컨텍스트** 유스케이스로 위임해 연동하는 도메인 서비스 작성법, 인터페이스·메소드를 자기 컨텍스트 유비쿼터스 언어로 짓는 법 |
    | 애플리케이션 서비스 | `application/service/PlaceOrderService` + `application/port/in/PlaceOrderUseCase` | private 메소드 없이 영어 읽듯 읽히는 흐름, 로직은 도메인에 두고 서비스는 오케스트레이션만 맡는 구성 |
    | input web 어댑터 | `adapter/in/web/OrderController` + `adapter/in/dto/**` | 요청 DTO 를 커맨드로 변환→유스케이스 호출→결과를 응답 DTO 로 매핑하는 흐름 |
    | output persistence 어댑터 | `application/port/out/OrderQueryPort` + `adapter/out/persistence/JpaOrderQueryAdapter` | 영속성 작업 수행법, 도메인 모델 ↔ JPA 엔티티 변환법, 스프링 이벤트를 발행하는 위치와 방법 |
-   | output ACL 어댑터 | `application/port/out/MarketQueryPort` + `adapter/out/acl/AclMarketQueryAdapter` | 타 컨텍스트 응답을 도메인 모델로 번역하는 위치와 방법 |
+   | output ACL 어댑터 | `application/port/out/MarketQueryPort` + `adapter/out/acl/TradingAclMarketQueryAdapter` | 타 컨텍스트 응답을 도메인 모델로 번역하는 위치와 방법 |
    | output messaging 어댑터 | `adapter/out/messaging/EngineInboxPublisher` | 도메인 이벤트를 트랜잭션 커밋 후 받아 메시지 큐로 발행하는 법 |
 
 **주의 : 베스트 프랙티스에는 연동형 도메인 서비스만 존재한다.**
-`PlaceOrderService`에서 `WalletBalanceService` 는 협력 대상인 지갑 잔고가 *다른* 컨텍스트에 있어 연동형 도메인 서비스로 구현한 것이다.
+`PlaceOrderService`에서 `BalanceChangeApplier` 는 협력 대상인 지갑 잔고가 *다른* 컨텍스트에 있어 연동형 도메인 서비스로 구현한 것이다.
 베스트 프렉티스에 잇다고 아무 생각없이 **같은 컨텍스트**의 애그리거트 여럿이 협력하는 로직을 연동형으로 구현하면 안 된다.
 
 ## 작업 루프
