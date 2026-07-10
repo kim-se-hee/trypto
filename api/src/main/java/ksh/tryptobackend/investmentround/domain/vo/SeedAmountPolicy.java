@@ -17,6 +17,10 @@ public enum SeedAmountPolicy {
     private final BigDecimal minAmount;
     private final BigDecimal maxAmount;
 
+    public static SeedAmountPolicy forDomestic(boolean domestic) {
+        return domestic ? DOMESTIC : OVERSEAS;
+    }
+
     public void validate(BigDecimal amount) {
         if (amount.compareTo(ZERO) < 0) {
             throw new CustomException(ErrorCode.INVALID_SEED_AMOUNT);
