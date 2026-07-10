@@ -12,7 +12,8 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.ViolatedOrderRes
 import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
 import ksh.tryptobackend.trading.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
-import ksh.tryptobackend.trading.application.support.RuleViolationReader;
+import ksh.tryptobackend.trading.application.port.out.RuleViolationQueryPort;
+import ksh.tryptobackend.trading.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.trading.domain.vo.InvestmentRule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,8 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
 
     private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final OrderQueryPort orderQueryPort;
-    private final RuleViolationReader ruleViolationReader;
+    private final RuleViolationQueryPort ruleViolationQueryPort;
+    private final WalletQueryPort walletQueryPort;
 
     @Override
     public List<ViolatedOrderResult> findViolatedOrders(FindViolatedOrdersQuery query) {
@@ -49,7 +51,10 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
     private List<ViolationResult> findViolationsByRules(
             List<InvestmentRule> rules, Long exchangeId) {
         List<Long> ruleIds = rules.stream().map(InvestmentRule::ruleId).toList();
-        return ruleViolationReader.findByRuleIdsAndExchangeId(ruleIds, exchangeId);
+        List<Long> walletIds = walletQueryPort.findWalletIdsByExchangeId(exchangeId);
+        return ruleViolationQueryPort.findByRuleIdsAndWalletIds(ruleIds, walletIds).stream()
+                .map(ViolationResult::from)
+                .toList();
     }
 
     private Map<Long, InvestmentRule> toRuleMap(List<InvestmentRule> rules) {

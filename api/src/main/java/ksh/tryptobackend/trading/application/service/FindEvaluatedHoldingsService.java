@@ -6,7 +6,8 @@ import ksh.tryptobackend.trading.application.port.in.FindEvaluatedHoldingsUseCas
 import ksh.tryptobackend.trading.application.port.in.dto.result.EvaluatedHoldingResult;
 import ksh.tryptobackend.trading.application.port.in.dto.result.HoldingInfoResult;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
-import ksh.tryptobackend.trading.application.support.ActiveHoldingReader;
+import ksh.tryptobackend.trading.application.port.out.PositionQueryPort;
+import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.trading.domain.vo.CoinExchangeMapping;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,12 +16,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FindEvaluatedHoldingsService implements FindEvaluatedHoldingsUseCase {
 
-    private final ActiveHoldingReader activeHoldingReader;
+    private final PositionQueryPort positionQueryPort;
     private final MarketQueryPort marketQueryPort;
 
     @Override
     public List<EvaluatedHoldingResult> findEvaluatedHoldings(Long walletId, Long exchangeId) {
-        List<HoldingInfoResult> holdings = activeHoldingReader.findActiveHoldings(walletId);
+        List<HoldingInfoResult> holdings = findActiveHoldings(walletId);
         if (holdings.isEmpty()) {
             return List.of();
         }
@@ -29,6 +30,13 @@ public class FindEvaluatedHoldingsService implements FindEvaluatedHoldingsUseCas
 
         return holdings.stream()
                 .map(holding -> toEvaluatedHoldingResult(holding, coinExchangeMapping))
+                .toList();
+    }
+
+    private List<HoldingInfoResult> findActiveHoldings(Long walletId) {
+        return positionQueryPort.findAllByWalletId(walletId).stream()
+                .filter(Position::isHolding)
+                .map(HoldingInfoResult::from)
                 .toList();
     }
 
