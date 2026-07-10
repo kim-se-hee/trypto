@@ -8,4 +8,6 @@ public interface WalletBalanceQueryPort {
     List<WalletBalance> findByWalletId(Long walletId);
 
     List<WalletBalance> getAllByWalletIdAndCoinIdsWithLock(Long walletId, List<Long> coinIds);
+
+    List<WalletBalance> getAllByCoinIdAndWalletIdsWithLock(Long coinId, List<Long> walletIds);
 }

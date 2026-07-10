@@ -29,6 +29,12 @@ public class WalletBalanceQueryAdapter implements WalletBalanceQueryPort {
         return coinIds.stream().sorted().map(coinId -> getWithLock(walletId, coinId)).toList();
     }
 
+    @Override
+    public List<WalletBalance> getAllByCoinIdAndWalletIdsWithLock(
+            Long coinId, List<Long> walletIds) {
+        return walletIds.stream().sorted().map(walletId -> getWithLock(walletId, coinId)).toList();
+    }
+
     private WalletBalance getWithLock(Long walletId, Long coinId) {
         return walletBalanceRepository
                 .findWithLockByWalletIdAndCoinId(walletId, coinId)
