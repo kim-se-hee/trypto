@@ -11,7 +11,7 @@ import ksh.tryptobackend.investmentround.application.port.out.InvestmentRoundQue
 import ksh.tryptobackend.investmentround.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.investmentround.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
-import ksh.tryptobackend.investmentround.domain.service.WalletBalanceService;
+import ksh.tryptobackend.investmentround.domain.service.FundsDepositor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
     private final InvestmentRoundCommandPort investmentRoundCommandPort;
     private final WalletQueryPort walletQueryPort;
     private final MarketDataQueryPort marketDataQueryPort;
-    private final WalletBalanceService walletBalanceService;
+    private final FundsDepositor fundsDepositor;
     private final Clock clock;
 
     @Override
@@ -42,7 +42,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
 
         Long walletId = walletQueryPort.getWalletId(command.roundId(), command.exchangeId());
         Long baseCurrencyCoinId = marketDataQueryPort.getBaseCurrencyCoinId(command.exchangeId());
-        walletBalanceService.addAvailable(walletId, baseCurrencyCoinId, command.amount());
+        fundsDepositor.deposit(walletId, baseCurrencyCoinId, command.amount());
 
         InvestmentRound saved = investmentRoundCommandPort.save(round);
         idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.latestFundingId());

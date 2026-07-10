@@ -9,7 +9,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderComma
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.domain.model.Order;
-import ksh.tryptobackend.trading.domain.service.WalletBalanceService;
+import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final IdempotencyKeyCommandPort idempotencyKeyCommandPort;
     private final OrderCommandPort orderCommandPort;
     private final MarketQueryPort marketQueryPort;
-    private final WalletBalanceService walletBalanceService;
+    private final BalanceChangeApplier balanceChangeApplier;
     private final Clock clock;
 
     @Override
@@ -37,7 +37,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         Order order = Order.create(cmd, marketInfo, now);
 
         BalanceChange reservation = order.planReservation(marketInfo.tradingPair());
-        walletBalanceService.apply(order.getWalletId(), reservation);
+        balanceChangeApplier.apply(order.getWalletId(), reservation);
 
         Order saved = orderCommandPort.save(order);
         idempotencyKeyCommandPort.linkResource(cmd.idempotencyKey(), saved.getId());

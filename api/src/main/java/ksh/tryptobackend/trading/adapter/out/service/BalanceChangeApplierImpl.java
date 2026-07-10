@@ -1,15 +1,15 @@
 package ksh.tryptobackend.trading.adapter.out.service;
 
 import java.util.List;
-import ksh.tryptobackend.trading.domain.service.WalletBalanceService;
+import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.wallet.application.port.in.ManageWalletBalanceUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("tradingWalletBalanceServiceImpl")
+@Component
 @RequiredArgsConstructor
-public class WalletBalanceServiceImpl implements WalletBalanceService {
+public class BalanceChangeApplierImpl implements BalanceChangeApplier {
 
     private final ManageWalletBalanceUseCase manageWalletBalanceUseCase;
 

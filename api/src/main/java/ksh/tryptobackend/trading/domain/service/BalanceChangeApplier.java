@@ -3,7 +3,7 @@ package ksh.tryptobackend.trading.domain.service;
 import java.util.List;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 
-public interface WalletBalanceService {
+public interface BalanceChangeApplier {
 
     void apply(Long walletId, BalanceChange change);
 

@@ -27,7 +27,7 @@ public class OrphanOrderCompensator {
     private final OrderCommandPort orderCommandPort;
     private final MarketQueryPort marketQueryPort;
 
-    private final WalletBalanceService walletBalanceService;
+    private final BalanceChangeApplier balanceChangeApplier;
     private final RecalculateHoldingUseCase recalculateHoldingUseCase;
 
     @Transactional
@@ -41,7 +41,7 @@ public class OrphanOrderCompensator {
         order.fill(Price.of(match.price()), filledAt);
 
         TradingPair pair = marketQueryPort.getTradingPair(order.getExchangeCoinId());
-        walletBalanceService.applyAll(order.getWalletId(), order.planSettlementChanges(pair));
+        balanceChangeApplier.applyAll(order.getWalletId(), order.planSettlementChanges(pair));
         orderCommandPort.save(order);
         recalculateHoldingUseCase.recalculate(order.getWalletId(), order.getExchangeCoinId());
         log.info("orphan {} 보상 완료 at {}", orphan.orderId(), match.price());
