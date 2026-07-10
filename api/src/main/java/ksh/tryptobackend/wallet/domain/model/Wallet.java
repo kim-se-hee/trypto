@@ -2,6 +2,8 @@ package ksh.tryptobackend.wallet.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Stream;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import lombok.Builder;
@@ -27,6 +29,13 @@ public class Wallet {
                 .build();
     }
 
+    public List<WalletBalance> openBalances(List<Long> tradableCoinIds, Long baseCurrencyCoinId) {
+        return Stream.concat(Stream.of(baseCurrencyCoinId), tradableCoinIds.stream())
+                .distinct()
+                .map(coinId -> openBalance(coinId, baseCurrencyCoinId))
+                .toList();
+    }
+
     public boolean isOwnedBy(Long requesterId, Long ownerId) {
         return ownerId.equals(requesterId);
     }
@@ -41,5 +50,13 @@ public class Wallet {
         if (!roundId.equals(other.roundId)) {
             throw new CustomException(ErrorCode.DIFFERENT_ROUND_TRANSFER);
         }
+    }
+
+    private WalletBalance openBalance(Long coinId, Long baseCurrencyCoinId) {
+        WalletBalance balance = WalletBalance.createEmpty(walletId, coinId);
+        if (coinId.equals(baseCurrencyCoinId)) {
+            balance.addAvailable(seedAmount);
+        }
+        return balance;
     }
 }

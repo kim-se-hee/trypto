@@ -24,6 +24,15 @@ public class WalletBalance {
                 .build();
     }
 
+    public static WalletBalance createEmpty(Long walletId, Long coinId) {
+        return WalletBalance.builder()
+                .walletId(walletId)
+                .coinId(coinId)
+                .available(BigDecimal.ZERO)
+                .locked(BigDecimal.ZERO)
+                .build();
+    }
+
     public void deductAvailable(BigDecimal amount) {
         validateSufficient(available, amount);
         this.available = available.subtract(amount);
