@@ -64,54 +64,6 @@ public class WalletCommandAdapter implements WalletCommandPort {
         }
     }
 
-    @Override
-    @Transactional
-    public void lockBalance(Long walletId, Long coinId, BigDecimal amount) {
-        long count =
-                queryFactory
-                        .update(balance)
-                        .set(balance.available, balance.available.subtract(amount))
-                        .set(balance.locked, balance.locked.add(amount))
-                        .where(
-                                balance.walletId
-                                        .eq(walletId)
-                                        .and(balance.coinId.eq(coinId))
-                                        .and(balance.available.goe(amount)))
-                        .execute();
-        if (count == 0) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void unlockBalance(Long walletId, Long coinId, BigDecimal amount) {
-        queryFactory
-                .update(balance)
-                .set(balance.locked, balance.locked.subtract(amount))
-                .set(balance.available, balance.available.add(amount))
-                .where(balance.walletId.eq(walletId).and(balance.coinId.eq(coinId)))
-                .execute();
-    }
-
-    @Override
-    @Transactional
-    public void consumeLocked(Long walletId, Long coinId, BigDecimal amount) {
-        long count =
-                queryFactory
-                        .update(balance)
-                        .set(balance.locked, balance.locked.subtract(amount))
-                        .where(
-                                balance.walletId
-                                        .eq(walletId)
-                                        .and(balance.coinId.eq(coinId))
-                                        .and(balance.locked.goe(amount)))
-                        .execute();
-        if (count == 0) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
-    }
-
     private void createBalanceWithAvailable(Long walletId, Long coinId, BigDecimal amount) {
         try {
             balanceRepository.saveAndFlush(
