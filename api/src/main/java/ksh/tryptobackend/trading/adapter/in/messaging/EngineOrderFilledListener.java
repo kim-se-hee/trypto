@@ -1,6 +1,5 @@
-package ksh.tryptobackend.trading.adapter.in;
+package ksh.tryptobackend.trading.adapter.in.messaging;
 
-import ksh.tryptobackend.trading.adapter.in.messages.EngineOrderFilledMessage;
 import ksh.tryptobackend.trading.application.port.in.NotifyFilledOrderUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.NotifyOrderFilledCommand;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,7 @@ public class EngineOrderFilledListener {
     private final NotifyFilledOrderUseCase notifyFilledOrderUseCase;
 
     @RabbitListener(queues = "#{engineOrderFilledQueue.name}")
-    public void onFilled(EngineOrderFilledMessage message) {
+    public void onFilled(OrderFilledEngineMessage message) {
         NotifyOrderFilledCommand command =
                 new NotifyOrderFilledCommand(
                         message.orderId(),

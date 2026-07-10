@@ -1,9 +1,9 @@
-package ksh.tryptobackend.trading.adapter.in.messages;
+package ksh.tryptobackend.trading.adapter.in.messaging;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record EngineOrderFilledMessage(
+public record OrderFilledEngineMessage(
         Long orderId,
         BigDecimal executedPrice,
         BigDecimal quantity,
