@@ -6,8 +6,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import ksh.tryptobackend.marketdata.application.port.in.FindTicksUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.TickResult;
 import ksh.tryptobackend.trading.application.port.in.CompensateOrphanOrdersUseCase;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
@@ -29,8 +27,6 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
 
     private final OrderQueryPort orderQueryPort;
     private final MarketQueryPort marketQueryPort;
-
-    private final FindTicksUseCase findTicksUseCase;
 
     private final OrphanOrderCompensator orphanOrderCompensator;
 
@@ -60,10 +56,8 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
         try {
             Instant from = orphan.createdAt().atZone(KST).toInstant();
             MarketIdentifier market = marketQueryPort.findMarketIdentifier(orphan.exchangeCoinId());
-            List<TickResult> ticks =
-                    findTicksUseCase.findTicks(
-                            market.exchangeName(), market.marketSymbol(), from, nowInstant);
-            PriceCandidates candidates = toPriceCandidates(ticks);
+            PriceCandidates candidates =
+                    marketQueryPort.findPriceCandidates(market, from, nowInstant);
 
             Optional<PriceCandidate> matchedPrice = candidates.findFirstMatching(orphan);
             return matchedPrice
@@ -73,10 +67,5 @@ public class CompensateOrphanOrdersService implements CompensateOrphanOrdersUseC
             log.error("orphan {} 보상 실패", orphan.orderId(), e);
             return false;
         }
-    }
-
-    private PriceCandidates toPriceCandidates(List<TickResult> ticks) {
-        return new PriceCandidates(
-                ticks.stream().map(t -> new PriceCandidate(t.time(), t.price())).toList());
     }
 }

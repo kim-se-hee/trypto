@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.trading.application.port.in.CountTradesByRoundIdsUseCase;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
+import ksh.tryptobackend.trading.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
-import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
+import ksh.tryptobackend.trading.domain.vo.WalletRef;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +15,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CountTradesByRoundIdsService implements CountTradesByRoundIdsUseCase {
 
-    private final FindWalletUseCase findWalletUseCase;
+    private final WalletQueryPort walletQueryPort;
     private final OrderQueryPort orderQueryPort;
 
     @Override
     public Map<Long, Integer> countTradesByRoundIds(List<Long> roundIds) {
-        List<WalletResult> wallets = findWalletUseCase.findByRoundIds(roundIds);
-        List<Long> walletIds = wallets.stream().map(WalletResult::walletId).toList();
+        List<WalletRef> wallets = walletQueryPort.findByRoundIds(roundIds);
+        List<Long> walletIds = wallets.stream().map(WalletRef::walletId).toList();
 
         FilledOrderCounts tradeCountByWalletId =
                 orderQueryPort.countFilledGroupByWalletId(walletIds);
@@ -30,11 +30,11 @@ public class CountTradesByRoundIdsService implements CountTradesByRoundIdsUseCas
     }
 
     private Map<Long, Integer> aggregateByRoundId(
-            List<WalletResult> wallets, FilledOrderCounts tradeCountByWalletId) {
+            List<WalletRef> wallets, FilledOrderCounts tradeCountByWalletId) {
         return wallets.stream()
                 .collect(
                         Collectors.groupingBy(
-                                WalletResult::roundId,
+                                WalletRef::roundId,
                                 Collectors.summingInt(
                                         w -> tradeCountByWalletId.getCount(w.walletId()))));
     }
