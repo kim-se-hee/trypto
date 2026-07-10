@@ -39,7 +39,7 @@ trading 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 않
 ## 도메인 서비스 어댑터 (연동형)
 
 인터페이스는 `domain/service` 에, 구현은 `adapter/out/service` 에 두고 타 컨텍스트 UseCase 로 위임한다.
-- `BalanceChangeApplier` ← Wallet `ManageWalletBalanceUseCase` — 체결·취소 시 잔고 반영
+- `BalanceChangeApplier` ← Wallet `ApplyBalanceChangesUseCase` — 체결·취소 시 잔고 변경 묶음을 한 호출로 반영
 - `RuleViolationChecker` ← InvestmentRound `CheckRuleViolationsUseCase` — 주문 시점 투자 원칙 위반 검증
 
 ## 자기 컨텍스트 내부 조회 합성
