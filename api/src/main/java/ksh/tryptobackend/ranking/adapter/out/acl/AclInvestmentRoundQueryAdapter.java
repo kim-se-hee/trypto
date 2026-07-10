@@ -8,7 +8,7 @@ import ksh.tryptobackend.ranking.application.port.out.InvestmentRoundQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("rankingAclInvestmentRoundQueryAdapter")
 @RequiredArgsConstructor
 public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 

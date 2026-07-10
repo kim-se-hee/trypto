@@ -9,7 +9,7 @@ import ksh.tryptobackend.ranking.domain.vo.ExchangeNames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("rankingAclMarketDataQueryAdapter")
 @RequiredArgsConstructor
 public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
 
