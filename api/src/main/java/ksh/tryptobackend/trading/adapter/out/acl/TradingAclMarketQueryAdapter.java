@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AclMarketQueryAdapter implements MarketQueryPort {
+public class TradingAclMarketQueryAdapter implements MarketQueryPort {
 
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;

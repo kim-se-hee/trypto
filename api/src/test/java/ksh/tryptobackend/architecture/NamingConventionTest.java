@@ -217,10 +217,11 @@ class NamingConventionTest {
                 .areNotInterfaces()
                 .and()
                 .areTopLevelClasses()
-                .should(matchPortNamingWithPrefix("Acl"))
+                .should(matchAclNamingWithContextPrefix())
                 .as(
-                        "ACL adapter name should be 'Acl' followed by the Port name with 'Port'"
-                                + " replaced by 'Adapter' (e.g. AclMarketQueryAdapter)")
+                        "ACL adapter name should be a context prefix followed by 'Acl' and the Port"
+                                + " name with 'Port' replaced by 'Adapter' (e.g."
+                                + " TradingAclWalletQueryAdapter)")
                 .check(classes);
     }
 
@@ -302,27 +303,28 @@ class NamingConventionTest {
         };
     }
 
-    private static ArchCondition<JavaClass> matchPortNamingWithPrefix(String prefix) {
+    private static ArchCondition<JavaClass> matchAclNamingWithContextPrefix() {
         return new ArchCondition<>(
-                "have name '"
-                        + prefix
-                        + "' followed by the Port name with 'Port' replaced by 'Adapter'") {
+                "have a context prefix followed by 'Acl' and the Port name with 'Port' replaced by"
+                        + " 'Adapter'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 javaClass.getAllRawInterfaces().stream()
                         .filter(i -> i.getSimpleName().endsWith("Port"))
                         .forEach(
                                 port -> {
-                                    String expected = prefix + expectedAdapterBase(port);
-                                    if (!javaClass.getSimpleName().equals(expected)) {
+                                    String suffix = "Acl" + expectedAdapterBase(port);
+                                    String actual = javaClass.getSimpleName();
+                                    if (!actual.endsWith(suffix)
+                                            || actual.length() <= suffix.length()) {
                                         events.add(
                                                 SimpleConditionEvent.violated(
                                                         javaClass,
-                                                        javaClass.getSimpleName()
+                                                        actual
                                                                 + " implements "
                                                                 + port.getSimpleName()
-                                                                + " but should be named "
-                                                                + expected));
+                                                                + " but should be named {context}"
+                                                                + suffix));
                                     }
                                 });
             }

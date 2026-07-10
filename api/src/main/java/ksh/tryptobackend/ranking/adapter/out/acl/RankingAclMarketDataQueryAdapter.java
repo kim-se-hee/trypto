@@ -9,9 +9,9 @@ import ksh.tryptobackend.ranking.domain.vo.ExchangeNames;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("rankingAclMarketDataQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
+public class RankingAclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
     private final FindExchangeNamesUseCase findExchangeNamesUseCase;

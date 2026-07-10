@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class WalletAclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final FindRoundInfoUseCase findRoundInfoUseCase;
 

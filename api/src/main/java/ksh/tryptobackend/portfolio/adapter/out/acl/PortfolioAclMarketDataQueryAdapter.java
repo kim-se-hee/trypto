@@ -17,9 +17,9 @@ import ksh.tryptobackend.portfolio.domain.vo.KrwConversionRate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("portfolioAclMarketDataQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
+public class PortfolioAclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindCoinInfoUseCase findCoinInfoUseCase;

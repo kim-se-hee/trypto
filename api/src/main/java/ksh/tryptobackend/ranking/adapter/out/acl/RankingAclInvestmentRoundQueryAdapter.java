@@ -13,9 +13,9 @@ import ksh.tryptobackend.ranking.domain.vo.ActiveRounds;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("rankingAclInvestmentRoundQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class RankingAclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final FindRoundInfoUseCase findRoundInfoUseCase;
     private final FindActiveRoundsUseCase findActiveRoundsUseCase;

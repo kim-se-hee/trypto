@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** wallet 컨텍스트 조회를 investmentround 로 번역하는 ACL 어댑터. */
-@Component("investmentroundAclWalletQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclWalletQueryAdapter implements WalletQueryPort {
+public class InvestmentRoundAclWalletQueryAdapter implements WalletQueryPort {
 
     private final FindWalletUseCase findWalletUseCase;
 

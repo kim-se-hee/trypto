@@ -18,9 +18,9 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("regretanalysisAclInvestmentRoundQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final FindRoundInfoUseCase findRoundInfoUseCase;
     private final FindInvestmentRulesUseCase findInvestmentRulesUseCase;

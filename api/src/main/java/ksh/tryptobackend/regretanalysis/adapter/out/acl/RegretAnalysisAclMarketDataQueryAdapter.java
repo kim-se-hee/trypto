@@ -22,9 +22,9 @@ import ksh.tryptobackend.regretanalysis.domain.vo.CurrentPrices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("regretanalysisAclMarketDataQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
+public class RegretAnalysisAclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     private static final String DOMESTIC_CURRENCY = "KRW";
     private static final String OVERSEAS_CURRENCY = "USDT";

@@ -11,9 +11,9 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("regretanalysisAclPortfolioQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclPortfolioQueryAdapter implements PortfolioQueryPort {
+public class RegretAnalysisAclPortfolioQueryAdapter implements PortfolioQueryPort {
 
     private final FindSnapshotsUseCase findSnapshotsUseCase;
 

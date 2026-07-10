@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AclTradingQueryAdapter implements TradingQueryPort {
+public class PortfolioAclTradingQueryAdapter implements TradingQueryPort {
 
     private final FindEvaluatedHoldingsUseCase findEvaluatedHoldingsUseCase;
 

@@ -8,9 +8,9 @@ import ksh.tryptobackend.trading.application.port.in.CountTradesByRoundIdsUseCas
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("rankingAclTradingQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclTradingQueryAdapter implements TradingQueryPort {
+public class RankingAclTradingQueryAdapter implements TradingQueryPort {
 
     private final CountTradesByRoundIdsUseCase countTradesByRoundIdsUseCase;
 

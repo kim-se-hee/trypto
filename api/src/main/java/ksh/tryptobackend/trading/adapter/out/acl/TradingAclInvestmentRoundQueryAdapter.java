@@ -8,9 +8,9 @@ import ksh.tryptobackend.trading.domain.vo.InvestmentRule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("tradingAclInvestmentRoundQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class TradingAclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final FindInvestmentRulesUseCase findInvestmentRulesUseCase;
 

@@ -14,9 +14,9 @@ import ksh.tryptobackend.wallet.domain.vo.BaseCurrency;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("walletAclMarketDataQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclMarketDataQueryAdapter implements MarketDataQueryPort {
+public class WalletAclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final FindCoinInfoUseCase findCoinInfoUseCase;

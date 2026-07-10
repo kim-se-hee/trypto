@@ -12,9 +12,9 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.ViolatedOrderRes
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("regretanalysisAclTradingQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclTradingQueryAdapter implements TradingQueryPort {
+public class RegretAnalysisAclTradingQueryAdapter implements TradingQueryPort {
 
     private final FindViolatedOrdersUseCase findViolatedOrdersUseCase;
 

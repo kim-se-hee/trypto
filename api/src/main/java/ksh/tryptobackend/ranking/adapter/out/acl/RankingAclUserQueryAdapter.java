@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AclUserQueryAdapter implements UserQueryPort {
+public class RankingAclUserQueryAdapter implements UserQueryPort {
 
     private final FindUserPublicInfoUseCase findUserPublicInfoUseCase;
 

@@ -11,9 +11,9 @@ import ksh.tryptobackend.portfolio.domain.vo.ActiveRounds;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component("portfolioAclInvestmentRoundQueryAdapter")
+@Component
 @RequiredArgsConstructor
-public class AclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
+public class PortfolioAclInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort {
 
     private final FindActiveRoundsUseCase findActiveRoundsUseCase;
     private final SumEmergencyFundingUseCase sumEmergencyFundingUseCase;
