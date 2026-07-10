@@ -1,4 +1,4 @@
-package ksh.tryptobackend.portfolio.adapter.in;
+package ksh.tryptobackend.portfolio.adapter.in.web;
 
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.portfolio.adapter.in.dto.response.MyHoldingsResponse;
