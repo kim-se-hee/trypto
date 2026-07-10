@@ -1,6 +1,7 @@
 package ksh.tryptobackend.ranking.adapter.out.acl;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.ranking.application.port.out.UserQueryPort;
@@ -23,6 +24,11 @@ public class AclUserQueryAdapter implements UserQueryPort {
                 findUserPublicInfoUseCase.findByUserIds(userIds).stream()
                         .collect(Collectors.toMap(UserPublicInfoResult::userId, this::toProfile));
         return new UserProfiles(profileByUserId);
+    }
+
+    @Override
+    public Optional<UserProfile> findByUserId(Long userId) {
+        return findUserPublicInfoUseCase.findByUserId(userId).map(this::toProfile);
     }
 
     private UserProfile toProfile(UserPublicInfoResult result) {
