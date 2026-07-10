@@ -5,7 +5,7 @@ import java.util.List;
 import ksh.tryptobackend.investmentround.domain.service.FundsDepositor;
 import ksh.tryptobackend.wallet.application.port.in.ApplyBalanceChangesUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.BalanceChangeType;
-import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeItem;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +19,6 @@ public class FundsDepositorImpl implements FundsDepositor {
     public void deposit(Long walletId, Long coinId, BigDecimal amount) {
         applyBalanceChangesUseCase.applyBalanceChanges(
                 walletId,
-                List.of(new BalanceChangeItem(BalanceChangeType.ADD_AVAILABLE, coinId, amount)));
+                List.of(new BalanceChangeCommand(BalanceChangeType.ADD_AVAILABLE, coinId, amount)));
     }
 }

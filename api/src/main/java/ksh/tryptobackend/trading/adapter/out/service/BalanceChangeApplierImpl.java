@@ -5,7 +5,7 @@ import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.wallet.application.port.in.ApplyBalanceChangesUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.BalanceChangeType;
-import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeItem;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.BalanceChangeCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,16 +26,18 @@ public class BalanceChangeApplierImpl implements BalanceChangeApplier {
         applyAll(walletId, List.of(change));
     }
 
-    private BalanceChangeItem translate(BalanceChange change) {
+    private BalanceChangeCommand translate(BalanceChange change) {
         return switch (change) {
             case BalanceChange.AddAvailable a ->
-                    new BalanceChangeItem(BalanceChangeType.ADD_AVAILABLE, a.coinId(), a.amount());
+                    new BalanceChangeCommand(
+                            BalanceChangeType.ADD_AVAILABLE, a.coinId(), a.amount());
             case BalanceChange.Lock l ->
-                    new BalanceChangeItem(BalanceChangeType.LOCK, l.coinId(), l.amount());
+                    new BalanceChangeCommand(BalanceChangeType.LOCK, l.coinId(), l.amount());
             case BalanceChange.Unlock u ->
-                    new BalanceChangeItem(BalanceChangeType.UNLOCK, u.coinId(), u.amount());
+                    new BalanceChangeCommand(BalanceChangeType.UNLOCK, u.coinId(), u.amount());
             case BalanceChange.ConsumeLocked s ->
-                    new BalanceChangeItem(BalanceChangeType.CONSUME_LOCKED, s.coinId(), s.amount());
+                    new BalanceChangeCommand(
+                            BalanceChangeType.CONSUME_LOCKED, s.coinId(), s.amount());
         };
     }
 }
