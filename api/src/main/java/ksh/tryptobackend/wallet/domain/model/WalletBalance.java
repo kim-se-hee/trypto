@@ -49,8 +49,14 @@ public class WalletBalance {
     }
 
     public void unlock(BigDecimal amount) {
+        validateSufficient(locked, amount);
         this.locked = locked.subtract(amount);
         this.available = available.add(amount);
+    }
+
+    public void consumeLocked(BigDecimal amount) {
+        validateSufficient(locked, amount);
+        this.locked = locked.subtract(amount);
     }
 
     private void validateSufficient(BigDecimal balance, BigDecimal amount) {
