@@ -14,11 +14,11 @@ public record PlaceOrderRequest(
         @NotNull Long exchangeCoinId,
         @NotNull Side side,
         @NotNull OrderType orderType,
-        BigDecimal price,
-        @NotNull @Positive BigDecimal amount) {
+        @Positive BigDecimal volume,
+        @Positive BigDecimal price) {
 
     public PlaceOrderCommand toCommand() {
         return new PlaceOrderCommand(
-                clientOrderId, walletId, exchangeCoinId, side, orderType, price, amount);
+                clientOrderId, walletId, exchangeCoinId, side, orderType, volume, price);
     }
 }

@@ -13,10 +13,8 @@ import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.trading.adapter.out.persistence.repository.OrderJpaRepository;
-import ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class OrderStepDefinition {
@@ -33,7 +31,6 @@ public class OrderStepDefinition {
     private final MockPositionAdapter holdingAdapter;
     private final MockPriceChangeRateAdapter priceChangeRateAdapter;
     private final OrderJpaRepository orderJpaRepository;
-    private final WalletBalanceJpaRepository walletBalanceJpaRepository;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final JdbcTemplate jdbcTemplate;
 
@@ -47,7 +44,6 @@ public class OrderStepDefinition {
             MockPositionAdapter holdingAdapter,
             MockPriceChangeRateAdapter priceChangeRateAdapter,
             OrderJpaRepository orderJpaRepository,
-            WalletBalanceJpaRepository walletBalanceJpaRepository,
             ExchangeJpaRepository exchangeJpaRepository,
             JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
@@ -55,7 +51,6 @@ public class OrderStepDefinition {
         this.holdingAdapter = holdingAdapter;
         this.priceChangeRateAdapter = priceChangeRateAdapter;
         this.orderJpaRepository = orderJpaRepository;
-        this.walletBalanceJpaRepository = walletBalanceJpaRepository;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -79,20 +74,13 @@ public class OrderStepDefinition {
     @Given("지갑에 KRW 잔고가 {long}원이다")
     public void 지갑에_KRW_잔고가_원이다(long amount) {
         ensureUserRoundWallet();
-        walletBalanceJpaRepository.save(
-                new WalletBalanceJpaEntity(
-                        WALLET_ID, KRW_COIN_ID, new BigDecimal(amount), BigDecimal.ZERO));
+        setAvailableBalance(KRW_COIN_ID, new BigDecimal(amount));
     }
 
     @Given("지갑에 BTC 잔고가 {double}개이다")
     public void 지갑에_BTC_잔고가_개이다(double amount) {
         ensureUserRoundWallet();
-        walletBalanceJpaRepository.save(
-                new WalletBalanceJpaEntity(
-                        WALLET_ID,
-                        BTC_COIN_ID,
-                        new BigDecimal(String.valueOf(amount)),
-                        BigDecimal.ZERO));
+        setAvailableBalance(BTC_COIN_ID, new BigDecimal(String.valueOf(amount)));
     }
 
     private void ensureUserRoundWallet() {
@@ -101,8 +89,8 @@ public class OrderStepDefinition {
                         "SELECT COUNT(*) FROM user WHERE user_id = ?", Integer.class, USER_ID);
         if (userCount == null || userCount == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO user (user_id, email, nickname, portfolio_public, created_at,"
-                            + " updated_at) VALUES (?, ?, ?, true, NOW(), NOW())",
+                    "INSERT INTO user (user_id, version, email, nickname, portfolio_public,"
+                            + " created_at, updated_at) VALUES (?, 0, ?, ?, true, NOW(), NOW())",
                     USER_ID,
                     "trader1@example.com",
                     "트레이더1");
@@ -133,32 +121,59 @@ public class OrderStepDefinition {
                     ROUND_ID,
                     EXCHANGE_ID);
         }
+        // 프로덕션 지갑 생성(openBalances)과 동일하게 거래가능 코인 잔고를 0으로 사전 생성한다.
+        ensureBalanceRow(KRW_COIN_ID);
+        ensureBalanceRow(BTC_COIN_ID);
+    }
+
+    private void ensureBalanceRow(Long coinId) {
+        Integer count =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM wallet_balance WHERE wallet_id = ? AND coin_id = ?",
+                        Integer.class,
+                        WALLET_ID,
+                        coinId);
+        if (count == null || count == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?,"
+                            + " ?, 0, 0)",
+                    WALLET_ID,
+                    coinId);
+        }
+    }
+
+    private void setAvailableBalance(Long coinId, BigDecimal available) {
+        jdbcTemplate.update(
+                "UPDATE wallet_balance SET available = ? WHERE wallet_id = ? AND coin_id = ?",
+                available,
+                WALLET_ID,
+                coinId);
     }
 
     @When("시장가 매수 주문을 {long}원으로 요청한다")
-    public void 시장가_매수_주문을_원으로_요청한다(long amount) {
-        Map<String, Object> body = createOrderBody("BUY", "MARKET", amount, null);
+    public void 시장가_매수_주문을_원으로_요청한다(long totalPrice) {
+        Map<String, Object> body = createOrderBody("BUY", "MARKET", null, totalPrice);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
     @When("시장가 매도 주문을 {double}개로 요청한다")
-    public void 시장가_매도_주문을_개로_요청한다(double amount) {
-        Map<String, Object> body = createOrderBody("SELL", "MARKET", amount, null);
+    public void 시장가_매도_주문을_개로_요청한다(double volume) {
+        Map<String, Object> body = createOrderBody("SELL", "MARKET", volume, null);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
-    @When("지정가 매수 주문을 {long}원에 가격 {long}원으로 요청한다")
-    public void 지정가_매수_주문을_원에_가격_원으로_요청한다(long amount, long price) {
-        Map<String, Object> body = createOrderBody("BUY", "LIMIT", amount, price);
+    @When("지정가 매수 주문을 {double}개에 가격 {long}원으로 요청한다")
+    public void 지정가_매수_주문을_개에_가격_원으로_요청한다(double volume, long price) {
+        Map<String, Object> body = createOrderBody("BUY", "LIMIT", volume, price);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
 
     @When("지정가 매도 주문을 {double}개에 가격 {long}원으로 요청한다")
-    public void 지정가_매도_주문을_개에_가격_원으로_요청한다(double amount, long price) {
-        Map<String, Object> body = createOrderBody("SELL", "LIMIT", amount, price);
+    public void 지정가_매도_주문을_개에_가격_원으로_요청한다(double volume, long price) {
+        Map<String, Object> body = createOrderBody("SELL", "LIMIT", volume, price);
         apiClient.post("/api/orders", body);
         extractOrderIdIfSuccess();
     }
@@ -173,7 +188,7 @@ public class OrderStepDefinition {
             body.put("exchangeCoinId", EXCHANGE_COIN_ID);
             body.put("side", "BUY");
             body.put("orderType", "MARKET");
-            body.put("amount", amount);
+            body.put("price", amount);
             apiClient.post("/api/orders", body);
             extractOrderIdIfSuccess();
             if (i == 0) {
@@ -305,14 +320,16 @@ public class OrderStepDefinition {
     }
 
     private Map<String, Object> createOrderBody(
-            String side, String orderType, Number amount, Long price) {
+            String side, String orderType, Number volume, Number price) {
         Map<String, Object> body = new HashMap<>();
         body.put("clientOrderId", UUID.randomUUID().toString());
         body.put("walletId", WALLET_ID);
         body.put("exchangeCoinId", EXCHANGE_COIN_ID);
         body.put("side", side);
         body.put("orderType", orderType);
-        body.put("amount", amount);
+        if (volume != null) {
+            body.put("volume", volume);
+        }
         if (price != null) {
             body.put("price", price);
         }

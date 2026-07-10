@@ -1,20 +1,17 @@
 package ksh.tryptobackend.marketdata.application.service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.marketdata.application.port.in.FindAllExchangeIdsUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.FindCoinInfoUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinsUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.WarmupExchangeCoinMappingUseCase;
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
-import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
+import ksh.tryptobackend.marketdata.application.port.out.CoinQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinMappingCacheCommandPort;
-import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
-import ksh.tryptobackend.marketdata.domain.vo.ExchangeSymbolKey;
+import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
+import ksh.tryptobackend.marketdata.application.port.out.ExchangeQueryPort;
+import ksh.tryptobackend.marketdata.domain.model.Exchange;
+import ksh.tryptobackend.marketdata.domain.model.ExchangeCoinMappings;
+import ksh.tryptobackend.marketdata.domain.model.ExchangeCoins;
+import ksh.tryptobackend.marketdata.domain.vo.CoinSymbols;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,68 +21,37 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class WarmupExchangeCoinMappingService implements WarmupExchangeCoinMappingUseCase {
 
+    private final ExchangeQueryPort exchangeQueryPort;
+    private final ExchangeCoinQueryPort exchangeCoinQueryPort;
+    private final CoinQueryPort coinQueryPort;
     private final ExchangeCoinMappingCacheCommandPort exchangeCoinMappingCacheCommandPort;
-
-    private final FindAllExchangeIdsUseCase findAllExchangeIdsUseCase;
-    private final FindExchangeDetailUseCase findExchangeDetailUseCase;
-    private final FindExchangeCoinsUseCase findExchangeCoinsUseCase;
-    private final FindCoinInfoUseCase findCoinInfoUseCase;
 
     @Override
     public void warmup() {
-        List<Long> exchangeIds = findAllExchangeIdsUseCase.findAllExchangeIds();
-        Map<Long, ExchangeDetailResult> detailMap = loadExchangeDetailMap(exchangeIds);
-        Map<Long, String> baseCurrencySymbols = loadBaseCurrencySymbols(detailMap);
+        List<Exchange> exchanges =
+                exchangeQueryPort.findAllExchangeIds().stream()
+                        .map(exchangeQueryPort::findExchangeDetailById)
+                        .flatMap(Optional::stream)
+                        .toList();
+        CoinSymbols baseCurrencySymbols =
+                coinQueryPort.findSymbolsByIds(
+                        exchanges.stream()
+                                .map(Exchange::getBaseCurrencyCoinId)
+                                .collect(Collectors.toSet()));
 
-        Map<ExchangeSymbolKey, ExchangeCoinMapping> mappings = new HashMap<>();
-        for (Map.Entry<Long, ExchangeDetailResult> entry : detailMap.entrySet()) {
-            mappings.putAll(
-                    buildMappingsForExchange(
-                            entry.getKey(), entry.getValue(), baseCurrencySymbols));
+        ExchangeCoinMappings mappings = ExchangeCoinMappings.empty();
+        for (Exchange exchange : exchanges) {
+            ExchangeCoins coins = exchangeCoinQueryPort.findByExchangeId(exchange.getExchangeId());
+            CoinSymbols coinSymbols = coinQueryPort.findSymbolsByIds(coins.coinIds());
+            mappings =
+                    mappings.add(
+                            exchange,
+                            baseCurrencySymbols.getSymbol(exchange.getBaseCurrencyCoinId()),
+                            coins,
+                            coinSymbols);
         }
 
-        exchangeCoinMappingCacheCommandPort.loadAll(mappings);
+        exchangeCoinMappingCacheCommandPort.loadAll(mappings.toMap());
         log.info("거래소-코인 매핑 캐시 로딩 완료: {}건", mappings.size());
-    }
-
-    private Map<Long, ExchangeDetailResult> loadExchangeDetailMap(List<Long> exchangeIds) {
-        Map<Long, ExchangeDetailResult> detailMap = new HashMap<>();
-        for (Long exchangeId : exchangeIds) {
-            findExchangeDetailUseCase
-                    .findExchangeDetail(exchangeId)
-                    .ifPresent(detail -> detailMap.put(exchangeId, detail));
-        }
-        return detailMap;
-    }
-
-    private Map<Long, String> loadBaseCurrencySymbols(Map<Long, ExchangeDetailResult> detailMap) {
-        Set<Long> baseCoinIds =
-                detailMap.values().stream()
-                        .map(ExchangeDetailResult::baseCurrencyCoinId)
-                        .collect(Collectors.toSet());
-        Map<Long, CoinInfoResult> coinInfoMap = findCoinInfoUseCase.findByIds(baseCoinIds);
-        return coinInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().symbol()));
-    }
-
-    private Map<ExchangeSymbolKey, ExchangeCoinMapping> buildMappingsForExchange(
-            Long exchangeId, ExchangeDetailResult detail, Map<Long, String> baseCurrencySymbols) {
-        String baseCurrencySymbol = baseCurrencySymbols.get(detail.baseCurrencyCoinId());
-        if (baseCurrencySymbol == null) {
-            return Map.of();
-        }
-
-        return findExchangeCoinsUseCase.findByExchangeId(exchangeId).stream()
-                .collect(
-                        Collectors.toMap(
-                                ec ->
-                                        ExchangeSymbolKey.of(
-                                                detail.name(), ec.coinSymbol(), baseCurrencySymbol),
-                                ec ->
-                                        new ExchangeCoinMapping(
-                                                ec.exchangeCoinId(),
-                                                exchangeId,
-                                                ec.coinId(),
-                                                ec.coinSymbol())));
     }
 }

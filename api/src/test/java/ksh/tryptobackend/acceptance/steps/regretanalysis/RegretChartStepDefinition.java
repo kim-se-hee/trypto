@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.mock.MockBtcPriceHistoryAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class RegretChartStepDefinition {
@@ -101,8 +101,8 @@ public class RegretChartStepDefinition {
     private void insertUser() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT INTO user (user_id, email, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO user (user_id, version, email, nickname, portfolio_public, created_at,"
+                        + " updated_at) VALUES (?, 0, ?, ?, ?, ?, ?)",
                 USER_ID,
                 "regretTester@test.com",
                 "regretTester",

@@ -4,9 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import ksh.tryptobackend.wallet.adapter.out.entity.TransferJpaEntity;
-import ksh.tryptobackend.wallet.adapter.out.repository.TransferJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.entity.TransferJpaEntity;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.TransferJpaRepository;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
 import ksh.tryptobackend.wallet.domain.vo.TransferStatus;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +54,6 @@ class TransferDataSeeder {
 
             Transfer transfer =
                     Transfer.builder()
-                            .idempotencyKey(UUID.randomUUID())
                             .fromWalletId(fromWalletId)
                             .toWalletId(toWalletId)
                             .coinId(coinId)

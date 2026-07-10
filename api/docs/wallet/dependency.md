@@ -12,23 +12,25 @@
 
 ## GetAvailableBalanceUseCase
 - `getAvailableBalance(Long walletId, Long coinId) → BigDecimal`
+- `getTotalBalance(Long walletId, Long coinId) → BigDecimal`
 
 ## CreateWalletWithBalanceUseCase
 - `createWalletWithBalance(CreateWalletWithBalanceCommand command) → Long`
 - Command `CreateWalletWithBalanceCommand { roundId: Long, exchangeId: Long, baseCurrencyCoinId: Long, initialAmount: BigDecimal, createdAt: LocalDateTime }`
+- 지갑과 함께 거래소의 기축통화·전 거래 코인 잔고를 0으로 사전 생성하고 기축통화에 시드를 예치한다
 
-## ManageWalletBalanceUseCase
-- `deductBalance(Long walletId, Long coinId, BigDecimal amount) → void`
-- `addBalance(Long walletId, Long coinId, BigDecimal amount) → void`
-- `lockBalance(Long walletId, Long coinId, BigDecimal amount) → void`
-- `unlockBalance(Long walletId, Long coinId, BigDecimal amount) → void`
+## ApplyBalanceChangesUseCase
+- `applyBalanceChanges(Long walletId, List<BalanceChangeItem> changes) → void`
+- `BalanceChangeItem { type: BalanceChangeType, coinId: Long, amount: BigDecimal }`
+- `BalanceChangeType`: ADD_AVAILABLE, LOCK, UNLOCK, CONSUME_LOCKED
+- 한 트랜잭션에서 관련 잔고를 coinId 오름차순으로 잠근 뒤 항목을 순서대로 반영한다
 
 ## GetWalletOwnerIdUseCase
 - `getWalletOwnerId(Long walletId) → Long`
 
 ## TransferCoinUseCase
 - `transferCoin(TransferCoinCommand command) → Transfer`
-- 거래소 간 송금 실행 (검증 → 실패 판정 → 잔고 변동 → 저장)
+- 거래소 간 송금 실행 (멱등 확인 → 검증 → 잔고 잠금 조회 → 도메인 서비스가 잔고 이동 → 저장)
 
 ## FindTransferHistoryUseCase
 - `findTransferHistory(FindTransferHistoryQuery query) → TransferHistoryCursorResult`
@@ -37,9 +39,9 @@
 # 의존
 
 ## MarketData
-- `FindExchangeDetailUseCase` — 거래소 정보 (입금 주소 발급)
 - `FindCoinInfoUseCase` — 기축통화 심볼 조회 (잔고 조회)
 - `FindCoinSymbolsUseCase` — 코인 심볼 조회 (송금 내역 응답 보강)
+- `FindExchangeCoinsUseCase` — 거래소 코인 목록 조회 (지갑 생성 시 잔고 사전 생성)
 
 ## InvestmentRound
 - `FindRoundInfoUseCase` — 잔고 조회 시 소유권 검증

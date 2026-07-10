@@ -32,4 +32,4 @@
 ## Wallet
 - `CreateWalletWithBalanceUseCase` — 라운드 시작 시 지갑 생성
 - `FindWalletUseCase` — 긴급 충전 시 지갑 조회
-- `ManageWalletBalanceUseCase` — 긴급 충전 시 잔고 반영
+- `ApplyBalanceChangesUseCase` — 긴급 충전 시 잔고 반영

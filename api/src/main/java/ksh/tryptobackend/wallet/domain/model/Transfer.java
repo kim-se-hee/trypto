@@ -2,11 +2,9 @@ package ksh.tryptobackend.wallet.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.wallet.domain.vo.TransferBalanceChange;
+import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
 import ksh.tryptobackend.wallet.domain.vo.TransferStatus;
 import ksh.tryptobackend.wallet.domain.vo.TransferType;
 import lombok.Builder;
@@ -17,7 +15,6 @@ import lombok.Getter;
 public class Transfer {
 
     private final Long transferId;
-    private final UUID idempotencyKey;
     private final Long fromWalletId;
     private final Long toWalletId;
     private final Long coinId;
@@ -26,34 +23,17 @@ public class Transfer {
     private final LocalDateTime createdAt;
     private final LocalDateTime completedAt;
 
-    public static Transfer create(
-            UUID idempotencyKey,
-            Long fromWalletId,
-            Long toWalletId,
-            Long coinId,
-            BigDecimal amount,
-            LocalDateTime createdAt) {
-        validateDifferentWallet(fromWalletId, toWalletId);
+    public static Transfer create(TransferCoinCommand command, LocalDateTime createdAt) {
+        validateDifferentWallet(command.fromWalletId(), command.toWalletId());
         return Transfer.builder()
-                .idempotencyKey(idempotencyKey)
-                .fromWalletId(fromWalletId)
-                .toWalletId(toWalletId)
-                .coinId(coinId)
-                .amount(amount)
+                .fromWalletId(command.fromWalletId())
+                .toWalletId(command.toWalletId())
+                .coinId(command.coinId())
+                .amount(command.amount())
                 .status(TransferStatus.SUCCESS)
                 .createdAt(createdAt)
                 .completedAt(createdAt)
                 .build();
-    }
-
-    public BigDecimal getTotalDeduction() {
-        return amount;
-    }
-
-    public List<TransferBalanceChange> planBalanceChanges() {
-        return List.of(
-                new TransferBalanceChange.Deduct(fromWalletId, coinId, amount),
-                new TransferBalanceChange.Add(toWalletId, coinId, amount));
     }
 
     public TransferType resolveType(Long viewerWalletId) {

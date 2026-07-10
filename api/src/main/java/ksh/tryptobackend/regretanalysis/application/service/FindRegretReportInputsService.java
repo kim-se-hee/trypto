@@ -1,12 +1,10 @@
 package ksh.tryptobackend.regretanalysis.application.service;
 
 import java.util.List;
-import ksh.tryptobackend.investmentround.application.port.in.FindActiveRoundsUseCase;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.ActiveRoundResult;
 import ksh.tryptobackend.regretanalysis.application.port.in.FindRegretReportInputsUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretReportInputResult;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
-import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
+import ksh.tryptobackend.regretanalysis.application.port.out.InvestmentRoundQueryPort;
+import ksh.tryptobackend.regretanalysis.application.port.out.WalletQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,27 +12,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FindRegretReportInputsService implements FindRegretReportInputsUseCase {
 
-    private final FindActiveRoundsUseCase findActiveRoundsUseCase;
-    private final FindWalletUseCase findWalletUseCase;
+    private final InvestmentRoundQueryPort investmentRoundQueryPort;
+    private final WalletQueryPort walletQueryPort;
 
     @Override
     public List<RegretReportInputResult> findAllInputs() {
-        List<ActiveRoundResult> activeRounds = findActiveRoundsUseCase.findAllActiveRounds();
-        return activeRounds.stream().flatMap(round -> findWalletsForRound(round).stream()).toList();
-    }
-
-    private List<RegretReportInputResult> findWalletsForRound(ActiveRoundResult round) {
-        return findWalletUseCase.findByRoundId(round.roundId()).stream()
-                .map(wallet -> toResult(round, wallet))
+        return investmentRoundQueryPort.findActiveRounds().stream()
+                .flatMap(
+                        round ->
+                                walletQueryPort.findWallets(round.roundId()).stream()
+                                        .map(round::combineWith))
+                .map(RegretReportInputResult::from)
                 .toList();
-    }
-
-    private RegretReportInputResult toResult(ActiveRoundResult round, WalletResult wallet) {
-        return new RegretReportInputResult(
-                round.roundId(),
-                round.userId(),
-                wallet.exchangeId(),
-                wallet.walletId(),
-                round.startedAt());
     }
 }

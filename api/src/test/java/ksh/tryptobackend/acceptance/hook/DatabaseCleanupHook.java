@@ -17,9 +17,8 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 @RequiredArgsConstructor
 public class DatabaseCleanupHook {
 
-    // shedlock 만 청소·재시드 대상에서 제외한다. coin/exchange_market/exchange_coin/exchange_coin_chain/
-    // withdrawal_fee 는 TRUNCATE 후 seed-data.sql 로 재적재되므로 시나리오가 추가한 잔재(예: coin-chain 의
-    // 102~104 exchange_coin) 가 다음 시나리오로 누설되지 않는다.
+    // shedlock 만 청소·재시드 대상에서 제외한다. coin/exchange_market/exchange_coin 는
+    // TRUNCATE 후 seed-data.sql 로 재적재되므로 시나리오가 추가한 잔재가 다음 시나리오로 누설되지 않는다.
     private static final Set<String> CLEANUP_EXCLUDED_TABLES = Set.of("shedlock");
 
     private final JdbcTemplate jdbcTemplate;

@@ -17,15 +17,11 @@ public class ExchangeInfo {
         this.maxOrderAmount = maxOrderAmount;
     }
 
-    public Fee calculateFee(Money filledAmount) {
-        return Fee.calculate(filledAmount, feeRate);
-    }
-
-    public void validateOrderAmount(BigDecimal amount) {
-        if (amount.compareTo(minOrderAmount) < 0) {
+    public void validateOrderAmount(Money orderAmount) {
+        if (orderAmount.value().compareTo(minOrderAmount) < 0) {
             throw new CustomException(ErrorCode.BELOW_MIN_ORDER_AMOUNT);
         }
-        if (maxOrderAmount != null && amount.compareTo(maxOrderAmount) > 0) {
+        if (maxOrderAmount != null && orderAmount.value().compareTo(maxOrderAmount) > 0) {
             throw new CustomException(ErrorCode.ABOVE_MAX_ORDER_AMOUNT);
         }
     }

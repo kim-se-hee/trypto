@@ -6,13 +6,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
-import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
 import ksh.tryptobackend.wallet.application.port.in.FindTransferHistoryUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.query.FindTransferHistoryQuery;
 import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryCursorResult;
+import ksh.tryptobackend.wallet.application.port.in.dto.result.TransferHistoryResult;
+import ksh.tryptobackend.wallet.application.port.out.InvestmentRoundQueryPort;
+import ksh.tryptobackend.wallet.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.TransferQueryPort;
+import ksh.tryptobackend.wallet.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.wallet.domain.model.Transfer;
-import ksh.tryptobackend.wallet.application.port.in.GetWalletOwnerIdUseCase;
+import ksh.tryptobackend.wallet.domain.model.Wallet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private final TransferQueryPort transferQueryPort;
-
-    private final GetWalletOwnerIdUseCase getWalletOwnerIdUseCase;
-
-    private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
+    private final WalletQueryPort walletQueryPort;
+    private final InvestmentRoundQueryPort investmentRoundQueryPort;
+    private final MarketDataQueryPort marketDataQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -36,14 +38,16 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
         boolean hasNext = transfers.size() > query.size();
         List<Transfer> pagedTransfers = hasNext ? transfers.subList(0, query.size()) : transfers;
 
-        Map<Long, String> coinSymbolMap = resolveCoinSymbols(pagedTransfers);
-
-        return buildCursorResult(pagedTransfers, coinSymbolMap, hasNext);
+        return buildCursorResult(pagedTransfers, query.walletId(), hasNext);
     }
 
     private void validateWalletOwnership(Long walletId, Long userId) {
-        Long ownerUserId = getWalletOwnerIdUseCase.getWalletOwnerId(walletId);
-        if (!ownerUserId.equals(userId)) {
+        Wallet wallet =
+                walletQueryPort
+                        .findById(walletId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        Long ownerId = investmentRoundQueryPort.getOwnerId(wallet.getRoundId());
+        if (!wallet.isOwnedBy(userId, ownerId)) {
             throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
         }
     }
@@ -55,12 +59,20 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private Map<Long, String> resolveCoinSymbols(List<Transfer> transfers) {
         Set<Long> coinIds = transfers.stream().map(Transfer::getCoinId).collect(Collectors.toSet());
-        return findCoinSymbolsUseCase.findSymbolsByIds(coinIds);
+        return marketDataQueryPort.findCoinSymbols(coinIds);
     }
 
     private TransferHistoryCursorResult buildCursorResult(
-            List<Transfer> transfers, Map<Long, String> coinSymbolMap, boolean hasNext) {
+            List<Transfer> transfers, Long viewerWalletId, boolean hasNext) {
+        Map<Long, String> coinSymbols = resolveCoinSymbols(transfers);
+        List<TransferHistoryResult> content =
+                transfers.stream()
+                        .map(
+                                transfer ->
+                                        TransferHistoryResult.from(
+                                                transfer, viewerWalletId, coinSymbols))
+                        .toList();
         Long nextCursor = hasNext ? transfers.getLast().getTransferId() : null;
-        return new TransferHistoryCursorResult(transfers, coinSymbolMap, nextCursor, hasNext);
+        return new TransferHistoryCursorResult(content, nextCursor, hasNext);
     }
 }

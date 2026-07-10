@@ -3,8 +3,8 @@ package ksh.tryptobackend.common.seed;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
-import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +57,7 @@ class UserDataSeeder {
 
     private UserJpaEntity toEntity(
             String nickname, String email, boolean portfolioPublic, LocalDateTime now) {
-        User user = User.reconstitute(null, email, nickname, portfolioPublic, now, now);
+        User user = User.create(email, nickname, portfolioPublic, now);
         return UserJpaEntity.fromDomain(user);
     }
 }

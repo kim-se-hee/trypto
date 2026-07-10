@@ -28,6 +28,10 @@ public record Money(BigDecimal value) {
         return new Money(value.subtract(other.value));
     }
 
+    public Money times(BigDecimal ratio) {
+        return new Money(value.multiply(ratio));
+    }
+
     public Price dividedBy(Quantity quantity) {
         return Price.of(value.divide(quantity.value(), SCALE, RoundingMode.FLOOR));
     }

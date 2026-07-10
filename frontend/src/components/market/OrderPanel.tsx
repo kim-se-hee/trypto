@@ -45,7 +45,7 @@ const QUICK_RATIO_BUTTONS = [10, 25, 50, 100];
 const STATUS_STYLES: Record<OrderStatus, { text: string; className: string }> = {
   FILLED: { text: "체결", className: "bg-positive/15 text-positive" },
   PENDING: { text: "대기", className: "bg-warning/15 text-warning" },
-  CANCELLED: { text: "취소", className: "bg-muted text-muted-foreground" },
+  CANCELED: { text: "취소", className: "bg-muted text-muted-foreground" },
   FAILED: { text: "실패", className: "bg-destructive/15 text-destructive" },
 };
 
@@ -312,10 +312,15 @@ export function OrderPanel({
     const parsedQuantity = parseNumber(quantity);
     const parsedPrice = parseNumber(price);
 
-    const requestAmount = side === "BUY" ? parsedAmount : parsedQuantity;
+    const isMarketBuy = orderType === "market" && isBuy;
 
-    if (requestAmount <= 0) {
-      setSubmitError(side === "BUY" ? "주문 총액을 입력해 주세요." : "주문 수량을 입력해 주세요.");
+    if (isMarketBuy && parsedAmount <= 0) {
+      setSubmitError("주문 총액을 입력해 주세요.");
+      return;
+    }
+
+    if (!isMarketBuy && parsedQuantity <= 0) {
+      setSubmitError("주문 수량을 입력해 주세요.");
       return;
     }
 
@@ -334,8 +339,8 @@ export function OrderPanel({
         exchangeCoinId: orderTargetIds.exchangeCoinId,
         side,
         orderType: orderType === "limit" ? "LIMIT" : "MARKET",
-        price: orderType === "limit" ? parsedPrice : undefined,
-        amount: requestAmount,
+        volume: isMarketBuy ? undefined : parsedQuantity,
+        price: orderType === "limit" ? parsedPrice : isMarketBuy ? parsedAmount : undefined,
       });
 
       setPrice("");

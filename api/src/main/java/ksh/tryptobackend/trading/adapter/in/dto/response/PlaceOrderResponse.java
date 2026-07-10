@@ -29,7 +29,7 @@ public record PlaceOrderResponse(
                 order.getQuantity().value(),
                 order.getLimitPrice() != null ? order.getLimitPrice().value() : null,
                 order.getFilledPrice() != null ? order.getFilledPrice().value() : null,
-                order.getFee() != null ? order.getFee().amount().value() : null,
+                order.getFeeAmount() != null ? order.getFeeAmount().value() : null,
                 order.getStatus(),
                 order.getCreatedAt(),
                 order.getFilledAt());

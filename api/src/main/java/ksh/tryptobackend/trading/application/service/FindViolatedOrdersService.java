@@ -4,16 +4,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.investmentround.application.port.in.FindInvestmentRulesUseCase;
-import ksh.tryptobackend.investmentround.application.port.in.dto.result.InvestmentRuleResult;
-import ksh.tryptobackend.trading.application.port.in.FindFilledOrdersUseCase;
 import ksh.tryptobackend.trading.application.port.in.FindViolatedOrdersUseCase;
-import ksh.tryptobackend.trading.application.port.in.FindViolationsUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.query.FindViolatedOrdersQuery;
 import ksh.tryptobackend.trading.application.port.in.dto.result.FilledOrderResult;
 import ksh.tryptobackend.trading.application.port.in.dto.result.SoldPortionResult;
 import ksh.tryptobackend.trading.application.port.in.dto.result.ViolatedOrderResult;
 import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
+import ksh.tryptobackend.trading.application.port.out.InvestmentRoundQueryPort;
+import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
+import ksh.tryptobackend.trading.application.port.out.RuleViolationQueryPort;
+import ksh.tryptobackend.trading.application.port.out.WalletQueryPort;
+import ksh.tryptobackend.trading.domain.vo.InvestmentRule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +22,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
 
-    private final FindInvestmentRulesUseCase findInvestmentRulesUseCase;
-    private final FindViolationsUseCase findViolationsUseCase;
-    private final FindFilledOrdersUseCase findFilledOrdersUseCase;
+    private final InvestmentRoundQueryPort investmentRoundQueryPort;
+    private final OrderQueryPort orderQueryPort;
+    private final RuleViolationQueryPort ruleViolationQueryPort;
+    private final WalletQueryPort walletQueryPort;
 
     @Override
     public List<ViolatedOrderResult> findViolatedOrders(FindViolatedOrdersQuery query) {
-        List<InvestmentRuleResult> rules =
-                findInvestmentRulesUseCase.findByRoundId(query.roundId());
+        List<InvestmentRule> rules = investmentRoundQueryPort.findRulesByRoundId(query.roundId());
         if (rules.isEmpty()) {
             return Collections.emptyList();
         }
@@ -38,7 +39,7 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
             return Collections.emptyList();
         }
 
-        Map<Long, InvestmentRuleResult> ruleMap = toRuleMap(rules);
+        Map<Long, InvestmentRule> ruleMap = toRuleMap(rules);
         Map<Long, FilledOrderResult> executionMap = findExecutionMap(violations);
 
         return violations.stream()
@@ -48,27 +49,31 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
     }
 
     private List<ViolationResult> findViolationsByRules(
-            List<InvestmentRuleResult> rules, Long exchangeId) {
-        List<Long> ruleIds = rules.stream().map(InvestmentRuleResult::ruleId).toList();
-        return findViolationsUseCase.findByRuleIdsAndExchangeId(ruleIds, exchangeId);
+            List<InvestmentRule> rules, Long exchangeId) {
+        List<Long> ruleIds = rules.stream().map(InvestmentRule::ruleId).toList();
+        List<Long> walletIds = walletQueryPort.findWalletIdsByExchangeId(exchangeId);
+        return ruleViolationQueryPort.findByRuleIdsAndWalletIds(ruleIds, walletIds).stream()
+                .map(ViolationResult::from)
+                .toList();
     }
 
-    private Map<Long, InvestmentRuleResult> toRuleMap(List<InvestmentRuleResult> rules) {
-        return rules.stream().collect(Collectors.toMap(InvestmentRuleResult::ruleId, r -> r));
+    private Map<Long, InvestmentRule> toRuleMap(List<InvestmentRule> rules) {
+        return rules.stream().collect(Collectors.toMap(InvestmentRule::ruleId, r -> r));
     }
 
     private Map<Long, FilledOrderResult> findExecutionMap(List<ViolationResult> violations) {
         List<Long> orderIds = violations.stream().map(ViolationResult::orderId).toList();
-        return findFilledOrdersUseCase.findByOrderIds(orderIds).stream()
+        return orderQueryPort.findFilledByOrderIds(orderIds).stream()
+                .map(FilledOrderResult::from)
                 .collect(Collectors.toMap(FilledOrderResult::orderId, o -> o));
     }
 
     private ViolatedOrderResult buildViolatedOrderResult(
             ViolationResult violation,
-            Map<Long, InvestmentRuleResult> ruleMap,
+            Map<Long, InvestmentRule> ruleMap,
             Map<Long, FilledOrderResult> executionMap,
             Long walletId) {
-        InvestmentRuleResult rule = ruleMap.get(violation.ruleId());
+        InvestmentRule rule = ruleMap.get(violation.ruleId());
         FilledOrderResult execution = executionMap.get(violation.orderId());
         List<SoldPortionResult> soldPortions = resolveSoldPortions(execution, walletId);
 
@@ -90,9 +95,10 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
         if ("SELL".equals(execution.side())) {
             return Collections.emptyList();
         }
-        return findFilledOrdersUseCase
-                .findSellOrders(walletId, execution.exchangeCoinId(), execution.filledAt())
+        return orderQueryPort
+                .findFilledSellOrders(walletId, execution.exchangeCoinId(), execution.filledAt())
                 .stream()
+                .map(FilledOrderResult::from)
                 .map(sell -> new SoldPortionResult(sell.filledPrice(), sell.quantity()))
                 .toList();
     }

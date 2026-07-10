@@ -1,8 +1,8 @@
 package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import java.util.List;
-import ksh.tryptobackend.regretanalysis.adapter.out.entity.RegretReportJpaEntity;
-import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.entity.RegretReportJpaEntity;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportCommandPort;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import lombok.RequiredArgsConstructor;

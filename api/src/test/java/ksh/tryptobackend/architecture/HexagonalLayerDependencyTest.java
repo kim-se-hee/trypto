@@ -192,4 +192,19 @@ class HexagonalLayerDependencyTest {
                                                 + " Request/Response DTOs"))
                 .check(classes);
     }
+
+    @ArchTest
+    void domain_vo_should_not_depend_on_domain_model(JavaClasses classes) {
+        FreezingArchRule.freeze(
+                        noClasses()
+                                .that()
+                                .resideInAnyPackage(allContextPackages(".domain.vo.."))
+                                .should()
+                                .dependOnClassesThat()
+                                .resideInAnyPackage(allContextPackages(".domain.model.."))
+                                .as(
+                                        "Domain VO should not depend on domain model — pass values"
+                                                + " into VO methods instead of aggregates"))
+                .check(classes);
+    }
 }

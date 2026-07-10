@@ -6,8 +6,8 @@ import io.cucumber.java.en.When;
 import java.time.LocalDateTime;
 import java.util.Map;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.user.adapter.out.entity.UserJpaEntity;
-import ksh.tryptobackend.user.adapter.out.repository.UserJpaRepository;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.domain.model.User;
 
 public class ChangeNicknameStepDefinition {
@@ -28,13 +28,8 @@ public class ChangeNicknameStepDefinition {
         UserJpaEntity saved =
                 userJpaRepository.save(
                         UserJpaEntity.fromDomain(
-                                User.reconstitute(
-                                        null,
-                                        "user@test.com",
-                                        nickname,
-                                        false,
-                                        LocalDateTime.now(),
-                                        LocalDateTime.now())));
+                                User.create(
+                                        "user@test.com", nickname, false, LocalDateTime.now())));
         userId = saved.getId();
     }
 
@@ -42,13 +37,7 @@ public class ChangeNicknameStepDefinition {
     public void 닉네임이_인_다른_사용자가_존재한다(String nickname) {
         userJpaRepository.save(
                 UserJpaEntity.fromDomain(
-                        User.reconstitute(
-                                null,
-                                "other@test.com",
-                                nickname,
-                                false,
-                                LocalDateTime.now(),
-                                LocalDateTime.now())));
+                        User.create("other@test.com", nickname, false, LocalDateTime.now())));
     }
 
     @When("닉네임을 {string}로 변경 요청한다")

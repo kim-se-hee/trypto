@@ -7,6 +7,7 @@ import ksh.tryptobackend.user.application.port.in.dto.command.ChangeNicknameComm
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.User;
+import ksh.tryptobackend.user.domain.service.NicknameUniquenessChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,25 +18,17 @@ public class ChangeNicknameService implements ChangeNicknameUseCase {
 
     private final UserQueryPort userQueryPort;
     private final UserCommandPort userCommandPort;
+    private final NicknameUniquenessChecker nicknameUniquenessChecker;
 
     @Override
     @Transactional
     public User changeNickname(ChangeNicknameCommand command) {
-        User user = getUser(command.userId());
+        User user =
+                userQueryPort
+                        .findById(command.userId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.changeNickname(command.nickname());
-        validateNicknameUniqueness(command.nickname());
+        nicknameUniquenessChecker.ensureUnique(user.getNickname());
         return userCommandPort.save(user);
-    }
-
-    private User getUser(Long userId) {
-        return userQueryPort
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private void validateNicknameUniqueness(String nickname) {
-        if (userQueryPort.existsByNickname(nickname)) {
-            throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-        }
     }
 }

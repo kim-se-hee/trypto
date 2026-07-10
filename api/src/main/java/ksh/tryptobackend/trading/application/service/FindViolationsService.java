@@ -4,8 +4,7 @@ import java.util.List;
 import ksh.tryptobackend.trading.application.port.in.FindViolationsUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.result.ViolationResult;
 import ksh.tryptobackend.trading.application.port.out.RuleViolationQueryPort;
-import ksh.tryptobackend.wallet.application.port.in.FindWalletUseCase;
-import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
+import ksh.tryptobackend.trading.application.port.out.WalletQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,15 +13,11 @@ import org.springframework.stereotype.Service;
 public class FindViolationsService implements FindViolationsUseCase {
 
     private final RuleViolationQueryPort ruleViolationQueryPort;
-    private final FindWalletUseCase findWalletUseCase;
+    private final WalletQueryPort walletQueryPort;
 
     @Override
     public List<ViolationResult> findByRuleIdsAndExchangeId(List<Long> ruleIds, Long exchangeId) {
-        List<Long> walletIds =
-                findWalletUseCase.findByExchangeId(exchangeId).stream()
-                        .map(WalletResult::walletId)
-                        .toList();
-
+        List<Long> walletIds = walletQueryPort.findWalletIdsByExchangeId(exchangeId);
         return ruleViolationQueryPort.findByRuleIdsAndWalletIds(ruleIds, walletIds).stream()
                 .map(ViolationResult::from)
                 .toList();

@@ -6,7 +6,6 @@ import { WalletSummary } from "@/components/wallet/WalletSummary";
 import { WalletAssetTable } from "@/components/wallet/WalletAssetTable";
 import { WalletAssetDetail } from "@/components/wallet/WalletAssetDetail";
 import { TransferModal, type TransferDestination } from "@/components/wallet/TransferModal";
-import { DepositModal } from "@/components/wallet/DepositModal";
 import { TransferHistoryPanel } from "@/components/wallet/TransferHistoryPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
@@ -54,7 +53,6 @@ export function WalletPage() {
 
   const [selectedCoin, setSelectedCoin] = useState<WalletCoinBalance | null>(null);
   const [transferCoin, setTransferCoin] = useState<WalletCoinBalance | null>(null);
-  const [depositCoin, setDepositCoin] = useState<WalletCoinBalance | null>(null);
 
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transfers, setTransfers] = useState<TransferRecord[]>([]);
@@ -153,10 +151,6 @@ export function WalletPage() {
     setSelectedCoin(null);
   };
 
-  const handleDeposit = useCallback((coin: WalletCoinBalance) => {
-    setDepositCoin(coin);
-  }, []);
-
   const handleTransfer = useCallback((coin: WalletCoinBalance) => {
     setTransferCoin(coin);
   }, []);
@@ -228,7 +222,6 @@ export function WalletPage() {
                       coin={selectedCoin}
                       baseCurrency={wallet.baseCurrency}
                       onClose={() => setSelectedCoin(null)}
-                      onDeposit={handleDeposit}
                       onTransfer={handleTransfer}
                     />
                   </div>
@@ -266,7 +259,6 @@ export function WalletPage() {
               coin={selectedCoin}
               baseCurrency={wallet.baseCurrency}
               onClose={() => setSelectedCoin(null)}
-              onDeposit={handleDeposit}
               onTransfer={handleTransfer}
             />
             <div className="px-4 pb-6">
@@ -290,16 +282,6 @@ export function WalletPage() {
           baseCurrency={wallet.baseCurrency}
           fromWalletId={wallet.walletId}
           destinations={transferDestinations}
-        />
-      )}
-
-      {/* Deposit Modal */}
-      {depositCoin && wallet && (
-        <DepositModal
-          isOpen
-          onClose={() => setDepositCoin(null)}
-          coin={depositCoin}
-          walletId={wallet.walletId}
         />
       )}
     </div>

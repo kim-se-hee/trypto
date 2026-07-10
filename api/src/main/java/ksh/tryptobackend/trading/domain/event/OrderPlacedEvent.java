@@ -3,6 +3,7 @@ package ksh.tryptobackend.trading.domain.event;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.domain.model.Order;
+import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
 import ksh.tryptobackend.trading.domain.vo.Side;
 
@@ -53,11 +54,11 @@ public final class OrderPlacedEvent {
     }
 
     public BigDecimal lockAmount() {
-        return order.lockAmount();
+        return lock().amount();
     }
 
     public Long lockedCoinId() {
-        return market.tradingPair().lockedCoinId(order.getSide());
+        return lock().coinId();
     }
 
     public boolean awaitsMatching() {
@@ -74,5 +75,9 @@ public final class OrderPlacedEvent {
 
     public boolean isBuy() {
         return order.getSide() == Side.BUY;
+    }
+
+    private BalanceChange.Lock lock() {
+        return order.planReservation(market.tradingPair());
     }
 }

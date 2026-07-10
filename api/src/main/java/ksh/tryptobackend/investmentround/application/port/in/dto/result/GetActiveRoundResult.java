@@ -3,9 +3,10 @@ package ksh.tryptobackend.investmentround.application.port.in.dto.result;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import ksh.tryptobackend.investmentround.domain.model.RuleSetting;
+import ksh.tryptobackend.investmentround.domain.model.Rule;
 import ksh.tryptobackend.investmentround.domain.vo.RoundOverview;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
+import ksh.tryptobackend.investmentround.domain.vo.RoundWallet;
 
 public record GetActiveRoundResult(
         Long roundId,
@@ -21,11 +22,11 @@ public record GetActiveRoundResult(
         List<GetActiveRoundWalletResult> wallets) {
 
     public static GetActiveRoundResult from(
-            RoundOverview round,
-            List<RuleSetting> rules,
-            List<GetActiveRoundWalletResult> wallets) {
+            RoundOverview round, List<Rule> rules, List<RoundWallet> wallets) {
         List<GetActiveRoundRuleResult> ruleResults =
                 rules.stream().map(GetActiveRoundRuleResult::from).toList();
+        List<GetActiveRoundWalletResult> walletResults =
+                wallets.stream().map(GetActiveRoundWalletResult::from).toList();
 
         return new GetActiveRoundResult(
                 round.roundId(),
@@ -38,6 +39,6 @@ public record GetActiveRoundResult(
                 round.startedAt(),
                 round.endedAt(),
                 ruleResults,
-                wallets);
+                walletResults);
     }
 }

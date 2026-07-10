@@ -13,11 +13,14 @@ public enum ErrorCode {
     INSUFFICIENT_BALANCE(400, "insufficient.balance"),
     BELOW_MIN_ORDER_AMOUNT(400, "below.min.order.amount"),
     ABOVE_MAX_ORDER_AMOUNT(400, "above.max.order.amount"),
-    PRICE_REQUIRED_FOR_LIMIT(400, "price.required.for.limit"),
+    VOLUME_REQUIRED(400, "volume.required"),
+    PRICE_REQUIRED(400, "price.required"),
+    VOLUME_NOT_ALLOWED(400, "volume.not.allowed"),
+    PRICE_NOT_ALLOWED(400, "price.not.allowed"),
     UNSUPPORTED_BASE_CURRENCY(400, "unsupported.base.currency"),
     ORDER_NOT_CANCELLABLE(400, "order.not.cancellable"),
     ORDER_NOT_FILLABLE(400, "order.not.fillable"),
-    BASE_CURRENCY_NOT_TRANSFERABLE(400, "base.currency.not.transferable"),
+    INVALID_FILL_PRICE(400, "invalid.fill.price"),
     BELOW_MIN_WITHDRAWAL(400, "below.min.withdrawal"),
     SAME_WALLET_TRANSFER(400, "same.wallet.transfer"),
     DIFFERENT_ROUND_TRANSFER(400, "different.round.transfer"),
@@ -26,6 +29,7 @@ public enum ErrorCode {
     DUPLICATE_EXCHANGE(400, "duplicate.exchange"),
     INVALID_EMERGENCY_FUNDING_LIMIT(400, "invalid.emergency.funding.limit"),
     INVALID_RULE_THRESHOLD(400, "invalid.rule.threshold"),
+    DUPLICATE_RULE_TYPE(400, "duplicate.rule.type"),
     EMERGENCY_FUNDING_DISABLED(400, "emergency.funding.disabled"),
     EMERGENCY_FUNDING_CHANCE_EXHAUSTED(400, "emergency.funding.chance.exhausted"),
     INVALID_EMERGENCY_FUNDING_AMOUNT(400, "invalid.emergency.funding.amount"),
@@ -35,6 +39,7 @@ public enum ErrorCode {
     PORTFOLIO_PRIVATE(403, "portfolio.private"),
 
     WALLET_NOT_FOUND(404, "wallet.not.found"),
+    WALLET_BALANCE_NOT_FOUND(404, "wallet.balance.not.found"),
     EXCHANGE_COIN_NOT_FOUND(404, "exchange.coin.not.found"),
     EXCHANGE_NOT_FOUND(404, "exchange.not.found"),
     COIN_NOT_FOUND(404, "coin.not.found"),
@@ -52,8 +57,6 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "user.not.found"),
     REPORT_NOT_FOUND(404, "report.not.found"),
     SNAPSHOT_NOT_FOUND(404, "snapshot.not.found"),
-
-    WITHDRAWAL_FEE_NOT_FOUND(404, "withdrawal.fee.not.found"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 

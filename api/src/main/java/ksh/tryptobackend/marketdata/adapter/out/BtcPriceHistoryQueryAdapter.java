@@ -30,7 +30,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
     private static final Map<String, BtcPriceSource> CURRENCY_SOURCE =
             Map.of(
                     "KRW", new BtcPriceSource("UPBIT", "BTC/KRW"),
-                    "USD", new BtcPriceSource("BINANCE", "BTC/USDT"));
+                    "USDT", new BtcPriceSource("BINANCE", "BTC/USDT"));
 
     private final InfluxDBClient influxDBClient;
     private final StringRedisTemplate redisTemplate;

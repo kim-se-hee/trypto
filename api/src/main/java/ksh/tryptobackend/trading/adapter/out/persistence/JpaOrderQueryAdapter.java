@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
@@ -21,7 +20,6 @@ import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.vo.FilledOrder;
 import ksh.tryptobackend.trading.domain.vo.FilledOrderCounts;
 import ksh.tryptobackend.trading.domain.vo.OrderStatus;
-import ksh.tryptobackend.trading.domain.vo.OrphanOrder;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,13 +30,6 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
 
     private final JPAQueryFactory queryFactory;
     private final OrderJpaRepository orderJpaRepository;
-
-    @Override
-    public Optional<Order> findByIdempotencyKey(String idempotencyKey) {
-        return orderJpaRepository
-                .findByIdempotencyKey(idempotencyKey)
-                .map(OrderJpaEntity::toDomain);
-    }
 
     @Override
     public Order getById(Long orderId) {
@@ -54,28 +45,6 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
                 .findWithLockById(orderId)
                 .map(OrderJpaEntity::toDomain)
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
-    }
-
-    @Override
-    public List<OrphanOrder> findOrphanOrders(LocalDateTime threshold) {
-        QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                OrphanOrder.class,
-                                o.id,
-                                o.walletId,
-                                o.exchangeCoinId,
-                                o.side,
-                                o.price,
-                                o.quantity,
-                                o.createdAt))
-                .from(o)
-                .where(
-                        o.status.eq(OrderStatus.PENDING),
-                        o.createdAt.lt(threshold),
-                        o.price.isNotNull())
-                .fetch();
     }
 
     @Override

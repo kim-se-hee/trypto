@@ -31,7 +31,7 @@ class UserTest {
             user.changeNickname("새닉네임");
 
             // Then
-            assertThat(user.getNickname()).isEqualTo("새닉네임");
+            assertThat(user.getNickname().value()).isEqualTo("새닉네임");
         }
 
         @Test
@@ -41,7 +41,7 @@ class UserTest {
             user.changeNickname("가나");
 
             // Then
-            assertThat(user.getNickname()).isEqualTo("가나");
+            assertThat(user.getNickname().value()).isEqualTo("가나");
         }
 
         @Test
@@ -54,7 +54,7 @@ class UserTest {
             user.changeNickname(twentyChars);
 
             // Then
-            assertThat(user.getNickname()).isEqualTo(twentyChars);
+            assertThat(user.getNickname().value()).isEqualTo(twentyChars);
         }
 
         @Test
@@ -87,23 +87,10 @@ class UserTest {
                     .extracting(e -> ((CustomException) e).getErrorCode())
                     .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
-
-        @Test
-        @DisplayName("동일 닉네임 검증이 길이 검증보다 먼저 수행된다")
-        void changeNickname_sameAsCurrentAndInvalidLength_sameAsCurrent() {
-            // Given — 현재 닉네임이 1자인 사용자 (reconstitute는 검증 없이 생성)
-            User shortNicknameUser = createUser("가");
-
-            // Then — 동일 닉네임 에러가 길이 에러보다 먼저 발생
-            assertThatThrownBy(() -> shortNicknameUser.changeNickname("가"))
-                    .isInstanceOf(CustomException.class)
-                    .extracting(e -> ((CustomException) e).getErrorCode())
-                    .isEqualTo(ErrorCode.NICKNAME_SAME_AS_CURRENT);
-        }
     }
 
     private static User createUser(String nickname) {
         return User.reconstitute(
-                1L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
+                1L, 0L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
     }
 }

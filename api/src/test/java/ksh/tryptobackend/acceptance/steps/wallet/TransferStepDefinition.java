@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.wallet.adapter.out.repository.WalletBalanceJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class TransferStepDefinition {
@@ -47,6 +47,14 @@ public class TransferStepDefinition {
         createRound(ROUND_ID);
         createWallet(FROM_WALLET_ID, ROUND_ID, EXCHANGE_ID_1);
         createWallet(TO_WALLET_ID, ROUND_ID, EXCHANGE_ID_2);
+        // 프로덕션에선 지갑 생성 시 모든 코인 잔고가 0으로 사전 생성된다. 도착 지갑 잔고 행도 동일하게 준비한다.
+        createZeroBalance(TO_WALLET_ID, COIN_ID);
+    }
+
+    private void createZeroBalance(Long walletId, Long coinId) {
+        walletBalanceJpaRepository.save(
+                new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
+                        walletId, coinId, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 
     @Given("송금용 코인이 등록되어 있다")
@@ -55,7 +63,7 @@ public class TransferStepDefinition {
     @Given("출금 지갑에 BTC 잔고가 {double}개 있다")
     public void 출금_지갑에_BTC_잔고가_개_있다(double amount) {
         walletBalanceJpaRepository.save(
-                new ksh.tryptobackend.wallet.adapter.out.entity.WalletBalanceJpaEntity(
+                new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
                         FROM_WALLET_ID,
                         COIN_ID,
                         new BigDecimal(String.valueOf(amount)),

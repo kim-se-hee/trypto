@@ -134,7 +134,7 @@ CancelOrderService → new OrderCanceledEvent(order)
 
 체결이 엔진 프로세스에서 일어나므로 API 의 주문 상태 변경(생성·취소)은 엔진의 체결과 경합할 수 있다. 이를 위해 주문의 상태를 변경하기 전에 주문의 상태가 PENDING인지 확인한다.
 
-- API 취소: `UPDATE orders SET status='CANCELLED' WHERE order_id=? AND status='PENDING'`
+- API 취소: `UPDATE orders SET status='CANCELED' WHERE order_id=? AND status='PENDING'`
 - 엔진 체결: `UPDATE orders SET status='FILLED' WHERE order_id=? AND status='PENDING'`
 
 API 서버와 엔진이 같은 조건을 쓰므로 DB 레벨에서 하나만 성공한다.
@@ -225,7 +225,7 @@ sequenceDiagram
     participant MySQL
 
     par
-        Cancel->>MySQL: UPDATE orders SET status='CANCELLED' WHERE status='PENDING'
+        Cancel->>MySQL: UPDATE orders SET status='CANCELED' WHERE status='PENDING'
     and
         DbWriter->>MySQL: UPDATE orders SET status='FILLED' WHERE status='PENDING'
     end

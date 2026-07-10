@@ -29,7 +29,7 @@ public record OrderHistoryResult(
                 order.getLimitPrice() != null ? order.getLimitPrice().value() : null,
                 order.getQuantity().value(),
                 order.getFilledAmount() != null ? order.getFilledAmount().value() : null,
-                order.getFee() != null ? order.getFee().amount().value() : null,
+                order.getFeeAmount() != null ? order.getFeeAmount().value() : null,
                 order.getCreatedAt(),
                 order.getFilledAt());
     }

@@ -9,10 +9,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.portfolio.adapter.out.repository.PortfolioSnapshotJpaRepository;
-import ksh.tryptobackend.portfolio.adapter.out.repository.SnapshotDetailJpaRepository;
-import ksh.tryptobackend.ranking.adapter.out.repository.RankingJpaRepository;
-import ksh.tryptobackend.regretanalysis.adapter.out.repository.RegretReportJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.PortfolioSnapshotJpaRepository;
+import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.SnapshotDetailJpaRepository;
+import ksh.tryptobackend.ranking.adapter.out.persistence.repository.RankingJpaRepository;
+import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
@@ -136,12 +136,10 @@ public class BatchOrchestrationStepDefinition {
     public void 오케스트레이션용_랭킹_대상_라운드가_존재한다() {
         for (int i = 0; i < 5; i++) {
             jdbcTemplate.update(
-                    "INSERT INTO orders (idempotency_key, wallet_id, exchange_coin_id, coin_id,"
-                            + " base_coin_id, order_type, side, quantity, price, filled_price,"
-                            + " fee, fee_rate, status, created_at, filled_at) VALUES (?, ?, 10, 2,"
-                            + " 1, 'MARKET', 'BUY', 0.001, NULL, 50000000, 50, 0.0005, 'FILLED',"
-                            + " ?, ?)",
-                    java.util.UUID.randomUUID().toString(),
+                    "INSERT INTO orders (wallet_id, exchange_coin_id, order_type, side, quantity,"
+                            + " price, filled_price, fee, fee_rate, status, created_at, filled_at)"
+                            + " VALUES (?, 10, 'MARKET', 'BUY', 0.001, NULL, 50000000, 50, 0.0005,"
+                            + " 'FILLED', ?, ?)",
                     WALLET_ID,
                     LocalDateTime.now(),
                     LocalDateTime.now());

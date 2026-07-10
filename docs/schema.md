@@ -64,39 +64,12 @@ erDiagram
         string display_name "거래소별 표시명"
     }
 
-    EXCHANGE_COIN_CHAIN {
-        id exchange_coin_chain_id PK "주 식별자"
-        id exchange_coin_id FK "거래소-코인 ID"
-        string chain "지원 체인"
-        boolean tag_required "태그 필수 여부"
-    }
-
-    WITHDRAWAL_FEE {
-        id withdrawal_fee_id PK "주 식별자"
-        id exchange_id FK "거래소 ID"
-        id coin_id FK "코인 ID"
-        string chain "출금 체인"
-        number fee "출금 수수료"
-        number min_withdrawal "최소 출금 수량"
-    }
-
     WALLET {
         id wallet_id PK "주 식별자"
         id round_id FK "라운드 ID (round_id + exchange_id 복합 유니크)"
         id exchange_id FK "거래소 ID"
         number seed_amount "시드머니"
-        string wallet_address "지갑 주소 (nullable)"
-        string wallet_tag "지갑 태그 (nullable)"
-        string chain "체인 (nullable)"
         datetime created_at "생성일"
-    }
-
-    DEPOSIT_ADDRESS {
-        id deposit_address_id PK "주 식별자"
-        id wallet_id FK "지갑 ID (wallet_id + chain 복합 유니크)"
-        string chain "체인"
-        string address "입금 주소"
-        string tag "태그 메모 (nullable)"
     }
 
     WALLET_BALANCE {
@@ -141,7 +114,7 @@ erDiagram
         number filled_price "실제 체결가 (nullable)"
         number fee "수수료 (nullable)"
         number fee_rate "수수료율"
-        string status "FILLED PENDING CANCELLED FAILED"
+        string status "FILLED PENDING CANCELED FAILED"
         datetime created_at "주문 시각"
         datetime filled_at "체결 시각 (nullable)"
     }
@@ -275,11 +248,7 @@ erDiagram
     EXCHANGE_MARKET ||--|{ EXCHANGE_COIN : ""
     COIN ||--o| EXCHANGE_MARKET : "base_currency"
     COIN ||--|{ EXCHANGE_COIN : ""
-    EXCHANGE_COIN ||--o{ EXCHANGE_COIN_CHAIN : ""
-    EXCHANGE_MARKET ||--|{ WITHDRAWAL_FEE : ""
-    COIN ||--|{ WITHDRAWAL_FEE : ""
     EXCHANGE_MARKET ||--o{ WALLET : ""
-    WALLET ||--o{ DEPOSIT_ADDRESS : ""
     WALLET ||--o{ WALLET_BALANCE : ""
     COIN ||--o{ WALLET_BALANCE : ""
     WALLET ||--o{ TRANSFER : "from"

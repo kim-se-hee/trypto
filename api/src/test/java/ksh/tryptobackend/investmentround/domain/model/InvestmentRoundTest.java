@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
@@ -24,6 +25,7 @@ class InvestmentRoundTest {
                                         0L,
                                         new BigDecimal("1000000"),
                                         new BigDecimal("1000001"),
+                                        List.of(),
                                         LocalDateTime.now()))
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
@@ -39,6 +41,7 @@ class InvestmentRoundTest {
                         2L,
                         new BigDecimal("8000100"),
                         new BigDecimal("500000"),
+                        List.of(),
                         LocalDateTime.now());
 
         assertThat(round.getRoundNumber()).isEqualTo(3L);
@@ -51,7 +54,12 @@ class InvestmentRoundTest {
     void end_activeRound_changesStatusToEnded() {
         InvestmentRound round =
                 InvestmentRound.start(
-                        1L, 0L, new BigDecimal("1000"), new BigDecimal("100"), LocalDateTime.now());
+                        1L,
+                        0L,
+                        new BigDecimal("1000"),
+                        new BigDecimal("100"),
+                        List.of(),
+                        LocalDateTime.now());
         LocalDateTime endedAt = LocalDateTime.of(2026, 3, 1, 11, 40, 0);
 
         round.end(endedAt);
@@ -118,12 +126,14 @@ class InvestmentRoundTest {
                         0L,
                         new BigDecimal("1000"),
                         new BigDecimal("500000"),
+                        List.of(),
                         LocalDateTime.now());
 
-        round.chargeEmergencyFunding(new BigDecimal("300000"));
+        round.chargeEmergencyFunding(1L, new BigDecimal("300000"), LocalDateTime.now());
 
         assertThat(round.getEmergencyChargeCount()).isEqualTo(2);
         assertThat(round.getStatus()).isEqualTo(RoundStatus.ACTIVE);
+        assertThat(round.getFundings().values()).hasSize(1);
     }
 
     @Test
@@ -131,9 +141,17 @@ class InvestmentRoundTest {
     void chargeEmergencyFunding_limitZero_throwsDisabled() {
         InvestmentRound round =
                 InvestmentRound.start(
-                        1L, 0L, new BigDecimal("1000"), BigDecimal.ZERO, LocalDateTime.now());
+                        1L,
+                        0L,
+                        new BigDecimal("1000"),
+                        BigDecimal.ZERO,
+                        List.of(),
+                        LocalDateTime.now());
 
-        assertThatThrownBy(() -> round.chargeEmergencyFunding(new BigDecimal("1")))
+        assertThatThrownBy(
+                        () ->
+                                round.chargeEmergencyFunding(
+                                        1L, new BigDecimal("1"), LocalDateTime.now()))
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.EMERGENCY_FUNDING_DISABLED);
@@ -144,11 +162,61 @@ class InvestmentRoundTest {
     void chargeEmergencyFunding_amountExceedsLimit_throwsInvalidAmount() {
         InvestmentRound round =
                 InvestmentRound.start(
-                        1L, 0L, new BigDecimal("1000"), new BigDecimal("100"), LocalDateTime.now());
+                        1L,
+                        0L,
+                        new BigDecimal("1000"),
+                        new BigDecimal("100"),
+                        List.of(),
+                        LocalDateTime.now());
 
-        assertThatThrownBy(() -> round.chargeEmergencyFunding(new BigDecimal("101")))
+        assertThatThrownBy(
+                        () ->
+                                round.chargeEmergencyFunding(
+                                        1L, new BigDecimal("101"), LocalDateTime.now()))
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_EMERGENCY_FUNDING_AMOUNT);
+    }
+
+    @Test
+    @DisplayName("Attach rules with distinct types when round starts")
+    void startRound_distinctRuleTypes_succeeds() {
+        LocalDateTime now = LocalDateTime.now();
+
+        InvestmentRound round =
+                InvestmentRound.start(
+                        1L,
+                        0L,
+                        new BigDecimal("1000"),
+                        new BigDecimal("100"),
+                        List.of(
+                                Rule.create(RuleType.LOSS_CUT, new BigDecimal("10"), now),
+                                Rule.create(RuleType.PROFIT_TAKE, new BigDecimal("20"), now)),
+                        now);
+
+        assertThat(round.getRules().rules()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Throw when duplicate rule type at round start")
+    void startRound_duplicateRuleType_throws() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Rule> rules =
+                List.of(
+                        Rule.create(RuleType.LOSS_CUT, new BigDecimal("10"), now),
+                        Rule.create(RuleType.LOSS_CUT, new BigDecimal("20"), now));
+
+        assertThatThrownBy(
+                        () ->
+                                InvestmentRound.start(
+                                        1L,
+                                        0L,
+                                        new BigDecimal("1000"),
+                                        new BigDecimal("100"),
+                                        rules,
+                                        now))
+                .isInstanceOf(CustomException.class)
+                .extracting(ex -> ((CustomException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.DUPLICATE_RULE_TYPE);
     }
 }

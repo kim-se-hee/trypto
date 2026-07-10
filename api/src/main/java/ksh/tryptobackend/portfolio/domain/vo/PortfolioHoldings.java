@@ -13,38 +13,19 @@ public class PortfolioHoldings {
         this.holdings = List.copyOf(holdings);
     }
 
-    public boolean isEmpty() {
-        return holdings.isEmpty();
-    }
-
-    public Set<Long> coinIds() {
-        return holdings.stream().map(PortfolioHolding::coinId).collect(Collectors.toSet());
-    }
-
     public Set<Long> coinIdsIncluding(Long additionalCoinId) {
-        Set<Long> allCoinIds = new HashSet<>(coinIds());
-        allCoinIds.add(additionalCoinId);
-        return Set.copyOf(allCoinIds);
+        Set<Long> coinIds =
+                holdings.stream()
+                        .map(PortfolioHolding::coinId)
+                        .collect(Collectors.toCollection(HashSet::new));
+        coinIds.add(additionalCoinId);
+        return Set.copyOf(coinIds);
     }
 
-    public List<HoldingSnapshot> toHoldingSnapshots(CoinSnapshotMap coinSnapshotMap) {
+    public List<HoldingSnapshot> toHoldingSnapshots(CoinMetadataMap coinMetadata) {
         return holdings.stream()
-                .map(
-                        holding -> {
-                            CoinSnapshot coinSnapshot =
-                                    coinSnapshotMap.getCoinSnapshot(holding.coinId());
-                            return new HoldingSnapshot(
-                                    holding.coinId(),
-                                    coinSnapshot.symbol(),
-                                    coinSnapshot.name(),
-                                    holding.quantity(),
-                                    holding.avgBuyPrice(),
-                                    coinSnapshot.currentPrice());
-                        })
+                .filter(holding -> coinMetadata.hasMetadata(holding.coinId()))
+                .map(holding -> holding.toSnapshot(coinMetadata.getMetadata(holding.coinId())))
                 .toList();
-    }
-
-    public List<PortfolioHolding> values() {
-        return holdings;
     }
 }

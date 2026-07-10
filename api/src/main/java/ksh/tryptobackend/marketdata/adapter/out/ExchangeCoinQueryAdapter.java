@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeCoinJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeCoinJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeCoinJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
+import ksh.tryptobackend.marketdata.domain.model.ExchangeCoins;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinIdMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -40,9 +41,11 @@ public class ExchangeCoinQueryAdapter implements ExchangeCoinQueryPort {
     }
 
     @Override
-    public List<ExchangeCoin> findByExchangeId(Long exchangeId) {
-        return repository.findByExchangeId(exchangeId).stream()
-                .map(ExchangeCoinJpaEntity::toDomain)
-                .toList();
+    public ExchangeCoins findByExchangeId(Long exchangeId) {
+        List<ExchangeCoin> exchangeCoins =
+                repository.findByExchangeId(exchangeId).stream()
+                        .map(ExchangeCoinJpaEntity::toDomain)
+                        .toList();
+        return new ExchangeCoins(exchangeCoins);
     }
 }

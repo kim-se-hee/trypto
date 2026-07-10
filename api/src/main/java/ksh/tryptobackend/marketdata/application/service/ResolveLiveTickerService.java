@@ -1,15 +1,14 @@
 package ksh.tryptobackend.marketdata.application.service;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import ksh.tryptobackend.marketdata.application.port.in.ResolveLiveTickerUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.dto.command.ResolveLiveTickerCommand;
+import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerBatchResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.LiveTickerResult;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinMappingCacheQueryPort;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResolveLiveTickerService implements ResolveLiveTickerUseCase {
@@ -17,24 +16,18 @@ public class ResolveLiveTickerService implements ResolveLiveTickerUseCase {
     private final ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
 
     @Override
-    public Optional<LiveTickerResult> resolve(
-            String exchange,
-            String symbol,
-            BigDecimal currentPrice,
-            BigDecimal changeRate,
-            BigDecimal quoteTurnover,
-            Long timestamp) {
-        return exchangeCoinMappingCacheQueryPort
-                .resolve(exchange, symbol)
-                .map(
-                        mapping ->
-                                new LiveTickerResult(
-                                        mapping.exchangeId(),
-                                        mapping.coinId(),
-                                        mapping.coinSymbol(),
-                                        currentPrice,
-                                        changeRate,
-                                        quoteTurnover,
-                                        timestamp));
+    public Optional<LiveTickerBatchResult> resolve(ResolveLiveTickerCommand command) {
+        return LiveTickerBatchResult.from(
+                command.tickers().stream()
+                        .map(
+                                ticker ->
+                                        exchangeCoinMappingCacheQueryPort
+                                                .resolve(command.exchange(), ticker.symbol())
+                                                .map(
+                                                        mapping ->
+                                                                LiveTickerResult.of(
+                                                                        mapping, ticker)))
+                        .flatMap(Optional::stream)
+                        .toList());
     }
 }

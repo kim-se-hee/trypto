@@ -1,6 +1,6 @@
 # 개요
 
-입출금 탭은 거래소 간 코인 송금과 잔고 확인을 담당한다. 잔고·이체 내역은 매번 fresh fetch하고, 체인 목록·출금 수수료·입금 주소 같은 정적 데이터는 캐싱한다.
+입출금 탭은 거래소 간 코인 송금과 잔고 확인을 담당한다. 잔고·이체 내역은 매번 fresh fetch하고, 거래소 코인 목록 같은 정적 데이터는 캐싱한다.
 
 # 화면 구성
 
@@ -9,8 +9,7 @@
 | 거래소 탭 | 업비트 / 빗썸 KRW / 바이낸스 USDT (walletId로 전환, 기축통화 표시) |
 | 총 자산 요약 | 선택된 거래소의 총 자산(기축통화 환산), 보유 기축통화(사용 가능 / 잠금). 업비트·빗썸은 KRW, 바이낸스는 USDT |
 | 자산 목록 | 거래소 상장 전체 코인 표시. 코인(심볼·코인명), 보유수량(≈ 기축통화 환산), 사용가능, 잠금. 검색·소액 제외 필터 |
-| 출금 폼 | 코인 선택 → 네트워크 선택 → 주소·태그 입력 → 수량 입력 → 수수료 확인 → 출금 |
-| 입금 영역 | 코인·네트워크 선택 → 입금 주소·태그 표시 |
+| 출금 폼 | 코인 선택 → 도착 거래소(지갑) 선택 → 수량 입력 → 출금 |
 | 이체 내역 | 입금/출금 이력 (커서 기반 페이지네이션) |
 
 # 데이터 소스
@@ -20,9 +19,6 @@
 | walletId ↔ exchangeId 매핑 | 활성 라운드 API | 라운드 시작 시 1회 | O |
 | 거래소 상장 코인 목록 | 거래소 코인 목록 API | 앱 로딩 시 1회 | O (마켓탭과 공유) |
 | 잔고 (available, locked) | 잔고 조회 API | 탭 진입·이벤트 수신 시 fresh fetch, 송금 후 로컬 갱신 | X |
-| 체인 목록 (exchangeCoinChain) | 체인 목록 API | 코인 선택 시 | O (exchangeId + coinId 키) |
-| 출금 수수료 (fee, minWithdrawal) | 출금 수수료 API | 네트워크 선택 시 | O (exchangeId+coinId+chain 키) |
-| 입금 주소 (address, tag) | 입금 주소 API | 네트워크 선택 시 | O (한 번 발급되면 불변) |
 | 이체 내역 | 이체 내역 API | 탭 진입 시 fresh fetch | X |
 | 현재가 | WebSocket 티커 | 실시간 | X |
 
@@ -31,9 +27,6 @@
 | 데이터 | API | staleTime | 캐시 키 | 근거 |
 |--------|-----|-----------|---------|------|
 | 거래소 코인 목록 | `GET /api/exchanges/{exchangeId}/coins` | 수 시간 | exchangeId | 마스터 데이터, 마켓탭과 공유 |
-| 체인 목록 | `GET /api/exchanges/{exchangeId}/coins/{coinId}/chains` | 수 시간 | exchangeId + coinId | 마스터 데이터, 운영자만 변경 |
-| 출금 수수료 | `GET /api/withdrawal-fees` | 1시간 | exchangeId + coinId + chain | 운영자 설정, 거의 안 변함 |
-| 입금 주소 | `GET /api/wallets/{walletId}/deposit-address` | Infinity (무한) | walletId + chain | 한 번 발급되면 변하지 않음 |
 | walletId 매핑 | `GET /api/rounds/active` | 라운드 시작 시 무효화 | userId | 라운드 시작 시에만 변경 |
 
 ## 캐싱 불가 데이터
@@ -49,10 +42,7 @@
 |-----|------|------|
 | `GET /api/rounds/active?userId=` | [active-round.md](../investmentround/active-round/index.md) | walletId 목록 |
 | `GET /api/exchanges/{exchangeId}/coins` | [find-exchange-coins.md](../marketdata/find-exchange-coins/index.md) | 코인 심볼·이름 (캐싱) |
-| `GET /api/exchanges/{exchangeId}/coins/{coinId}/chains` | [find-coin-chains.md](../marketdata/find-coin-chains/index.md) | 체인 목록 (캐싱) |
 | `GET /api/users/{userId}/wallets/{walletId}/balances` | [wallet-assets.md](../wallet/wallet-assets/index.md) | 잔고 조회 |
-| `GET /api/withdrawal-fees` | [withdrawal-fee.md](../marketdata/withdrawal-fee/index.md) | 출금 수수료 (캐싱) |
-| `GET /api/wallets/{walletId}/deposit-address` | [deposit-address.md](../wallet/deposit-address/index.md) | 입금 주소 (캐싱) |
 | `POST /api/transfers` | [transfer.md](../wallet/transfer/index.md) | 송금 실행 |
 | `GET /api/wallets/{walletId}/transfers` | [transfer-history.md](../wallet/transfer-history/index.md) | 이체 내역 |
 | WebSocket `/topic/tickers.{exchangeId}` | [live-ticker-streaming.md](../marketdata/live-ticker-streaming/index.md) | 실시간 시세 |
@@ -76,7 +66,6 @@ STOMP user destination: `/user/queue/events`
 | eventType | 발생 시점 | 프론트 동작 |
 |-----------|----------|-----------|
 | `ORDER_FILLED` | 지정가 주문 체결 (매칭 스케줄러) | 해당 coinId 잔고만 로컬 갱신 (refetch 없음) |
-| `FROZEN_FUNDS_RELEASED` | 동결 자금 24시간 후 자동 반환 (배치) | 잔고 API + 이체 내역 API refetch |
 
 - 메시지 형식: `{eventType, walletId, orderId, coinId, side, quantity, price, fee}`
 - 현재 walletId와 일치할 때만 로컬 갱신 트리거
@@ -129,50 +118,25 @@ STOMP user destination: `/user/queue/events`
 1. 코인 선택
    → 자산 목록에서 코인 선택 (coinId 확정)
 
-2. 네트워크 선택
-   → GET /api/exchanges/{exchangeId}/coins/{coinId}/chains → 체인 목록 (캐싱)
-   → 사용자가 네트워크 선택 (chain 확정)
+2. 도착 거래소(지갑) 선택
+   → 사용자가 도착 지갑(toWalletId)을 선택
 
-3. 수수료 확인
-   → GET /api/withdrawal-fees?exchangeId=&coinId=&chain= → fee, minWithdrawal (캐싱)
-   → 수수료와 최소 출금 수량을 화면에 표시
+3. 수량 입력 + 검증 (프론트)
+   → available ≥ amount 확인
 
-4. 주소·태그 입력
-   → 사용자가 도착 주소와 태그(필요 시) 직접 입력
-
-5. 수량 입력 + 검증 (프론트)
-   → amount ≥ minWithdrawal 확인
-   → available ≥ amount + fee 확인
-
-6. 출금 제출
+4. 출금 제출
    → POST /api/transfers
-   → 성공/동결 결과 표시
+   → 성공 결과 표시
 
-7. 송금 후 로컬 갱신 (refetch 없음)
-   → 잔고 갱신: 응답의 status에 따라 해당 coinId 잔고 로컬 갱신
-     - SUCCESS: available -= (amount + fee)
-     - FROZEN: available -= (amount + fee), locked += (amount + fee)
+5. 송금 후 로컬 갱신 (refetch 없음)
+   → 잔고 갱신: 해당 coinId 잔고 로컬 갱신
+     - available -= amount
    → 이체 내역 prepend: 요청 값 + 응답 값을 조합하여 이체 내역 목록 맨 앞에 추가
-     - 요청에서: coinId, chain, toAddress, toTag, amount
-     - 응답에서: transferId, fee, status, failureReason, frozenUntil
+     - 요청에서: coinId, amount
+     - 응답에서: transferId, status
      - 프론트 판단: type=WITHDRAW, coinSymbol은 캐싱 coinMap에서 조회
      - createdAt: 클라이언트 시각 사용 (정렬 기준이 transferId이므로 오차 무관)
-     - completedAt: SUCCESS이면 createdAt과 동일, FROZEN이면 null
-```
-
-## 입금 흐름
-
-```
-1. 코인·네트워크 선택
-   → 체인 목록 조회 (캐싱)
-
-2. 입금 주소 조회
-   → GET /api/wallets/{walletId}/deposit-address?coinId=&chain= (캐싱)
-   → 주소·태그 표시 + 복사 기능
-
-3. 안내 문구
-   → "이 주소로 다른 거래소에서 출금하세요"
-   → 태그가 있으면 "태그를 반드시 입력하세요" 경고
+     - completedAt: createdAt과 동일
 ```
 
 ## 이체 내역
@@ -187,8 +151,7 @@ STOMP user destination: `/user/queue/events`
 
 3. 표시 정보
    - type (입금/출금), coinId → coinSymbol (캐싱 coinMap으로 매핑)
-   - chain, amount, fee, status, failureReason, createdAt
-   - FROZEN 상태면 frozenUntil 표시 + "자동 반환 예정" 안내
+   - amount, status, createdAt
 ```
 
 # 거래소 탭 전환
@@ -201,9 +164,3 @@ STOMP user destination: `/user/queue/events`
 5. 새 거래소 토픽 구독
 6. coinMap은 캐시 히트 (마켓탭에서 이미 로드)
 ```
-
-# 미결 사항
-
-| 항목 | 상태 | 비고 |
-|------|------|------|
-| 동결 자금 해제 알림 | 설계 완료 | `/user/queue/events`의 `FROZEN_FUNDS_RELEASED` 이벤트로 잔고 + 이체 내역 refetch |

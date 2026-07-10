@@ -138,7 +138,7 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 - 컬렉션과 관련된 비지니스 로직이 있거나 구현을 감추고 싶다면 일급 컬렉션을 만들어 가독성과 응집성을 높인다.
 - 하나의 도메인 개념을 이루는 필드 묶음은 VO로 추출한다. 필드들이 코드상 항상 함께 이동하지 않아도(로직마다 부분집합으로 흩어져 쓰여도) 개념이 하나면 묶는다.
   - 판별 리트머스: 그 묶음에 도메인 언어로 이름을 붙일 수 있는가. 어떤 판정 메서드가 묶음의 일부와 원시 타입을 나란히 파라미터로 받고 있다면 묶음이 쪼개져 있다는 신호다.
-  - 예: 송금의 (chain, toAddress, toTag)는 resolve엔 chain·toAddress만, 태그 판정엔 toTag만 쓰이지만 "도착지 지정"이라는 한 개념이므로 VO로 묶는다.
+  - 예: 주문 입력의 `OrderInput(volume, price)`는 수량 검증엔 volume만, 가격 검증엔 price만 쓰이지만 "주문 입력값"이라는 한 개념이므로 VO로 묶는다.
 - VO는 불변 객체로 만든다. 모든 필드 `final`
 - VO는 `equals()`/`hashCode()`를 반드시 구현한다
 - 외부에 공개할 필요가 없고 애그리거트 내부에서만 사용하는 메소드는 private으로 만든다.
@@ -175,12 +175,12 @@ throw new CustomException(ErrorCode.INVALID_PAGE_SIZE, Arrays.asList(requestSize
 
 - **acl — `adapter/out/acl/`**
   - 설명: 다른 컨텍스트의 정보를 조회하는 ACL 어댑터. 저장소에 직접 접근하지 않고 타 컨텍스트 UseCase를 호출해 결과를 받는다는 점이 persistence와 다르다
-  - 명명법: `Acl{타 컨텍스트}QueryAdapter` (예: `AclMarketQueryAdapter`)
+  - 명명법: `{컨텍스트}Acl{타 컨텍스트}QueryAdapter` (예: `TradingAclWalletQueryAdapter`). 접두사 `{컨텍스트}` 는 어댑터가 속한 자기 컨텍스트다. 여러 컨텍스트가 같은 타 컨텍스트를 조회하면 `Acl{타 컨텍스트}QueryAdapter` 만으로는 클래스 이름이 겹쳐 Spring 빈 이름이 충돌하므로, 자기 컨텍스트를 접두사로 넣어 `@Component` 인자 없이 빈 이름을 유일하게 만든다
   - 컨벤션: 타 컨텍스트의 반환값을 자기 컨텍스트 모델로 변환한다. 변환이 복잡하면 별도 `Translator`로 분리한다
 
 - **service — `adapter/out/service/`**
   - 설명: 도메인 서비스 구현체. 
-  - 명명법: `{도메인서비스}Impl` (예: `WalletBalanceServiceImpl`, `RuleViolationCheckerImpl`)
+  - 명명법: `{도메인서비스}Impl` (예: `RuleViolationCheckerImpl`, `BalanceChangeApplierImpl`). 연동형이라도 도메인 서비스이므로 인터페이스·메소드 이름은 acl 어댑터식 기계적 명명이 아니라 자기 컨텍스트의 유비쿼터스 언어로 짓는다. 같은 타 컨텍스트에 위임하더라도 컨텍스트마다 협력의 의미가 달라 이름이 자연히 갈리므로(예: trading `BalanceChangeApplier.applyAll`, investmentround `FundsDepositor.deposit` — 둘 다 wallet 잔고 변경 위임) 빈 이름 충돌도 생기지 않는다
   - 컨벤션: acl과 마찬가지로 타 컨텍스트 모델을 자기 컨텍스트로 변환하며, 변환이 복잡하면 `Translator`로 분리한다
 
 - **messaging — `adapter/out/messaging/`**

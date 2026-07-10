@@ -69,10 +69,6 @@ logging:
     org.springframework.messaging.simp.stomp: DEBUG
     org.apache.tomcat.websocket: DEBUG
 
-compensation:
-  boundary-seconds: ${COMPENSATION_BOUNDARY_SECONDS:30}
-  interval-ms: ${COMPENSATION_INTERVAL_MS:30000}
-
 app:
   websocket:
     endpoint: /ws

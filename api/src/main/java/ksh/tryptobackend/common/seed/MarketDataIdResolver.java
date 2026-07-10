@@ -1,12 +1,12 @@
 package ksh.tryptobackend.common.seed;
 
 import java.util.List;
-import ksh.tryptobackend.marketdata.adapter.out.entity.CoinJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeCoinJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.entity.ExchangeJpaEntity;
-import ksh.tryptobackend.marketdata.adapter.out.repository.CoinJpaRepository;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeCoinJpaRepository;
-import ksh.tryptobackend.marketdata.adapter.out.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.CoinJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeCoinJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeJpaEntity;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.CoinJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeCoinJpaRepository;
+import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

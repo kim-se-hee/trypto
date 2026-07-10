@@ -23,9 +23,6 @@ public class OrderJpaEntity {
     @Column(name = "order_id")
     private Long id;
 
-    @Column(name = "idempotency_key", nullable = false, unique = true, length = 64)
-    private String idempotencyKey;
-
     @Column(name = "wallet_id", nullable = false)
     private Long walletId;
 
@@ -68,7 +65,6 @@ public class OrderJpaEntity {
     public static OrderJpaEntity fromDomain(Order order) {
         OrderJpaEntity entity = new OrderJpaEntity();
         entity.id = order.getId();
-        entity.idempotencyKey = order.getIdempotencyKey();
         entity.walletId = order.getWalletId();
         entity.exchangeCoinId = order.getExchangeCoinId();
         entity.orderType = order.getOrderType();
@@ -76,7 +72,7 @@ public class OrderJpaEntity {
         entity.quantity = order.getQuantity().value();
         entity.price = order.getLimitPrice() != null ? order.getLimitPrice().value() : null;
         entity.filledPrice = order.getFilledPrice() != null ? order.getFilledPrice().value() : null;
-        entity.fee = order.getFee() != null ? order.getFee().amount().value() : null;
+        entity.fee = order.getFeeAmount() != null ? order.getFeeAmount().value() : null;
         entity.feeRate = order.getFeeRate();
         entity.status = order.getStatus();
         entity.createdAt = order.getCreatedAt();
@@ -87,7 +83,6 @@ public class OrderJpaEntity {
     public Order toDomain() {
         return Order.reconstitute(
                 id,
-                idempotencyKey,
                 walletId,
                 exchangeCoinId,
                 side,

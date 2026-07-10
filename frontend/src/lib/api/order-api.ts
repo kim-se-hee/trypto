@@ -3,7 +3,7 @@ import type { CursorPageResponseDto } from "./types";
 
 export type OrderSide = "BUY" | "SELL";
 export type OrderType = "MARKET" | "LIMIT";
-export type OrderStatus = "FILLED" | "PENDING" | "CANCELLED" | "FAILED";
+export type OrderStatus = "FILLED" | "PENDING" | "CANCELED" | "FAILED";
 
 export interface OrderAvailability {
   available: number;
@@ -31,8 +31,8 @@ export interface PlaceOrderRequest {
   exchangeCoinId: number;
   side: OrderSide;
   orderType: OrderType;
+  volume?: number;
   price?: number;
-  amount: number;
 }
 
 export interface PlaceOrderResult {

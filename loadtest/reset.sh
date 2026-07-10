@@ -31,8 +31,8 @@ case "$SCENARIO" in
     # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
-  get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|deposit_address.js|my_ranking.js|ranking_stats.js|coin_chains.js|withdrawal_fee.js|regret_report.js|regret_chart.js|transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
-    # 신규 18개 기능 시나리오 — base(loadtest.sql 확장 시드) + 시나리오별 추가 시드. market-meta-sync off.
+  get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|my_ranking.js|ranking_stats.js|regret_report.js|regret_chart.js|transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
+    # 신규 15개 기능 시나리오 — base(loadtest.sql 확장 시드) + 시나리오별 추가 시드. market-meta-sync off.
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
 esac
@@ -64,7 +64,7 @@ esac
 # 조회 시나리오 판별 — 데이터를 바꾸지 않아 재측정 사이클에서 재시드가 불필요하다.
 READ_SCENARIO=0
 case "$SCENARIO" in
-  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js|get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|deposit_address.js|my_ranking.js|ranking_stats.js|coin_chains.js|withdrawal_fee.js|regret_report.js|regret_chart.js) READ_SCENARIO=1 ;;
+  ranking_list.js|my_holdings.js|candle_scroll.js|ranker_portfolio.js|transfer_history.js|get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|my_ranking.js|ranking_stats.js|regret_report.js|regret_chart.js) READ_SCENARIO=1 ;;
 esac
 
 if [ "$WARM_PATH" = 1 ]; then
@@ -301,14 +301,6 @@ if [ "$READ_SCENARIO" = 1 ]; then
       echo "[read-seed] ranking 적재 (my_ranking/ranking_stats — ranking_list 와 동일 시드 재사용)"
       sed "s/@WALLET_COUNT@/${WALLET_COUNT}/g; s/@RANKING_DAYS@/${RANKING_DAYS}/g" loadtest/seed/ranking.sql.tmpl \
         | docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto
-      ;;
-    coin_chains.js)
-      echo "[read-seed] exchange_coin_chain 적재"
-      docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto < loadtest/seed/coin-chains.sql.tmpl
-      ;;
-    withdrawal_fee.js)
-      echo "[read-seed] withdrawal_fee 적재"
-      docker compose "${COMPOSE_ARGS[@]}" exec -T mysql mysql -uroot -p1234 trypto < loadtest/seed/withdrawal-fee.sql.tmpl
       ;;
     regret_report.js|regret_chart.js)
       echo "[read-seed] regret 적재 (report/violation/impact/rule + snapshot, ${REGRET_ROUNDS:-1000} 라운드 × ${REGRET_DAYS:-30}일)"

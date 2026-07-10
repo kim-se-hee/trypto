@@ -1,0 +1,26 @@
+package ksh.tryptobackend.investmentround.adapter.out.persistence.repository;
+
+import jakarta.persistence.LockModeType;
+import java.util.List;
+import java.util.Optional;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRoundJpaEntity;
+import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+
+public interface InvestmentRoundJpaRepository
+        extends JpaRepository<InvestmentRoundJpaEntity, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<InvestmentRoundJpaEntity> findWithLockById(Long roundId);
+
+    boolean existsByUserIdAndStatus(Long userId, RoundStatus status);
+
+    long countByUserId(Long userId);
+
+    Optional<InvestmentRoundJpaEntity> findByUserIdAndStatus(Long userId, RoundStatus status);
+
+    Optional<InvestmentRoundJpaEntity> findByIdAndUserId(Long roundId, Long userId);
+
+    List<InvestmentRoundJpaEntity> findByStatus(RoundStatus status);
+}

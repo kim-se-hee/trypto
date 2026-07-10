@@ -2,59 +2,54 @@ package ksh.tryptobackend.investmentround.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.investmentround.domain.vo.DetectedViolation;
+import ksh.tryptobackend.investmentround.domain.vo.EmergencyFundingAllowance;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
+import ksh.tryptobackend.investmentround.domain.vo.RuleEvaluationInput;
 import lombok.Getter;
 
 @Getter
 public class InvestmentRound {
 
-    private static final BigDecimal ZERO = BigDecimal.ZERO;
-    private static final BigDecimal MAX_EMERGENCY_FUNDING_LIMIT = new BigDecimal("1000000");
-    private static final int DEFAULT_EMERGENCY_CHARGE_COUNT = 3;
-
-    private final Long roundId;
+    private final Long id;
     private final Long version;
     private final Long userId;
     private final long roundNumber;
     private final BigDecimal initialSeed;
-    private final BigDecimal emergencyFundingLimit;
-    private int emergencyChargeCount;
-    private RoundStatus status;
     private final LocalDateTime startedAt;
+    private final Rules rules;
+    private final EmergencyFundings fundings;
+
+    private EmergencyFundingAllowance emergencyFundingAllowance;
+    private RoundStatus status;
     private LocalDateTime endedAt;
 
-    private final List<RuleSetting> rules;
-    private final List<EmergencyFunding> fundings;
-
     private InvestmentRound(
-            Long roundId,
+            Long id,
             Long version,
             Long userId,
             long roundNumber,
             BigDecimal initialSeed,
-            BigDecimal emergencyFundingLimit,
-            int emergencyChargeCount,
+            EmergencyFundingAllowance emergencyFundingAllowance,
             RoundStatus status,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            List<RuleSetting> rules,
+            Rules rules,
             List<EmergencyFunding> fundings) {
-        this.roundId = roundId;
+        this.id = id;
         this.version = version;
         this.userId = userId;
         this.roundNumber = roundNumber;
         this.initialSeed = initialSeed;
-        this.emergencyFundingLimit = emergencyFundingLimit;
-        this.emergencyChargeCount = emergencyChargeCount;
+        this.emergencyFundingAllowance = emergencyFundingAllowance;
         this.status = status;
         this.startedAt = startedAt;
         this.endedAt = endedAt;
-        this.rules = rules != null ? new ArrayList<>(rules) : new ArrayList<>();
-        this.fundings = fundings != null ? new ArrayList<>(fundings) : new ArrayList<>();
+        this.rules = rules != null ? rules : new Rules(List.of());
+        this.fundings = new EmergencyFundings(fundings);
     }
 
     public static InvestmentRound start(
@@ -62,25 +57,24 @@ public class InvestmentRound {
             long previousRoundCount,
             BigDecimal initialSeed,
             BigDecimal emergencyFundingLimit,
+            List<Rule> rules,
             LocalDateTime startedAt) {
-        validateEmergencyFundingLimit(emergencyFundingLimit);
         return new InvestmentRound(
                 null,
                 null,
                 userId,
                 previousRoundCount + 1,
                 initialSeed,
-                emergencyFundingLimit,
-                DEFAULT_EMERGENCY_CHARGE_COUNT,
+                EmergencyFundingAllowance.initial(emergencyFundingLimit),
                 RoundStatus.ACTIVE,
                 startedAt,
                 null,
-                null,
+                Rules.create(rules),
                 null);
     }
 
     public static InvestmentRound reconstitute(
-            Long roundId,
+            Long id,
             Long version,
             Long userId,
             long roundNumber,
@@ -90,49 +84,51 @@ public class InvestmentRound {
             RoundStatus status,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            List<RuleSetting> rules,
+            List<Rule> rules,
             List<EmergencyFunding> fundings) {
         return new InvestmentRound(
-                roundId,
+                id,
                 version,
                 userId,
                 roundNumber,
                 initialSeed,
-                emergencyFundingLimit,
-                emergencyChargeCount,
+                EmergencyFundingAllowance.of(emergencyFundingLimit, emergencyChargeCount),
                 status,
                 startedAt,
                 endedAt,
-                rules,
+                new Rules(rules),
                 fundings);
     }
 
     public void end(LocalDateTime endedAt) {
-        if (status == RoundStatus.ENDED) {
+        if (isEnded()) {
             return;
         }
-        if (status != RoundStatus.ACTIVE) {
+        if (!isActive()) {
             throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
         }
         this.status = RoundStatus.ENDED;
         this.endedAt = endedAt;
     }
 
-    public void chargeEmergencyFunding(BigDecimal amount) {
-        validateChargeEmergencyFunding(amount);
-        this.emergencyChargeCount = emergencyChargeCount - 1;
-    }
-
-    public void addRules(List<RuleSetting> newRules) {
-        this.rules.addAll(newRules);
-    }
-
-    public void addFunding(EmergencyFunding funding) {
+    public EmergencyFunding chargeEmergencyFunding(
+            Long exchangeId, BigDecimal amount, LocalDateTime now) {
+        if (status != RoundStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
+        }
+        emergencyFundingAllowance.validateChargeable(amount);
+        this.emergencyFundingAllowance = emergencyFundingAllowance.consume();
+        EmergencyFunding funding = EmergencyFunding.create(exchangeId, amount, now);
         this.fundings.add(funding);
+        return funding;
     }
 
     public boolean isEnded() {
         return status == RoundStatus.ENDED;
+    }
+
+    public List<DetectedViolation> detectViolations(RuleEvaluationInput context) {
+        return rules.check(context);
     }
 
     public void validateOwnedBy(Long requesterUserId) {
@@ -141,25 +137,19 @@ public class InvestmentRound {
         }
     }
 
-    private static void validateEmergencyFundingLimit(BigDecimal emergencyFundingLimit) {
-        if (emergencyFundingLimit.compareTo(ZERO) < 0
-                || emergencyFundingLimit.compareTo(MAX_EMERGENCY_FUNDING_LIMIT) > 0) {
-            throw new CustomException(ErrorCode.INVALID_EMERGENCY_FUNDING_LIMIT);
-        }
+    public BigDecimal getEmergencyFundingLimit() {
+        return emergencyFundingAllowance.limit();
     }
 
-    private void validateChargeEmergencyFunding(BigDecimal amount) {
-        if (status != RoundStatus.ACTIVE) {
-            throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
-        }
-        if (emergencyFundingLimit.compareTo(ZERO) == 0) {
-            throw new CustomException(ErrorCode.EMERGENCY_FUNDING_DISABLED);
-        }
-        if (emergencyChargeCount <= 0) {
-            throw new CustomException(ErrorCode.EMERGENCY_FUNDING_CHANCE_EXHAUSTED);
-        }
-        if (amount.compareTo(ZERO) <= 0 || amount.compareTo(emergencyFundingLimit) > 0) {
-            throw new CustomException(ErrorCode.INVALID_EMERGENCY_FUNDING_AMOUNT);
-        }
+    public int getEmergencyChargeCount() {
+        return emergencyFundingAllowance.remainingCount();
+    }
+
+    public Long latestFundingId() {
+        return fundings.latestId();
+    }
+
+    private boolean isActive() {
+        return status == RoundStatus.ACTIVE;
     }
 }

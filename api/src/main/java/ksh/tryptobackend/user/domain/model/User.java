@@ -3,6 +3,7 @@ package ksh.tryptobackend.user.domain.model;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.user.domain.vo.Nickname;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,18 +11,30 @@ import lombok.Getter;
 @Builder
 public class User {
 
-    private static final int MIN_NICKNAME_LENGTH = 2;
-    private static final int MAX_NICKNAME_LENGTH = 20;
-
     private final Long userId;
+    private final Long version;
     private final String email;
-    private String nickname;
+    private Nickname nickname;
     private boolean portfolioPublic;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
+    public static User create(
+            String email, String nickname, boolean portfolioPublic, LocalDateTime now) {
+        return User.builder()
+                .userId(null)
+                .version(null)
+                .email(email)
+                .nickname(Nickname.of(nickname))
+                .portfolioPublic(portfolioPublic)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
     public static User reconstitute(
             Long userId,
+            Long version,
             String email,
             String nickname,
             boolean portfolioPublic,
@@ -29,8 +42,9 @@ public class User {
             LocalDateTime updatedAt) {
         return User.builder()
                 .userId(userId)
+                .version(version)
                 .email(email)
-                .nickname(nickname)
+                .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
@@ -38,22 +52,10 @@ public class User {
     }
 
     public void changeNickname(String newNickname) {
-        validateSameNickname(newNickname);
-        validateNicknameLength(newNickname);
-        this.nickname = newNickname;
-    }
-
-    private void validateSameNickname(String newNickname) {
-        if (this.nickname.equals(newNickname)) {
+        if (nickname.hasSameValueAs(newNickname)) {
             throw new CustomException(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
-    }
-
-    private void validateNicknameLength(String newNickname) {
-        if (newNickname.length() < MIN_NICKNAME_LENGTH
-                || newNickname.length() > MAX_NICKNAME_LENGTH) {
-            throw new CustomException(ErrorCode.INVALID_NICKNAME_LENGTH);
-        }
+        this.nickname = Nickname.of(newNickname);
     }
 
     public void changePortfolioVisibility(boolean portfolioPublic) {

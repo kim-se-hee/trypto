@@ -34,7 +34,7 @@ public class EngineInboxPublisher {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onOrderCanceled(OrderCanceledEvent event) {
-        OrderCanceledEngineMessage payload = OrderCanceledEngineMessage.from(event.order());
+        OrderCanceledEngineMessage payload = OrderCanceledEngineMessage.from(event);
         publish("OrderCanceled", payload, payload.orderId());
     }
 

@@ -2,6 +2,7 @@ package ksh.tryptobackend.regretanalysis.domain.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,16 +33,16 @@ public class RegretReport {
             Long userId,
             Long roundId,
             Long exchangeId,
-            BigDecimal actualProfitRate,
-            BigDecimal totalInvestment,
+            AssetSnapshot snapshot,
             List<RuleImpact> ruleImpacts,
             List<ViolationDetail> violationDetails,
             LocalDate analysisStart,
-            LocalDate analysisEnd,
-            LocalDateTime createdAt) {
+            Clock clock) {
+        BigDecimal actualProfitRate = snapshot.getTotalProfitRate();
         BigDecimal missedProfit = sumLossAmounts(violationDetails);
         BigDecimal ruleFollowedProfitRate =
-                calculateRuleFollowedRate(actualProfitRate, missedProfit, totalInvestment);
+                calculateRuleFollowedRate(
+                        actualProfitRate, missedProfit, snapshot.getTotalInvestment());
 
         return RegretReport.builder()
                 .userId(userId)
@@ -52,17 +53,19 @@ public class RegretReport {
                 .actualProfitRate(actualProfitRate)
                 .ruleFollowedProfitRate(ruleFollowedProfitRate)
                 .analysisStart(analysisStart)
-                .analysisEnd(analysisEnd)
-                .createdAt(createdAt)
+                .analysisEnd(LocalDate.now(clock))
+                .createdAt(LocalDateTime.now(clock))
                 .ruleImpacts(ruleImpacts)
                 .violationDetails(new ViolationDetails(violationDetails))
                 .build();
     }
 
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
-        return violationDetails.stream()
-                .map(ViolationDetail::getLossAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sum =
+                violationDetails.stream()
+                        .map(ViolationDetail::getLossAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.max(BigDecimal.ZERO);
     }
 
     private static BigDecimal calculateRuleFollowedRate(
