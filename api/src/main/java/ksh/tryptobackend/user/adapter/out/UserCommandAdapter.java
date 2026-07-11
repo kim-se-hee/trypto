@@ -17,6 +17,9 @@ public class UserCommandAdapter implements UserCommandPort {
 
     @Override
     public User save(User user) {
+        if (user.getUserId() == null) {
+            return userJpaRepository.saveAndFlush(UserJpaEntity.fromDomain(user)).toDomain();
+        }
         UserJpaEntity entity =
                 userJpaRepository
                         .findById(user.getUserId())

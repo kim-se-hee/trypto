@@ -7,6 +7,7 @@ import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.User;
+import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,14 @@ public class UserQueryAdapter implements UserQueryPort {
         return userJpaRepository.findAllById(userIds).stream()
                 .map(UserJpaEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<User> findBySocialIdentity(SocialIdentity socialIdentity) {
+        return userJpaRepository
+                .findByProviderAndProviderId(
+                        socialIdentity.providerName(), socialIdentity.providerId())
+                .map(UserJpaEntity::toDomain);
     }
 
     @Override
