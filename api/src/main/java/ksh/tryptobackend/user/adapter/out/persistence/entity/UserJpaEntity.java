@@ -19,10 +19,14 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "\"user\"",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "uk_user_social_identity",
-                        columnNames = {"provider", "provider_id"}))
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_user_social_identity",
+                    columnNames = {"provider", "provider_id"}),
+            @UniqueConstraint(
+                    name = "uk_user_nickname",
+                    columnNames = {"nickname"})
+        })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserJpaEntity {
@@ -42,7 +46,7 @@ public class UserJpaEntity {
     @Column(name = "provider_id")
     private String providerId;
 
-    @Column(name = "nickname", nullable = false, unique = true)
+    @Column(name = "nickname", nullable = false)
     private String nickname;
 
     @Column(name = "portfolio_public", nullable = false)
