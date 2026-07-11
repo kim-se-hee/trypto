@@ -2,7 +2,6 @@ package ksh.tryptobackend.user.adapter.out;
 
 import java.util.Locale;
 import java.util.Optional;
-import java.util.function.Supplier;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
@@ -20,8 +19,6 @@ import org.springframework.stereotype.Component;
 public class UserCommandAdapter implements UserCommandPort {
 
     private static final String SOCIAL_IDENTITY_CONSTRAINT = "uk_user_social_identity";
-    private static final String NICKNAME_CONSTRAINT = "uk_user_nickname";
-    private static final int MAX_REGISTER_ATTEMPTS = 5;
 
     private final UserJpaRepository userJpaRepository;
 
@@ -39,22 +36,15 @@ public class UserCommandAdapter implements UserCommandPort {
     }
 
     @Override
-    public User register(SocialIdentity socialIdentity, Supplier<User> newUserFactory) {
-        for (int attempt = 0; attempt < MAX_REGISTER_ATTEMPTS; attempt++) {
-            try {
-                return userJpaRepository
-                        .saveAndFlush(UserJpaEntity.fromDomain(newUserFactory.get()))
-                        .toDomain();
-            } catch (DataIntegrityViolationException e) {
-                if (isSocialIdentityConflict(e)) {
-                    return getRegistered(socialIdentity);
-                }
-                if (!isNicknameConflict(e)) {
-                    throw e;
-                }
+    public User register(User newUser) {
+        try {
+            return userJpaRepository.saveAndFlush(UserJpaEntity.fromDomain(newUser)).toDomain();
+        } catch (DataIntegrityViolationException e) {
+            if (isSocialIdentityConflict(e)) {
+                return getRegistered(newUser.getSocialIdentity());
             }
+            throw e;
         }
-        throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     private boolean isSocialIdentityConflict(DataIntegrityViolationException e) {
@@ -64,10 +54,6 @@ public class UserCommandAdapter implements UserCommandPort {
     private User getRegistered(SocialIdentity socialIdentity) {
         return findBySocialIdentity(socialIdentity)
                 .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
-    }
-
-    private boolean isNicknameConflict(DataIntegrityViolationException e) {
-        return violatedConstraintContains(e, NICKNAME_CONSTRAINT);
     }
 
     private boolean violatedConstraintContains(

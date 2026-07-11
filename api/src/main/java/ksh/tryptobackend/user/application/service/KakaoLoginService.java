@@ -3,7 +3,6 @@ package ksh.tryptobackend.user.application.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.function.Supplier;
 import ksh.tryptobackend.user.application.port.in.KakaoLoginUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.KakaoLoginCommand;
 import ksh.tryptobackend.user.application.port.in.dto.result.KakaoLoginResult;
@@ -34,21 +33,22 @@ public class KakaoLoginService implements KakaoLoginUseCase {
                 socialIdentityQueryPort.getByAuthorizationCode(
                         command.code(), command.codeVerifier());
 
-        Supplier<User> newUserFactory =
-                () ->
-                        User.registerWith(
-                                socialIdentity,
-                                uniqueNicknameGenerator.generate(),
-                                LocalDateTime.now(clock));
-
         Optional<User> existingUser = userQueryPort.findBySocialIdentity(socialIdentity);
-        boolean newUser = existingUser.isEmpty();
-        User user =
-                existingUser.orElseGet(
-                        () -> userCommandPort.register(socialIdentity, newUserFactory));
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            String sessionId = sessionCommandPort.create(user.getUserId());
+            return new KakaoLoginResult(
+                    user.getUserId(), user.getNickname().value(), false, sessionId);
+        }
 
-        String sessionId = sessionCommandPort.create(user.getUserId());
+        User newUser =
+                User.registerWith(
+                        socialIdentity,
+                        uniqueNicknameGenerator.generate(),
+                        LocalDateTime.now(clock));
+        User registeredUser = userCommandPort.register(newUser);
+        String sessionId = sessionCommandPort.create(registeredUser.getUserId());
         return new KakaoLoginResult(
-                user.getUserId(), user.getNickname().value(), newUser, sessionId);
+                registeredUser.getUserId(), registeredUser.getNickname().value(), true, sessionId);
     }
 }
