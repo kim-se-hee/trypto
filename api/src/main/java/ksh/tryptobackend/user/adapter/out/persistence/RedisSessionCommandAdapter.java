@@ -1,4 +1,4 @@
-package ksh.tryptobackend.user.adapter.out;
+package ksh.tryptobackend.user.adapter.out.persistence;
 
 import java.util.UUID;
 import ksh.tryptobackend.common.config.SessionProperties;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SessionCommandAdapter implements SessionCommandPort {
+public class RedisSessionCommandAdapter implements SessionCommandPort {
 
     private static final String SESSION_KEY_PREFIX = "session:";
 
