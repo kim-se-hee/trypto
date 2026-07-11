@@ -5,12 +5,17 @@ erDiagram
 
     USER {
         id user_id PK "주 식별자"
-        string email UK "이메일"
+        number version "낙관적 잠금 버전"
+        string provider UK "소셜 제공자 (provider_id 와 복합 유니크)"
+        string provider_id UK "제공자 회원번호"
         string nickname UK "닉네임"
-        string password_hash "비밀번호 해시"
         boolean portfolio_public "포트폴리오 공개 여부"
         datetime created_at "가입일"
         datetime updated_at "수정일"
+    }
+
+    NICKNAME_SEQUENCE {
+        id nickname_sequence_id PK "자동 닉네임 번호표"
     }
 
     INVESTMENT_ROUND {
