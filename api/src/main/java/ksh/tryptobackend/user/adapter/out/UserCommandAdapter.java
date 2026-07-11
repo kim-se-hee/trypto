@@ -47,7 +47,7 @@ public class UserCommandAdapter implements UserCommandPort {
                         .toDomain();
             } catch (DataIntegrityViolationException e) {
                 if (isSocialIdentityConflict(e)) {
-                    return findRegistered(socialIdentity);
+                    return getRegistered(socialIdentity);
                 }
                 if (!isNicknameConflict(e)) {
                     throw e;
@@ -57,7 +57,7 @@ public class UserCommandAdapter implements UserCommandPort {
         throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
-    private User findRegistered(SocialIdentity socialIdentity) {
+    private User getRegistered(SocialIdentity socialIdentity) {
         return findBySocialIdentity(socialIdentity)
                 .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
     }
