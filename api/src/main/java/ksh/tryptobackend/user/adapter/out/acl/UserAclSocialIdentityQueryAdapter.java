@@ -1,5 +1,6 @@
 package ksh.tryptobackend.user.adapter.out.acl;
 
+import java.net.http.HttpClient;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.out.SocialIdentityQueryPort;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -26,7 +28,15 @@ public class UserAclSocialIdentityQueryAdapter implements SocialIdentityQueryPor
     public UserAclSocialIdentityQueryAdapter(
             KakaoOAuthProperties properties, RestClient.Builder restClientBuilder) {
         this.properties = properties;
-        this.restClient = restClientBuilder.build();
+        this.restClient = restClientBuilder.requestFactory(requestFactory(properties)).build();
+    }
+
+    private static JdkClientHttpRequestFactory requestFactory(KakaoOAuthProperties properties) {
+        HttpClient httpClient =
+                HttpClient.newBuilder().connectTimeout(properties.getConnectTimeout()).build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(properties.getReadTimeout());
+        return requestFactory;
     }
 
     @Override

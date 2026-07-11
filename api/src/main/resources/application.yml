@@ -88,6 +88,8 @@ app:
       redirect-uri: ${KAKAO_REDIRECT_URI:}
       token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
       user-info-uri: ${KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
+      connect-timeout: ${KAKAO_CONNECT_TIMEOUT:3s}
+      read-timeout: ${KAKAO_READ_TIMEOUT:5s}
   exchanges:
     - name: UPBIT
       market-type: DOMESTIC
