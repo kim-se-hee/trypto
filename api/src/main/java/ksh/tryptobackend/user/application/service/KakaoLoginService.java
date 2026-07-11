@@ -2,8 +2,6 @@ package ksh.tryptobackend.user.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.in.KakaoLoginUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.KakaoLoginCommand;
 import ksh.tryptobackend.user.application.port.in.dto.result.KakaoLoginResult;
@@ -13,10 +11,8 @@ import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.User;
 import ksh.tryptobackend.user.domain.service.UniqueNicknameGenerator;
-import ksh.tryptobackend.user.domain.vo.Nickname;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,25 +31,20 @@ public class KakaoLoginService implements KakaoLoginUseCase {
         SocialIdentity socialIdentity =
                 socialIdentityQueryPort.getByAuthorizationCode(
                         command.code(), command.codeVerifier());
-
         return userQueryPort
                 .findBySocialIdentity(socialIdentity)
                 .map(user -> issueSession(user, false))
-                .orElseGet(() -> registerAndIssueSession(socialIdentity));
-    }
-
-    private KakaoLoginResult registerAndIssueSession(SocialIdentity socialIdentity) {
-        Nickname nickname = uniqueNicknameGenerator.generate();
-        User newUser = User.registerWith(socialIdentity, nickname, LocalDateTime.now(clock));
-        try {
-            return issueSession(userCommandPort.save(newUser), true);
-        } catch (DataIntegrityViolationException e) {
-            User existing =
-                    userQueryPort
-                            .findBySocialIdentity(socialIdentity)
-                            .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
-            return issueSession(existing, false);
-        }
+                .orElseGet(
+                        () ->
+                                issueSession(
+                                        userCommandPort.register(
+                                                socialIdentity,
+                                                () ->
+                                                        User.registerWith(
+                                                                socialIdentity,
+                                                                uniqueNicknameGenerator.generate(),
+                                                                LocalDateTime.now(clock))),
+                                        true));
     }
 
     private KakaoLoginResult issueSession(User user, boolean newUser) {
