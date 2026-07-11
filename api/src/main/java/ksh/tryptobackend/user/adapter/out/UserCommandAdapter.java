@@ -57,13 +57,13 @@ public class UserCommandAdapter implements UserCommandPort {
         throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
+    private boolean isSocialIdentityConflict(DataIntegrityViolationException e) {
+        return violatedConstraintContains(e, SOCIAL_IDENTITY_CONSTRAINT);
+    }
+
     private User getRegistered(SocialIdentity socialIdentity) {
         return findBySocialIdentity(socialIdentity)
                 .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
-    }
-
-    private boolean isSocialIdentityConflict(DataIntegrityViolationException e) {
-        return violatedConstraintContains(e, SOCIAL_IDENTITY_CONSTRAINT);
     }
 
     private boolean isNicknameConflict(DataIntegrityViolationException e) {
