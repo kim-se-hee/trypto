@@ -25,10 +25,9 @@ public class UserAclSocialIdentityQueryAdapter implements SocialIdentityQueryPor
     private final KakaoOAuthProperties properties;
     private final RestClient restClient;
 
-    public UserAclSocialIdentityQueryAdapter(
-            KakaoOAuthProperties properties, RestClient.Builder restClientBuilder) {
+    public UserAclSocialIdentityQueryAdapter(KakaoOAuthProperties properties) {
         this.properties = properties;
-        this.restClient = restClientBuilder.requestFactory(requestFactory(properties)).build();
+        this.restClient = RestClient.builder().requestFactory(requestFactory(properties)).build();
     }
 
     private static JdkClientHttpRequestFactory requestFactory(KakaoOAuthProperties properties) {
