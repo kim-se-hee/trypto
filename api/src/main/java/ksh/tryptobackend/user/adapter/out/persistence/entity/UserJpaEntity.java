@@ -40,10 +40,10 @@ public class UserJpaEntity {
     @Column(name = "version", nullable = false)
     private Long version;
 
-    @Column(name = "provider", length = 20)
+    @Column(name = "provider", nullable = false, length = 20)
     private String provider;
 
-    @Column(name = "provider_id")
+    @Column(name = "provider_id", nullable = false)
     private String providerId;
 
     @Column(name = "nickname", nullable = false)
