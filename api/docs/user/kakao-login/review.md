@@ -35,3 +35,24 @@
 - [api/.../user/domain/model/User.java:19] `socialIdentity` nullable 이 외부(영속성 매퍼)에 null 체크를 강제 — `Optional` 노출 또는 주석 권장 (oop)
 - [api/.../user/adapter/out/service/UniqueNicknameGeneratorImpl.java:29-38] 닉네임 생성기 TOCTOU 창 — DB 유니크 제약 실패를 자체 감지·재시도 못 함(1번 차단과 연계 해결) (동시성)
 - [api/.../user/adapter/out/service/UniqueNicknameGeneratorImpl.java] 신규 가입 1건당 후보마다 DB 왕복(최악 20회) — 표본 공간 확대·배치 조회 고려 (성능)
+
+## 2차 차단 이슈
+
+- [ ] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-63] `find` 접두어인데 실제 동작은 `get`(없으면 예외)** (출처: 컨벤션)
+  - **설명:** `findRegistered(SocialIdentity)` 는 소셜 신원 유니크 위반 시 호출되어 반드시 존재하는 회원을 조회하고, 없으면 `Optional` 이 아니라 `CustomException(SOCIAL_LOGIN_FAILED)` 을 던지며 `User` 를 직접 반환한다. conventions.md 의 get/find 규칙(get=반드시 존재·없으면 예외, find=없을 수 있음·Optional 반환)상 이름은 `get` 이어야 한다. 바로 아래 진짜 `find` 인 `findBySocialIdentity`(Optional 반환)와 이름 규칙이 뒤섞여 혼란스럽다.
+  - **수정 제안:** `findRegistered` → `getRegistered` 로 개명하고 호출부(`register()` 내부)도 함께 변경한다.
+
+- [ ] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-88] private 메서드가 사용 순서대로 나열되지 않음** (출처: 컨벤션)
+  - **설명:** conventions.md 는 private 메서드를 사용된 순서대로 나열하도록 한다. `register()` 본문의 호출 순서는 `isSocialIdentityConflict` → `getRegistered`(위 이슈 반영 후 이름) → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 인데, 실제 선언 순서는 `findRegistered` 가 맨 앞에 와 step-down 서사가 깨진다.
+  - **수정 제안:** 호출 순서에 맞춰 `isSocialIdentityConflict` → `getRegistered` → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 순으로 재배열한다.
+
+## 2차 참고 이슈 (수정 안 함, 보고용)
+
+- [api/.../user/application/port/out/UserCommandPort.java:11] `register` 포트가 저장+충돌 복구 정책까지 흡수 — 선례(`JpaPositionCommandAdapter`)에 부합해 현행 유지 가능, 규칙 복잡해지면 도메인 서비스로 승격 고려 (ddd)
+- [api/.../user/adapter/out/UserCommandAdapter.java:79-84] 커맨드 어댑터가 소셜 신원 재조회 수행 — QueryPort 와 조회 SQL 중복, 원자적 레이스 복구 의도상 현행 허용 (ddd)
+- [api/.../user/application/service/KakaoLoginService.java:34-47] 신규 등록 경로가 3단 중첩 람다(`orElseGet(() -> issueSession(register(..., () -> ...), true))`) — 지역 변수로 풀어 가독성 개선 권장 (oop)
+- [api/.../user/adapter/out/UserCommandAdapter.java:22-23, 65-81] 제약 이름 문자열(`uk_user_social_identity`/`uk_user_nickname`)이 엔티티와 어댑터 두 곳에 리터럴 중복 — `UserJpaEntity` 의 `public static final` 상수로 단일화 권장 (oop)
+- [api/.../user/adapter/out/UserCommandAdapter.java:42-58] 새 동시성 분기(닉네임 재시도/소셜 재조회/전파/소진) 회귀 테스트 부재 — 최소 3케이스 추가 권장 (oop)
+- [api/.../user/adapter/out/UserCommandAdapter.java:42-58] 닉네임 재시도 5회 소진 시 `INTERNAL_SERVER_ERROR(500)` — 극히 드문 가용성 저하, 필요 시 전용 에러코드로 분리 (동시성)
+- [api/.../user/adapter/out/UserCommandAdapter.java + UniqueNicknameGeneratorImpl.java] 재시도 루프 중첩 워스트케이스 최대 105회 DB 왕복 — 표본 공간 확대·실패 후보 제외 등 후속 고려 (성능)
+- [api/.../user/adapter/out/acl/UserAclSocialIdentityQueryAdapter.java] 순차 외부 호출 2회 타임아웃 합산 시 워커 최대 ~16초 점유 — 값 유지로 충분, 지연 잦으면 read timeout 하향 검토 (성능)
