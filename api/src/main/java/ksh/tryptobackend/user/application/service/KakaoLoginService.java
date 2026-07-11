@@ -2,6 +2,8 @@ package ksh.tryptobackend.user.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.function.Supplier;
 import ksh.tryptobackend.user.application.port.in.KakaoLoginUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.KakaoLoginCommand;
 import ksh.tryptobackend.user.application.port.in.dto.result.KakaoLoginResult;
@@ -31,20 +33,20 @@ public class KakaoLoginService implements KakaoLoginUseCase {
         SocialIdentity socialIdentity =
                 socialIdentityQueryPort.getByAuthorizationCode(
                         command.code(), command.codeVerifier());
-        return userQueryPort
-                .findBySocialIdentity(socialIdentity)
-                .map(user -> issueSession(user, false))
-                .orElseGet(
-                        () ->
-                                issueSession(
-                                        userCommandPort.register(
-                                                socialIdentity,
-                                                () ->
-                                                        User.registerWith(
-                                                                socialIdentity,
-                                                                uniqueNicknameGenerator.generate(),
-                                                                LocalDateTime.now(clock))),
-                                        true));
+
+        Optional<User> existingUser = userQueryPort.findBySocialIdentity(socialIdentity);
+        if (existingUser.isPresent()) {
+            return issueSession(existingUser.get(), false);
+        }
+
+        Supplier<User> newUserFactory =
+                () ->
+                        User.registerWith(
+                                socialIdentity,
+                                uniqueNicknameGenerator.generate(),
+                                LocalDateTime.now(clock));
+        User registeredUser = userCommandPort.register(socialIdentity, newUserFactory);
+        return issueSession(registeredUser, true);
     }
 
     private KakaoLoginResult issueSession(User user, boolean newUser) {
