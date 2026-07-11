@@ -46,6 +46,10 @@
   - **설명:** conventions.md 는 private 메서드를 사용된 순서대로 나열하도록 한다. `register()` 본문의 호출 순서는 `isSocialIdentityConflict` → `getRegistered`(위 이슈 반영 후 이름) → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 인데, 실제 선언 순서는 `findRegistered` 가 맨 앞에 와 step-down 서사가 깨진다.
   - **수정 제안:** 호출 순서에 맞춰 `isSocialIdentityConflict` → `getRegistered` → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 순으로 재배열한다.
 
+## 3차 재리뷰 결과
+
+- ddd·oop·동시성·성능·컨벤션 5개 리뷰어 전원 **차단 0건**. 2차 수정분(`getRegistered` 개명 + private 메서드 재배열)은 순수 리팩토링으로 새 이슈를 유발하지 않음. → 리뷰 단계 통과.
+
 ## 2차 참고 이슈 (수정 안 함, 보고용)
 
 - [api/.../user/application/port/out/UserCommandPort.java:11] `register` 포트가 저장+충돌 복구 정책까지 흡수 — 선례(`JpaPositionCommandAdapter`)에 부합해 현행 유지 가능, 규칙 복잡해지면 도메인 서비스로 승격 고려 (ddd)
