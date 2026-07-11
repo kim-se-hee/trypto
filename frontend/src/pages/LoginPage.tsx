@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, ArrowRight } from "lucide-react";
+import { Activity, ArrowRight, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
+import { beginKakaoLogin, isKakaoConfigured } from "@/lib/auth/kakao";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -10,6 +11,21 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [kakaoLoading, setKakaoLoading] = useState(false);
+
+  const kakaoReady = isKakaoConfigured();
+
+  async function handleKakaoLogin() {
+    setError("");
+    setKakaoLoading(true);
+    try {
+      await beginKakaoLogin();
+      // 성공 시 카카오로 리다이렉트되므로 이 아래는 실행되지 않는다.
+    } catch {
+      setError("카카오 로그인 설정이 완료되지 않았습니다.");
+      setKakaoLoading(false);
+    }
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,6 +62,30 @@ export function LoginPage() {
 
         {/* Login card */}
         <div className="rounded-xl border border-border bg-card p-6">
+          {/* 카카오 로그인 (주 로그인) */}
+          <button
+            type="button"
+            onClick={handleKakaoLogin}
+            disabled={!kakaoReady || kakaoLoading}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-sm font-semibold text-[#191600] transition-all duration-150 hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <MessageCircle className="h-4 w-4 fill-current" />
+            {kakaoLoading ? "카카오로 이동 중…" : "카카오로 로그인"}
+          </button>
+          {!kakaoReady && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              카카오 로그인 설정(<span className="font-mono">.env.local</span>)이 필요합니다.
+            </p>
+          )}
+
+          {/* 구분선 */}
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">개발용 로그인</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* 목 이메일 로그인 (개발용) */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="text-xs font-medium text-muted-foreground">

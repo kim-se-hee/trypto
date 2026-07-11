@@ -101,10 +101,9 @@ public class RegretChartStepDefinition {
     private void insertUser() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT INTO user (user_id, version, email, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, 0, ?, ?, ?, ?, ?)",
+                "INSERT INTO user (user_id, version, nickname, portfolio_public, created_at,"
+                        + " updated_at) VALUES (?, 0, ?, ?, ?, ?)",
                 USER_ID,
-                "regretTester@test.com",
                 "regretTester",
                 true,
                 now,

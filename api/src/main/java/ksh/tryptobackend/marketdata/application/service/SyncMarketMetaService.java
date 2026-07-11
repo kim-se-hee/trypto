@@ -65,39 +65,49 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
     private Map<String, String> resolveSymbolNames(
             Map<String, List<MarketMetaEntry>> marketMetaMap,
             List<ExchangeConfig> exchangeConfigs) {
-        Set<String> domesticExchanges =
-                exchangeConfigs.stream()
-                        .filter(c -> c.marketType().isDomestic())
-                        .map(ExchangeConfig::name)
-                        .collect(Collectors.toSet());
+        Set<String> domesticExchanges = domesticExchangeNames(exchangeConfigs);
 
         Map<String, String> symbolToName = new LinkedHashMap<>();
+        putBaseSymbolNames(marketMetaMap, symbolToName, domesticExchanges, false);
+        putBaseSymbolNames(marketMetaMap, symbolToName, domesticExchanges, true);
+        putQuoteSymbolNames(marketMetaMap, symbolToName);
+        return symbolToName;
+    }
 
+    private Set<String> domesticExchangeNames(List<ExchangeConfig> exchangeConfigs) {
+        return exchangeConfigs.stream()
+                .filter(c -> c.marketType().isDomestic())
+                .map(ExchangeConfig::name)
+                .collect(Collectors.toSet());
+    }
+
+    private void putBaseSymbolNames(
+            Map<String, List<MarketMetaEntry>> marketMetaMap,
+            Map<String, String> symbolToName,
+            Set<String> domesticExchanges,
+            boolean domestic) {
         marketMetaMap.forEach(
                 (exchangeName, entries) -> {
-                    if (!domesticExchanges.contains(exchangeName)) {
-                        for (MarketMetaEntry entry : entries) {
+                    if (domesticExchanges.contains(exchangeName) != domestic) {
+                        return;
+                    }
+                    for (MarketMetaEntry entry : entries) {
+                        if (domestic) {
+                            symbolToName.put(entry.base(), entry.displayName());
+                        } else {
                             symbolToName.putIfAbsent(entry.base(), entry.displayName());
                         }
                     }
                 });
+    }
 
-        marketMetaMap.forEach(
-                (exchangeName, entries) -> {
-                    if (domesticExchanges.contains(exchangeName)) {
-                        for (MarketMetaEntry entry : entries) {
-                            symbolToName.put(entry.base(), entry.displayName());
-                        }
-                    }
-                });
-
+    private void putQuoteSymbolNames(
+            Map<String, List<MarketMetaEntry>> marketMetaMap, Map<String, String> symbolToName) {
         marketMetaMap.values().stream()
                 .flatMap(List::stream)
                 .map(MarketMetaEntry::quote)
                 .distinct()
                 .forEach(quote -> symbolToName.putIfAbsent(quote, quote));
-
-        return symbolToName;
     }
 
     private Map<String, Long> syncExchanges(

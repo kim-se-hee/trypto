@@ -2,13 +2,19 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import type { MockUser } from "@/lib/types/user";
 import { MOCK_USERS } from "@/mocks/auth";
 
-/** true로 바꾸면 로그인 없이 바로 메인 진입 */
-const DEV_SKIP_AUTH = true;
+/** true로 바꾸면 로그인 없이 바로 메인 진입 (로그인 화면을 보려면 false) */
+const DEV_SKIP_AUTH = false;
+
+interface KakaoLoginUser {
+  userId: number;
+  nickname: string;
+}
 
 interface AuthContextValue {
   user: MockUser | null;
   isAuthenticated: boolean;
   login: (email: string) => boolean;
+  loginWithKakao: (result: KakaoLoginUser) => void;
   logout: () => void;
   updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password" | "portfolioPublic">>) => void;
 }
@@ -25,6 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const loginWithKakao = useCallback((result: KakaoLoginUser) => {
+    setUser({
+      userId: result.userId,
+      nickname: result.nickname,
+      email: "",
+      password: "",
+      portfolioPublic: true,
+      createdAt: new Date().toISOString(),
+    });
+  }, []);
+
   const logout = useCallback(() => {
     setUser(null);
   }, []);
@@ -37,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, loginWithKakao, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
