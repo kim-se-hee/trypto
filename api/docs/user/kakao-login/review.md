@@ -38,11 +38,11 @@
 
 ## 2차 차단 이슈
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-63] `find` 접두어인데 실제 동작은 `get`(없으면 예외)** (출처: 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-63] `find` 접두어인데 실제 동작은 `get`(없으면 예외)** (출처: 컨벤션)
   - **설명:** `findRegistered(SocialIdentity)` 는 소셜 신원 유니크 위반 시 호출되어 반드시 존재하는 회원을 조회하고, 없으면 `Optional` 이 아니라 `CustomException(SOCIAL_LOGIN_FAILED)` 을 던지며 `User` 를 직접 반환한다. conventions.md 의 get/find 규칙(get=반드시 존재·없으면 예외, find=없을 수 있음·Optional 반환)상 이름은 `get` 이어야 한다. 바로 아래 진짜 `find` 인 `findBySocialIdentity`(Optional 반환)와 이름 규칙이 뒤섞여 혼란스럽다.
   - **수정 제안:** `findRegistered` → `getRegistered` 로 개명하고 호출부(`register()` 내부)도 함께 변경한다.
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-88] private 메서드가 사용 순서대로 나열되지 않음** (출처: 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/user/adapter/out/UserCommandAdapter.java:60-88] private 메서드가 사용 순서대로 나열되지 않음** (출처: 컨벤션)
   - **설명:** conventions.md 는 private 메서드를 사용된 순서대로 나열하도록 한다. `register()` 본문의 호출 순서는 `isSocialIdentityConflict` → `getRegistered`(위 이슈 반영 후 이름) → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 인데, 실제 선언 순서는 `findRegistered` 가 맨 앞에 와 step-down 서사가 깨진다.
   - **수정 제안:** 호출 순서에 맞춰 `isSocialIdentityConflict` → `getRegistered` → `isNicknameConflict` → `violatedConstraintContains` → `findBySocialIdentity` 순으로 재배열한다.
 
