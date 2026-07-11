@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.domain.vo.Nickname;
+import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,20 +12,38 @@ import lombok.Getter;
 @Builder
 public class User {
 
+    private static final boolean DEFAULT_PORTFOLIO_PUBLIC = true;
+
     private final Long userId;
     private final Long version;
-    private final String email;
+    private final SocialIdentity socialIdentity;
     private Nickname nickname;
     private boolean portfolioPublic;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public static User create(
-            String email, String nickname, boolean portfolioPublic, LocalDateTime now) {
+    public static User registerWith(
+            SocialIdentity socialIdentity, Nickname nickname, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)
-                .email(email)
+                .socialIdentity(socialIdentity)
+                .nickname(nickname)
+                .portfolioPublic(DEFAULT_PORTFOLIO_PUBLIC)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    public static User create(
+            SocialIdentity socialIdentity,
+            String nickname,
+            boolean portfolioPublic,
+            LocalDateTime now) {
+        return User.builder()
+                .userId(null)
+                .version(null)
+                .socialIdentity(socialIdentity)
                 .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
                 .createdAt(now)
@@ -35,7 +54,7 @@ public class User {
     public static User reconstitute(
             Long userId,
             Long version,
-            String email,
+            SocialIdentity socialIdentity,
             String nickname,
             boolean portfolioPublic,
             LocalDateTime createdAt,
@@ -43,7 +62,7 @@ public class User {
         return User.builder()
                 .userId(userId)
                 .version(version)
-                .email(email)
+                .socialIdentity(socialIdentity)
                 .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
                 .createdAt(createdAt)

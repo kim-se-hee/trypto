@@ -4,16 +4,11 @@ import java.time.LocalDateTime;
 import ksh.tryptobackend.user.domain.model.User;
 
 public record UserProfileResponse(
-        Long userId,
-        String email,
-        String nickname,
-        boolean portfolioPublic,
-        LocalDateTime createdAt) {
+        Long userId, String nickname, boolean portfolioPublic, LocalDateTime createdAt) {
 
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
                 user.getUserId(),
-                user.getEmail(),
                 user.getNickname().value(),
                 user.isPortfolioPublic(),
                 user.getCreatedAt());

@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.user.domain.vo.Provider;
+import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -91,6 +93,12 @@ class UserTest {
 
     private static User createUser(String nickname) {
         return User.reconstitute(
-                1L, 0L, "test@test.com", nickname, false, LocalDateTime.now(), LocalDateTime.now());
+                1L,
+                0L,
+                SocialIdentity.of(Provider.KAKAO, "1234567"),
+                nickname,
+                false,
+                LocalDateTime.now(),
+                LocalDateTime.now());
     }
 }

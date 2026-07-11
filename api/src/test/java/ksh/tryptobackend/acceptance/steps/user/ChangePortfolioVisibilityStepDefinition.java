@@ -43,19 +43,17 @@ public class ChangePortfolioVisibilityStepDefinition {
     private void insertUsers() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, email, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
+                        + " updated_at) VALUES (?, ?, ?, ?, ?)",
                 1L,
-                "trader1@test.com",
                 "트레이더1",
                 true,
                 now,
                 now);
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, email, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
+                        + " updated_at) VALUES (?, ?, ?, ?, ?)",
                 2L,
-                "trader2@test.com",
                 "트레이더2",
                 false,
                 now,

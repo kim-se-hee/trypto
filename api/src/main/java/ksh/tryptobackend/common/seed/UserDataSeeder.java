@@ -34,30 +34,29 @@ class UserDataSeeder {
     private List<UserJpaEntity> createMainUsers() {
         LocalDateTime now = LocalDateTime.now();
         return List.of(
-                toEntity("김비트", "kimbit@trypto.com", true, now),
-                toEntity("이더리움", "ethereum@trypto.com", false, now),
-                toEntity("박솔라나", "solana@trypto.com", true, now),
-                toEntity("최리플", "ripple@trypto.com", true, now),
-                toEntity("정도지", "doge@trypto.com", false, now),
-                toEntity("한에이다", "ada@trypto.com", false, now),
-                toEntity("강링크", "link@trypto.com", false, now),
-                toEntity("윤닷", "dot@trypto.com", true, now),
-                toEntity("송아톰", "atom@trypto.com", false, now),
-                toEntity("임앱트", "apt@trypto.com", true, now));
+                toEntity("김비트", true, now),
+                toEntity("이더리움", false, now),
+                toEntity("박솔라나", true, now),
+                toEntity("최리플", true, now),
+                toEntity("정도지", false, now),
+                toEntity("한에이다", false, now),
+                toEntity("강링크", false, now),
+                toEntity("윤닷", true, now),
+                toEntity("송아톰", false, now),
+                toEntity("임앱트", true, now));
     }
 
     private List<UserJpaEntity> createBackgroundUsers() {
         LocalDateTime now = LocalDateTime.now();
         List<UserJpaEntity> users = new ArrayList<>();
         for (int i = 11; i <= 200; i++) {
-            users.add(toEntity("투자자" + i, "user" + i + "@trypto.com", false, now));
+            users.add(toEntity("투자자" + i, false, now));
         }
         return users;
     }
 
-    private UserJpaEntity toEntity(
-            String nickname, String email, boolean portfolioPublic, LocalDateTime now) {
-        User user = User.create(email, nickname, portfolioPublic, now);
+    private UserJpaEntity toEntity(String nickname, boolean portfolioPublic, LocalDateTime now) {
+        User user = User.create(null, nickname, portfolioPublic, now);
         return UserJpaEntity.fromDomain(user);
     }
 }
