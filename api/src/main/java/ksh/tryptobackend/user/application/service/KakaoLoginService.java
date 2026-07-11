@@ -34,22 +34,19 @@ public class KakaoLoginService implements KakaoLoginUseCase {
                 socialIdentityQueryPort.getByAuthorizationCode(
                         command.code(), command.codeVerifier());
 
-        Optional<User> existingUser = userQueryPort.findBySocialIdentity(socialIdentity);
-        if (existingUser.isPresent()) {
-            return issueSession(existingUser.get(), false);
-        }
-
         Supplier<User> newUserFactory =
                 () ->
                         User.registerWith(
                                 socialIdentity,
                                 uniqueNicknameGenerator.generate(),
                                 LocalDateTime.now(clock));
-        User registeredUser = userCommandPort.register(socialIdentity, newUserFactory);
-        return issueSession(registeredUser, true);
-    }
 
-    private KakaoLoginResult issueSession(User user, boolean newUser) {
+        Optional<User> existingUser = userQueryPort.findBySocialIdentity(socialIdentity);
+        boolean newUser = existingUser.isEmpty();
+        User user =
+                existingUser.orElseGet(
+                        () -> userCommandPort.register(socialIdentity, newUserFactory));
+
         String sessionId = sessionCommandPort.create(user.getUserId());
         return new KakaoLoginResult(
                 user.getUserId(), user.getNickname().value(), newUser, sessionId);
