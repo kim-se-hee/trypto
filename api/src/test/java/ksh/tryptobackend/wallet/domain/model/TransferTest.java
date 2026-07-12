@@ -50,6 +50,6 @@ class TransferTest {
     }
 
     private TransferCoinCommand command(Long toWalletId, BigDecimal amount) {
-        return new TransferCoinCommand(UUID.randomUUID().toString(), FROM_WALLET_ID, toWalletId, COIN_ID, amount);
+        return new TransferCoinCommand(UUID.randomUUID().toString(), 1L, FROM_WALLET_ID, toWalletId, COIN_ID, amount);
     }
 }
