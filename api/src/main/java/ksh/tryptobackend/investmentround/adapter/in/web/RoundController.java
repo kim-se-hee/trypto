@@ -5,9 +5,8 @@ import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.DuplicateRequestException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.investmentround.adapter.in.dto.request.ChargeEmergencyFundingRequest;
-import ksh.tryptobackend.investmentround.adapter.in.dto.request.EndRoundRequest;
-import ksh.tryptobackend.investmentround.adapter.in.dto.request.GetActiveRoundRequest;
 import ksh.tryptobackend.investmentround.adapter.in.dto.request.StartRoundRequest;
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.ChargeEmergencyFundingResponse;
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.EndRoundResponse;
@@ -18,6 +17,8 @@ import ksh.tryptobackend.investmentround.application.port.in.EndRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.GetActiveRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.StartRoundUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.dto.command.EndRoundCommand;
+import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetActiveRoundQuery;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
@@ -26,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,31 +46,33 @@ public class RoundController {
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<StartRoundResponse>> createRound(
-            @Valid @RequestBody StartRoundRequest request) {
-        StartRoundResult result = startRoundUseCase.startRound(request.toCommand());
+            @LoginUser Long userId, @Valid @RequestBody StartRoundRequest request) {
+        StartRoundResult result = startRoundUseCase.startRound(request.toCommand(userId));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponseDto.created("투자 라운드가 시작되었습니다.", StartRoundResponse.from(result)));
     }
 
     @PostMapping("/{roundId}/end")
     public ResponseEntity<ApiResponseDto<EndRoundResponse>> endRound(
-            @PathVariable Long roundId, @Valid @RequestBody EndRoundRequest request) {
-        InvestmentRound round = endRoundUseCase.endRound(request.toCommand(roundId));
+            @PathVariable Long roundId, @LoginUser Long userId) {
+        InvestmentRound round = endRoundUseCase.endRound(new EndRoundCommand(roundId, userId));
         return ResponseEntity.ok(ApiResponseDto.success("라운드를 종료했습니다.", EndRoundResponse.from(round)));
     }
 
     @GetMapping("/active")
-    public ApiResponseDto<GetActiveRoundResponse> getActiveRound(@Valid @ModelAttribute GetActiveRoundRequest request) {
-        GetActiveRoundResult result = getActiveRoundUseCase.getActiveRound(request.toQuery());
+    public ApiResponseDto<GetActiveRoundResponse> getActiveRound(@LoginUser Long userId) {
+        GetActiveRoundResult result = getActiveRoundUseCase.getActiveRound(new GetActiveRoundQuery(userId));
         return ApiResponseDto.success("활성 라운드를 조회했습니다.", GetActiveRoundResponse.from(result));
     }
 
     @PostMapping("/{roundId}/emergency-funding")
     public ResponseEntity<ApiResponseDto<ChargeEmergencyFundingResponse>> chargeEmergencyFunding(
-            @PathVariable Long roundId, @Valid @RequestBody ChargeEmergencyFundingRequest request) {
+            @PathVariable Long roundId,
+            @LoginUser Long userId,
+            @Valid @RequestBody ChargeEmergencyFundingRequest request) {
         int remainingChargeCount;
         try {
-            InvestmentRound round = chargeEmergencyFundingUseCase.charge(request.toCommand(roundId));
+            InvestmentRound round = chargeEmergencyFundingUseCase.charge(request.toCommand(roundId, userId));
             remainingChargeCount = round.getEmergencyChargeCount();
         } catch (DuplicateRequestException e) {
             remainingChargeCount = findRoundInfoUseCase
