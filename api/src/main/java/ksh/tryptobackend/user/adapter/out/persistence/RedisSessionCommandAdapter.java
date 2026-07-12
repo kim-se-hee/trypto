@@ -24,4 +24,9 @@ public class RedisSessionCommandAdapter implements SessionCommandPort {
                 .set(SESSION_KEY_PREFIX + sessionId, String.valueOf(userId), sessionProperties.getTtl());
         return sessionId;
     }
+
+    @Override
+    public void delete(String sessionId) {
+        redisTemplate.delete(SESSION_KEY_PREFIX + sessionId);
+    }
 }
