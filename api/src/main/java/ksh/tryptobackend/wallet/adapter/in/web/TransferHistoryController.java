@@ -3,6 +3,7 @@ package ksh.tryptobackend.wallet.adapter.in.web;
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.dto.response.CursorPageResponseDto;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.wallet.adapter.in.dto.request.FindTransferHistoryRequest;
 import ksh.tryptobackend.wallet.adapter.in.dto.response.TransferHistoryResponse;
 import ksh.tryptobackend.wallet.application.port.in.FindTransferHistoryUseCase;
@@ -23,8 +24,11 @@ public class TransferHistoryController {
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<TransferHistoryResponse>> findTransferHistory(
-            @PathVariable Long walletId, @Valid @ModelAttribute FindTransferHistoryRequest request) {
-        TransferHistoryCursorResult result = findTransferHistoryUseCase.findTransferHistory(request.toQuery(walletId));
+            @PathVariable Long walletId,
+            @LoginUser Long userId,
+            @Valid @ModelAttribute FindTransferHistoryRequest request) {
+        TransferHistoryCursorResult result =
+                findTransferHistoryUseCase.findTransferHistory(request.toQuery(walletId, userId));
         CursorPageResponseDto<TransferHistoryResponse> response = CursorPageResponseDto.of(
                 result.content().stream().map(TransferHistoryResponse::from).toList(),
                 result.nextCursor(),

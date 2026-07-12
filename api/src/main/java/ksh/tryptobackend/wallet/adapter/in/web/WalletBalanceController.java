@@ -1,6 +1,7 @@
 package ksh.tryptobackend.wallet.adapter.in.web;
 
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.wallet.adapter.in.dto.response.WalletBalancesResponse;
 import ksh.tryptobackend.wallet.application.port.in.GetWalletBalancesUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.query.GetWalletBalancesQuery;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/users/{userId}/wallets/{walletId}/balances")
+@RequestMapping("/api/wallets/{walletId}/balances")
 @RequiredArgsConstructor
 public class WalletBalanceController {
 
@@ -20,7 +21,7 @@ public class WalletBalanceController {
 
     @GetMapping
     public ApiResponseDto<WalletBalancesResponse> getWalletBalances(
-            @PathVariable Long userId, @PathVariable Long walletId) {
+            @LoginUser Long userId, @PathVariable Long walletId) {
         GetWalletBalancesQuery query = new GetWalletBalancesQuery(userId, walletId);
         WalletBalancesResult result = getWalletBalancesUseCase.getWalletBalances(query);
         return ApiResponseDto.success("잔고를 조회했습니다.", WalletBalancesResponse.from(result));
