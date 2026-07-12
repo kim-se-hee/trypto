@@ -55,6 +55,7 @@ public enum ErrorCode {
     NICKNAME_ALREADY_EXISTS(409, "nickname.already.exists"),
 
     USER_NOT_FOUND(404, "user.not.found"),
+    USER_ALREADY_DELETED(409, "user.already.deleted"),
     UNAUTHENTICATED(401, "unauthenticated"),
     SOCIAL_LOGIN_FAILED(401, "social.login.failed"),
     SIGNUP_RESTRICTED(403, "signup.restricted"),
