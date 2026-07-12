@@ -7,6 +7,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryCurs
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryResult;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
+import ksh.tryptobackend.trading.domain.service.WalletOwnershipVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindOrderHistoryService implements FindOrderHistoryUseCase {
 
     private final OrderQueryPort orderQueryPort;
+    private final WalletOwnershipVerifier walletOwnershipVerifier;
 
     @Override
     @Transactional(readOnly = true)
     public OrderHistoryCursorResult findOrderHistory(FindOrderHistoryQuery query) {
+        walletOwnershipVerifier.verify(query.walletId(), query.requesterId());
+
         List<Order> orders = fetchOrdersWithOverflow(query);
         boolean hasNext = orders.size() > query.size();
         List<Order> trimmed = hasNext ? orders.subList(0, query.size()) : orders;

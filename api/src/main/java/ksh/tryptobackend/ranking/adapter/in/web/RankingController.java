@@ -3,6 +3,7 @@ package ksh.tryptobackend.ranking.adapter.in.web;
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.dto.response.CursorPageResponseDto;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetMyRankingRequest;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetRankerPortfolioRequest;
 import ksh.tryptobackend.ranking.adapter.in.dto.request.GetRankingStatsRequest;
@@ -48,8 +49,9 @@ public class RankingController {
     }
 
     @GetMapping("/me")
-    public ApiResponseDto<MyRankingResponse> getMyRanking(@Valid @ModelAttribute GetMyRankingRequest request) {
-        MyRankingResult result = getMyRankingUseCase.getMyRanking(request.toQuery());
+    public ApiResponseDto<MyRankingResponse> getMyRanking(
+            @LoginUser Long userId, @Valid @ModelAttribute GetMyRankingRequest request) {
+        MyRankingResult result = getMyRankingUseCase.getMyRanking(request.toQuery(userId));
         MyRankingResponse response = result != null ? MyRankingResponse.from(result) : null;
         return ApiResponseDto.success("내 랭킹을 조회했습니다.", response);
     }

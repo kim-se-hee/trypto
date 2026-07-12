@@ -2,6 +2,7 @@ package ksh.tryptobackend.regretanalysis.adapter.in.web;
 
 import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.regretanalysis.adapter.in.dto.request.GetRegretChartRequest;
 import ksh.tryptobackend.regretanalysis.adapter.in.dto.request.GetRegretReportRequest;
 import ksh.tryptobackend.regretanalysis.adapter.in.dto.response.RegretChartResponse;
@@ -27,15 +28,15 @@ public class RegretController {
 
     @GetMapping
     public ApiResponseDto<RegretReportResponse> getRegretReport(
-            @PathVariable Long roundId, @Valid @ModelAttribute GetRegretReportRequest request) {
-        RegretReportResult result = getRegretReportUseCase.getRegretReport(request.toQuery(roundId));
+            @PathVariable Long roundId, @LoginUser Long userId, @Valid @ModelAttribute GetRegretReportRequest request) {
+        RegretReportResult result = getRegretReportUseCase.getRegretReport(request.toQuery(roundId, userId));
         return ApiResponseDto.success("투자 복기 리포트를 조회했습니다.", RegretReportResponse.from(result));
     }
 
     @GetMapping("/chart")
     public ApiResponseDto<RegretChartResponse> getRegretChart(
-            @PathVariable Long roundId, @Valid @ModelAttribute GetRegretChartRequest request) {
-        RegretChartResult result = getRegretChartUseCase.getRegretChart(request.toQuery(roundId));
+            @PathVariable Long roundId, @LoginUser Long userId, @Valid @ModelAttribute GetRegretChartRequest request) {
+        RegretChartResult result = getRegretChartUseCase.getRegretChart(request.toQuery(roundId, userId));
         return ApiResponseDto.success("복기 그래프 데이터를 조회했습니다.", RegretChartResponse.from(result));
     }
 }

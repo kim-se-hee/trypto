@@ -21,8 +21,8 @@ public class RankingMyStepDefinition {
 
     @Given("내 랭킹 테스트 데이터가 준비되어 있다")
     public void 내_랭킹_테스트_데이터가_준비되어_있다() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
-                + " updated_at) VALUES (1, '테스터', true, NOW(), NOW())");
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public,"
+                + " created_at, updated_at) VALUES (1, 'KAKAO', 'test-1', '테스터', true, NOW(), NOW())");
 
         LocalDate referenceDate = LocalDate.of(2026, 3, 1);
         LocalDateTime now = LocalDateTime.now();
@@ -41,7 +41,8 @@ public class RankingMyStepDefinition {
 
     @When("유저 {long}이 기간 {string}로 내 랭킹을 조회한다")
     public void 유저_이_기간_로_내_랭킹을_조회한다(long userId, String period) {
-        apiClient.get("/api/rankings/me?userId=" + userId + "&period=" + period);
+        apiClient.loginAs(userId);
+        apiClient.get("/api/rankings/me?period=" + period);
     }
 
     @Then("내 순위는 {int}이다")

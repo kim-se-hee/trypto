@@ -8,6 +8,7 @@ import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
+import ksh.tryptobackend.trading.domain.service.WalletOwnershipVerifier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,13 @@ public class CancelOrderService implements CancelOrderUseCase {
     private final OrderCommandPort orderCommandPort;
     private final MarketQueryPort marketQueryPort;
     private final BalanceChangeApplier balanceChangeApplier;
+    private final WalletOwnershipVerifier walletOwnershipVerifier;
 
     @Override
     @Transactional
     public Order cancelOrder(CancelOrderCommand command) {
         Order order = orderQueryPort.getByIdWithLock(command.orderId());
+        walletOwnershipVerifier.verify(order.getWalletId(), command.requesterId());
 
         TradingPair pair = marketQueryPort.getTradingPair(order.getExchangeCoinId());
         List<BalanceChange> refund = order.cancel(command.walletId(), pair);

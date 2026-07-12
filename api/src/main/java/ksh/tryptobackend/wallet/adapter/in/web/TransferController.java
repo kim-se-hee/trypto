@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import ksh.tryptobackend.common.dto.response.ApiResponseDto;
 import ksh.tryptobackend.common.exception.DuplicateRequestException;
 import ksh.tryptobackend.common.idempotency.IdempotencyKeyQueryPort;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.wallet.adapter.in.dto.request.TransferCoinRequest;
 import ksh.tryptobackend.wallet.adapter.in.dto.response.TransferCoinResponse;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
@@ -26,10 +27,11 @@ public class TransferController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<TransferCoinResponse> createTransfer(@Valid @RequestBody TransferCoinRequest request) {
+    public ApiResponseDto<TransferCoinResponse> createTransfer(
+            @LoginUser Long userId, @Valid @RequestBody TransferCoinRequest request) {
         TransferCoinResponse response;
         try {
-            Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand());
+            Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand(userId));
             response = TransferCoinResponse.from(transfer);
         } catch (DuplicateRequestException e) {
             Long transferId = idempotencyKeyQueryPort

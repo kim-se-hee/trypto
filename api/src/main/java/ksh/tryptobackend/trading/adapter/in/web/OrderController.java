@@ -7,6 +7,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.DuplicateRequestException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.common.idempotency.IdempotencyKeyQueryPort;
+import ksh.tryptobackend.common.web.auth.LoginUser;
 import ksh.tryptobackend.trading.adapter.in.dto.request.CancelOrderRequest;
 import ksh.tryptobackend.trading.adapter.in.dto.request.FindOrderHistoryRequest;
 import ksh.tryptobackend.trading.adapter.in.dto.request.GetOrderAvailabilityRequest;
@@ -41,10 +42,11 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<PlaceOrderResponse> createOrder(@Valid @RequestBody PlaceOrderRequest request) {
+    public ApiResponseDto<PlaceOrderResponse> createOrder(
+            @LoginUser Long userId, @Valid @RequestBody PlaceOrderRequest request) {
         Order order;
         try {
-            order = placeOrderUseCase.placeOrder(request.toCommand());
+            order = placeOrderUseCase.placeOrder(request.toCommand(userId));
         } catch (DuplicateRequestException e) {
             Long orderId = idempotencyKeyQueryPort
                     .findResourceId(request.clientOrderId())
@@ -57,15 +59,15 @@ public class OrderController {
 
     @GetMapping("/available")
     public ApiResponseDto<OrderAvailabilityResponse> getAvailability(
-            @Valid @ModelAttribute GetOrderAvailabilityRequest request) {
-        OrderAvailabilityResult result = getOrderAvailabilityUseCase.getAvailability(request.toQuery());
+            @LoginUser Long userId, @Valid @ModelAttribute GetOrderAvailabilityRequest request) {
+        OrderAvailabilityResult result = getOrderAvailabilityUseCase.getAvailability(request.toQuery(userId));
         return ApiResponseDto.success("조회 성공", OrderAvailabilityResponse.from(result));
     }
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(
-            @Valid @ModelAttribute FindOrderHistoryRequest request) {
-        OrderHistoryCursorResult result = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
+            @LoginUser Long userId, @Valid @ModelAttribute FindOrderHistoryRequest request) {
+        OrderHistoryCursorResult result = findOrderHistoryUseCase.findOrderHistory(request.toQuery(userId));
         CursorPageResponseDto<OrderHistoryResponse> response = CursorPageResponseDto.of(
                 result.content().stream().map(OrderHistoryResponse::from).toList(),
                 result.nextCursor(),
@@ -75,8 +77,8 @@ public class OrderController {
 
     @PostMapping("/{orderId}/cancel")
     public ApiResponseDto<CancelOrderResponse> cancelOrder(
-            @PathVariable Long orderId, @Valid @RequestBody CancelOrderRequest request) {
-        Order order = cancelOrderUseCase.cancelOrder(request.toCommand(orderId));
+            @PathVariable Long orderId, @LoginUser Long userId, @Valid @RequestBody CancelOrderRequest request) {
+        Order order = cancelOrderUseCase.cancelOrder(request.toCommand(orderId, userId));
         return ApiResponseDto.success("주문이 취소되었습니다.", CancelOrderResponse.from(order));
     }
 }

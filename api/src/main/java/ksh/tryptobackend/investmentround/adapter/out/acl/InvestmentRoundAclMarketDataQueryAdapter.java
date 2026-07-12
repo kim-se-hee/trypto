@@ -12,7 +12,6 @@ import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetai
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** marketdata 컨텍스트 조회를 investmentround 로 번역하는 ACL 어댑터. */
 @Component
 @RequiredArgsConstructor
 public class InvestmentRoundAclMarketDataQueryAdapter implements MarketDataQueryPort {

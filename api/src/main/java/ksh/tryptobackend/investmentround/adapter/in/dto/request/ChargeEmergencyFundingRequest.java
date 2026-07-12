@@ -7,12 +7,11 @@ import java.util.UUID;
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.ChargeEmergencyFundingCommand;
 
 public record ChargeEmergencyFundingRequest(
-        @NotNull Long userId,
         @NotNull Long exchangeId,
         @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal amount,
         @NotNull UUID idempotencyKey) {
 
-    public ChargeEmergencyFundingCommand toCommand(Long roundId) {
+    public ChargeEmergencyFundingCommand toCommand(Long roundId, Long userId) {
         return new ChargeEmergencyFundingCommand(roundId, userId, exchangeId, amount, idempotencyKey);
     }
 }

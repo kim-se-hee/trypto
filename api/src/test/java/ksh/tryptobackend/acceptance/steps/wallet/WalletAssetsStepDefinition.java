@@ -39,7 +39,8 @@ public class WalletAssetsStepDefinition {
 
     @When("유저 {long}이 지갑 {long}의 잔고를 조회한다")
     public void 유저가_지갑의_잔고를_조회한다(Long userId, Long walletId) {
-        apiClient.get("/api/users/" + userId + "/wallets/" + walletId + "/balances");
+        apiClient.loginAs(userId);
+        apiClient.get("/api/wallets/" + walletId + "/balances");
     }
 
     @Then("기축통화 사용 가능 잔고는 {bigdecimal}이다")
@@ -101,9 +102,10 @@ public class WalletAssetsStepDefinition {
     }
 
     private void insertUsers() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
-                + "(1, '트레이더1', true), "
-                + "(2, '트레이더2', true)");
+        jdbcTemplate.execute(
+                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public) VALUES "
+                        + "(1, 'KAKAO', 'test-1', '트레이더1', true), "
+                        + "(2, 'KAKAO', 'test-2', '트레이더2', true)");
     }
 
     private void insertCoins() {

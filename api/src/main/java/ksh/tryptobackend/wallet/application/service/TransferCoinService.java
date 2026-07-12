@@ -6,6 +6,7 @@ import ksh.tryptobackend.common.idempotency.IdempotencyKeyCommandPort;
 import ksh.tryptobackend.common.idempotency.IdempotencyResourceType;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
 import ksh.tryptobackend.wallet.application.port.in.dto.command.TransferCoinCommand;
+import ksh.tryptobackend.wallet.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.wallet.application.port.out.TransferCommandPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletBalanceCommandPort;
 import ksh.tryptobackend.wallet.application.port.out.WalletBalanceQueryPort;
@@ -25,6 +26,7 @@ public class TransferCoinService implements TransferCoinUseCase {
     private final IdempotencyKeyCommandPort idempotencyKeyCommandPort;
     private final TransferCommandPort transferCommandPort;
     private final WalletQueryPort walletQueryPort;
+    private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final WalletBalanceQueryPort walletBalanceQueryPort;
     private final WalletBalanceCommandPort walletBalanceCommandPort;
 
@@ -42,6 +44,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         Wallet source = walletQueryPort.getById(command.fromWalletId());
         Wallet destination = walletQueryPort.getById(command.toWalletId());
         source.verifySameRoundAs(destination);
+        source.verifyOwnedBy(command.requesterId(), investmentRoundQueryPort.getOwnerId(source.getRoundId()));
 
         Transfer transfer = Transfer.create(command, now);
 

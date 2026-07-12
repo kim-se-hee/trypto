@@ -9,7 +9,7 @@ public record GetOrderAvailabilityRequest(
         @NotNull Long exchangeCoinId,
         @NotNull Side side) {
 
-    public GetOrderAvailabilityQuery toQuery() {
-        return new GetOrderAvailabilityQuery(walletId, exchangeCoinId, side);
+    public GetOrderAvailabilityQuery toQuery(Long requesterId) {
+        return new GetOrderAvailabilityQuery(requesterId, walletId, exchangeCoinId, side);
     }
 }

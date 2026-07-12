@@ -49,7 +49,8 @@ public class MyHoldingsStepDefinition {
 
     @When("유저 {long}이 지갑 {long}의 포트폴리오를 조회한다")
     public void 유저가_지갑의_포트폴리오를_조회한다(Long userId, Long walletId) {
-        apiClient.get("/api/users/" + userId + "/wallets/" + walletId + "/portfolio");
+        apiClient.loginAs(userId);
+        apiClient.get("/api/wallets/" + walletId + "/portfolio");
     }
 
     @Then("거래소 ID는 {long}이다")
@@ -103,9 +104,10 @@ public class MyHoldingsStepDefinition {
     }
 
     private void insertUsers() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
-                + "(1, '트레이더1', true), "
-                + "(2, '트레이더2', true)");
+        jdbcTemplate.execute(
+                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public) VALUES "
+                        + "(1, 'KAKAO', 'test-1', '트레이더1', true), "
+                        + "(2, 'KAKAO', 'test-2', '트레이더2', true)");
     }
 
     private void insertExchangeAndCoins() {

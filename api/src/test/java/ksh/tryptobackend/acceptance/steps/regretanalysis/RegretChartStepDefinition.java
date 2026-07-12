@@ -52,7 +52,8 @@ public class RegretChartStepDefinition {
 
     @When("라운드 {long} 거래소 {long} 유저 {long}로 복기 그래프를 조회한다")
     public void getRegretChart(Long roundId, Long exchangeId, Long userId) {
-        apiClient.get("/api/rounds/" + roundId + "/regret/chart?exchangeId=" + exchangeId + "&userId=" + userId);
+        apiClient.loginAs(userId);
+        apiClient.get("/api/rounds/" + roundId + "/regret/chart?exchangeId=" + exchangeId);
     }
 
     @Then("복기 그래프의 거래소 이름은 {string}이다")
@@ -91,9 +92,10 @@ public class RegretChartStepDefinition {
     private void insertUser() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT INTO user (user_id, version, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, 0, ?, ?, ?, ?)",
+                "INSERT INTO user (user_id, version, provider, provider_id, nickname, portfolio_public,"
+                        + " created_at, updated_at) VALUES (?, 0, 'KAKAO', ?, ?, ?, ?, ?)",
                 USER_ID,
+                "test-" + USER_ID,
                 "regretTester",
                 true,
                 now,

@@ -33,7 +33,7 @@ class OrderTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
 
     private static PlaceOrderCommand cmd(Side side, OrderType orderType, BigDecimal volume, BigDecimal price) {
-        return new PlaceOrderCommand(UUID.randomUUID().toString(), 1L, 1L, side, orderType, volume, price);
+        return new PlaceOrderCommand(UUID.randomUUID().toString(), 1L, 1L, 1L, side, orderType, volume, price);
     }
 
     private static MarketInfo ctx(BigDecimal currentPrice) {

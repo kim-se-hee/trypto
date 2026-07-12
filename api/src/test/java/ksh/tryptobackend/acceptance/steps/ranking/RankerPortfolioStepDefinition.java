@@ -30,6 +30,7 @@ public class RankerPortfolioStepDefinition {
 
     @When("유저 {long}의 포트폴리오를 기간 {string}로 조회한다")
     public void 유저의_포트폴리오를_기간으로_조회한다(Long userId, String period) {
+        apiClient.loginAs(userId);
         apiClient.get("/api/rankings/" + userId + "/portfolio?period=" + period);
     }
 
@@ -50,9 +51,10 @@ public class RankerPortfolioStepDefinition {
     private void insertUsers() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (1, '트레이더1', true, ?, ?), (2, '트레이더2', false, ?, ?), (3,"
-                        + " '트레이더3', true, ?, ?)",
+                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public,"
+                        + " created_at, updated_at) VALUES (1, 'KAKAO', 'test-1', '트레이더1', true, ?, ?), (2,"
+                        + " 'KAKAO', 'test-2', '트레이더2', false, ?, ?), (3, 'KAKAO', 'test-3', '트레이더3', true, ?,"
+                        + " ?)",
                 now,
                 now,
                 now,

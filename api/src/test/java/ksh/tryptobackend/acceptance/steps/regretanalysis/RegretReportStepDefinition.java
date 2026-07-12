@@ -75,22 +75,26 @@ public class RegretReportStepDefinition {
 
     @When("복기 리포트 조회 요청을 보낸다")
     public void 복기_리포트_조회_요청을_보낸다() {
-        apiClient.get(regretReportUrl(savedRoundId, USER_ID, EXCHANGE_ID_WITH_REPORT));
+        apiClient.loginAs(USER_ID);
+        apiClient.get(regretReportUrl(savedRoundId, EXCHANGE_ID_WITH_REPORT));
     }
 
     @When("다른 유저로 복기 리포트 조회 요청을 보낸다")
     public void 다른_유저로_복기_리포트_조회_요청을_보낸다() {
-        apiClient.get(regretReportUrl(savedRoundId, OTHER_USER_ID, EXCHANGE_ID_WITH_REPORT));
+        apiClient.loginAs(OTHER_USER_ID);
+        apiClient.get(regretReportUrl(savedRoundId, EXCHANGE_ID_WITH_REPORT));
     }
 
     @When("지갑이 없는 거래소로 복기 리포트 조회 요청을 보낸다")
     public void 지갑이_없는_거래소로_복기_리포트_조회_요청을_보낸다() {
-        apiClient.get(regretReportUrl(savedRoundId, USER_ID, EXCHANGE_ID_WITHOUT_WALLET));
+        apiClient.loginAs(USER_ID);
+        apiClient.get(regretReportUrl(savedRoundId, EXCHANGE_ID_WITHOUT_WALLET));
     }
 
     @When("리포트가 없는 거래소로 복기 리포트 조회 요청을 보낸다")
     public void 리포트가_없는_거래소로_복기_리포트_조회_요청을_보낸다() {
-        apiClient.get(regretReportUrl(savedRoundId, USER_ID, EXCHANGE_ID_WITHOUT_REPORT));
+        apiClient.loginAs(USER_ID);
+        apiClient.get(regretReportUrl(savedRoundId, EXCHANGE_ID_WITHOUT_REPORT));
     }
 
     @Then("리포트의 거래소명은 {string}이다")
@@ -130,8 +134,8 @@ public class RegretReportStepDefinition {
                 .isEqualTo(count);
     }
 
-    private String regretReportUrl(Long roundId, Long userId, Long exchangeId) {
-        return "/api/rounds/" + roundId + "/regret?userId=" + userId + "&exchangeId=" + exchangeId;
+    private String regretReportUrl(Long roundId, Long exchangeId) {
+        return "/api/rounds/" + roundId + "/regret?exchangeId=" + exchangeId;
     }
 
     private void insertCoins() {

@@ -35,7 +35,9 @@ public class RoundStepDefinition {
     }
 
     @Given("라운드용 거래소 메타데이터가 준비되어 있다")
-    public void 라운드용_거래소_메타데이터가_준비되어_있다() {}
+    public void 라운드용_거래소_메타데이터가_준비되어_있다() {
+        apiClient.loginAs(USER_ID);
+    }
 
     @When("기본 라운드 시작 요청을 보낸다")
     public void 기본_라운드_시작_요청을_보낸다() {
@@ -83,7 +85,7 @@ public class RoundStepDefinition {
 
     @When("활성 라운드 조회 요청을 보낸다")
     public void 활성_라운드_조회_요청을_보낸다() {
-        apiClient.get("/api/rounds/active?userId=" + USER_ID);
+        apiClient.get("/api/rounds/active");
     }
 
     @When("거래소 {long}의 시드머니를 0으로 라운드 시작 요청을 보낸다")
@@ -123,14 +125,13 @@ public class RoundStepDefinition {
 
     @When("라운드 종료 요청을 보낸다")
     public void 라운드_종료_요청을_보낸다() {
-        Map<String, Object> body = Map.of("userId", USER_ID);
-        apiClient.post("/api/rounds/" + lastRoundId + "/end", body);
+        apiClient.post("/api/rounds/" + lastRoundId + "/end");
     }
 
     @When("다른 사용자로 라운드 종료 요청을 보낸다")
     public void 다른_사용자로_라운드_종료_요청을_보낸다() {
-        Map<String, Object> body = Map.of("userId", 999L);
-        apiClient.post("/api/rounds/" + lastRoundId + "/end", body);
+        apiClient.loginAs(999L);
+        apiClient.post("/api/rounds/" + lastRoundId + "/end");
     }
 
     @Given("파산 상태의 라운드가 존재한다")
@@ -154,13 +155,11 @@ public class RoundStepDefinition {
 
     @When("존재하지 않는 라운드 종료 요청을 보낸다")
     public void 존재하지_않는_라운드_종료_요청을_보낸다() {
-        Map<String, Object> body = Map.of("userId", USER_ID);
-        apiClient.post("/api/rounds/999999/end", body);
+        apiClient.post("/api/rounds/999999/end");
     }
 
     private Map<String, Object> defaultRequest() {
         Map<String, Object> body = new HashMap<>();
-        body.put("userId", USER_ID);
         body.put(
                 "seeds",
                 List.of(

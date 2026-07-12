@@ -10,7 +10,6 @@ import ksh.tryptobackend.wallet.application.port.in.dto.result.WalletResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** wallet 컨텍스트 조회를 investmentround 로 번역하는 ACL 어댑터. */
 @Component
 @RequiredArgsConstructor
 public class InvestmentRoundAclWalletQueryAdapter implements WalletQueryPort {

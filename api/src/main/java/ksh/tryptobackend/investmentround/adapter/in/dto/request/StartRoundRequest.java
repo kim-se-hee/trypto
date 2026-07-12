@@ -12,12 +12,11 @@ import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRo
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.StartRoundSeedCommand;
 
 public record StartRoundRequest(
-        @NotNull Long userId,
         @NotEmpty List<@Valid SeedRequest> seeds,
         @NotNull @DecimalMin("0") BigDecimal emergencyFundingLimit,
         List<@Valid RuleRequest> rules) {
 
-    public StartRoundCommand toCommand() {
+    public StartRoundCommand toCommand(Long userId) {
         List<StartRoundSeedCommand> seedCommands = seeds.stream()
                 .map(seed -> new StartRoundSeedCommand(seed.exchangeId(), seed.amount()))
                 .toList();

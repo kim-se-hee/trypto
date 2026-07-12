@@ -26,7 +26,8 @@ public class ChangePortfolioVisibilityStepDefinition {
     @When("유저 {long}의 포트폴리오 공개 설정을 {word}로 변경한다")
     public void 유저의_포트폴리오_공개_설정을_변경한다(Long userId, String visibility) {
         Map<String, Boolean> requestBody = Map.of("portfolioPublic", Boolean.parseBoolean(visibility));
-        apiClient.put("/api/users/" + userId + "/portfolio-visibility", requestBody);
+        apiClient.loginAs(userId);
+        apiClient.put("/api/users/me/portfolio-visibility", requestBody);
     }
 
     @Then("응답의 portfolioPublic은 {word}이다")
@@ -41,17 +42,19 @@ public class ChangePortfolioVisibilityStepDefinition {
     private void insertUsers() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public,"
+                        + " created_at, updated_at) VALUES (?, 'KAKAO', ?, ?, ?, ?, ?)",
                 1L,
+                "test-1",
                 "트레이더1",
                 true,
                 now,
                 now);
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
-                        + " updated_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public,"
+                        + " created_at, updated_at) VALUES (?, 'KAKAO', ?, ?, ?, ?, ?)",
                 2L,
+                "test-2",
                 "트레이더2",
                 false,
                 now,

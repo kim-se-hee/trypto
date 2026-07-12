@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
-/** 멱등성 키의 유니크 위반을 중복 요청 신호로 번역하는 어댑터. 도메인·애플리케이션은 인프라 예외를 보지 않는다. */
 @Component
 @RequiredArgsConstructor
 public class IdempotencyKeyCommandAdapter implements IdempotencyKeyCommandPort {

@@ -1,0 +1,34 @@
+package ksh.tryptobackend.common.config;
+
+import java.util.List;
+import ksh.tryptobackend.common.web.auth.AuthInterceptor;
+import ksh.tryptobackend.common.web.auth.LoginUserArgumentResolver;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+@RequiredArgsConstructor
+public class WebConfig implements WebMvcConfigurer {
+
+    private static final String API_PATH = "/api/**";
+
+    private static final String[] PUBLIC_PATTERNS = {
+        "/api/auth/**", "/api/candles", "/api/exchanges/*/coins", "/api/rankings", "/api/rankings/stats",
+    };
+
+    private final AuthInterceptor authInterceptor;
+    private final LoginUserArgumentResolver loginUserArgumentResolver;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authInterceptor).addPathPatterns(API_PATH).excludePathPatterns(PUBLIC_PATTERNS);
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(loginUserArgumentResolver);
+    }
+}
