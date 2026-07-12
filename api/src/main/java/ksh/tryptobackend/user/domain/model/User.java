@@ -17,10 +17,10 @@ public class User {
     private final Long userId;
     private final Long version;
     private final Long socialAccountId;
+    private final LocalDateTime createdAt;
     private Nickname nickname;
     private boolean portfolioPublic;
     private LocalDateTime deletedAt;
-    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static User registerWith(Long socialAccountId, Nickname nickname, LocalDateTime now) {
