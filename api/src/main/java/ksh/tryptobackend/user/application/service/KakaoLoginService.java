@@ -2,7 +2,6 @@ package ksh.tryptobackend.user.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.in.KakaoLoginUseCase;
@@ -40,15 +39,14 @@ public class KakaoLoginService implements KakaoLoginUseCase {
                 socialIdentityQueryPort.getByAuthorizationCode(command.code(), command.codeVerifier());
         LocalDateTime now = LocalDateTime.now(clock);
 
-        Optional<SocialAccount> existing = socialAccountQueryPort.findByIdentity(identity);
-        if (existing.isPresent() && existing.get().isConnected()) {
-            return buildResult(loadUser(existing.get().getUserId()), false);
-        }
-
-        SocialAccount account =
-                existing.orElseGet(() -> socialAccountCommandPort.register(SocialAccount.register(identity, now)));
+        SocialAccount account = socialAccountQueryPort
+                .findByIdentity(identity)
+                .orElseGet(() -> socialAccountCommandPort.register(SocialAccount.register(identity, now)));
         if (account.isConnected()) {
-            return buildResult(loadUser(account.getUserId()), false);
+            User user = userQueryPort
+                    .findById(account.getUserId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
+            return KakaoLoginResult.of(user, false, sessionCommandPort.create(user.getUserId()));
         }
 
         userQueryPort
@@ -59,15 +57,6 @@ public class KakaoLoginService implements KakaoLoginUseCase {
                 userCommandPort.register(User.registerWith(account.getId(), uniqueNicknameGenerator.generate(), now));
         account.connectTo(newUser.getUserId());
         socialAccountCommandPort.save(account);
-        return buildResult(newUser, true);
-    }
-
-    private User loadUser(Long userId) {
-        return userQueryPort.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
-    }
-
-    private KakaoLoginResult buildResult(User user, boolean newUser) {
-        String sessionId = sessionCommandPort.create(user.getUserId());
-        return new KakaoLoginResult(user.getUserId(), user.getNickname().value(), newUser, sessionId);
+        return KakaoLoginResult.of(newUser, true, sessionCommandPort.create(newUser.getUserId()));
     }
 }
