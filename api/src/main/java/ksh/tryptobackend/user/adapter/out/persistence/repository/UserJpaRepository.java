@@ -8,5 +8,5 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
 
     boolean existsByNickname(String nickname);
 
-    Optional<UserJpaEntity> findByProviderAndProviderId(String provider, String providerId);
+    Optional<UserJpaEntity> findFirstBySocialAccountIdAndDeletedAtIsNotNullOrderByDeletedAtDesc(Long socialAccountId);
 }
