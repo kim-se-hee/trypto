@@ -15,7 +15,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     private static final String API_PATH = "/api/**";
 
-    /** 로그인 없이 접근 가능한 공개 엔드포인트. 여기에 없는 /api 요청은 전부 인증을 강제한다(기본 차단). */
     private static final String[] PUBLIC_PATTERNS = {
         "/api/auth/**", "/api/candles", "/api/exchanges/*/coins", "/api/rankings", "/api/rankings/stats",
     };
