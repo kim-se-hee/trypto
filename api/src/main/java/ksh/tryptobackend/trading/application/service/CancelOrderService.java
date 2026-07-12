@@ -8,6 +8,7 @@ import ksh.tryptobackend.trading.application.port.out.OrderCommandPort;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
 import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
+import ksh.tryptobackend.trading.domain.service.WalletOwnershipVerifier;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.RequiredArgsConstructor;

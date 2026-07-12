@@ -6,6 +6,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.query.GetOrderAvailabil
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderAvailabilityResult;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.WalletQueryPort;
+import ksh.tryptobackend.trading.domain.service.WalletOwnershipVerifier;
 import ksh.tryptobackend.trading.domain.vo.Side;
 import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.RequiredArgsConstructor;

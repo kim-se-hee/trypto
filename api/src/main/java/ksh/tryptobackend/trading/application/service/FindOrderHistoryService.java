@@ -7,6 +7,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryCurs
 import ksh.tryptobackend.trading.application.port.in.dto.result.OrderHistoryResult;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
 import ksh.tryptobackend.trading.domain.model.Order;
+import ksh.tryptobackend.trading.domain.service.WalletOwnershipVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
