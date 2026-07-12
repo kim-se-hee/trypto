@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class RedisSessionReader implements SessionReader {
 
     private static final String SESSION_KEY_PREFIX = "session:";
+    private static final String USER_SESSIONS_KEY_PREFIX = "user-sessions:";
 
     private final StringRedisTemplate redisTemplate;
     private final SessionProperties sessionProperties;
@@ -23,6 +24,7 @@ public class RedisSessionReader implements SessionReader {
             return Optional.empty();
         }
         redisTemplate.expire(key, sessionProperties.getTtl());
+        redisTemplate.expire(USER_SESSIONS_KEY_PREFIX + userId, sessionProperties.getTtl());
         return Optional.of(Long.valueOf(userId));
     }
 }

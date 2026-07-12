@@ -69,6 +69,8 @@ public class UserJpaEntity {
     public void updateFromDomain(User user) {
         this.nickname = user.getNickname().value();
         this.portfolioPublic = user.isPortfolioPublic();
+        this.deletedAt = user.getDeletedAt();
+        this.updatedAt = user.getUpdatedAt();
     }
 
     public User toDomain() {
