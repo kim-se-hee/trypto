@@ -23,15 +23,12 @@ public class TransferHistoryController {
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<TransferHistoryResponse>> findTransferHistory(
-            @PathVariable Long walletId,
-            @Valid @ModelAttribute FindTransferHistoryRequest request) {
-        TransferHistoryCursorResult result =
-                findTransferHistoryUseCase.findTransferHistory(request.toQuery(walletId));
-        CursorPageResponseDto<TransferHistoryResponse> response =
-                CursorPageResponseDto.of(
-                        result.content().stream().map(TransferHistoryResponse::from).toList(),
-                        result.nextCursor(),
-                        result.hasNext());
+            @PathVariable Long walletId, @Valid @ModelAttribute FindTransferHistoryRequest request) {
+        TransferHistoryCursorResult result = findTransferHistoryUseCase.findTransferHistory(request.toQuery(walletId));
+        CursorPageResponseDto<TransferHistoryResponse> response = CursorPageResponseDto.of(
+                result.content().stream().map(TransferHistoryResponse::from).toList(),
+                result.nextCursor(),
+                result.hasNext());
         return ApiResponseDto.success("송금 내역을 조회했습니다.", response);
     }
 }

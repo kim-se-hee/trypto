@@ -40,31 +40,23 @@ public class StartRoundService implements StartRoundUseCase {
         LocalDateTime now = LocalDateTime.now(clock);
         SeedAllocations seedAllocations = resolveSeedAllocations(command);
 
-        InvestmentRound round =
-                InvestmentRound.start(
-                        command.userId(),
-                        investmentRoundCommandPort.countByUserId(command.userId()),
-                        seedAllocations.totalAmount(),
-                        command.emergencyFundingLimit(),
-                        toRules(command, now),
-                        now);
+        InvestmentRound round = InvestmentRound.start(
+                command.userId(),
+                investmentRoundCommandPort.countByUserId(command.userId()),
+                seedAllocations.totalAmount(),
+                command.emergencyFundingLimit(),
+                toRules(command, now),
+                now);
         InvestmentRound savedRound = investmentRoundCommandPort.save(round);
 
-        return StartRoundResult.from(
-                savedRound, provisionWallets(savedRound.getId(), seedAllocations, now));
+        return StartRoundResult.from(savedRound, provisionWallets(savedRound.getId(), seedAllocations, now));
     }
 
     private SeedAllocations resolveSeedAllocations(StartRoundCommand command) {
-        List<SeedAllocation> allocations =
-                command.seeds().stream()
-                        .map(
-                                seed ->
-                                        SeedAllocation.create(
-                                                seed.exchangeId(),
-                                                marketDataQueryPort.getSeedFundingSpec(
-                                                        seed.exchangeId()),
-                                                seed.amount()))
-                        .toList();
+        List<SeedAllocation> allocations = command.seeds().stream()
+                .map(seed -> SeedAllocation.create(
+                        seed.exchangeId(), marketDataQueryPort.getSeedFundingSpec(seed.exchangeId()), seed.amount()))
+                .toList();
         return SeedAllocations.of(allocations);
     }
 
@@ -77,11 +69,8 @@ public class StartRoundService implements StartRoundUseCase {
     private List<StartRoundWalletResult> provisionWallets(
             Long roundId, SeedAllocations seedAllocations, LocalDateTime now) {
         return seedAllocations.getAll().stream()
-                .map(
-                        allocation ->
-                                new StartRoundWalletResult(
-                                        seedWalletProvisioner.provision(roundId, allocation, now),
-                                        allocation.exchangeId()))
+                .map(allocation -> new StartRoundWalletResult(
+                        seedWalletProvisioner.provision(roundId, allocation, now), allocation.exchangeId()))
                 .toList();
     }
 }

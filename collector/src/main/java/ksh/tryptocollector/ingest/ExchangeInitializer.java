@@ -3,25 +3,6 @@ package ksh.tryptocollector.ingest;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import jakarta.annotation.PreDestroy;
-import ksh.tryptocollector.ingest.binance.BinanceRestClient;
-import ksh.tryptocollector.ingest.binance.BinanceWebSocketHandler;
-import ksh.tryptocollector.ingest.bithumb.BithumbRestClient;
-import ksh.tryptocollector.ingest.bithumb.BithumbTickerResponse;
-import ksh.tryptocollector.ingest.bithumb.BithumbWebSocketHandler;
-import ksh.tryptocollector.ingest.upbit.UpbitRestClient;
-import ksh.tryptocollector.ingest.upbit.UpbitTickerResponse;
-import ksh.tryptocollector.ingest.upbit.UpbitWebSocketHandler;
-import ksh.tryptocollector.model.Exchange;
-import ksh.tryptocollector.model.MarketInfo;
-import ksh.tryptocollector.model.NormalizedTicker;
-import ksh.tryptocollector.metadata.MarketInfoCache;
-import ksh.tryptocollector.metadata.MarketMetadataRedisRepository;
-import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -30,6 +11,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
+import ksh.tryptocollector.ingest.binance.BinanceRestClient;
+import ksh.tryptocollector.ingest.binance.BinanceWebSocketHandler;
+import ksh.tryptocollector.ingest.bithumb.BithumbRestClient;
+import ksh.tryptocollector.ingest.bithumb.BithumbTickerResponse;
+import ksh.tryptocollector.ingest.bithumb.BithumbWebSocketHandler;
+import ksh.tryptocollector.ingest.upbit.UpbitRestClient;
+import ksh.tryptocollector.ingest.upbit.UpbitTickerResponse;
+import ksh.tryptocollector.ingest.upbit.UpbitWebSocketHandler;
+import ksh.tryptocollector.metadata.MarketInfoCache;
+import ksh.tryptocollector.metadata.MarketMetadataRedisRepository;
+import ksh.tryptocollector.model.Exchange;
+import ksh.tryptocollector.model.MarketInfo;
+import ksh.tryptocollector.model.NormalizedTicker;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -175,12 +174,13 @@ public class ExchangeInitializer {
                     .divide(BigDecimal.valueOf(100), CHANGE_RATE_SCALE, RoundingMode.HALF_UP);
             NormalizedTicker normalized = new NormalizedTicker(
                     Exchange.BINANCE.name(),
-                    base, "USDT", base,
+                    base,
+                    "USDT",
+                    base,
                     new BigDecimal(ticker.lastPrice()),
                     changeRate,
                     new BigDecimal(ticker.quoteVolume()),
-                    System.currentTimeMillis()
-            );
+                    System.currentTimeMillis());
             tickerRedisRepository.save(normalized);
         }
         log.info("바이낸스 마켓 메타데이터 로드 및 초기 스냅샷 저장 완료");

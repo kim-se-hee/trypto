@@ -21,9 +21,8 @@ public class RankingStatsStepDefinition {
 
     @Given("랭킹 통계 테스트 데이터가 준비되어 있다")
     public void 랭킹_통계_테스트_데이터가_준비되어_있다() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
-                        + "(1, 'user1', true), (2, 'user2', true), (3, 'user3', true)");
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, nickname, portfolio_public) VALUES "
+                + "(1, 'user1', true), (2, 'user2', true), (3, 'user3', true)");
 
         LocalDate referenceDate = LocalDate.of(2026, 3, 1);
         LocalDateTime now = LocalDateTime.now();
@@ -79,11 +78,19 @@ public class RankingStatsStepDefinition {
 
     @Then("최고 수익률이 존재한다")
     public void 최고_수익률이_존재한다() {
-        apiClient.getLastResponse().expectBody().jsonPath("$.data.maxProfitRate").isNotEmpty();
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.maxProfitRate")
+                .isNotEmpty();
     }
 
     @Then("평균 수익률이 존재한다")
     public void 평균_수익률이_존재한다() {
-        apiClient.getLastResponse().expectBody().jsonPath("$.data.avgProfitRate").isNotEmpty();
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.avgProfitRate")
+                .isNotEmpty();
     }
 }

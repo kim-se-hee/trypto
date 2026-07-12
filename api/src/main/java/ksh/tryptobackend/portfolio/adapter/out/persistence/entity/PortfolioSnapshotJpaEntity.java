@@ -77,8 +77,9 @@ public class PortfolioSnapshotJpaEntity {
         entity.totalProfit = snapshot.getTotalProfit();
         entity.totalProfitRate = snapshot.getTotalProfitRate();
         entity.snapshotDate = snapshot.getSnapshotDate();
-        entity.details =
-                snapshot.getDetails().stream().map(SnapshotDetailJpaEntity::fromDomain).toList();
+        entity.details = snapshot.getDetails().stream()
+                .map(SnapshotDetailJpaEntity::fromDomain)
+                .toList();
         return entity;
     }
 

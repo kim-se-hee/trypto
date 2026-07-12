@@ -7,7 +7,6 @@ public record ChargeEmergencyFundingResponse(
 
     public static ChargeEmergencyFundingResponse of(
             Long roundId, Long exchangeId, BigDecimal chargedAmount, int remainingChargeCount) {
-        return new ChargeEmergencyFundingResponse(
-                roundId, exchangeId, chargedAmount, remainingChargeCount);
+        return new ChargeEmergencyFundingResponse(roundId, exchangeId, chargedAmount, remainingChargeCount);
     }
 }

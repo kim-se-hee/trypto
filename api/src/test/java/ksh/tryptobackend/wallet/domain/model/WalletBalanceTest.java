@@ -31,10 +31,8 @@ class WalletBalanceTest {
 
         assertThatThrownBy(() -> balance.deductAvailable(new BigDecimal("1.5")))
                 .isInstanceOf(CustomException.class)
-                .satisfies(
-                        e ->
-                                assertThat(((CustomException) e).getErrorCode())
-                                        .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode()).isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
     }
 
     @Test
@@ -66,10 +64,8 @@ class WalletBalanceTest {
 
         assertThatThrownBy(() -> balance.unlock(new BigDecimal("1.5")))
                 .isInstanceOf(CustomException.class)
-                .satisfies(
-                        e ->
-                                assertThat(((CustomException) e).getErrorCode())
-                                        .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode()).isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
     }
 
     @Test
@@ -90,10 +86,8 @@ class WalletBalanceTest {
 
         assertThatThrownBy(() -> balance.consumeLocked(new BigDecimal("1.5")))
                 .isInstanceOf(CustomException.class)
-                .satisfies(
-                        e ->
-                                assertThat(((CustomException) e).getErrorCode())
-                                        .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
+                .satisfies(e ->
+                        assertThat(((CustomException) e).getErrorCode()).isEqualTo(ErrorCode.INSUFFICIENT_BALANCE));
     }
 
     private WalletBalance balance(String available, String locked) {

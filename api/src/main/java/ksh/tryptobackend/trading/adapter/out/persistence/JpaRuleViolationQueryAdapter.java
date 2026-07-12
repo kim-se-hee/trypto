@@ -17,25 +17,18 @@ public class JpaRuleViolationQueryAdapter implements RuleViolationQueryPort {
 
     private final JPAQueryFactory queryFactory;
 
-    private static final QRuleViolationJpaEntity violation =
-            QRuleViolationJpaEntity.ruleViolationJpaEntity;
+    private static final QRuleViolationJpaEntity violation = QRuleViolationJpaEntity.ruleViolationJpaEntity;
     private static final QOrderJpaEntity order = QOrderJpaEntity.orderJpaEntity;
 
     @Override
-    public List<RuleViolationRef> findByRuleIdsAndWalletIds(
-            List<Long> ruleIds, List<Long> walletIds) {
+    public List<RuleViolationRef> findByRuleIdsAndWalletIds(List<Long> ruleIds, List<Long> walletIds) {
         if (ruleIds.isEmpty()) {
             return Collections.emptyList();
         }
 
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                RuleViolationRef.class,
-                                violation.id,
-                                violation.orderId,
-                                violation.ruleId,
-                                violation.createdAt))
+                .select(Projections.constructor(
+                        RuleViolationRef.class, violation.id, violation.orderId, violation.ruleId, violation.createdAt))
                 .from(violation)
                 .leftJoin(order)
                 .on(violation.orderId.eq(order.id))

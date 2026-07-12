@@ -20,25 +20,20 @@ public class FindSnapshotInputsService implements FindSnapshotInputsUseCase {
     @Override
     public List<SnapshotInputResult> findAllSnapshotInputs() {
         ActiveRounds activeRounds = investmentRoundQueryPort.findActiveRounds();
-        WalletSnapshots walletSnapshots =
-                walletQueryPort.findWalletSnapshots(activeRounds.roundIds());
+        WalletSnapshots walletSnapshots = walletQueryPort.findWalletSnapshots(activeRounds.roundIds());
         return toSnapshotInputResults(activeRounds, walletSnapshots);
     }
 
     private List<SnapshotInputResult> toSnapshotInputResults(
             ActiveRounds activeRounds, WalletSnapshots walletSnapshots) {
         return activeRounds.values().stream()
-                .flatMap(
-                        round ->
-                                walletSnapshots.findByRoundId(round.roundId()).stream()
-                                        .map(
-                                                wallet ->
-                                                        new SnapshotInputResult(
-                                                                round.roundId(),
-                                                                round.userId(),
-                                                                wallet.exchangeId(),
-                                                                wallet.walletId(),
-                                                                wallet.seedAmount())))
+                .flatMap(round -> walletSnapshots.findByRoundId(round.roundId()).stream()
+                        .map(wallet -> new SnapshotInputResult(
+                                round.roundId(),
+                                round.userId(),
+                                wallet.exchangeId(),
+                                wallet.walletId(),
+                                wallet.seedAmount())))
                 .toList();
     }
 }

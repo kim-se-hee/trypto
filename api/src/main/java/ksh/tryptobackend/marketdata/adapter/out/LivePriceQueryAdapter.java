@@ -54,10 +54,9 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
     @Override
     public LivePrices getCurrentPrices(Set<Long> exchangeCoinIds) {
         List<Long> ids = new ArrayList<>(exchangeCoinIds);
-        List<String> keys =
-                ids.stream()
-                        .map(id -> redisKeyCache.computeIfAbsent(id, this::buildRedisKey))
-                        .toList();
+        List<String> keys = ids.stream()
+                .map(id -> redisKeyCache.computeIfAbsent(id, this::buildRedisKey))
+                .toList();
 
         List<String> jsons = redisTemplate.opsForValue().multiGet(keys);
 
@@ -73,15 +72,13 @@ public class LivePriceQueryAdapter implements LivePriceQueryPort {
     }
 
     private String buildRedisKey(Long exchangeCoinId) {
-        ExchangeCoinJpaEntity exchangeCoin =
-                exchangeCoinRepository
-                        .findById(exchangeCoinId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        ExchangeCoinJpaEntity exchangeCoin = exchangeCoinRepository
+                .findById(exchangeCoinId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
-        ExchangeJpaEntity exchange =
-                exchangeRepository
-                        .findById(exchangeCoin.getExchangeId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeJpaEntity exchange = exchangeRepository
+                .findById(exchangeCoin.getExchangeId())
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         String baseSymbol = findCoinSymbol(exchangeCoin.getCoinId());
         String quoteSymbol = findCoinSymbol(exchange.getBaseCurrencyCoinId());

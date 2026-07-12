@@ -31,8 +31,7 @@ class TransferDataSeeder {
         log.info("[Seed] 송금 {}건 생성 완료", transfers.size());
     }
 
-    private List<TransferJpaEntity> createTransfersForUser(
-            SeedContext ctx, String nickname, String coinSymbol) {
+    private List<TransferJpaEntity> createTransfersForUser(SeedContext ctx, String nickname, String coinSymbol) {
         Long userId = ctx.userIdByNickname.get(nickname);
         if (userId == null) return List.of();
 
@@ -52,16 +51,15 @@ class TransferDataSeeder {
             Long fromWalletId = walletIds.get(i);
             Long toWalletId = walletIds.get(i + 1);
 
-            Transfer transfer =
-                    Transfer.builder()
-                            .fromWalletId(fromWalletId)
-                            .toWalletId(toWalletId)
-                            .coinId(coinId)
-                            .amount(new BigDecimal("0.01"))
-                            .status(TransferStatus.SUCCESS)
-                            .createdAt(now.minusDays(10 + i))
-                            .completedAt(now.minusDays(10 + i).plusMinutes(5))
-                            .build();
+            Transfer transfer = Transfer.builder()
+                    .fromWalletId(fromWalletId)
+                    .toWalletId(toWalletId)
+                    .coinId(coinId)
+                    .amount(new BigDecimal("0.01"))
+                    .status(TransferStatus.SUCCESS)
+                    .createdAt(now.minusDays(10 + i))
+                    .completedAt(now.minusDays(10 + i).plusMinutes(5))
+                    .build();
             transfers.add(TransferJpaEntity.fromDomain(transfer));
         }
 

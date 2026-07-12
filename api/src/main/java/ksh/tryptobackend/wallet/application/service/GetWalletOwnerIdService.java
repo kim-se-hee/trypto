@@ -24,9 +24,7 @@ public class GetWalletOwnerIdService implements GetWalletOwnerIdUseCase {
     @Transactional(readOnly = true)
     public Long getWalletOwnerId(Long walletId) {
         Wallet wallet =
-                walletQueryPort
-                        .findById(walletId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                walletQueryPort.findById(walletId).orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
 
         return investmentRoundQueryPort.getOwnerId(wallet.getRoundId());
     }

@@ -13,8 +13,7 @@ import java.util.TreeMap;
 public class OrderBook {
 
     private final TradingPair pair;
-    private final NavigableMap<BigDecimal, List<Long>> bids =
-            new TreeMap<>(Collections.reverseOrder());
+    private final NavigableMap<BigDecimal, List<Long>> bids = new TreeMap<>(Collections.reverseOrder());
     private final NavigableMap<BigDecimal, List<Long>> asks = new TreeMap<>();
     private final Map<Long, OrderDetail> orderIndex = new HashMap<>();
 

@@ -21,18 +21,16 @@ public class RegretAnalysisAclTradingQueryAdapter implements TradingQueryPort {
     @Override
     public ViolatedOrders findViolatedOrders(Long roundId, Long exchangeId, Long walletId) {
         FindViolatedOrdersQuery query = new FindViolatedOrdersQuery(roundId, exchangeId, walletId);
-        List<ViolatedOrder> orders =
-                findViolatedOrdersUseCase.findViolatedOrders(query).stream()
-                        .map(this::toViolatedOrder)
-                        .toList();
+        List<ViolatedOrder> orders = findViolatedOrdersUseCase.findViolatedOrders(query).stream()
+                .map(this::toViolatedOrder)
+                .toList();
         return new ViolatedOrders(orders);
     }
 
     private ViolatedOrder toViolatedOrder(ViolatedOrderResult result) {
-        List<SoldPortion> soldPortions =
-                result.soldPortions().stream()
-                        .map(sp -> new SoldPortion(sp.filledPrice(), sp.quantity()))
-                        .toList();
+        List<SoldPortion> soldPortions = result.soldPortions().stream()
+                .map(sp -> new SoldPortion(sp.filledPrice(), sp.quantity()))
+                .toList();
 
         return ViolatedOrder.create(
                 result.orderId(),

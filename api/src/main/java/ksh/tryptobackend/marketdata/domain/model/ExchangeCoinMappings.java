@@ -20,10 +20,7 @@ public class ExchangeCoinMappings {
     }
 
     public ExchangeCoinMappings add(
-            Exchange exchange,
-            String baseCurrencySymbol,
-            ExchangeCoins coins,
-            CoinSymbols coinSymbols) {
+            Exchange exchange, String baseCurrencySymbol, ExchangeCoins coins, CoinSymbols coinSymbols) {
         if (baseCurrencySymbol == null) {
             return this;
         }
@@ -33,10 +30,7 @@ public class ExchangeCoinMappings {
             merged.put(
                     ExchangeSymbolKey.of(exchange.getName(), coinSymbol, baseCurrencySymbol),
                     new ExchangeCoinMapping(
-                            coin.exchangeCoinId(),
-                            exchange.getExchangeId(),
-                            coin.coinId(),
-                            coinSymbol));
+                            coin.exchangeCoinId(), exchange.getExchangeId(), coin.coinId(), coinSymbol));
         }
         return new ExchangeCoinMappings(merged);
     }

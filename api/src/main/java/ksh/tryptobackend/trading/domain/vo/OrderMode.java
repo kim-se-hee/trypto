@@ -10,28 +10,19 @@ public enum OrderMode {
             input.rejectVolume();
             Money total = Money.of(input.requiredPrice());
             market.exchangeInfo().validateOrderAmount(total);
-            return InterpretedOrderInput.market(
-                    Quantity.from(total.value(), market.currentPrice()));
+            return InterpretedOrderInput.market(Quantity.from(total.value(), market.currentPrice()));
         }
 
         @Override
         public BalanceChange.Lock planReservation(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return new BalanceChange.Lock(
                     pair.quoteCoinId(), settlementDebit(quantity, fill).value());
         }
 
         @Override
         public List<BalanceChange> planSettlementChanges(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return List.of(
                     new BalanceChange.ConsumeLocked(
                             pair.quoteCoinId(), settlementDebit(quantity, fill).value()),
@@ -50,21 +41,13 @@ public enum OrderMode {
 
         @Override
         public BalanceChange.Lock planReservation(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return new BalanceChange.Lock(pair.tradedCoinId(), quantity.value());
         }
 
         @Override
         public List<BalanceChange> planSettlementChanges(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return List.of(
                     new BalanceChange.ConsumeLocked(pair.tradedCoinId(), quantity.value()),
                     new BalanceChange.AddAvailable(
@@ -85,27 +68,21 @@ public enum OrderMode {
 
         @Override
         public BalanceChange.Lock planReservation(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return new BalanceChange.Lock(
-                    pair.quoteCoinId(), reservedDebit(quantity, limitPrice, feeRate).value());
+                    pair.quoteCoinId(),
+                    reservedDebit(quantity, limitPrice, feeRate).value());
         }
 
         @Override
         public List<BalanceChange> planSettlementChanges(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             Money reserved = reservedDebit(quantity, limitPrice, feeRate);
             Money settled = settlementDebit(quantity, fill);
             return List.of(
                     new BalanceChange.ConsumeLocked(pair.quoteCoinId(), settled.value()),
-                    new BalanceChange.Unlock(pair.quoteCoinId(), reserved.minus(settled).value()),
+                    new BalanceChange.Unlock(
+                            pair.quoteCoinId(), reserved.minus(settled).value()),
                     new BalanceChange.AddAvailable(pair.tradedCoinId(), quantity.value()));
         }
     },
@@ -123,21 +100,13 @@ public enum OrderMode {
 
         @Override
         public BalanceChange.Lock planReservation(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return new BalanceChange.Lock(pair.tradedCoinId(), quantity.value());
         }
 
         @Override
         public List<BalanceChange> planSettlementChanges(
-                Quantity quantity,
-                Price limitPrice,
-                BigDecimal feeRate,
-                Fill fill,
-                TradingPair pair) {
+                Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return List.of(
                     new BalanceChange.ConsumeLocked(pair.tradedCoinId(), quantity.value()),
                     new BalanceChange.AddAvailable(

@@ -17,8 +17,7 @@ public record TransferHistoryResult(
         LocalDateTime createdAt,
         LocalDateTime completedAt) {
 
-    public static TransferHistoryResult from(
-            Transfer transfer, Long viewerWalletId, Map<Long, String> coinSymbols) {
+    public static TransferHistoryResult from(Transfer transfer, Long viewerWalletId, Map<Long, String> coinSymbols) {
         return new TransferHistoryResult(
                 transfer.getTransferId(),
                 transfer.resolveType(viewerWalletId),

@@ -80,23 +80,20 @@ public class ExchangeCoinsStepDefinition {
     }
 
     private void insertCoins() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
-                        + "(1, 'KRW', '원화'), "
-                        + "(2, 'BTC', '비트코인'), "
-                        + "(3, 'ETH', '이더리움')");
+        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
+                + "(1, 'KRW', '원화'), "
+                + "(2, 'BTC', '비트코인'), "
+                + "(3, 'ETH', '이더리움')");
     }
 
     private void insertExchanges() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
-                        + " base_currency_coin_id, fee_rate) VALUES (1, 'Upbit', 'DOMESTIC', 1,"
-                        + " 0.000500), (2, 'Bithumb', 'DOMESTIC', 1, 0.000500)");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
+                + " base_currency_coin_id, fee_rate) VALUES (1, 'Upbit', 'DOMESTIC', 1,"
+                + " 0.000500), (2, 'Bithumb', 'DOMESTIC', 1, 0.000500)");
     }
 
     private void insertExchangeCoins() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id,"
-                        + " display_name) VALUES (10, 1, 2, '비트코인'), (11, 1, 3, '이더리움')");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id,"
+                + " display_name) VALUES (10, 1, 2, '비트코인'), (11, 1, 3, '이더리움')");
     }
 }

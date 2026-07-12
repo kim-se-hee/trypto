@@ -102,11 +102,8 @@ public class BatchOrchestrationStepDefinition {
 
     @Given("오케스트레이션용 거래소 정보가 존재한다")
     public void 오케스트레이션용_거래소_정보가_존재한다() {
-        Integer count =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM exchange_market WHERE exchange_id = ?",
-                        Integer.class,
-                        EXCHANGE_ID);
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM exchange_market WHERE exchange_id = ?", Integer.class, EXCHANGE_ID);
         if (count == null || count == 0) {
             jdbcTemplate.update(
                     "INSERT INTO exchange_market (exchange_id, name, market_type,"
@@ -120,8 +117,7 @@ public class BatchOrchestrationStepDefinition {
     @Given("오케스트레이션용 잔고가 존재한다")
     public void 오케스트레이션용_잔고가_존재한다() {
         jdbcTemplate.update(
-                "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?, ?,"
-                        + " ?, 0)",
+                "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?, ?," + " ?, 0)",
                 WALLET_ID,
                 BASE_CURRENCY_COIN_ID,
                 new BigDecimal("10000000"));
@@ -155,11 +151,10 @@ public class BatchOrchestrationStepDefinition {
 
     @When("전체 배치를 순차 실행한다")
     public void 전체_배치를_순차_실행한다() throws Exception {
-        JobParameters params =
-                new JobParametersBuilder()
-                        .addString("snapshotDate", SNAPSHOT_DATE.toString())
-                        .addLong("run.id", System.currentTimeMillis())
-                        .toJobParameters();
+        JobParameters params = new JobParametersBuilder()
+                .addString("snapshotDate", SNAPSHOT_DATE.toString())
+                .addLong("run.id", System.currentTimeMillis())
+                .toJobParameters();
 
         jobOperator.start(snapshotJob, params);
         snapshotCompleted = true;

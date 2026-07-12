@@ -8,8 +8,7 @@ import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 
-public interface InvestmentRoundJpaRepository
-        extends JpaRepository<InvestmentRoundJpaEntity, Long> {
+public interface InvestmentRoundJpaRepository extends JpaRepository<InvestmentRoundJpaEntity, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<InvestmentRoundJpaEntity> findWithLockById(Long roundId);

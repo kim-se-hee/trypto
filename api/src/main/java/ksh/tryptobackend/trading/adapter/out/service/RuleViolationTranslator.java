@@ -12,8 +12,7 @@ final class RuleViolationTranslator {
 
     private RuleViolationTranslator() {}
 
-    static CheckRuleViolationsQuery toQuery(
-            OrderPlacedEvent event, Position position, long todayOrderCount) {
+    static CheckRuleViolationsQuery toQuery(OrderPlacedEvent event, Position position, long todayOrderCount) {
         return new CheckRuleViolationsQuery(
                 event.walletId(),
                 event.exchangeCoinId(),

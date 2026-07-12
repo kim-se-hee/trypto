@@ -2,8 +2,7 @@ package ksh.tryptobackend.portfolio.domain.vo;
 
 import java.math.BigDecimal;
 
-public record ExchangeSnapshot(
-        Long exchangeId, Long baseCurrencyCoinId, KrwConversionRate conversionRate) {
+public record ExchangeSnapshot(Long exchangeId, Long baseCurrencyCoinId, KrwConversionRate conversionRate) {
 
     public BigDecimal convertToKrw(BigDecimal amount) {
         return conversionRate.convert(amount);

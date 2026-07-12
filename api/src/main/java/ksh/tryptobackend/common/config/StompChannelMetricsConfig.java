@@ -47,7 +47,10 @@ public class StompChannelMetricsConfig {
                     bean.getClass().getName());
             return;
         }
-        Gauge.builder(prefix + ".queue.size", tpe, e -> e.getThreadPoolExecutor().getQueue().size())
+        Gauge.builder(
+                        prefix + ".queue.size",
+                        tpe,
+                        e -> e.getThreadPoolExecutor().getQueue().size())
                 .description("STOMP 채널 executor 의 대기 큐 크기")
                 .register(meterRegistry);
         Gauge.builder(prefix + ".active", tpe, ThreadPoolTaskExecutor::getActiveCount)
@@ -60,16 +63,14 @@ public class StompChannelMetricsConfig {
     }
 
     private void bindRejectedCounter(String prefix, ThreadPoolTaskExecutor tpe) {
-        Counter rejected =
-                Counter.builder(prefix + ".rejected")
-                        .description("큐가 가득 차서 폐기된 STOMP 채널 작업 수 (메시지 손실 직접 증거)")
-                        .register(meterRegistry);
+        Counter rejected = Counter.builder(prefix + ".rejected")
+                .description("큐가 가득 차서 폐기된 STOMP 채널 작업 수 (메시지 손실 직접 증거)")
+                .register(meterRegistry);
         ThreadPoolExecutor executor = tpe.getThreadPoolExecutor();
         RejectedExecutionHandler delegate = executor.getRejectedExecutionHandler();
-        executor.setRejectedExecutionHandler(
-                (r, e) -> {
-                    rejected.increment();
-                    delegate.rejectedExecution(r, e);
-                });
+        executor.setRejectedExecutionHandler((r, e) -> {
+            rejected.increment();
+            delegate.rejectedExecution(r, e);
+        });
     }
 }

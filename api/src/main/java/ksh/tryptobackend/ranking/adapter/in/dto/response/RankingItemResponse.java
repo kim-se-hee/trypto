@@ -4,12 +4,7 @@ import java.math.BigDecimal;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingItemResult;
 
 public record RankingItemResponse(
-        int rank,
-        Long userId,
-        String nickname,
-        BigDecimal profitRate,
-        int tradeCount,
-        boolean portfolioPublic) {
+        int rank, Long userId, String nickname, BigDecimal profitRate, int tradeCount, boolean portfolioPublic) {
 
     public static RankingItemResponse from(RankingItemResult result) {
         return new RankingItemResponse(

@@ -28,12 +28,10 @@ public class TickerEventConflator {
 
     private final TickerEventPublisher publisher;
 
-    private final ConcurrentHashMap<Key, AtomicReference<NormalizedTicker>> slots =
-            new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Key, AtomicReference<NormalizedTicker>> slots = new ConcurrentHashMap<>();
 
     public void submit(NormalizedTicker ticker) {
-        slots.computeIfAbsent(Key.of(ticker), k -> new AtomicReference<>())
-                .set(ticker);
+        slots.computeIfAbsent(Key.of(ticker), k -> new AtomicReference<>()).set(ticker);
     }
 
     @Scheduled(fixedDelay = FLUSH_INTERVAL_MS)
@@ -42,7 +40,9 @@ public class TickerEventConflator {
         slots.values().forEach(ref -> {
             NormalizedTicker latest = ref.getAndSet(null);
             if (latest != null) {
-                byExchange.computeIfAbsent(latest.exchange(), k -> new ArrayList<>()).add(latest);
+                byExchange
+                        .computeIfAbsent(latest.exchange(), k -> new ArrayList<>())
+                        .add(latest);
             }
         });
         byExchange.forEach(publisher::publishBatch);

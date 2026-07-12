@@ -5,11 +5,7 @@ import java.time.LocalDateTime;
 import ksh.tryptobackend.trading.domain.vo.OrderFilledNotification;
 
 public record OrderFilledStompPayload(
-        String eventType,
-        Long orderId,
-        BigDecimal executedPrice,
-        BigDecimal quantity,
-        LocalDateTime executedAt) {
+        String eventType, Long orderId, BigDecimal executedPrice, BigDecimal quantity, LocalDateTime executedAt) {
 
     private static final String EVENT_TYPE = "ORDER_FILLED";
 

@@ -1,6 +1,13 @@
 package ksh.tryptocollector.ha;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 import com.redis.testcontainers.RedisContainer;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,14 +19,6 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.springframework.context.ApplicationEventPublisher;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 @DisplayName("LeaderElection 분산 리더 선출 통합 테스트")
 class LeaderElectionIntegrationTest {
@@ -90,11 +89,10 @@ class LeaderElectionIntegrationTest {
         RecordingEventPublisher publisher = new RecordingEventPublisher();
         LeaderElection election = startElection(redissonA, publisher);
 
-        await().atMost(Duration.ofSeconds(3))
-                .untilAsserted(() -> {
-                    assertThat(election.isLeader()).isTrue();
-                    assertThat(publisher.events()).hasAtLeastOneElementOfType(LeadershipAcquiredEvent.class);
-                });
+        await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(election.isLeader()).isTrue();
+            assertThat(publisher.events()).hasAtLeastOneElementOfType(LeadershipAcquiredEvent.class);
+        });
     }
 
     @Test
@@ -104,7 +102,8 @@ class LeaderElectionIntegrationTest {
         LeaderElection electionB = startElection(redissonB, new RecordingEventPublisher());
 
         await().atMost(Duration.ofSeconds(5))
-                .untilAsserted(() -> assertThat(electionA.isLeader() || electionB.isLeader()).isTrue());
+                .untilAsserted(() ->
+                        assertThat(electionA.isLeader() || electionB.isLeader()).isTrue());
 
         // 최소 6초 동안 두 인스턴스가 동시에 리더가 되면 안 된다 (tick 한 사이클 이상)
         await().during(Duration.ofSeconds(6))
@@ -119,8 +118,7 @@ class LeaderElectionIntegrationTest {
         LeaderElection electionB = startElection(redissonB, new RecordingEventPublisher());
 
         // 한 쪽이 리더가 될 때까지 대기
-        await().atMost(Duration.ofSeconds(5))
-                .until(() -> electionA.isLeader() || electionB.isLeader());
+        await().atMost(Duration.ofSeconds(5)).until(() -> electionA.isLeader() || electionB.isLeader());
 
         // 리더/스탠바이 식별
         LeaderElection leader = electionA.isLeader() ? electionA : electionB;
@@ -131,8 +129,7 @@ class LeaderElectionIntegrationTest {
         shutdownEarly(leader);
 
         // standby가 tick cycle(최대 5초) 내 리더로 승격되어야 한다
-        await().atMost(Duration.ofSeconds(8))
-                .until(standby::isLeader);
+        await().atMost(Duration.ofSeconds(8)).until(standby::isLeader);
     }
 
     /**

@@ -25,14 +25,14 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
         TradingPair tradingPair = marketQueryPort.getTradingPair(query.exchangeCoinId());
 
         BigDecimal available = getAvailableBalance(query.walletId(), query.side(), tradingPair);
-        BigDecimal currentPrice = marketQueryPort.getCurrentPrice(query.exchangeCoinId()).value();
+        BigDecimal currentPrice =
+                marketQueryPort.getCurrentPrice(query.exchangeCoinId()).value();
 
         return new OrderAvailabilityResult(available, currentPrice);
     }
 
     private BigDecimal getAvailableBalance(Long walletId, Side side, TradingPair tradingPair) {
-        Long targetCoinId =
-                side == Side.BUY ? tradingPair.quoteCoinId() : tradingPair.tradedCoinId();
+        Long targetCoinId = side == Side.BUY ? tradingPair.quoteCoinId() : tradingPair.tradedCoinId();
         return walletQueryPort.getAvailableBalance(walletId, targetCoinId);
     }
 }

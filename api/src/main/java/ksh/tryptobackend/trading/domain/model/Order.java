@@ -44,20 +44,18 @@ public class Order extends AggregateRoot {
 
     public static Order create(PlaceOrderCommand cmd, MarketInfo marketInfo, LocalDateTime now) {
         OrderMode mode = OrderMode.of(cmd.orderType(), cmd.side());
-        InterpretedOrderInput interpreted =
-                mode.interpret(new OrderInput(cmd.volume(), cmd.price()), marketInfo);
+        InterpretedOrderInput interpreted = mode.interpret(new OrderInput(cmd.volume(), cmd.price()), marketInfo);
 
-        Order order =
-                Order.builder()
-                        .walletId(cmd.walletId())
-                        .exchangeCoinId(cmd.exchangeCoinId())
-                        .mode(mode)
-                        .quantity(interpreted.quantity())
-                        .limitPrice(interpreted.limitPrice())
-                        .feeRate(marketInfo.exchangeInfo().feeRate())
-                        .status(OrderStatus.PENDING)
-                        .createdAt(now)
-                        .build();
+        Order order = Order.builder()
+                .walletId(cmd.walletId())
+                .exchangeCoinId(cmd.exchangeCoinId())
+                .mode(mode)
+                .quantity(interpreted.quantity())
+                .limitPrice(interpreted.limitPrice())
+                .feeRate(marketInfo.exchangeInfo().feeRate())
+                .status(OrderStatus.PENDING)
+                .createdAt(now)
+                .build();
 
         order.registerEvent(OrderPlacedEvent.of(order, marketInfo));
         if (order.isMarketOrder()) {
@@ -82,10 +80,7 @@ public class Order extends AggregateRoot {
             LocalDateTime createdAt,
             LocalDateTime filledAt) {
         Price price = (limitPrice != null) ? Price.of(limitPrice) : null;
-        Fill fill =
-                (filledPrice != null)
-                        ? new Fill(Price.of(filledPrice), Money.of(feeAmount), filledAt)
-                        : null;
+        Fill fill = (filledPrice != null) ? new Fill(Price.of(filledPrice), Money.of(feeAmount), filledAt) : null;
         return Order.builder()
                 .id(id)
                 .walletId(walletId)

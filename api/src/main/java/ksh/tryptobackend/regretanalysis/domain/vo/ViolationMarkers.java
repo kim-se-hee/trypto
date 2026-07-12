@@ -18,20 +18,12 @@ public final class ViolationMarkers {
 
     public static ViolationMarkers from(List<ViolationDetail> violations, AssetTimeline timeline) {
         Set<LocalDate> violationDates =
-                violations.stream()
-                        .map(ViolationDetail::getOccurredDate)
-                        .collect(Collectors.toSet());
+                violations.stream().map(ViolationDetail::getOccurredDate).collect(Collectors.toSet());
 
-        List<ViolationMarker> markers =
-                violationDates.stream()
-                        .sorted()
-                        .flatMap(
-                                date ->
-                                        timeline
-                                                .findAssetAt(date)
-                                                .map(asset -> new ViolationMarker(date, asset))
-                                                .stream())
-                        .toList();
+        List<ViolationMarker> markers = violationDates.stream()
+                .sorted()
+                .flatMap(date -> timeline.findAssetAt(date).map(asset -> new ViolationMarker(date, asset)).stream())
+                .toList();
 
         return new ViolationMarkers(markers);
     }

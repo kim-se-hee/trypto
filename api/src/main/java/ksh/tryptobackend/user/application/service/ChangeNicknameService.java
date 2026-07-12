@@ -23,10 +23,9 @@ public class ChangeNicknameService implements ChangeNicknameUseCase {
     @Override
     @Transactional
     public User changeNickname(ChangeNicknameCommand command) {
-        User user =
-                userQueryPort
-                        .findById(command.userId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userQueryPort
+                .findById(command.userId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.changeNickname(command.nickname());
         nicknameUniquenessChecker.ensureUnique(user.getNickname());
         return userCommandPort.save(user);

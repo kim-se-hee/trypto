@@ -19,10 +19,9 @@ public class JpaRuleViolationCommandAdapter implements RuleViolationCommandPort 
         if (violations.isEmpty()) {
             return;
         }
-        List<RuleViolationJpaEntity> entities =
-                violations.stream()
-                        .map(v -> RuleViolationJpaEntity.fromOrderViolation(orderId, v))
-                        .toList();
+        List<RuleViolationJpaEntity> entities = violations.stream()
+                .map(v -> RuleViolationJpaEntity.fromOrderViolation(orderId, v))
+                .toList();
         ruleViolationJpaRepository.saveAll(entities);
     }
 }

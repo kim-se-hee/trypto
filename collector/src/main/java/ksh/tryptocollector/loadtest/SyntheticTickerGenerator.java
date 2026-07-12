@@ -64,12 +64,8 @@ public class SyntheticTickerGenerator {
                 coinIndexes.put(exchange, new AtomicInteger(0));
                 rateCarry.put(exchange, 0.0);
                 publishedCounters.computeIfAbsent(exchange, this::newCounter);
-                ScheduledFuture<?> task =
-                        scheduler.scheduleAtFixedRate(
-                                () -> tick(exchange),
-                                0L,
-                                TICK_INTERVAL_MS,
-                                TimeUnit.MILLISECONDS);
+                ScheduledFuture<?> task = scheduler.scheduleAtFixedRate(
+                        () -> tick(exchange), 0L, TICK_INTERVAL_MS, TimeUnit.MILLISECONDS);
                 tasks.put(exchange, task);
             }
             log.info(

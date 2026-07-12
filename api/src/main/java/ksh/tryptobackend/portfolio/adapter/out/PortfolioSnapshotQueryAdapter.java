@@ -22,68 +22,56 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
 
     private final JPAQueryFactory queryFactory;
 
-    private static final QPortfolioSnapshotJpaEntity snapshot =
-            QPortfolioSnapshotJpaEntity.portfolioSnapshotJpaEntity;
-    private static final QSnapshotDetailJpaEntity detail =
-            QSnapshotDetailJpaEntity.snapshotDetailJpaEntity;
+    private static final QPortfolioSnapshotJpaEntity snapshot = QPortfolioSnapshotJpaEntity.portfolioSnapshotJpaEntity;
+    private static final QSnapshotDetailJpaEntity detail = QSnapshotDetailJpaEntity.snapshotDetailJpaEntity;
 
     @Override
     public List<HoldingSummary> findLatestSnapshotDetails(Long userId, Long roundId) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                HoldingSummary.class,
-                                detail.coinId,
-                                snapshot.exchangeId,
-                                detail.assetRatio,
-                                detail.profitRate))
+                .select(Projections.constructor(
+                        HoldingSummary.class, detail.coinId, snapshot.exchangeId, detail.assetRatio, detail.profitRate))
                 .from(detail)
                 .join(snapshot)
                 .on(detail.snapshotId.eq(snapshot.id))
-                .where(
-                        snapshot.userId
-                                .eq(userId)
-                                .and(snapshot.roundId.eq(roundId))
-                                .and(snapshot.snapshotDate.eq(latestSnapshotDate(userId, roundId))))
+                .where(snapshot.userId
+                        .eq(userId)
+                        .and(snapshot.roundId.eq(roundId))
+                        .and(snapshot.snapshotDate.eq(latestSnapshotDate(userId, roundId))))
                 .fetch();
     }
 
     @Override
-    public Optional<SnapshotOverview> findLatestByRoundIdAndExchangeId(
-            Long roundId, Long exchangeId) {
-        SnapshotOverview result =
-                queryFactory
-                        .select(
-                                Projections.constructor(
-                                        SnapshotOverview.class,
-                                        snapshot.id,
-                                        snapshot.roundId,
-                                        snapshot.exchangeId,
-                                        snapshot.totalAsset,
-                                        snapshot.totalInvestment,
-                                        snapshot.totalProfitRate,
-                                        snapshot.snapshotDate))
-                        .from(snapshot)
-                        .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
-                        .orderBy(snapshot.snapshotDate.desc())
-                        .limit(1)
-                        .fetchOne();
+    public Optional<SnapshotOverview> findLatestByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
+        SnapshotOverview result = queryFactory
+                .select(Projections.constructor(
+                        SnapshotOverview.class,
+                        snapshot.id,
+                        snapshot.roundId,
+                        snapshot.exchangeId,
+                        snapshot.totalAsset,
+                        snapshot.totalInvestment,
+                        snapshot.totalProfitRate,
+                        snapshot.snapshotDate))
+                .from(snapshot)
+                .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
+                .orderBy(snapshot.snapshotDate.desc())
+                .limit(1)
+                .fetchOne();
         return Optional.ofNullable(result);
     }
 
     @Override
     public List<SnapshotOverview> findAllByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                SnapshotOverview.class,
-                                snapshot.id,
-                                snapshot.roundId,
-                                snapshot.exchangeId,
-                                snapshot.totalAsset,
-                                snapshot.totalInvestment,
-                                snapshot.totalProfitRate,
-                                snapshot.snapshotDate))
+                .select(Projections.constructor(
+                        SnapshotOverview.class,
+                        snapshot.id,
+                        snapshot.roundId,
+                        snapshot.exchangeId,
+                        snapshot.totalAsset,
+                        snapshot.totalInvestment,
+                        snapshot.totalProfitRate,
+                        snapshot.snapshotDate))
                 .from(snapshot)
                 .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
                 .orderBy(snapshot.snapshotDate.asc())
@@ -93,13 +81,12 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
     @Override
     public List<UserSnapshotSummary> findLatestSummaries(LocalDate snapshotDate) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                UserSnapshotSummary.class,
-                                snapshot.userId,
-                                snapshot.roundId,
-                                snapshot.totalAssetKrw.sum(),
-                                snapshot.totalInvestmentKrw.sum()))
+                .select(Projections.constructor(
+                        UserSnapshotSummary.class,
+                        snapshot.userId,
+                        snapshot.roundId,
+                        snapshot.totalAssetKrw.sum(),
+                        snapshot.totalInvestmentKrw.sum()))
                 .from(snapshot)
                 .where(snapshot.snapshotDate.eq(snapshotDate))
                 .groupBy(snapshot.userId, snapshot.roundId)

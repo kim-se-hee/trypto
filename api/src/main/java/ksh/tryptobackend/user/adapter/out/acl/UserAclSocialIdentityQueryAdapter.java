@@ -27,12 +27,14 @@ public class UserAclSocialIdentityQueryAdapter implements SocialIdentityQueryPor
 
     public UserAclSocialIdentityQueryAdapter(KakaoOAuthProperties properties) {
         this.properties = properties;
-        this.restClient = RestClient.builder().requestFactory(requestFactory(properties)).build();
+        this.restClient =
+                RestClient.builder().requestFactory(requestFactory(properties)).build();
     }
 
     private static JdkClientHttpRequestFactory requestFactory(KakaoOAuthProperties properties) {
-        HttpClient httpClient =
-                HttpClient.newBuilder().connectTimeout(properties.getConnectTimeout()).build();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(properties.getConnectTimeout())
+                .build();
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(properties.getReadTimeout());
         return requestFactory;

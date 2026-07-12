@@ -30,29 +30,24 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
     @Override
     public Optional<RegretReport> generateReport(GenerateRegretReportCommand command) {
         ViolatedOrders violations =
-                tradingQueryPort.findViolatedOrders(
-                        command.roundId(), command.exchangeId(), command.walletId());
+                tradingQueryPort.findViolatedOrders(command.roundId(), command.exchangeId(), command.walletId());
         if (violations.isEmpty()) {
             return Optional.empty();
         }
 
-        CurrentPrices currentPrices =
-                marketDataQueryPort.findCurrentPrices(violations.exchangeCoinIds());
+        CurrentPrices currentPrices = marketDataQueryPort.findCurrentPrices(violations.exchangeCoinIds());
         List<ViolationDetail> details = violations.calculateDetails(currentPrices);
-        AssetSnapshot snapshot =
-                portfolioQueryPort.getLatestSnapshot(command.roundId(), command.exchangeId());
-        List<RuleImpact> impacts =
-                new ViolationDetails(details).toRuleImpacts(snapshot.getTotalInvestment());
+        AssetSnapshot snapshot = portfolioQueryPort.getLatestSnapshot(command.roundId(), command.exchangeId());
+        List<RuleImpact> impacts = new ViolationDetails(details).toRuleImpacts(snapshot.getTotalInvestment());
 
-        return Optional.of(
-                RegretReport.generate(
-                        command.userId(),
-                        command.roundId(),
-                        command.exchangeId(),
-                        snapshot,
-                        impacts,
-                        details,
-                        command.startedAt().toLocalDate(),
-                        clock));
+        return Optional.of(RegretReport.generate(
+                command.userId(),
+                command.roundId(),
+                command.exchangeId(),
+                snapshot,
+                impacts,
+                details,
+                command.startedAt().toLocalDate(),
+                clock));
     }
 }

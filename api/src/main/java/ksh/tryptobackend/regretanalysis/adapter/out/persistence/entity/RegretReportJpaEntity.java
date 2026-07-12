@@ -85,16 +85,12 @@ public class RegretReportJpaEntity {
         entity.createdAt = report.getCreatedAt();
 
         if (report.getRuleImpacts() != null) {
-            report.getRuleImpacts()
-                    .forEach(ri -> entity.ruleImpacts.add(RuleImpactJpaEntity.fromDomain(ri)));
+            report.getRuleImpacts().forEach(ri -> entity.ruleImpacts.add(RuleImpactJpaEntity.fromDomain(ri)));
         }
         if (report.getViolationDetails() != null) {
             report.getViolationDetails()
                     .toList()
-                    .forEach(
-                            vd ->
-                                    entity.violationDetails.add(
-                                            ViolationDetailJpaEntity.fromDomain(vd)));
+                    .forEach(vd -> entity.violationDetails.add(ViolationDetailJpaEntity.fromDomain(vd)));
         }
 
         return entity;
@@ -103,8 +99,9 @@ public class RegretReportJpaEntity {
     public RegretReport toDomain() {
         List<RuleImpact> domainRuleImpacts =
                 ruleImpacts.stream().map(RuleImpactJpaEntity::toDomain).toList();
-        List<ViolationDetail> domainViolationDetails =
-                violationDetails.stream().map(ViolationDetailJpaEntity::toDomain).toList();
+        List<ViolationDetail> domainViolationDetails = violationDetails.stream()
+                .map(ViolationDetailJpaEntity::toDomain)
+                .toList();
 
         return RegretReport.reconstitute(
                 id,

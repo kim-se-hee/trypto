@@ -1,12 +1,11 @@
 package ksh.tryptocollector.ingest.binance;
 
+import java.util.List;
 import ksh.tryptocollector.ingest.ExchangeTickerPoller;
 import ksh.tryptocollector.ingest.NormalizableTicker;
 import ksh.tryptocollector.model.Exchange;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor

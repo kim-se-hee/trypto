@@ -38,7 +38,8 @@ public class FindOrderHistoryService implements FindOrderHistoryUseCase {
     }
 
     private OrderHistoryCursorResult buildCursorResult(List<Order> orders, boolean hasNext) {
-        List<OrderHistoryResult> content = orders.stream().map(OrderHistoryResult::from).toList();
+        List<OrderHistoryResult> content =
+                orders.stream().map(OrderHistoryResult::from).toList();
         Long nextCursor = hasNext ? orders.getLast().getId() : null;
 
         return new OrderHistoryCursorResult(content, nextCursor, hasNext);

@@ -55,8 +55,7 @@ public sealed interface Rule {
         }
     }
 
-    record LossCutRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt)
-            implements Rule {
+    record LossCutRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt) implements Rule {
 
         @Override
         public RuleType ruleType() {
@@ -74,8 +73,7 @@ public sealed interface Rule {
         }
     }
 
-    record ProfitTakeRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt)
-            implements Rule {
+    record ProfitTakeRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt) implements Rule {
 
         @Override
         public RuleType ruleType() {
@@ -93,8 +91,7 @@ public sealed interface Rule {
         }
     }
 
-    record ChaseBuyBanRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt)
-            implements Rule {
+    record ChaseBuyBanRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt) implements Rule {
 
         @Override
         public RuleType ruleType() {
@@ -119,8 +116,7 @@ public sealed interface Rule {
         }
     }
 
-    record AveragingDownLimitRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt)
-            implements Rule {
+    record AveragingDownLimitRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt) implements Rule {
 
         @Override
         public RuleType ruleType() {
@@ -150,8 +146,7 @@ public sealed interface Rule {
         }
     }
 
-    record OvertradingLimitRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt)
-            implements Rule {
+    record OvertradingLimitRule(Long id, BigDecimal thresholdValue, LocalDateTime createdAt) implements Rule {
 
         @Override
         public RuleType ruleType() {

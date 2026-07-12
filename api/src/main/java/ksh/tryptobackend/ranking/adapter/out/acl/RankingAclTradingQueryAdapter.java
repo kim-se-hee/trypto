@@ -16,8 +16,7 @@ public class RankingAclTradingQueryAdapter implements TradingQueryPort {
 
     @Override
     public RoundTradeCounts countTradesByRoundIds(List<Long> roundIds) {
-        Map<Long, Integer> countByRoundId =
-                countTradesByRoundIdsUseCase.countTradesByRoundIds(roundIds);
+        Map<Long, Integer> countByRoundId = countTradesByRoundIdsUseCase.countTradesByRoundIds(roundIds);
         return new RoundTradeCounts(countByRoundId);
     }
 }

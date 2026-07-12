@@ -60,7 +60,7 @@ spotless {
     java {
         target 'src/**/*.java'
 
-        googleJavaFormat('1.25.2').aosp().reflowLongStrings()
+        palantirJavaFormat('2.95.0')
         formatAnnotations()
 
         removeUnusedImports()

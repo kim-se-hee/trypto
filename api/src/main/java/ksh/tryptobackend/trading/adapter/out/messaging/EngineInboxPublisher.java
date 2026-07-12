@@ -41,12 +41,11 @@ public class EngineInboxPublisher {
     private void publish(String type, Object payload, Long orderId) {
         try {
             byte[] body = objectMapper.writeValueAsBytes(payload);
-            Message msg =
-                    MessageBuilder.withBody(body)
-                            .setContentType(MessageProperties.CONTENT_TYPE_JSON)
-                            .setDeliveryMode(MessageProperties.DEFAULT_DELIVERY_MODE)
-                            .setHeader("event_type", type)
-                            .build();
+            Message msg = MessageBuilder.withBody(body)
+                    .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                    .setDeliveryMode(MessageProperties.DEFAULT_DELIVERY_MODE)
+                    .setHeader("event_type", type)
+                    .build();
             rabbitTemplate.send("", inboxQueue, msg);
         } catch (Exception e) {
             log.warn("engine.inbox publish failed type={} orderId={}", type, orderId, e);

@@ -28,13 +28,14 @@ public class MockPositionAdapter implements PositionCommandPort, PositionQueryPo
 
     @Override
     public Position getOrCreate(Long walletId, Long coinId) {
-        return findByWalletIdAndCoinId(walletId, coinId)
-                .orElseGet(() -> Position.empty(walletId, coinId));
+        return findByWalletIdAndCoinId(walletId, coinId).orElseGet(() -> Position.empty(walletId, coinId));
     }
 
     @Override
     public List<Position> findAllByWalletId(Long walletId) {
-        return positions.values().stream().filter(p -> p.getWalletId().equals(walletId)).toList();
+        return positions.values().stream()
+                .filter(p -> p.getWalletId().equals(walletId))
+                .toList();
     }
 
     @Override
@@ -49,21 +50,16 @@ public class MockPositionAdapter implements PositionCommandPort, PositionQueryPo
     }
 
     public void setHolding(
-            Long walletId,
-            Long coinId,
-            BigDecimal avgBuyPrice,
-            BigDecimal totalQuantity,
-            int averagingDownCount) {
+            Long walletId, Long coinId, BigDecimal avgBuyPrice, BigDecimal totalQuantity, int averagingDownCount) {
         positions.put(
                 key(walletId, coinId),
                 Position.builder()
                         .walletId(walletId)
                         .coinId(coinId)
-                        .holding(
-                                new Holding(
-                                        Price.of(avgBuyPrice),
-                                        Quantity.of(totalQuantity),
-                                        Money.of(avgBuyPrice.multiply(totalQuantity))))
+                        .holding(new Holding(
+                                Price.of(avgBuyPrice),
+                                Quantity.of(totalQuantity),
+                                Money.of(avgBuyPrice.multiply(totalQuantity))))
                         .averagingDownCount(averagingDownCount)
                         .build());
     }

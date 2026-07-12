@@ -19,10 +19,9 @@ public class RegretAnalysisAclPortfolioQueryAdapter implements PortfolioQueryPor
 
     @Override
     public AssetTimeline getAssetTimeline(Long roundId, Long exchangeId) {
-        List<AssetSnapshot> snapshots =
-                findSnapshotsUseCase.findAllByRoundIdAndExchangeId(roundId, exchangeId).stream()
-                        .map(this::toAssetSnapshot)
-                        .toList();
+        List<AssetSnapshot> snapshots = findSnapshotsUseCase.findAllByRoundIdAndExchangeId(roundId, exchangeId).stream()
+                .map(this::toAssetSnapshot)
+                .toList();
         return AssetTimeline.of(snapshots);
     }
 

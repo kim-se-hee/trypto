@@ -1,13 +1,11 @@
 package ksh.tryptocollector.ingest.upbit;
 
+import java.util.Arrays;
+import java.util.List;
 import ksh.tryptocollector.model.MarketInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import java.util.Arrays;
-import java.util.List;
-
 
 @Component
 public class UpbitRestClient {
@@ -25,10 +23,8 @@ public class UpbitRestClient {
     }
 
     public List<MarketInfo> fetchKrwMarkets() {
-        UpbitMarketResponse[] responses = restClient.get()
-                .uri(restUrl)
-                .retrieve()
-                .body(UpbitMarketResponse[].class);
+        UpbitMarketResponse[] responses =
+                restClient.get().uri(restUrl).retrieve().body(UpbitMarketResponse[].class);
         if (responses == null) {
             return List.of();
         }
@@ -43,7 +39,8 @@ public class UpbitRestClient {
 
     public List<UpbitTickerResponse> fetchKrwTickers(List<String> marketCodes) {
         String markets = String.join(",", marketCodes);
-        UpbitTickerResponse[] responses = restClient.get()
+        UpbitTickerResponse[] responses = restClient
+                .get()
                 .uri(tickerUrl + "?markets=" + markets)
                 .retrieve()
                 .body(UpbitTickerResponse[].class);

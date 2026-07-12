@@ -31,41 +31,45 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class WarmupExchangeCoinMappingServiceTest {
 
-    @Mock private ExchangeQueryPort exchangeQueryPort;
-    @Mock private ExchangeCoinQueryPort exchangeCoinQueryPort;
-    @Mock private CoinQueryPort coinQueryPort;
-    @Mock private ExchangeCoinMappingCacheCommandPort exchangeCoinMappingCacheCommandPort;
+    @Mock
+    private ExchangeQueryPort exchangeQueryPort;
 
-    @InjectMocks private WarmupExchangeCoinMappingService sut;
+    @Mock
+    private ExchangeCoinQueryPort exchangeCoinQueryPort;
+
+    @Mock
+    private CoinQueryPort coinQueryPort;
+
+    @Mock
+    private ExchangeCoinMappingCacheCommandPort exchangeCoinMappingCacheCommandPort;
+
+    @InjectMocks
+    private WarmupExchangeCoinMappingService sut;
 
     @Test
     @DisplayName("거래소-코인 매핑 캐시를 로딩한다")
     void warmup_loadsExchangeCoinMappingCache() {
         // Given
-        Exchange upbit =
-                Exchange.builder()
-                        .exchangeId(1L)
-                        .name("Upbit")
-                        .marketType(ExchangeMarketType.DOMESTIC)
-                        .baseCurrencyCoinId(100L)
-                        .feeRate(new BigDecimal("0.0005"))
-                        .build();
+        Exchange upbit = Exchange.builder()
+                .exchangeId(1L)
+                .name("Upbit")
+                .marketType(ExchangeMarketType.DOMESTIC)
+                .baseCurrencyCoinId(100L)
+                .feeRate(new BigDecimal("0.0005"))
+                .build();
         when(exchangeQueryPort.findAllExchangeIds()).thenReturn(List.of(1L));
         when(exchangeQueryPort.findExchangeDetailById(1L)).thenReturn(Optional.of(upbit));
-        when(coinQueryPort.findSymbolsByIds(Set.of(100L)))
-                .thenReturn(new CoinSymbols(Map.of(100L, "KRW")));
+        when(coinQueryPort.findSymbolsByIds(Set.of(100L))).thenReturn(new CoinSymbols(Map.of(100L, "KRW")));
         when(exchangeCoinQueryPort.findByExchangeId(1L))
                 .thenReturn(new ExchangeCoins(List.of(new ExchangeCoin(10L, 1L, 5L, "Bitcoin"))));
-        when(coinQueryPort.findSymbolsByIds(Set.of(5L)))
-                .thenReturn(new CoinSymbols(Map.of(5L, "BTC")));
+        when(coinQueryPort.findSymbolsByIds(Set.of(5L))).thenReturn(new CoinSymbols(Map.of(5L, "BTC")));
 
         // When
         sut.warmup();
 
         // Then
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<ExchangeSymbolKey, ExchangeCoinMapping>> captor =
-                ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<ExchangeSymbolKey, ExchangeCoinMapping>> captor = ArgumentCaptor.forClass(Map.class);
         verify(exchangeCoinMappingCacheCommandPort).loadAll(captor.capture());
 
         Map<ExchangeSymbolKey, ExchangeCoinMapping> mappings = captor.getValue();

@@ -18,13 +18,11 @@ public class RuleViolation {
         this.createdAt = createdAt;
     }
 
-    public static RuleViolation create(
-            Long ruleId, String violationReason, LocalDateTime createdAt) {
+    public static RuleViolation create(Long ruleId, String violationReason, LocalDateTime createdAt) {
         return new RuleViolation(null, ruleId, violationReason, createdAt);
     }
 
-    public static RuleViolation reconstitute(
-            Long id, Long ruleId, String violationReason, LocalDateTime createdAt) {
+    public static RuleViolation reconstitute(Long id, Long ruleId, String violationReason, LocalDateTime createdAt) {
         return new RuleViolation(id, ruleId, violationReason, createdAt);
     }
 }

@@ -22,7 +22,6 @@ public class FindSnapshotDetailsService implements FindSnapshotDetailsUseCase {
     }
 
     private SnapshotDetailResult toResult(HoldingSummary detail) {
-        return new SnapshotDetailResult(
-                detail.coinId(), detail.exchangeId(), detail.assetRatio(), detail.profitRate());
+        return new SnapshotDetailResult(detail.coinId(), detail.exchangeId(), detail.assetRatio(), detail.profitRate());
     }
 }

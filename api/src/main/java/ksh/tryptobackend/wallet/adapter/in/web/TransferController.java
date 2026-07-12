@@ -26,21 +26,16 @@ public class TransferController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<TransferCoinResponse> createTransfer(
-            @Valid @RequestBody TransferCoinRequest request) {
+    public ApiResponseDto<TransferCoinResponse> createTransfer(@Valid @RequestBody TransferCoinRequest request) {
         TransferCoinResponse response;
         try {
             Transfer transfer = transferCoinUseCase.transferCoin(request.toCommand());
             response = TransferCoinResponse.from(transfer);
         } catch (DuplicateRequestException e) {
-            Long transferId =
-                    idempotencyKeyQueryPort
-                            .findResourceId(request.idempotencyKey().toString())
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalStateException(
-                                                    "중복 송금 요청에는 연결된 리소스 ID 가 있어야 한다: "
-                                                            + request.idempotencyKey()));
+            Long transferId = idempotencyKeyQueryPort
+                    .findResourceId(request.idempotencyKey().toString())
+                    .orElseThrow(() ->
+                            new IllegalStateException("중복 송금 요청에는 연결된 리소스 ID 가 있어야 한다: " + request.idempotencyKey()));
             response = TransferCoinResponse.duplicate(transferId);
         }
         return ApiResponseDto.created("송금이 요청되었습니다.", response);

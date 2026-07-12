@@ -38,8 +38,7 @@ public class ExchangeInfo {
                 && minOrderAmount.compareTo(that.minOrderAmount) == 0
                 && (maxOrderAmount == null
                         ? that.maxOrderAmount == null
-                        : that.maxOrderAmount != null
-                                && maxOrderAmount.compareTo(that.maxOrderAmount) == 0);
+                        : that.maxOrderAmount != null && maxOrderAmount.compareTo(that.maxOrderAmount) == 0);
     }
 
     @Override

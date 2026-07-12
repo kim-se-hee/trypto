@@ -15,6 +15,8 @@ public record MyHoldingsResult(
                 portfolio.exchangeId(),
                 portfolio.baseCurrencyBalance(),
                 portfolio.baseCurrencySymbol(),
-                portfolio.holdingSnapshots().stream().map(HoldingSnapshotResult::from).toList());
+                portfolio.holdingSnapshots().stream()
+                        .map(HoldingSnapshotResult::from)
+                        .toList());
     }
 }

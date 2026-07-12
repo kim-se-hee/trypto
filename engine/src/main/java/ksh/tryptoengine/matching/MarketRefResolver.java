@@ -44,18 +44,14 @@ public class MarketRefResolver {
 
     private MarketRef lazyLoad(Long exchangeCoinId) {
         try {
-            MarketRef ref =
-                    jdbc.queryForObject(
-                            "SELECT ec.coin_id, em.base_currency_coin_id, em.fee_rate "
-                                    + "FROM exchange_coin ec "
-                                    + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id "
-                                    + "WHERE ec.exchange_coin_id = ?",
-                            (rs, rowNum) ->
-                                    new MarketRef(
-                                            rs.getLong("coin_id"),
-                                            rs.getLong("base_currency_coin_id"),
-                                            rs.getBigDecimal("fee_rate")),
-                            exchangeCoinId);
+            MarketRef ref = jdbc.queryForObject(
+                    "SELECT ec.coin_id, em.base_currency_coin_id, em.fee_rate "
+                            + "FROM exchange_coin ec "
+                            + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id "
+                            + "WHERE ec.exchange_coin_id = ?",
+                    (rs, rowNum) -> new MarketRef(
+                            rs.getLong("coin_id"), rs.getLong("base_currency_coin_id"), rs.getBigDecimal("fee_rate")),
+                    exchangeCoinId);
             cache.put(exchangeCoinId, ref);
             return ref;
         } catch (Exception e) {

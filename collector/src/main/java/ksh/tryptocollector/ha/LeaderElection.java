@@ -1,6 +1,10 @@
 package ksh.tryptocollector.ha;
 
 import jakarta.annotation.PreDestroy;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -9,11 +13,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -40,10 +39,8 @@ public class LeaderElection {
 
     void start() {
         lock = redissonClient.getLock(LEADER_LOCK_KEY);
-        scheduler = Executors.newSingleThreadScheduledExecutor(
-                r -> new Thread(r, THREAD_NAME));
-        scheduler.scheduleWithFixedDelay(
-                this::tick, 0, ACQUIRE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, THREAD_NAME));
+        scheduler.scheduleWithFixedDelay(this::tick, 0, ACQUIRE_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     @PreDestroy

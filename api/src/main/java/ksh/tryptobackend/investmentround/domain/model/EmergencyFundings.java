@@ -20,10 +20,7 @@ public class EmergencyFundings {
                 .map(EmergencyFunding::id)
                 .filter(id -> id != null)
                 .max(Long::compareTo)
-                .orElseThrow(
-                        () ->
-                                new IllegalStateException(
-                                        "no persisted emergency funding to reference"));
+                .orElseThrow(() -> new IllegalStateException("no persisted emergency funding to reference"));
     }
 
     public List<EmergencyFunding> values() {

@@ -42,7 +42,6 @@ public class InvestmentRoundAclMarketDataQueryAdapter implements MarketDataQuery
     }
 
     private SeedFundingSpec toSeedFundingSpec(ExchangeDetailResult detail) {
-        return new SeedFundingSpec(
-                detail.baseCurrencyCoinId(), SeedAmountPolicy.forDomestic(detail.domestic()));
+        return new SeedFundingSpec(detail.baseCurrencyCoinId(), SeedAmountPolicy.forDomestic(detail.domestic()));
     }
 }

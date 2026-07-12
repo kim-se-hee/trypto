@@ -17,12 +17,10 @@ public class FindExchangeDetailService implements FindExchangeDetailUseCase {
     public Optional<ExchangeDetailResult> findExchangeDetail(Long exchangeId) {
         return exchangeQueryPort
                 .findExchangeDetailById(exchangeId)
-                .map(
-                        exchange ->
-                                new ExchangeDetailResult(
-                                        exchange.getName(),
-                                        exchange.getBaseCurrencyCoinId(),
-                                        exchange.isDomestic(),
-                                        exchange.getFeeRate()));
+                .map(exchange -> new ExchangeDetailResult(
+                        exchange.getName(),
+                        exchange.getBaseCurrencyCoinId(),
+                        exchange.isDomestic(),
+                        exchange.getFeeRate()));
     }
 }

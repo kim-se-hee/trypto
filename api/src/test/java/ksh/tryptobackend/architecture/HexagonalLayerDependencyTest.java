@@ -13,9 +13,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class HexagonalLayerDependencyTest {
 
     @ArchTest
@@ -27,22 +25,16 @@ class HexagonalLayerDependencyTest {
                 .resideOutsideOfPackage("..domain.service..")
                 .should()
                 .dependOnClassesThat()
-                .resideInAnyPackage(
-                        merge(
-                                allContextPackages(SERVICE),
-                                allContextPackages(".application.port.out.."),
-                                allContextPackages(".application.port.in"),
-                                allContextPackages(STRATEGY),
-                                allContextPackages(ADAPTER),
-                                new String[] {
-                                    "org.springframework..",
-                                    "jakarta.persistence..",
-                                    "jakarta.transaction..",
-                                    "com.querydsl.."
-                                }))
-                .as(
-                        "Domain should not depend on application (except port.in.dto), adapter, or"
-                                + " framework")
+                .resideInAnyPackage(merge(
+                        allContextPackages(SERVICE),
+                        allContextPackages(".application.port.out.."),
+                        allContextPackages(".application.port.in"),
+                        allContextPackages(STRATEGY),
+                        allContextPackages(ADAPTER),
+                        new String[] {
+                            "org.springframework..", "jakarta.persistence..", "jakarta.transaction..", "com.querydsl.."
+                        }))
+                .as("Domain should not depend on application (except port.in.dto), adapter, or" + " framework")
                 .check(classes);
     }
 
@@ -74,21 +66,18 @@ class HexagonalLayerDependencyTest {
 
     @ArchTest
     void application_service_should_not_depend_on_service(JavaClasses classes) {
-        DescribedPredicate<JavaClass> anApplicationService =
-                describe(
-                        "an application service",
-                        jc ->
-                                jc.getSimpleName().endsWith("Service")
-                                        && jc.getPackageName().contains(".application.service"));
+        DescribedPredicate<JavaClass> anApplicationService = describe(
+                "an application service",
+                jc -> jc.getSimpleName().endsWith("Service")
+                        && jc.getPackageName().contains(".application.service"));
         noFields()
                 .that()
                 .areDeclaredInClassesThat()
                 .resideInAnyPackage(allContextPackages(SERVICE))
                 .should()
                 .haveRawType(anApplicationService)
-                .as(
-                        "Application services must not inject another application service —"
-                                + " collaborate via ports or domain services")
+                .as("Application services must not inject another application service —"
+                        + " collaborate via ports or domain services")
                 .check(classes);
     }
 
@@ -142,69 +131,52 @@ class HexagonalLayerDependencyTest {
 
     @ArchTest
     void output_port_should_not_depend_on_port_out_dto(JavaClasses classes) {
-        FreezingArchRule.freeze(
-                        noClasses()
-                                .that()
-                                .resideInAnyPackage(allContextPackages(PORT_OUT))
-                                .should()
-                                .dependOnClassesThat()
-                                .resideInAnyPackage(
-                                        allContextPackages(".application.port.out.dto.."))
-                                .as(
-                                        "Output Port should not depend on port.out.dto — return"
-                                                + " domain model/VO instead"))
+        FreezingArchRule.freeze(noClasses()
+                        .that()
+                        .resideInAnyPackage(allContextPackages(PORT_OUT))
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAnyPackage(allContextPackages(".application.port.out.dto.."))
+                        .as("Output Port should not depend on port.out.dto — return" + " domain model/VO instead"))
                 .check(classes);
     }
 
     @ArchTest
     void service_should_not_depend_on_port_out_dto(JavaClasses classes) {
-        FreezingArchRule.freeze(
-                        noClasses()
-                                .that()
-                                .resideInAnyPackage(allContextPackages(SERVICE))
-                                .should()
-                                .dependOnClassesThat()
-                                .resideInAnyPackage(
-                                        allContextPackages(".application.port.out.dto.."))
-                                .as(
-                                        "Service should not depend on port.out.dto — use domain"
-                                                + " model/VO instead"))
+        FreezingArchRule.freeze(noClasses()
+                        .that()
+                        .resideInAnyPackage(allContextPackages(SERVICE))
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAnyPackage(allContextPackages(".application.port.out.dto.."))
+                        .as("Service should not depend on port.out.dto — use domain" + " model/VO instead"))
                 .check(classes);
     }
 
     @ArchTest
     void application_and_domain_should_not_depend_on_adapter_dto(JavaClasses classes) {
-        FreezingArchRule.freeze(
-                        noClasses()
-                                .that()
-                                .resideInAnyPackage(
-                                        merge(
-                                                allContextPackages(APPLICATION),
-                                                allContextPackages(DOMAIN)))
-                                .should()
-                                .dependOnClassesThat()
-                                .resideInAnyPackage(
-                                        merge(
-                                                allContextPackages(".adapter.in.dto.request.."),
-                                                allContextPackages(".adapter.in.dto.response..")))
-                                .as(
-                                        "Application and domain should not depend on adapter"
-                                                + " Request/Response DTOs"))
+        FreezingArchRule.freeze(noClasses()
+                        .that()
+                        .resideInAnyPackage(merge(allContextPackages(APPLICATION), allContextPackages(DOMAIN)))
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAnyPackage(merge(
+                                allContextPackages(".adapter.in.dto.request.."),
+                                allContextPackages(".adapter.in.dto.response..")))
+                        .as("Application and domain should not depend on adapter" + " Request/Response DTOs"))
                 .check(classes);
     }
 
     @ArchTest
     void domain_vo_should_not_depend_on_domain_model(JavaClasses classes) {
-        FreezingArchRule.freeze(
-                        noClasses()
-                                .that()
-                                .resideInAnyPackage(allContextPackages(".domain.vo.."))
-                                .should()
-                                .dependOnClassesThat()
-                                .resideInAnyPackage(allContextPackages(".domain.model.."))
-                                .as(
-                                        "Domain VO should not depend on domain model — pass values"
-                                                + " into VO methods instead of aggregates"))
+        FreezingArchRule.freeze(noClasses()
+                        .that()
+                        .resideInAnyPackage(allContextPackages(".domain.vo.."))
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAnyPackage(allContextPackages(".domain.model.."))
+                        .as("Domain VO should not depend on domain model — pass values"
+                                + " into VO methods instead of aggregates"))
                 .check(classes);
     }
 }

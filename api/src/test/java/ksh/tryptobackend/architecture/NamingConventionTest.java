@@ -13,9 +13,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.springframework.web.bind.annotation.RestController;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class NamingConventionTest {
 
     @ArchTest
@@ -176,9 +174,8 @@ class NamingConventionTest {
                 .and()
                 .areInterfaces()
                 .should(endWithQueryPortOrCommandPortOrEventPort())
-                .as(
-                        "Output Port interfaces should end with 'QueryPort', 'CommandPort',"
-                                + " 'EventPort', or 'NotificationPort'")
+                .as("Output Port interfaces should end with 'QueryPort', 'CommandPort',"
+                        + " 'EventPort', or 'NotificationPort'")
                 .check(classes);
     }
 
@@ -202,9 +199,8 @@ class NamingConventionTest {
                 .and()
                 .areTopLevelClasses()
                 .should(matchPortNamingWithTechPrefix())
-                .as(
-                        "Persistence adapter name should be a tech prefix followed by the Port name"
-                                + " with 'Port' replaced by 'Adapter' (e.g. JpaOrderQueryAdapter)")
+                .as("Persistence adapter name should be a tech prefix followed by the Port name"
+                        + " with 'Port' replaced by 'Adapter' (e.g. JpaOrderQueryAdapter)")
                 .check(classes);
     }
 
@@ -218,16 +214,14 @@ class NamingConventionTest {
                 .and()
                 .areTopLevelClasses()
                 .should(matchAclNamingWithContextPrefix())
-                .as(
-                        "ACL adapter name should be a context prefix followed by 'Acl' and the Port"
-                                + " name with 'Port' replaced by 'Adapter' (e.g."
-                                + " TradingAclWalletQueryAdapter)")
+                .as("ACL adapter name should be a context prefix followed by 'Acl' and the Port"
+                        + " name with 'Port' replaced by 'Adapter' (e.g."
+                        + " TradingAclWalletQueryAdapter)")
                 .check(classes);
     }
 
     private static ArchCondition<JavaClass> endWithQueryPortOrCommandPortOrEventPort() {
-        return new ArchCondition<>(
-                "end with 'QueryPort', 'CommandPort', 'EventPort', or 'NotificationPort'") {
+        return new ArchCondition<>("end with 'QueryPort', 'CommandPort', 'EventPort', or 'NotificationPort'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 String name = javaClass.getSimpleName();
@@ -235,12 +229,11 @@ class NamingConventionTest {
                         && !name.endsWith("CommandPort")
                         && !name.endsWith("EventPort")
                         && !name.endsWith("NotificationPort")) {
-                    events.add(
-                            SimpleConditionEvent.violated(
-                                    javaClass,
-                                    name
-                                            + " should end with 'QueryPort', 'CommandPort',"
-                                            + " 'EventPort', or 'NotificationPort'"));
+                    events.add(SimpleConditionEvent.violated(
+                            javaClass,
+                            name
+                                    + " should end with 'QueryPort', 'CommandPort',"
+                                    + " 'EventPort', or 'NotificationPort'"));
                 }
             }
         };
@@ -252,21 +245,18 @@ class NamingConventionTest {
             public void check(JavaClass javaClass, ConditionEvents events) {
                 javaClass.getAllRawInterfaces().stream()
                         .filter(i -> i.getSimpleName().endsWith("UseCase"))
-                        .forEach(
-                                useCase -> {
-                                    String expected =
-                                            useCase.getSimpleName().replace("UseCase", "Service");
-                                    if (!javaClass.getSimpleName().equals(expected)) {
-                                        events.add(
-                                                SimpleConditionEvent.violated(
-                                                        javaClass,
-                                                        javaClass.getSimpleName()
-                                                                + " implements "
-                                                                + useCase.getSimpleName()
-                                                                + " but should be named "
-                                                                + expected));
-                                    }
-                                });
+                        .forEach(useCase -> {
+                            String expected = useCase.getSimpleName().replace("UseCase", "Service");
+                            if (!javaClass.getSimpleName().equals(expected)) {
+                                events.add(SimpleConditionEvent.violated(
+                                        javaClass,
+                                        javaClass.getSimpleName()
+                                                + " implements "
+                                                + useCase.getSimpleName()
+                                                + " but should be named "
+                                                + expected));
+                            }
+                        });
             }
         };
     }
@@ -277,56 +267,48 @@ class NamingConventionTest {
     }
 
     private static ArchCondition<JavaClass> matchPortNamingWithTechPrefix() {
-        return new ArchCondition<>(
-                "have a tech prefix followed by the Port name with 'Port' replaced by 'Adapter'") {
+        return new ArchCondition<>("have a tech prefix followed by the Port name with 'Port' replaced by 'Adapter'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 javaClass.getAllRawInterfaces().stream()
                         .filter(i -> i.getSimpleName().endsWith("Port"))
-                        .forEach(
-                                port -> {
-                                    String base = expectedAdapterBase(port);
-                                    String actual = javaClass.getSimpleName();
-                                    if (!actual.endsWith(base)
-                                            || actual.length() <= base.length()) {
-                                        events.add(
-                                                SimpleConditionEvent.violated(
-                                                        javaClass,
-                                                        actual
-                                                                + " implements "
-                                                                + port.getSimpleName()
-                                                                + " but should be named {tech}"
-                                                                + base));
-                                    }
-                                });
+                        .forEach(port -> {
+                            String base = expectedAdapterBase(port);
+                            String actual = javaClass.getSimpleName();
+                            if (!actual.endsWith(base) || actual.length() <= base.length()) {
+                                events.add(SimpleConditionEvent.violated(
+                                        javaClass,
+                                        actual
+                                                + " implements "
+                                                + port.getSimpleName()
+                                                + " but should be named {tech}"
+                                                + base));
+                            }
+                        });
             }
         };
     }
 
     private static ArchCondition<JavaClass> matchAclNamingWithContextPrefix() {
         return new ArchCondition<>(
-                "have a context prefix followed by 'Acl' and the Port name with 'Port' replaced by"
-                        + " 'Adapter'") {
+                "have a context prefix followed by 'Acl' and the Port name with 'Port' replaced by" + " 'Adapter'") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
                 javaClass.getAllRawInterfaces().stream()
                         .filter(i -> i.getSimpleName().endsWith("Port"))
-                        .forEach(
-                                port -> {
-                                    String suffix = "Acl" + expectedAdapterBase(port);
-                                    String actual = javaClass.getSimpleName();
-                                    if (!actual.endsWith(suffix)
-                                            || actual.length() <= suffix.length()) {
-                                        events.add(
-                                                SimpleConditionEvent.violated(
-                                                        javaClass,
-                                                        actual
-                                                                + " implements "
-                                                                + port.getSimpleName()
-                                                                + " but should be named {context}"
-                                                                + suffix));
-                                    }
-                                });
+                        .forEach(port -> {
+                            String suffix = "Acl" + expectedAdapterBase(port);
+                            String actual = javaClass.getSimpleName();
+                            if (!actual.endsWith(suffix) || actual.length() <= suffix.length()) {
+                                events.add(SimpleConditionEvent.violated(
+                                        javaClass,
+                                        actual
+                                                + " implements "
+                                                + port.getSimpleName()
+                                                + " but should be named {context}"
+                                                + suffix));
+                            }
+                        });
             }
         };
     }

@@ -22,18 +22,11 @@ public class CreateWalletWithBalanceService implements CreateWalletWithBalanceUs
     @Override
     @Transactional
     public Long createWalletWithBalance(CreateWalletWithBalanceCommand command) {
-        Wallet wallet =
-                walletCommandPort.save(
-                        Wallet.create(
-                                command.roundId(),
-                                command.exchangeId(),
-                                command.initialAmount(),
-                                command.createdAt()));
+        Wallet wallet = walletCommandPort.save(
+                Wallet.create(command.roundId(), command.exchangeId(), command.initialAmount(), command.createdAt()));
 
-        List<Long> tradableCoinIds =
-                marketDataQueryPort.findCoinIdsByExchange(command.exchangeId());
-        walletBalanceCommandPort.saveAll(
-                wallet.openBalances(tradableCoinIds, command.baseCurrencyCoinId()));
+        List<Long> tradableCoinIds = marketDataQueryPort.findCoinIdsByExchange(command.exchangeId());
+        walletBalanceCommandPort.saveAll(wallet.openBalances(tradableCoinIds, command.baseCurrencyCoinId()));
         return wallet.getWalletId();
     }
 }

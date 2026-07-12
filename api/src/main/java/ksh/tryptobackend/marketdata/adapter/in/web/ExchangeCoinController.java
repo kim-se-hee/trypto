@@ -19,10 +19,8 @@ public class ExchangeCoinController {
     private final FindExchangeCoinsUseCase findExchangeCoinsUseCase;
 
     @GetMapping("/{exchangeId}/coins")
-    public ApiResponseDto<List<ExchangeCoinResponse>> getExchangeCoins(
-            @PathVariable Long exchangeId) {
-        List<ExchangeCoinListResult> results =
-                findExchangeCoinsUseCase.findByExchangeId(exchangeId);
+    public ApiResponseDto<List<ExchangeCoinResponse>> getExchangeCoins(@PathVariable Long exchangeId) {
+        List<ExchangeCoinListResult> results = findExchangeCoinsUseCase.findByExchangeId(exchangeId);
         List<ExchangeCoinResponse> response =
                 results.stream().map(ExchangeCoinResponse::from).toList();
         return ApiResponseDto.success("거래소 상장 코인 목록을 조회했습니다.", response);

@@ -18,7 +18,6 @@ public record PlaceOrderRequest(
         @Positive BigDecimal price) {
 
     public PlaceOrderCommand toCommand() {
-        return new PlaceOrderCommand(
-                clientOrderId, walletId, exchangeCoinId, side, orderType, volume, price);
+        return new PlaceOrderCommand(clientOrderId, walletId, exchangeCoinId, side, orderType, volume, price);
     }
 }

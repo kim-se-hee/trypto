@@ -37,21 +37,19 @@ import org.springframework.transaction.annotation.Transactional;
 class TradingDataSeeder {
 
     private static final BigDecimal FEE_RATE = new BigDecimal("0.0005");
-    private static final String[] MAIN_COINS = {
-        "BTC", "ETH", "XRP", "SOL", "DOGE", "ADA", "LINK", "DOT", "ATOM", "APT"
+    private static final String[] MAIN_COINS = {"BTC", "ETH", "XRP", "SOL", "DOGE", "ADA", "LINK", "DOT", "ATOM", "APT"
     };
-    private static final Map<String, BigDecimal> COIN_PRICES =
-            Map.of(
-                    "BTC", new BigDecimal("95000000"),
-                    "ETH", new BigDecimal("5000000"),
-                    "XRP", new BigDecimal("3200"),
-                    "SOL", new BigDecimal("280000"),
-                    "DOGE", new BigDecimal("500"),
-                    "ADA", new BigDecimal("1200"),
-                    "LINK", new BigDecimal("25000"),
-                    "DOT", new BigDecimal("12000"),
-                    "ATOM", new BigDecimal("15000"),
-                    "APT", new BigDecimal("18000"));
+    private static final Map<String, BigDecimal> COIN_PRICES = Map.of(
+            "BTC", new BigDecimal("95000000"),
+            "ETH", new BigDecimal("5000000"),
+            "XRP", new BigDecimal("3200"),
+            "SOL", new BigDecimal("280000"),
+            "DOGE", new BigDecimal("500"),
+            "ADA", new BigDecimal("1200"),
+            "LINK", new BigDecimal("25000"),
+            "DOT", new BigDecimal("12000"),
+            "ATOM", new BigDecimal("15000"),
+            "APT", new BigDecimal("18000"));
 
     private final OrderJpaRepository orderRepository;
     private final PositionJpaRepository positionRepository;
@@ -78,21 +76,11 @@ class TradingDataSeeder {
         int count = 0;
 
         count +=
-                createOrdersForUser(
-                        ctx,
-                        "김비트",
-                        "UPBIT",
-                        new String[] {"BTC", "ETH", "XRP", "SOL", "DOGE"},
-                        15,
-                        3,
-                        now);
+                createOrdersForUser(ctx, "김비트", "UPBIT", new String[] {"BTC", "ETH", "XRP", "SOL", "DOGE"}, 15, 3, now);
 
-        count +=
-                createOrdersForUser(ctx, "이더리움", "BITHUMB", new String[] {"ETH", "BTC"}, 5, 0, now);
+        count += createOrdersForUser(ctx, "이더리움", "BITHUMB", new String[] {"ETH", "BTC"}, 5, 0, now);
 
-        count +=
-                createOrdersForUser(
-                        ctx, "박솔라나", "BINANCE", new String[] {"SOL", "APT", "ATOM"}, 8, 0, now);
+        count += createOrdersForUser(ctx, "박솔라나", "BINANCE", new String[] {"SOL", "APT", "ATOM"}, 8, 0, now);
 
         count += createOrdersForUser(ctx, "최리플", "UPBIT", new String[] {"XRP", "BTC"}, 5, 0, now);
         count += createOrdersForUser(ctx, "최리플", "BITHUMB", new String[] {"XRP", "ETH"}, 4, 0, now);
@@ -102,24 +90,13 @@ class TradingDataSeeder {
 
         count += createOrdersForUser(ctx, "한에이다", "UPBIT", new String[] {"ADA"}, 2, 0, now);
 
-        count +=
-                createOrdersForUser(ctx, "강링크", "BITHUMB", new String[] {"LINK", "BTC"}, 8, 1, now);
+        count += createOrdersForUser(ctx, "강링크", "BITHUMB", new String[] {"LINK", "BTC"}, 8, 1, now);
 
         count += createOrdersForUser(ctx, "윤닷", "UPBIT", new String[] {"DOT", "ETH"}, 6, 0, now);
 
-        count +=
-                createOrdersForUser(
-                        ctx, "송아톰", "UPBIT", new String[] {"ATOM", "BTC", "ETH"}, 12, 5, now);
+        count += createOrdersForUser(ctx, "송아톰", "UPBIT", new String[] {"ATOM", "BTC", "ETH"}, 12, 5, now);
 
-        count +=
-                createOrdersForUser(
-                        ctx,
-                        "임앱트",
-                        "BINANCE",
-                        new String[] {"BTC", "ETH", "SOL", "APT"},
-                        10,
-                        0,
-                        now);
+        count += createOrdersForUser(ctx, "임앱트", "BINANCE", new String[] {"BTC", "ETH", "SOL", "APT"}, 10, 0, now);
 
         return count;
     }
@@ -144,11 +121,10 @@ class TradingDataSeeder {
         Long exchangeId = ctx.getExchangeId(exchangeName);
         if (exchangeId == null) return 0;
 
-        Long walletId =
-                walletIds.stream()
-                        .filter(wId -> exchangeId.equals(ctx.exchangeIdByWalletId.get(wId)))
-                        .findFirst()
-                        .orElse(null);
+        Long walletId = walletIds.stream()
+                .filter(wId -> exchangeId.equals(ctx.exchangeIdByWalletId.get(wId)))
+                .findFirst()
+                .orElse(null);
         if (walletId == null) return 0;
 
         List<Long> ruleIds = ctx.ruleIdsByRoundId.getOrDefault(roundId, List.of());
@@ -167,9 +143,7 @@ class TradingDataSeeder {
 
             BigDecimal price = COIN_PRICES.getOrDefault(coin, new BigDecimal("10000"));
             BigDecimal variation =
-                    BigDecimal.ONE.add(
-                            new BigDecimal(random.nextDouble(-0.1, 0.1))
-                                    .setScale(4, RoundingMode.HALF_UP));
+                    BigDecimal.ONE.add(new BigDecimal(random.nextDouble(-0.1, 0.1)).setScale(4, RoundingMode.HALF_UP));
             BigDecimal orderPrice = price.multiply(variation).setScale(8, RoundingMode.HALF_UP);
 
             BigDecimal amount = new BigDecimal(random.nextInt(100000, 2000000));
@@ -179,12 +153,9 @@ class TradingDataSeeder {
             Side side = (i % 3 == 2) ? Side.SELL : Side.BUY;
             OrderType orderType = (i % 4 == 0) ? OrderType.LIMIT : OrderType.MARKET;
             OrderStatus status = OrderStatus.FILLED;
-            LocalDateTime createdAt =
-                    now.minusDays(random.nextInt(1, 30)).minusHours(random.nextInt(0, 24));
+            LocalDateTime createdAt = now.minusDays(random.nextInt(1, 30)).minusHours(random.nextInt(0, 24));
             LocalDateTime filledAt =
-                    orderType == OrderType.MARKET
-                            ? createdAt
-                            : createdAt.plusMinutes(random.nextInt(1, 60));
+                    orderType == OrderType.MARKET ? createdAt : createdAt.plusMinutes(random.nextInt(1, 60));
 
             RuleViolation violation = null;
             if (violationsAdded < violationCount && !ruleIds.isEmpty()) {
@@ -194,21 +165,20 @@ class TradingDataSeeder {
             }
             violationsByOrderIndex.add(violation);
 
-            Order order =
-                    Order.reconstitute(
-                            null,
-                            walletId,
-                            exchangeCoinId,
-                            side,
-                            orderType,
-                            Quantity.of(quantity),
-                            orderType == OrderType.LIMIT ? orderPrice : null,
-                            FEE_RATE,
-                            orderPrice,
-                            feeAmount,
-                            status,
-                            createdAt,
-                            filledAt);
+            Order order = Order.reconstitute(
+                    null,
+                    walletId,
+                    exchangeCoinId,
+                    side,
+                    orderType,
+                    Quantity.of(quantity),
+                    orderType == OrderType.LIMIT ? orderPrice : null,
+                    FEE_RATE,
+                    orderPrice,
+                    feeAmount,
+                    status,
+                    createdAt,
+                    filledAt);
             orders.add(OrderJpaEntity.fromDomain(order));
         }
 
@@ -260,12 +230,11 @@ class TradingDataSeeder {
                 Long exchangeId = ctx.exchangeIdByWalletId.get(walletId);
                 if (exchangeId == null) continue;
 
-                String exchangeName =
-                        ctx.exchangeIdByName.entrySet().stream()
-                                .filter(e -> e.getValue().equals(exchangeId))
-                                .map(Map.Entry::getKey)
-                                .findFirst()
-                                .orElse(null);
+                String exchangeName = ctx.exchangeIdByName.entrySet().stream()
+                        .filter(e -> e.getValue().equals(exchangeId))
+                        .map(Map.Entry::getKey)
+                        .findFirst()
+                        .orElse(null);
                 if (exchangeName == null) continue;
 
                 for (String coin : MAIN_COINS) {
@@ -276,23 +245,16 @@ class TradingDataSeeder {
                     if (random.nextDouble() < 0.3) {
                         BigDecimal price = COIN_PRICES.getOrDefault(coin, new BigDecimal("10000"));
                         BigDecimal qty =
-                                new BigDecimal(random.nextDouble(0.001, 1.0))
-                                        .setScale(8, RoundingMode.HALF_UP);
-                        BigDecimal buyAmount =
-                                price.multiply(qty).setScale(8, RoundingMode.HALF_UP);
+                                new BigDecimal(random.nextDouble(0.001, 1.0)).setScale(8, RoundingMode.HALF_UP);
+                        BigDecimal buyAmount = price.multiply(qty).setScale(8, RoundingMode.HALF_UP);
 
                         PositionJpaEntity entity = new PositionJpaEntity(walletId, coinId);
-                        Position position =
-                                Position.builder()
-                                        .walletId(walletId)
-                                        .coinId(coinId)
-                                        .holding(
-                                                new Holding(
-                                                        Price.of(price),
-                                                        Quantity.of(qty),
-                                                        Money.of(buyAmount)))
-                                        .averagingDownCount(random.nextInt(0, 3))
-                                        .build();
+                        Position position = Position.builder()
+                                .walletId(walletId)
+                                .coinId(coinId)
+                                .holding(new Holding(Price.of(price), Quantity.of(qty), Money.of(buyAmount)))
+                                .averagingDownCount(random.nextInt(0, 3))
+                                .build();
                         entity.updateFrom(position);
                         holdings.add(entity);
                     }
@@ -317,14 +279,13 @@ class TradingDataSeeder {
         for (Long walletId : walletIds) {
             List<Long> orderIds = ctx.orderIdsByWalletId.getOrDefault(walletId, List.of());
             for (int i = 0; i < Math.min(3, orderIds.size()); i++) {
-                OrderFillFailure failure =
-                        OrderFillFailure.builder()
-                                .orderId(orderIds.get(i))
-                                .attemptedPrice(new BigDecimal("100000000"))
-                                .failedAt(LocalDateTime.now().minusDays(random.nextInt(1, 15)))
-                                .reason("시세 급변으로 체결 실패")
-                                .resolved(true)
-                                .build();
+                OrderFillFailure failure = OrderFillFailure.builder()
+                        .orderId(orderIds.get(i))
+                        .attemptedPrice(new BigDecimal("100000000"))
+                        .failedAt(LocalDateTime.now().minusDays(random.nextInt(1, 15)))
+                        .reason("시세 급변으로 체결 실패")
+                        .resolved(true)
+                        .build();
                 failures.add(OrderFillFailureJpaEntity.fromDomain(failure));
             }
         }

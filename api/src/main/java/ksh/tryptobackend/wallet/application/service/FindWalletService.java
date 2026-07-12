@@ -27,24 +27,27 @@ public class FindWalletService implements FindWalletUseCase {
 
     @Override
     public List<WalletResult> findByRoundId(Long roundId) {
-        return walletQueryPort.findByRoundId(roundId).stream().map(this::toResult).toList();
+        return walletQueryPort.findByRoundId(roundId).stream()
+                .map(this::toResult)
+                .toList();
     }
 
     @Override
     public List<WalletResult> findByRoundIds(List<Long> roundIds) {
-        return walletQueryPort.findByRoundIds(roundIds).stream().map(this::toResult).toList();
+        return walletQueryPort.findByRoundIds(roundIds).stream()
+                .map(this::toResult)
+                .toList();
     }
 
     @Override
     public List<WalletResult> findByExchangeId(Long exchangeId) {
-        return walletQueryPort.findByExchangeId(exchangeId).stream().map(this::toResult).toList();
+        return walletQueryPort.findByExchangeId(exchangeId).stream()
+                .map(this::toResult)
+                .toList();
     }
 
     private WalletResult toResult(Wallet wallet) {
         return new WalletResult(
-                wallet.getWalletId(),
-                wallet.getRoundId(),
-                wallet.getExchangeId(),
-                wallet.getSeedAmount());
+                wallet.getWalletId(), wallet.getRoundId(), wallet.getExchangeId(), wallet.getSeedAmount());
     }
 }

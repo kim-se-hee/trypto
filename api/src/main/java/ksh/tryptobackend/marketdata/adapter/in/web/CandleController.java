@@ -21,10 +21,10 @@ public class CandleController {
     private final FindCandlesUseCase findCandlesUseCase;
 
     @GetMapping
-    public ApiResponseDto<List<CandleResponse>> getCandles(
-            @Valid @ModelAttribute FindCandlesRequest request) {
+    public ApiResponseDto<List<CandleResponse>> getCandles(@Valid @ModelAttribute FindCandlesRequest request) {
         List<Candle> candles = findCandlesUseCase.findCandles(request.toQuery());
-        List<CandleResponse> response = candles.stream().map(CandleResponse::from).toList();
+        List<CandleResponse> response =
+                candles.stream().map(CandleResponse::from).toList();
         return ApiResponseDto.success("캔들 데이터를 조회했습니다.", response);
     }
 }

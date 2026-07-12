@@ -30,10 +30,9 @@ public class RankingAclInvestmentRoundQueryAdapter implements InvestmentRoundQue
 
     @Override
     public ActiveRounds findActiveRounds() {
-        List<ActiveRound> rounds =
-                findActiveRoundsUseCase.findAllActiveRounds().stream()
-                        .map(this::toActiveRound)
-                        .toList();
+        List<ActiveRound> rounds = findActiveRoundsUseCase.findAllActiveRounds().stream()
+                .map(this::toActiveRound)
+                .toList();
         return new ActiveRounds(rounds);
     }
 

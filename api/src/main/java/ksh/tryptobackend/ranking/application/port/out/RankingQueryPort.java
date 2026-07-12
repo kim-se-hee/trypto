@@ -11,8 +11,7 @@ public interface RankingQueryPort {
 
     Optional<LocalDate> findLatestReferenceDate(RankingPeriod period);
 
-    List<RankingSummary> findRankings(
-            RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size);
+    List<RankingSummary> findRankings(RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size);
 
     Optional<RankingSummary> findByUserIdAndPeriodAndReferenceDate(
             Long userId, RankingPeriod period, LocalDate referenceDate);

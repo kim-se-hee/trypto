@@ -15,17 +15,11 @@ public record RegretChartResponse(
         List<ViolationMarkerItem> violationMarkers) {
 
     public record AssetHistoryItem(
-            LocalDate snapshotDate,
-            BigDecimal actualAsset,
-            BigDecimal ruleFollowedAsset,
-            BigDecimal btcHoldAsset) {
+            LocalDate snapshotDate, BigDecimal actualAsset, BigDecimal ruleFollowedAsset, BigDecimal btcHoldAsset) {
 
         public static AssetHistoryItem from(RegretChartResult.DailyComparison result) {
             return new AssetHistoryItem(
-                    result.snapshotDate(),
-                    result.actualAsset(),
-                    result.ruleFollowedAsset(),
-                    result.btcHoldAsset());
+                    result.snapshotDate(), result.actualAsset(), result.ruleFollowedAsset(), result.btcHoldAsset());
         }
     }
 
@@ -44,6 +38,8 @@ public record RegretChartResponse(
                 result.currency(),
                 result.totalDays(),
                 result.assetHistory().stream().map(AssetHistoryItem::from).toList(),
-                result.violationMarkers().stream().map(ViolationMarkerItem::from).toList());
+                result.violationMarkers().stream()
+                        .map(ViolationMarkerItem::from)
+                        .toList());
     }
 }

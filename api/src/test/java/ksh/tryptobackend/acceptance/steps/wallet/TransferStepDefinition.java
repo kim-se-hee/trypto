@@ -64,10 +64,7 @@ public class TransferStepDefinition {
     public void 출금_지갑에_BTC_잔고가_개_있다(double amount) {
         walletBalanceJpaRepository.save(
                 new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
-                        FROM_WALLET_ID,
-                        COIN_ID,
-                        new BigDecimal(String.valueOf(amount)),
-                        BigDecimal.ZERO));
+                        FROM_WALLET_ID, COIN_ID, new BigDecimal(String.valueOf(amount)), BigDecimal.ZERO));
     }
 
     @Given("다른 라운드의 지갑이 준비되어 있다")
@@ -91,8 +88,7 @@ public class TransferStepDefinition {
 
     @When("출금 지갑에서 다른 라운드 지갑으로 BTC {double}개를 송금한다")
     public void 출금_지갑에서_다른_라운드_지갑으로_BTC_개를_송금한다(double amount) {
-        Map<String, Object> body =
-                createTransferBody(FROM_WALLET_ID, OTHER_ROUND_WALLET_ID, amount);
+        Map<String, Object> body = createTransferBody(FROM_WALLET_ID, OTHER_ROUND_WALLET_ID, amount);
         apiClient.post("/api/transfers", body);
     }
 
@@ -130,8 +126,7 @@ public class TransferStepDefinition {
         assertThat(firstTransferId).isEqualTo(lastTransferId);
     }
 
-    private Map<String, Object> createTransferBody(
-            Long fromWalletId, Long toWalletId, double amount) {
+    private Map<String, Object> createTransferBody(Long fromWalletId, Long toWalletId, double amount) {
         Map<String, Object> body = new HashMap<>();
         body.put("idempotencyKey", UUID.randomUUID().toString());
         body.put("fromWalletId", fromWalletId);

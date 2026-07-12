@@ -1,13 +1,13 @@
 package ksh.tryptocollector.distribute.redis;
 
 import io.micrometer.core.annotation.Timed;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 import ksh.tryptocollector.model.NormalizedTicker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component

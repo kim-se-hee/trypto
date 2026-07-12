@@ -24,7 +24,9 @@ public class PortfolioSnapshot {
     private final BigDecimal totalProfit;
     private final BigDecimal totalProfitRate;
     private final LocalDate snapshotDate;
-    @Builder.Default private final List<SnapshotDetail> details = new ArrayList<>();
+
+    @Builder.Default
+    private final List<SnapshotDetail> details = new ArrayList<>();
 
     public static PortfolioSnapshot create(
             Long userId,

@@ -28,27 +28,19 @@ public class WarmupExchangeCoinMappingService implements WarmupExchangeCoinMappi
 
     @Override
     public void warmup() {
-        List<Exchange> exchanges =
-                exchangeQueryPort.findAllExchangeIds().stream()
-                        .map(exchangeQueryPort::findExchangeDetailById)
-                        .flatMap(Optional::stream)
-                        .toList();
-        CoinSymbols baseCurrencySymbols =
-                coinQueryPort.findSymbolsByIds(
-                        exchanges.stream()
-                                .map(Exchange::getBaseCurrencyCoinId)
-                                .collect(Collectors.toSet()));
+        List<Exchange> exchanges = exchangeQueryPort.findAllExchangeIds().stream()
+                .map(exchangeQueryPort::findExchangeDetailById)
+                .flatMap(Optional::stream)
+                .toList();
+        CoinSymbols baseCurrencySymbols = coinQueryPort.findSymbolsByIds(
+                exchanges.stream().map(Exchange::getBaseCurrencyCoinId).collect(Collectors.toSet()));
 
         ExchangeCoinMappings mappings = ExchangeCoinMappings.empty();
         for (Exchange exchange : exchanges) {
             ExchangeCoins coins = exchangeCoinQueryPort.findByExchangeId(exchange.getExchangeId());
             CoinSymbols coinSymbols = coinQueryPort.findSymbolsByIds(coins.coinIds());
-            mappings =
-                    mappings.add(
-                            exchange,
-                            baseCurrencySymbols.getSymbol(exchange.getBaseCurrencyCoinId()),
-                            coins,
-                            coinSymbols);
+            mappings = mappings.add(
+                    exchange, baseCurrencySymbols.getSymbol(exchange.getBaseCurrencyCoinId()), coins, coinSymbols);
         }
 
         exchangeCoinMappingCacheCommandPort.loadAll(mappings.toMap());

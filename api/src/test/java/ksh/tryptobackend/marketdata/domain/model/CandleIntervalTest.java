@@ -20,14 +20,7 @@ class CandleIntervalTest {
     class Of {
 
         @ParameterizedTest(name = "코드 \"{0}\"은 {1}로 변환된다")
-        @CsvSource({
-            "1m, ONE_MINUTE",
-            "1h, ONE_HOUR",
-            "4h, FOUR_HOURS",
-            "1d, ONE_DAY",
-            "1w, ONE_WEEK",
-            "1M, ONE_MONTH"
-        })
+        @CsvSource({"1m, ONE_MINUTE", "1h, ONE_HOUR", "4h, FOUR_HOURS", "1d, ONE_DAY", "1w, ONE_WEEK", "1M, ONE_MONTH"})
         @DisplayName("유효한 코드로 CandleInterval을 생성한다")
         void of_validCode_returnsCandleInterval(String code, CandleInterval expected) {
             // When
@@ -62,8 +55,7 @@ class CandleIntervalTest {
             "ONE_MONTH, candle_1M"
         })
         @DisplayName("각 주기에 대응하는 InfluxDB measurement 이름을 반환한다")
-        void getMeasurement_returnsCorrectMeasurement(
-                CandleInterval interval, String expectedMeasurement) {
+        void getMeasurement_returnsCorrectMeasurement(CandleInterval interval, String expectedMeasurement) {
             assertThat(interval.getMeasurement()).isEqualTo(expectedMeasurement);
         }
     }

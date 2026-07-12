@@ -46,17 +46,10 @@ public class LiveTickerEventListener {
     }
 
     private ResolveLiveTickerCommand toCommand(TickerBatchMessage batch) {
-        List<ExternalTickerCommand> tickers =
-                batch.tickers().stream()
-                        .map(
-                                item ->
-                                        new ExternalTickerCommand(
-                                                item.symbol(),
-                                                item.currentPrice(),
-                                                item.changeRate(),
-                                                item.quoteTurnover(),
-                                                item.timestamp()))
-                        .toList();
+        List<ExternalTickerCommand> tickers = batch.tickers().stream()
+                .map(item -> new ExternalTickerCommand(
+                        item.symbol(), item.currentPrice(), item.changeRate(), item.quoteTurnover(), item.timestamp()))
+                .toList();
         return new ResolveLiveTickerCommand(batch.exchange(), tickers);
     }
 

@@ -45,8 +45,7 @@ public class WalWriter {
     private FileOutputStream out;
     private BufferedWriter writer;
 
-    public WalWriter(
-            ObjectMapper mapper, EngineMetrics metrics, @Value("${engine.wal.dir}") String walDir) {
+    public WalWriter(ObjectMapper mapper, EngineMetrics metrics, @Value("${engine.wal.dir}") String walDir) {
         this.mapper = mapper;
         this.metrics = metrics;
         this.walDir = Path.of(walDir);

@@ -22,11 +22,7 @@ public class SnapshotDetail {
     private final BigDecimal assetRatio;
 
     public static SnapshotDetail create(
-            Long coinId,
-            BigDecimal quantity,
-            BigDecimal avgBuyPrice,
-            BigDecimal currentPrice,
-            BigDecimal totalAsset) {
+            Long coinId, BigDecimal quantity, BigDecimal avgBuyPrice, BigDecimal currentPrice, BigDecimal totalAsset) {
         BigDecimal coinAsset = currentPrice.multiply(quantity);
 
         return SnapshotDetail.builder()
@@ -34,7 +30,8 @@ public class SnapshotDetail {
                 .quantity(quantity)
                 .avgBuyPrice(avgBuyPrice)
                 .currentPrice(currentPrice)
-                .profitRate(ProfitRate.fromAssetChange(currentPrice, avgBuyPrice).value())
+                .profitRate(
+                        ProfitRate.fromAssetChange(currentPrice, avgBuyPrice).value())
                 .assetRatio(calculateAssetRatio(coinAsset, totalAsset))
                 .build();
     }
@@ -43,8 +40,6 @@ public class SnapshotDetail {
         if (totalAsset.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
-        return coinAsset
-                .divide(totalAsset, RATE_SCALE, RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"));
+        return coinAsset.divide(totalAsset, RATE_SCALE, RoundingMode.HALF_UP).multiply(new BigDecimal("100"));
     }
 }

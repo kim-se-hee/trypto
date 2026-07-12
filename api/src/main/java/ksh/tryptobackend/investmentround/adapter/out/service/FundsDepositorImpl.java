@@ -18,7 +18,6 @@ public class FundsDepositorImpl implements FundsDepositor {
     @Override
     public void deposit(Long walletId, Long coinId, BigDecimal amount) {
         applyBalanceChangesUseCase.applyBalanceChanges(
-                walletId,
-                List.of(new BalanceChangeCommand(BalanceChangeType.ADD_AVAILABLE, coinId, amount)));
+                walletId, List.of(new BalanceChangeCommand(BalanceChangeType.ADD_AVAILABLE, coinId, amount)));
     }
 }

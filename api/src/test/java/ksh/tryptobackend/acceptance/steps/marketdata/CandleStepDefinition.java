@@ -18,9 +18,7 @@ public class CandleStepDefinition {
     private final JdbcTemplate jdbcTemplate;
 
     public CandleStepDefinition(
-            CommonApiClient apiClient,
-            MockCandleAdapter mockCandleAdapter,
-            JdbcTemplate jdbcTemplate) {
+            CommonApiClient apiClient, MockCandleAdapter mockCandleAdapter, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.mockCandleAdapter = mockCandleAdapter;
         this.jdbcTemplate = jdbcTemplate;
@@ -29,20 +27,19 @@ public class CandleStepDefinition {
     @Given("캔들 데이터가 존재한다")
     public void 캔들_데이터가_존재한다() {
         insertExchangeIfAbsent();
-        mockCandleAdapter.setCandles(
-                List.of(
-                        new Candle(
-                                Instant.parse("2026-03-10T00:00:00Z"),
-                                new BigDecimal("68500000"),
-                                new BigDecimal("69200000"),
-                                new BigDecimal("67800000"),
-                                new BigDecimal("68900000")),
-                        new Candle(
-                                Instant.parse("2026-03-11T00:00:00Z"),
-                                new BigDecimal("68900000"),
-                                new BigDecimal("70100000"),
-                                new BigDecimal("68400000"),
-                                new BigDecimal("69750000"))));
+        mockCandleAdapter.setCandles(List.of(
+                new Candle(
+                        Instant.parse("2026-03-10T00:00:00Z"),
+                        new BigDecimal("68500000"),
+                        new BigDecimal("69200000"),
+                        new BigDecimal("67800000"),
+                        new BigDecimal("68900000")),
+                new Candle(
+                        Instant.parse("2026-03-11T00:00:00Z"),
+                        new BigDecimal("68900000"),
+                        new BigDecimal("70100000"),
+                        new BigDecimal("68400000"),
+                        new BigDecimal("69750000"))));
     }
 
     @When("캔들 조회 API를 호출한다")
@@ -83,11 +80,9 @@ public class CandleStepDefinition {
     }
 
     private void insertExchangeIfAbsent() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES (1, 'KRW', '원화')");
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
-                        + " base_currency_coin_id, fee_rate) VALUES (1, 'Upbit', 'DOMESTIC', 1,"
-                        + " 0.000500)");
+        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES (1, 'KRW', '원화')");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
+                + " base_currency_coin_id, fee_rate) VALUES (1, 'Upbit', 'DOMESTIC', 1,"
+                + " 0.000500)");
     }
 }

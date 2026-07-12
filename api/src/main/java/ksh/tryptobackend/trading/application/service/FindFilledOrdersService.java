@@ -22,8 +22,7 @@ public class FindFilledOrdersService implements FindFilledOrdersUseCase {
     }
 
     @Override
-    public List<FilledOrderResult> findSellOrders(
-            Long walletId, Long exchangeCoinId, LocalDateTime after) {
+    public List<FilledOrderResult> findSellOrders(Long walletId, Long exchangeCoinId, LocalDateTime after) {
         return orderQueryPort.findFilledSellOrders(walletId, exchangeCoinId, after).stream()
                 .map(FilledOrderResult::from)
                 .toList();

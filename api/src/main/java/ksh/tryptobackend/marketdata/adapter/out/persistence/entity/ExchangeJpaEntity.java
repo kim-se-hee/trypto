@@ -37,11 +37,7 @@ public class ExchangeJpaEntity {
     private BigDecimal feeRate;
 
     public ExchangeJpaEntity(
-            Long id,
-            String name,
-            ExchangeMarketType marketType,
-            Long baseCurrencyCoinId,
-            BigDecimal feeRate) {
+            Long id, String name, ExchangeMarketType marketType, Long baseCurrencyCoinId, BigDecimal feeRate) {
         this.id = id;
         this.name = name;
         this.marketType = marketType;

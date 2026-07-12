@@ -16,8 +16,7 @@ public class FindSnapshotsService implements FindSnapshotsUseCase {
     private final PortfolioSnapshotQueryPort portfolioSnapshotQueryPort;
 
     @Override
-    public Optional<SnapshotInfoResult> findLatestByRoundIdAndExchangeId(
-            Long roundId, Long exchangeId) {
+    public Optional<SnapshotInfoResult> findLatestByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return portfolioSnapshotQueryPort
                 .findLatestByRoundIdAndExchangeId(roundId, exchangeId)
                 .map(this::toResult);
@@ -25,9 +24,7 @@ public class FindSnapshotsService implements FindSnapshotsUseCase {
 
     @Override
     public List<SnapshotInfoResult> findAllByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return portfolioSnapshotQueryPort
-                .findAllByRoundIdAndExchangeId(roundId, exchangeId)
-                .stream()
+        return portfolioSnapshotQueryPort.findAllByRoundIdAndExchangeId(roundId, exchangeId).stream()
                 .map(this::toResult)
                 .toList();
     }

@@ -16,11 +16,8 @@ public class FindTicksService implements FindTicksUseCase {
     private final TickQueryPort tickQueryPort;
 
     @Override
-    public List<TickResult> findTicks(
-            String exchangeName, String marketSymbol, Instant from, Instant to) {
-        return tickQueryPort
-                .findTicks(new ExchangeSymbolKey(exchangeName, marketSymbol), from, to)
-                .stream()
+    public List<TickResult> findTicks(String exchangeName, String marketSymbol, Instant from, Instant to) {
+        return tickQueryPort.findTicks(new ExchangeSymbolKey(exchangeName, marketSymbol), from, to).stream()
                 .map(t -> new TickResult(t.time(), t.price()))
                 .toList();
     }

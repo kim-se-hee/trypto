@@ -27,10 +27,9 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
 
     private static final String MEASUREMENT = "candle_1h";
     private static final String TICKER_KEY_PREFIX = "ticker:";
-    private static final Map<String, BtcPriceSource> CURRENCY_SOURCE =
-            Map.of(
-                    "KRW", new BtcPriceSource("UPBIT", "BTC/KRW"),
-                    "USDT", new BtcPriceSource("BINANCE", "BTC/USDT"));
+    private static final Map<String, BtcPriceSource> CURRENCY_SOURCE = Map.of(
+            "KRW", new BtcPriceSource("UPBIT", "BTC/KRW"),
+            "USDT", new BtcPriceSource("BINANCE", "BTC/USDT"));
 
     private final InfluxDBClient influxDBClient;
     private final StringRedisTemplate redisTemplate;
@@ -41,8 +40,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
     private String bucket;
 
     @Override
-    public List<DailyClosePrice> findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency) {
+    public List<DailyClosePrice> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) {
         BtcPriceSource source = CURRENCY_SOURCE.get(currency);
         if (source == null) {
             return List.of();
@@ -52,8 +50,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
         return appendTodayTickerIfNeeded(candles, startDate, endDate, source);
     }
 
-    private List<DailyClosePrice> queryDailyCandles(
-            LocalDate startDate, LocalDate endDate, BtcPriceSource source) {
+    private List<DailyClosePrice> queryDailyCandles(LocalDate startDate, LocalDate endDate, BtcPriceSource source) {
         Instant start = startDate.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant stop = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
@@ -96,10 +93,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
     }
 
     private List<DailyClosePrice> appendTodayTickerIfNeeded(
-            List<DailyClosePrice> candles,
-            LocalDate startDate,
-            LocalDate endDate,
-            BtcPriceSource source) {
+            List<DailyClosePrice> candles, LocalDate startDate, LocalDate endDate, BtcPriceSource source) {
         LocalDate today = LocalDate.now(clock);
         if (today.isBefore(startDate) || today.isAfter(endDate)) {
             return candles;

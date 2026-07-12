@@ -12,9 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-        name = "position",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
+@Table(name = "position", uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PositionJpaEntity {
@@ -60,11 +58,7 @@ public class PositionJpaEntity {
                 .id(id)
                 .walletId(walletId)
                 .coinId(coinId)
-                .holding(
-                        new Holding(
-                                Price.of(avgBuyPrice),
-                                Quantity.of(totalQuantity),
-                                Money.of(totalBuyAmount)))
+                .holding(new Holding(Price.of(avgBuyPrice), Quantity.of(totalQuantity), Money.of(totalBuyAmount)))
                 .averagingDownCount(averagingDownCount)
                 .build();
     }

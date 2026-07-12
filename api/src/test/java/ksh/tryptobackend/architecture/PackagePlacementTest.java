@@ -14,9 +14,7 @@ import jakarta.persistence.Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class PackagePlacementTest {
 
     @ArchTest
@@ -42,11 +40,8 @@ class PackagePlacementTest {
                 .and()
                 .areNotInterfaces()
                 .should()
-                .resideInAnyPackage(
-                        merge(allContextPackages(SERVICE), allContextPackages(DOMAIN_SERVICE)))
-                .as(
-                        "Service implementations should reside in application.service or"
-                                + " domain.service")
+                .resideInAnyPackage(merge(allContextPackages(SERVICE), allContextPackages(DOMAIN_SERVICE)))
+                .as("Service implementations should reside in application.service or" + " domain.service")
                 .check(classes);
     }
 
@@ -67,13 +62,10 @@ class PackagePlacementTest {
                 .that()
                 .areAnnotatedWith(Entity.class)
                 .should()
-                .resideInAnyPackage(
-                        merge(
-                                allContextPackages(".adapter.out.persistence.entity.."),
-                                new String[] {COMMON + ".idempotency.."}))
-                .as(
-                        "JPA entities should reside in adapter.out.persistence.entity or"
-                                + " common.idempotency")
+                .resideInAnyPackage(merge(
+                        allContextPackages(".adapter.out.persistence.entity.."),
+                        new String[] {COMMON + ".idempotency.."}))
+                .as("JPA entities should reside in adapter.out.persistence.entity or" + " common.idempotency")
                 .check(classes);
     }
 
@@ -83,13 +75,10 @@ class PackagePlacementTest {
                 .that()
                 .areAssignableTo(JpaRepository.class)
                 .should()
-                .resideInAnyPackage(
-                        merge(
-                                allContextPackages(".adapter.out.persistence.repository.."),
-                                new String[] {COMMON + ".idempotency.."}))
-                .as(
-                        "JPA repositories should reside in adapter.out.persistence.repository or"
-                                + " common.idempotency")
+                .resideInAnyPackage(merge(
+                        allContextPackages(".adapter.out.persistence.repository.."),
+                        new String[] {COMMON + ".idempotency.."}))
+                .as("JPA repositories should reside in adapter.out.persistence.repository or" + " common.idempotency")
                 .check(classes);
     }
 
@@ -101,10 +90,7 @@ class PackagePlacementTest {
                 .and()
                 .areInterfaces()
                 .should()
-                .resideInAnyPackage(
-                        merge(
-                                allContextDirectPackages(PORT_OUT),
-                                new String[] {COMMON + ".idempotency"}))
+                .resideInAnyPackage(merge(allContextDirectPackages(PORT_OUT), new String[] {COMMON + ".idempotency"}))
                 .as("Port interfaces should reside in application.port.out or common.idempotency")
                 .check(classes);
     }
@@ -149,10 +135,8 @@ class PackagePlacementTest {
                     return false;
                 }
                 return javaClass.getAllRawInterfaces().stream()
-                        .anyMatch(
-                                i ->
-                                        i.getPackageName().startsWith(BASE)
-                                                && i.getPackageName().contains(".domain.service"));
+                        .anyMatch(i -> i.getPackageName().startsWith(BASE)
+                                && i.getPackageName().contains(".domain.service"));
             }
         };
     }

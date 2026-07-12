@@ -36,14 +36,11 @@ public class OutboxPublisher {
         this.jdbc = jdbc;
         this.fanoutExchange = fanoutExchange;
         AtomicInteger seq = new AtomicInteger();
-        this.pool =
-                Executors.newFixedThreadPool(
-                        threads,
-                        r -> {
-                            Thread t = new Thread(r, "outbox-publisher-" + seq.incrementAndGet());
-                            t.setDaemon(false);
-                            return t;
-                        });
+        this.pool = Executors.newFixedThreadPool(threads, r -> {
+            Thread t = new Thread(r, "outbox-publisher-" + seq.incrementAndGet());
+            t.setDaemon(false);
+            return t;
+        });
     }
 
     public void publishAsync(List<Long> ids, List<OrderFilledEvent> events) {
@@ -81,10 +78,7 @@ public class OutboxPublisher {
                         }
                     });
         } catch (Exception e) {
-            log.warn(
-                    "hook sent_at update failed size={}, polling will retry remaining",
-                    sent.size(),
-                    e);
+            log.warn("hook sent_at update failed size={}, polling will retry remaining", sent.size(), e);
         }
     }
 

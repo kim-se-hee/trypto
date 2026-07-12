@@ -29,9 +29,7 @@ public class StompSessionMetrics {
                 .description("현재 활성 STOMP 세션 수")
                 .register(meterRegistry);
         this.connectCounter =
-                Counter.builder(CONNECT_COUNTER)
-                        .description("STOMP 세션 연결 누계")
-                        .register(meterRegistry);
+                Counter.builder(CONNECT_COUNTER).description("STOMP 세션 연결 누계").register(meterRegistry);
     }
 
     @EventListener

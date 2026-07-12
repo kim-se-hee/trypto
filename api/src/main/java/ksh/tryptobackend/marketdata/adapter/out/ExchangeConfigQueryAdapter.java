@@ -17,13 +17,11 @@ public class ExchangeConfigQueryAdapter implements ExchangeConfigQueryPort {
     @Override
     public List<ExchangeConfig> findAll() {
         return exchangeProperties.getExchanges().stream()
-                .map(
-                        config ->
-                                new ExchangeConfig(
-                                        config.getName(),
-                                        ExchangeMarketType.valueOf(config.getMarketType()),
-                                        config.getBaseCurrencySymbol(),
-                                        config.getFeeRate()))
+                .map(config -> new ExchangeConfig(
+                        config.getName(),
+                        ExchangeMarketType.valueOf(config.getMarketType()),
+                        config.getBaseCurrencySymbol(),
+                        config.getFeeRate()))
                 .toList();
     }
 }

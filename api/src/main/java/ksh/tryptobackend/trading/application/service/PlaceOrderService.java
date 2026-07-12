@@ -30,8 +30,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     @Transactional
     public Order placeOrder(PlaceOrderCommand cmd) {
         LocalDateTime now = LocalDateTime.now(clock);
-        idempotencyKeyCommandPort.preempt(
-                cmd.idempotencyKey(), IdempotencyResourceType.PLACE_ORDER, now);
+        idempotencyKeyCommandPort.preempt(cmd.idempotencyKey(), IdempotencyResourceType.PLACE_ORDER, now);
 
         MarketInfo marketInfo = marketQueryPort.findByExchangeCoinId(cmd.exchangeCoinId());
         Order order = Order.create(cmd, marketInfo, now);

@@ -21,8 +21,7 @@ class HoldingIncrementalUpdaterTest {
     @Test
     void 첫_BUY는_평단과_수량을_그대로_세팅() {
         HoldingState result =
-                HoldingIncrementalUpdater.applyFills(
-                        HoldingIncrementalUpdater.EMPTY, List.of(buy("100", "5")));
+                HoldingIncrementalUpdater.applyFills(HoldingIncrementalUpdater.EMPTY, List.of(buy("100", "5")));
 
         assertThat(result.avg()).isEqualByComparingTo("100");
         assertThat(result.qty()).isEqualByComparingTo("5");
@@ -58,8 +57,7 @@ class HoldingIncrementalUpdaterTest {
     void SELL은_수량만_감소하고_평단은_유지() {
         HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
 
-        HoldingState result =
-                HoldingIncrementalUpdater.applyFills(start, List.of(sell("500", "3")));
+        HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("500", "3")));
 
         assertThat(result.avg()).isEqualByComparingTo("150");
         assertThat(result.qty()).isEqualByComparingTo("7");
@@ -71,8 +69,7 @@ class HoldingIncrementalUpdaterTest {
     void 전량_SELL_후_수량은_0이고_평단은_유지() {
         HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
 
-        HoldingState result =
-                HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "10")));
+        HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "10")));
 
         assertThat(result.avg()).isEqualByComparingTo("150");
         assertThat(result.qty()).isEqualByComparingTo("0");
@@ -80,11 +77,9 @@ class HoldingIncrementalUpdaterTest {
 
     @Test
     void 배치에서_여러_체결을_순차_적용한_결과는_단건씩_누적한_결과와_같다() {
-        List<FillCommand> fills =
-                List.of(buy("100", "5"), buy("200", "5"), sell("1000", "2"), buy("50", "3"));
+        List<FillCommand> fills = List.of(buy("100", "5"), buy("200", "5"), sell("1000", "2"), buy("50", "3"));
 
-        HoldingState batched =
-                HoldingIncrementalUpdater.applyFills(HoldingIncrementalUpdater.EMPTY, fills);
+        HoldingState batched = HoldingIncrementalUpdater.applyFills(HoldingIncrementalUpdater.EMPTY, fills);
 
         HoldingState incremental = HoldingIncrementalUpdater.EMPTY;
         for (FillCommand f : fills) {
@@ -96,17 +91,15 @@ class HoldingIncrementalUpdaterTest {
 
     @Test
     void 같은_체결_시퀀스에_대해_증분_결과는_원본_전체재계산_결과와_동일하다() {
-        List<FillCommand> fills =
-                List.of(
-                        buy("120.50", "3.5"),
-                        buy("115.25", "2"),
-                        sell("300", "1.5"),
-                        buy("130", "4"),
-                        buy("110", "1.25"),
-                        sell("400", "2"));
+        List<FillCommand> fills = List.of(
+                buy("120.50", "3.5"),
+                buy("115.25", "2"),
+                sell("300", "1.5"),
+                buy("130", "4"),
+                buy("110", "1.25"),
+                sell("400", "2"));
 
-        HoldingState incremental =
-                HoldingIncrementalUpdater.applyFills(HoldingIncrementalUpdater.EMPTY, fills);
+        HoldingState incremental = HoldingIncrementalUpdater.applyFills(HoldingIncrementalUpdater.EMPTY, fills);
         HoldingState naive = naiveReplay(fills);
 
         assertThat(incremental.avg()).isEqualByComparingTo(naive.avg());
@@ -143,12 +136,9 @@ class HoldingIncrementalUpdaterTest {
             BigDecimal q = cmd.order().quantity();
             if (cmd.order().side() == Side.BUY) {
                 BigDecimal newQty = qty.add(q);
-                BigDecimal newAvg =
-                        qty.signum() == 0
-                                ? p
-                                : avg.multiply(qty)
-                                        .add(p.multiply(q))
-                                        .divide(newQty, 8, RoundingMode.HALF_UP);
+                BigDecimal newAvg = qty.signum() == 0
+                        ? p
+                        : avg.multiply(qty).add(p.multiply(q)).divide(newQty, 8, RoundingMode.HALF_UP);
                 if (qty.signum() > 0 && newAvg.compareTo(avg) < 0) {
                     adCount++;
                 }
@@ -171,25 +161,21 @@ class HoldingIncrementalUpdaterTest {
     }
 
     private static FillCommand fill(Side side, String price, String qty) {
-        OrderDetail order =
-                new OrderDetail(
-                        1L,
-                        WALLET,
-                        side,
-                        new TradingPair(100L),
-                        COIN,
-                        200L,
-                        bd(price),
-                        bd(qty),
-                        bd("0.0005"),
-                        BigDecimal.ZERO,
-                        200L,
-                        LocalDateTime.of(2025, 1, 1, 0, 0));
-        return new FillCommand(
-                order,
+        OrderDetail order = new OrderDetail(
+                1L,
+                WALLET,
+                side,
+                new TradingPair(100L),
+                COIN,
+                200L,
                 bd(price),
-                LocalDateTime.of(2025, 1, 1, 0, 0),
+                bd(qty),
+                bd("0.0005"),
+                BigDecimal.ZERO,
+                200L,
                 LocalDateTime.of(2025, 1, 1, 0, 0));
+        return new FillCommand(
+                order, bd(price), LocalDateTime.of(2025, 1, 1, 0, 0), LocalDateTime.of(2025, 1, 1, 0, 0));
     }
 
     private static BigDecimal bd(String v) {

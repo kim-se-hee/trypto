@@ -20,10 +20,9 @@ public class PortfolioAclInvestmentRoundQueryAdapter implements InvestmentRoundQ
 
     @Override
     public ActiveRounds findActiveRounds() {
-        List<ActiveRound> rounds =
-                findActiveRoundsUseCase.findAllActiveRounds().stream()
-                        .map(this::toActiveRound)
-                        .toList();
+        List<ActiveRound> rounds = findActiveRoundsUseCase.findAllActiveRounds().stream()
+                .map(this::toActiveRound)
+                .toList();
         return new ActiveRounds(rounds);
     }
 

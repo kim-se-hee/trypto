@@ -17,10 +17,10 @@ public record StartRoundResult(
         List<StartRoundWalletResult> wallets,
         LocalDateTime startedAt) {
 
-    public static StartRoundResult from(
-            InvestmentRound round, List<StartRoundWalletResult> wallets) {
-        List<StartRoundRuleResult> ruleResults =
-                round.getRules().rules().stream().map(StartRoundRuleResult::from).toList();
+    public static StartRoundResult from(InvestmentRound round, List<StartRoundWalletResult> wallets) {
+        List<StartRoundRuleResult> ruleResults = round.getRules().rules().stream()
+                .map(StartRoundRuleResult::from)
+                .toList();
 
         return new StartRoundResult(
                 round.getId(),

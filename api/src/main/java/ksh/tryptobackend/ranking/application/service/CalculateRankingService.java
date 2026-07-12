@@ -35,10 +35,8 @@ public class CalculateRankingService implements CalculateRankingUseCase {
         LocalDate snapshotDate = command.snapshotDate();
 
         ActiveRounds activeRounds = investmentRoundQueryPort.findActiveRounds();
-        RoundTradeCounts roundTradeCounts =
-                tradingQueryPort.countTradesByRoundIds(activeRounds.roundIds());
-        EligibleRounds eligibleRounds =
-                activeRounds.toEligibleRounds(roundTradeCounts, snapshotDate);
+        RoundTradeCounts roundTradeCounts = tradingQueryPort.countTradesByRoundIds(activeRounds.roundIds());
+        EligibleRounds eligibleRounds = activeRounds.toEligibleRounds(roundTradeCounts, snapshotDate);
         if (eligibleRounds.isEmpty()) {
             return;
         }
@@ -47,11 +45,9 @@ public class CalculateRankingService implements CalculateRankingUseCase {
 
         for (RankingPeriod period : RankingPeriod.values()) {
             SnapshotSummaries comparison =
-                    portfolioQueryPort.findLatestSummaries(
-                            snapshotDate.minusDays(period.getWindowDays()));
+                    portfolioQueryPort.findLatestSummaries(snapshotDate.minusDays(period.getWindowDays()));
             RankingCandidates candidates = eligibleRounds.toCandidates(todaySummaries, comparison);
-            List<Ranking> rankings =
-                    candidates.toRankings(period, snapshotDate, LocalDateTime.now(clock));
+            List<Ranking> rankings = candidates.toRankings(period, snapshotDate, LocalDateTime.now(clock));
             rankingCommandPort.replaceByPeriodAndDate(rankings, period, snapshotDate);
         }
     }

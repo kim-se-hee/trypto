@@ -2,21 +2,20 @@ package ksh.tryptocollector.ingest.binance;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.WebSocket;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
+import ksh.tryptocollector.distribute.TickerSinkProcessor;
 import ksh.tryptocollector.ingest.ExchangeTickerStream;
 import ksh.tryptocollector.ingest.RestPollingFallback;
-import ksh.tryptocollector.distribute.TickerSinkProcessor;
 import ksh.tryptocollector.metadata.MarketInfoCache;
 import ksh.tryptocollector.model.Exchange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 @Component
@@ -31,9 +30,12 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
     private final Counter reconnectCounter;
     private final Counter parseFailureCounter;
 
-    public BinanceWebSocketHandler(ObjectMapper objectMapper, MarketInfoCache marketInfoCache,
-                                   TickerSinkProcessor tickerSinkProcessor, RestPollingFallback restPollingFallback,
-                                   MeterRegistry registry) {
+    public BinanceWebSocketHandler(
+            ObjectMapper objectMapper,
+            MarketInfoCache marketInfoCache,
+            TickerSinkProcessor tickerSinkProcessor,
+            RestPollingFallback restPollingFallback,
+            MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
@@ -55,7 +57,8 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
-                WebSocket ws = httpClient.newWebSocketBuilder()
+                WebSocket ws = httpClient
+                        .newWebSocketBuilder()
                         .buildAsync(URI.create(wsUrl), new BinanceListener(closeLatch))
                         .join();
                 log.info("바이낸스 WebSocket 연결 시작");
@@ -79,7 +82,8 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
         try {
             BinanceTickerMessage[] tickers = objectMapper.readValue(payload, BinanceTickerMessage[].class);
             for (BinanceTickerMessage ticker : tickers) {
-                marketInfoCache.find(Exchange.BINANCE, ticker.symbol())
+                marketInfoCache
+                        .find(Exchange.BINANCE, ticker.symbol())
                         .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
             }
         } catch (Exception e) {

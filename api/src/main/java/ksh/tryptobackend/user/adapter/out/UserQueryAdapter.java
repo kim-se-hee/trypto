@@ -32,8 +32,7 @@ public class UserQueryAdapter implements UserQueryPort {
     @Override
     public Optional<User> findBySocialIdentity(SocialIdentity socialIdentity) {
         return userJpaRepository
-                .findByProviderAndProviderId(
-                        socialIdentity.providerName(), socialIdentity.providerId())
+                .findByProviderAndProviderId(socialIdentity.providerName(), socialIdentity.providerId())
                 .map(UserJpaEntity::toDomain);
     }
 

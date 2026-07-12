@@ -22,10 +22,9 @@ public final class ImpactGap {
         if (totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
             return ImpactGap.of(BigDecimal.ZERO);
         }
-        BigDecimal gap =
-                totalLoss
-                        .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
-                        .multiply(new BigDecimal("100"));
+        BigDecimal gap = totalLoss
+                .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"));
         return new ImpactGap(gap);
     }
 

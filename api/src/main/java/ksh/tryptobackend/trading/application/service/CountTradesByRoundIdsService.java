@@ -23,19 +23,14 @@ public class CountTradesByRoundIdsService implements CountTradesByRoundIdsUseCas
         List<WalletRef> wallets = walletQueryPort.findByRoundIds(roundIds);
         List<Long> walletIds = wallets.stream().map(WalletRef::walletId).toList();
 
-        FilledOrderCounts tradeCountByWalletId =
-                orderQueryPort.countFilledGroupByWalletId(walletIds);
+        FilledOrderCounts tradeCountByWalletId = orderQueryPort.countFilledGroupByWalletId(walletIds);
 
         return aggregateByRoundId(wallets, tradeCountByWalletId);
     }
 
-    private Map<Long, Integer> aggregateByRoundId(
-            List<WalletRef> wallets, FilledOrderCounts tradeCountByWalletId) {
+    private Map<Long, Integer> aggregateByRoundId(List<WalletRef> wallets, FilledOrderCounts tradeCountByWalletId) {
         return wallets.stream()
-                .collect(
-                        Collectors.groupingBy(
-                                WalletRef::roundId,
-                                Collectors.summingInt(
-                                        w -> tradeCountByWalletId.getCount(w.walletId()))));
+                .collect(Collectors.groupingBy(
+                        WalletRef::roundId, Collectors.summingInt(w -> tradeCountByWalletId.getCount(w.walletId()))));
     }
 }

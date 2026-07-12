@@ -33,9 +33,7 @@ public class TransferHistoryStepDefinition {
     private Long walletId;
 
     public TransferHistoryStepDefinition(
-            CommonApiClient apiClient,
-            TransferJpaRepository transferJpaRepository,
-            JdbcTemplate jdbcTemplate) {
+            CommonApiClient apiClient, TransferJpaRepository transferJpaRepository, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.transferJpaRepository = transferJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -50,29 +48,27 @@ public class TransferHistoryStepDefinition {
 
         // WITHDRAW: WALLET_ID -> OTHER_WALLET_ID (SUCCESS)
         LocalDateTime withdrawCreatedAt = now.minusHours(3);
-        saveTransfer(
-                Transfer.builder()
-                        .fromWalletId(WALLET_ID)
-                        .toWalletId(OTHER_WALLET_ID)
-                        .coinId(COIN_ID)
-                        .amount(new BigDecimal("0.01"))
-                        .status(TransferStatus.SUCCESS)
-                        .createdAt(withdrawCreatedAt)
-                        .completedAt(withdrawCreatedAt)
-                        .build());
+        saveTransfer(Transfer.builder()
+                .fromWalletId(WALLET_ID)
+                .toWalletId(OTHER_WALLET_ID)
+                .coinId(COIN_ID)
+                .amount(new BigDecimal("0.01"))
+                .status(TransferStatus.SUCCESS)
+                .createdAt(withdrawCreatedAt)
+                .completedAt(withdrawCreatedAt)
+                .build());
 
         // DEPOSIT: OTHER_WALLET_ID -> WALLET_ID (SUCCESS)
         LocalDateTime depositCreatedAt = now.minusHours(2);
-        saveTransfer(
-                Transfer.builder()
-                        .fromWalletId(OTHER_WALLET_ID)
-                        .toWalletId(WALLET_ID)
-                        .coinId(COIN_ID)
-                        .amount(new BigDecimal("0.005"))
-                        .status(TransferStatus.SUCCESS)
-                        .createdAt(depositCreatedAt)
-                        .completedAt(depositCreatedAt)
-                        .build());
+        saveTransfer(Transfer.builder()
+                .fromWalletId(OTHER_WALLET_ID)
+                .toWalletId(WALLET_ID)
+                .coinId(COIN_ID)
+                .amount(new BigDecimal("0.005"))
+                .status(TransferStatus.SUCCESS)
+                .createdAt(depositCreatedAt)
+                .completedAt(depositCreatedAt)
+                .build());
 
         walletId = WALLET_ID;
     }
@@ -84,20 +80,17 @@ public class TransferHistoryStepDefinition {
 
     @When("지갑의 송금 내역을 DEPOSIT 타입으로 조회한다")
     public void 지갑의_송금_내역을_DEPOSIT_타입으로_조회한다() {
-        apiClient.get(
-                "/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=DEPOSIT");
+        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=DEPOSIT");
     }
 
     @When("지갑의 송금 내역을 WITHDRAW 타입으로 조회한다")
     public void 지갑의_송금_내역을_WITHDRAW_타입으로_조회한다() {
-        apiClient.get(
-                "/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=WITHDRAW");
+        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=WITHDRAW");
     }
 
     @When("지갑의 송금 내역을 size {int}로 조회한다")
     public void 지갑의_송금_내역을_size로_조회한다(int size) {
-        apiClient.get(
-                "/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&size=" + size);
+        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&size=" + size);
     }
 
     @When("다른 사용자의 지갑으로 송금 내역을 조회한다")
@@ -122,32 +115,28 @@ public class TransferHistoryStepDefinition {
     @Then("송금 내역에 DEPOSIT과 WITHDRAW가 모두 포함된다")
     public void 송금_내역에_DEPOSIT과_WITHDRAW가_모두_포함된다() {
         byte[] body = apiClient.getLastResponse().expectBody().returnResult().getResponseBody();
-        List<String> types =
-                com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].type");
+        List<String> types = com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].type");
         assertThat(types).contains("DEPOSIT", "WITHDRAW");
     }
 
     @Then("송금 내역의 타입이 모두 {string}이다")
     public void 송금_내역의_타입이_모두_이다(String expectedType) {
         byte[] body = apiClient.getLastResponse().expectBody().returnResult().getResponseBody();
-        List<String> types =
-                com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].type");
+        List<String> types = com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].type");
         assertThat(types).isNotEmpty().allMatch(type -> type.equals(expectedType));
     }
 
     @Then("송금 내역에 coinSymbol이 모두 포함된다")
     public void 송금_내역에_coinSymbol이_모두_포함된다() {
         byte[] body = apiClient.getLastResponse().expectBody().returnResult().getResponseBody();
-        List<String> symbols =
-                com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].coinSymbol");
+        List<String> symbols = com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*].coinSymbol");
         assertThat(symbols).isNotEmpty().allMatch(symbol -> symbol.equals(COIN_SYMBOL));
     }
 
     @Then("SUCCESS 송금의 completedAt이 createdAt과 동일하다")
     public void SUCCESS_송금의_completedAt이_createdAt과_동일하다() {
         byte[] body = apiClient.getLastResponse().expectBody().returnResult().getResponseBody();
-        List<Map<String, Object>> content =
-                com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*]");
+        List<Map<String, Object>> content = com.jayway.jsonpath.JsonPath.read(new String(body), "$.data.content[*]");
         List<Map<String, Object>> successTransfers =
                 content.stream().filter(t -> "SUCCESS".equals(t.get("status"))).toList();
         assertThat(successTransfers).isNotEmpty();

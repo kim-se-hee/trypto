@@ -1,13 +1,5 @@
 package ksh.tryptocollector.ingest;
 
-import ksh.tryptocollector.distribute.TickerSinkProcessor;
-import ksh.tryptocollector.metadata.MarketInfoCache;
-import ksh.tryptocollector.model.Exchange;
-import ksh.tryptocollector.model.NormalizedTicker;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.metadata.MarketInfoCache;
+import ksh.tryptocollector.model.Exchange;
+import ksh.tryptocollector.model.NormalizedTicker;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -35,9 +34,7 @@ public class RestPollingFallback {
             TickerSinkProcessor tickerSinkProcessor,
             TaskScheduler taskScheduler) {
         this.pollers = pollerList.stream()
-                .collect(Collectors.toUnmodifiableMap(
-                        ExchangeTickerPoller::exchange,
-                        Function.identity()));
+                .collect(Collectors.toUnmodifiableMap(ExchangeTickerPoller::exchange, Function.identity()));
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.taskScheduler = taskScheduler;
@@ -47,10 +44,8 @@ public class RestPollingFallback {
         if (pollingTasks.containsKey(exchange)) {
             return;
         }
-        ScheduledFuture<?> task = taskScheduler.scheduleWithFixedDelay(
-                () -> pollOnce(exchange),
-                Duration.ofMillis(POLL_INTERVAL_MS)
-        );
+        ScheduledFuture<?> task =
+                taskScheduler.scheduleWithFixedDelay(() -> pollOnce(exchange), Duration.ofMillis(POLL_INTERVAL_MS));
         pollingTasks.put(exchange, task);
         log.info("{} REST 폴링 폴백 시작", exchange);
     }
@@ -84,7 +79,8 @@ public class RestPollingFallback {
             throw new IllegalStateException("등록된 Poller 없음: " + exchange);
         }
         return poller.fetch(symbolCodes).stream()
-                .map(r -> marketInfoCache.find(exchange, r.code())
+                .map(r -> marketInfoCache
+                        .find(exchange, r.code())
                         .map(meta -> r.toNormalized(meta.displayName()))
                         .orElse(null))
                 .filter(Objects::nonNull)

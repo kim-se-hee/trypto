@@ -1,10 +1,10 @@
 package ksh.tryptocollector.distribute;
 
-import ksh.tryptocollector.model.NormalizedTicker;
 import ksh.tryptocollector.distribute.rabbitmq.EngineInboxPublisher;
 import ksh.tryptocollector.distribute.rabbitmq.TickerEventConflator;
 import ksh.tryptocollector.distribute.redis.TickerRedisRepository;
 import ksh.tryptocollector.distribute.tick.TickRawWriter;
+import ksh.tryptocollector.model.NormalizedTicker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

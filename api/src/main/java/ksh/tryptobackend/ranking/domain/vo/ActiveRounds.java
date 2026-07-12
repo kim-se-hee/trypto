@@ -17,10 +17,9 @@ public class ActiveRounds {
     }
 
     public EligibleRounds toEligibleRounds(RoundTradeCounts tradeCounts, LocalDate snapshotDate) {
-        List<EligibleRound> eligible =
-                rounds.stream()
-                        .map(round -> round.toEligibleRound(tradeCounts.getCount(round.roundId())))
-                        .toList();
+        List<EligibleRound> eligible = rounds.stream()
+                .map(round -> round.toEligibleRound(tradeCounts.getCount(round.roundId())))
+                .toList();
         return EligibleRounds.of(eligible, snapshotDate);
     }
 

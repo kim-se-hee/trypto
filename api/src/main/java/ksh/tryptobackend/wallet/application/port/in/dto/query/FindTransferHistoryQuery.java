@@ -2,8 +2,7 @@ package ksh.tryptobackend.wallet.application.port.in.dto.query;
 
 import ksh.tryptobackend.wallet.domain.vo.TransferType;
 
-public record FindTransferHistoryQuery(
-        Long walletId, Long userId, TransferType type, Long cursorTransferId, int size) {
+public record FindTransferHistoryQuery(Long walletId, Long userId, TransferType type, Long cursorTransferId, int size) {
 
     private static final int DEFAULT_SIZE = 20;
 

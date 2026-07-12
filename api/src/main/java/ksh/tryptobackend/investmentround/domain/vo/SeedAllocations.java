@@ -21,9 +21,7 @@ public class SeedAllocations {
     }
 
     public BigDecimal totalAmount() {
-        return allocations.stream()
-                .map(SeedAllocation::amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return allocations.stream().map(SeedAllocation::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<SeedAllocation> getAll() {

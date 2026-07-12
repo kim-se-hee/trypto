@@ -23,32 +23,26 @@ public class RankingAclPortfolioQueryAdapter implements PortfolioQueryPort {
 
     @Override
     public Holdings findLatestHoldings(Long userId, Long roundId) {
-        List<Holding> holdings =
-                findSnapshotDetailsUseCase.findLatestSnapshotDetails(userId, roundId).stream()
-                        .map(this::toHolding)
-                        .toList();
+        List<Holding> holdings = findSnapshotDetailsUseCase.findLatestSnapshotDetails(userId, roundId).stream()
+                .map(this::toHolding)
+                .toList();
         return new Holdings(holdings);
     }
 
     @Override
     public SnapshotSummaries findLatestSummaries(LocalDate snapshotDate) {
-        List<SnapshotSummary> summaries =
-                findSnapshotSummariesUseCase.findLatestSummaries(snapshotDate).stream()
-                        .map(this::toSnapshotSummary)
-                        .toList();
+        List<SnapshotSummary> summaries = findSnapshotSummariesUseCase.findLatestSummaries(snapshotDate).stream()
+                .map(this::toSnapshotSummary)
+                .toList();
         return new SnapshotSummaries(summaries);
     }
 
     private Holding toHolding(SnapshotDetailResult detail) {
-        return new Holding(
-                detail.coinId(), detail.exchangeId(), detail.assetRatio(), detail.profitRate());
+        return new Holding(detail.coinId(), detail.exchangeId(), detail.assetRatio(), detail.profitRate());
     }
 
     private SnapshotSummary toSnapshotSummary(SnapshotSummaryResult result) {
         return new SnapshotSummary(
-                result.userId(),
-                result.roundId(),
-                result.totalAssetKrw(),
-                result.totalInvestmentKrw());
+                result.userId(), result.roundId(), result.totalAssetKrw(), result.totalInvestmentKrw());
     }
 }

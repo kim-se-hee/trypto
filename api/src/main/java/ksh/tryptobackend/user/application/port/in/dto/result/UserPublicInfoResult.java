@@ -5,7 +5,6 @@ import ksh.tryptobackend.user.domain.model.User;
 public record UserPublicInfoResult(Long userId, String nickname, boolean portfolioPublic) {
 
     public static UserPublicInfoResult from(User user) {
-        return new UserPublicInfoResult(
-                user.getUserId(), user.getNickname().value(), user.isPortfolioPublic());
+        return new UserPublicInfoResult(user.getUserId(), user.getNickname().value(), user.isPortfolioPublic());
     }
 }

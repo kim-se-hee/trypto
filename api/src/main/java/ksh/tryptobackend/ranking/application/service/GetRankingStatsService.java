@@ -21,12 +21,10 @@ public class GetRankingStatsService implements GetRankingStatsUseCase {
     @Override
     @Transactional(readOnly = true)
     public RankingStatsResult getRankingStats(GetRankingStatsQuery query) {
-        LocalDate referenceDate =
-                rankingQueryPort
-                        .findLatestReferenceDate(query.period())
-                        .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
+        LocalDate referenceDate = rankingQueryPort
+                .findLatestReferenceDate(query.period())
+                .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
         RankingStats stats = rankingQueryPort.getRankingStats(query.period(), referenceDate);
-        return new RankingStatsResult(
-                stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate());
+        return new RankingStatsResult(stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate());
     }
 }

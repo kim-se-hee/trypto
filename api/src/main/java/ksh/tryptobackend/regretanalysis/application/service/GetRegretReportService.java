@@ -37,9 +37,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
 
         AnalysisExchange exchange = marketDataQueryPort.getExchange(query.exchangeId());
         AnalysisRules rules = investmentRoundQueryPort.findRules(query.roundId());
-        RegretReport report =
-                regretReportQueryPort.getByRoundIdAndExchangeId(
-                        query.roundId(), query.exchangeId());
+        RegretReport report = regretReportQueryPort.getByRoundIdAndExchangeId(query.roundId(), query.exchangeId());
         Map<Long, String> coinSymbols =
                 marketDataQueryPort.findCoinSymbols(report.getViolationDetails().extractCoinIds());
 

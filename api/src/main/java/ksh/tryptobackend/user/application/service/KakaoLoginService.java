@@ -30,22 +30,14 @@ public class KakaoLoginService implements KakaoLoginUseCase {
     @Override
     public KakaoLoginResult login(KakaoLoginCommand command) {
         SocialIdentity socialIdentity =
-                socialIdentityQueryPort.getByAuthorizationCode(
-                        command.code(), command.codeVerifier());
+                socialIdentityQueryPort.getByAuthorizationCode(command.code(), command.codeVerifier());
 
         Optional<User> existingUser = userQueryPort.findBySocialIdentity(socialIdentity);
         boolean newUser = existingUser.isEmpty();
-        User user =
-                existingUser.orElseGet(
-                        () ->
-                                userCommandPort.register(
-                                        User.registerWith(
-                                                socialIdentity,
-                                                uniqueNicknameGenerator.generate(),
-                                                LocalDateTime.now(clock))));
+        User user = existingUser.orElseGet(() -> userCommandPort.register(
+                User.registerWith(socialIdentity, uniqueNicknameGenerator.generate(), LocalDateTime.now(clock))));
 
         String sessionId = sessionCommandPort.create(user.getUserId());
-        return new KakaoLoginResult(
-                user.getUserId(), user.getNickname().value(), newUser, sessionId);
+        return new KakaoLoginResult(user.getUserId(), user.getNickname().value(), newUser, sessionId);
     }
 }

@@ -1,5 +1,6 @@
 package ksh.tryptocollector.metadata;
 
+import java.util.List;
 import ksh.tryptocollector.model.Exchange;
 import ksh.tryptocollector.model.MarketInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -8,8 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.List;
 
 @Slf4j
 @Component

@@ -16,12 +16,7 @@ public class SeedWalletProvisionerImpl implements SeedWalletProvisioner {
 
     @Override
     public Long provision(Long roundId, SeedAllocation allocation, LocalDateTime createdAt) {
-        return createWalletWithBalanceUseCase.createWalletWithBalance(
-                new CreateWalletWithBalanceCommand(
-                        roundId,
-                        allocation.exchangeId(),
-                        allocation.baseCurrencyCoinId(),
-                        allocation.amount(),
-                        createdAt));
+        return createWalletWithBalanceUseCase.createWalletWithBalance(new CreateWalletWithBalanceCommand(
+                roundId, allocation.exchangeId(), allocation.baseCurrencyCoinId(), allocation.amount(), createdAt));
     }
 }

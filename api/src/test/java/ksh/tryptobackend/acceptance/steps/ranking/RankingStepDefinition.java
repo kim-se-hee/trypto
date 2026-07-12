@@ -50,8 +50,7 @@ public class RankingStepDefinition {
 
     @When("기간 {string} 커서 {int} 크기 {int}로 랭킹 목록을 조회한다")
     public void 기간_커서_크기로_랭킹_목록을_조회한다(String period, int cursorRank, int size) {
-        apiClient.get(
-                "/api/rankings?period=" + period + "&cursorRank=" + cursorRank + "&size=" + size);
+        apiClient.get("/api/rankings?period=" + period + "&cursorRank=" + cursorRank + "&size=" + size);
     }
 
     @Then("랭킹 목록 개수는 {int}개이다")
@@ -65,7 +64,11 @@ public class RankingStepDefinition {
 
     @Then("첫 번째 랭킹의 순위는 {int}이다")
     public void 첫_번째_랭킹의_순위는_이다(int rank) {
-        apiClient.getLastResponse().expectBody().jsonPath("$.data.content[0].rank").isEqualTo(rank);
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.content[0].rank")
+                .isEqualTo(rank);
     }
 
     @Then("다음 페이지가 존재한다")

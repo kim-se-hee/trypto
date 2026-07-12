@@ -19,8 +19,7 @@ public class Wallet {
     private final BigDecimal seedAmount;
     private final LocalDateTime createdAt;
 
-    public static Wallet create(
-            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+    public static Wallet create(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
         return Wallet.builder()
                 .roundId(roundId)
                 .exchangeId(exchangeId)

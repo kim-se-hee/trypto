@@ -14,10 +14,9 @@ public record WalletBalancesResponse(
     public record CoinBalanceResponse(Long coinId, BigDecimal available, BigDecimal locked) {}
 
     public static WalletBalancesResponse from(WalletBalancesResult result) {
-        List<CoinBalanceResponse> balances =
-                result.balances().stream()
-                        .map(b -> new CoinBalanceResponse(b.coinId(), b.available(), b.locked()))
-                        .toList();
+        List<CoinBalanceResponse> balances = result.balances().stream()
+                .map(b -> new CoinBalanceResponse(b.coinId(), b.available(), b.locked()))
+                .toList();
 
         return new WalletBalancesResponse(
                 result.exchangeId(),

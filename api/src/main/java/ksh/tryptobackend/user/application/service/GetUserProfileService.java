@@ -19,8 +19,6 @@ public class GetUserProfileService implements GetUserProfileUseCase {
     @Override
     @Transactional(readOnly = true)
     public User getUserProfile(GetUserProfileQuery query) {
-        return userQueryPort
-                .findById(query.userId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return userQueryPort.findById(query.userId()).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

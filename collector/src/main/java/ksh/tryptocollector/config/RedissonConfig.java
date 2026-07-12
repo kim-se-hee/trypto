@@ -23,8 +23,7 @@ public class RedissonConfig {
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
-        config.useSingleServer()
-                .setAddress(REDIS_PROTOCOL + host + ":" + port);
+        config.useSingleServer().setAddress(REDIS_PROTOCOL + host + ":" + port);
         return Redisson.create(config);
     }
 }

@@ -18,10 +18,8 @@ public class FindRegretReportInputsService implements FindRegretReportInputsUseC
     @Override
     public List<RegretReportInputResult> findAllInputs() {
         return investmentRoundQueryPort.findActiveRounds().stream()
-                .flatMap(
-                        round ->
-                                walletQueryPort.findWallets(round.roundId()).stream()
-                                        .map(round::combineWith))
+                .flatMap(round ->
+                        walletQueryPort.findWallets(round.roundId()).stream().map(round::combineWith))
                 .map(RegretReportInputResult::from)
                 .toList();
     }

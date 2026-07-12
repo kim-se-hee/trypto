@@ -6,6 +6,5 @@ import ksh.tryptobackend.marketdata.application.port.in.dto.result.BtcDailyPrice
 
 public interface FindBtcDailyPricesUseCase {
 
-    List<BtcDailyPriceResult> findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency);
+    List<BtcDailyPriceResult> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency);
 }

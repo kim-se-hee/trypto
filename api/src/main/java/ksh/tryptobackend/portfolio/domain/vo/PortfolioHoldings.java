@@ -15,9 +15,7 @@ public class PortfolioHoldings {
 
     public Set<Long> coinIdsIncluding(Long additionalCoinId) {
         Set<Long> coinIds =
-                holdings.stream()
-                        .map(PortfolioHolding::coinId)
-                        .collect(Collectors.toCollection(HashSet::new));
+                holdings.stream().map(PortfolioHolding::coinId).collect(Collectors.toCollection(HashSet::new));
         coinIds.add(additionalCoinId);
         return Set.copyOf(coinIds);
     }

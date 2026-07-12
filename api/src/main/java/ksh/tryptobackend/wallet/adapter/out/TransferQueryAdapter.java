@@ -18,15 +18,12 @@ public class TransferQueryAdapter implements TransferQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Transfer> findByCursor(
-            Long walletId, TransferType type, Long cursorTransferId, int size) {
+    public List<Transfer> findByCursor(Long walletId, TransferType type, Long cursorTransferId, int size) {
         QTransferJpaEntity transfer = QTransferJpaEntity.transferJpaEntity;
 
         return queryFactory
                 .selectFrom(transfer)
-                .where(
-                        walletCondition(transfer, walletId, type),
-                        cursorLt(transfer, cursorTransferId))
+                .where(walletCondition(transfer, walletId, type), cursorLt(transfer, cursorTransferId))
                 .orderBy(transfer.id.desc())
                 .limit(size)
                 .fetch()
@@ -35,8 +32,7 @@ public class TransferQueryAdapter implements TransferQueryPort {
                 .toList();
     }
 
-    private BooleanExpression walletCondition(
-            QTransferJpaEntity transfer, Long walletId, TransferType type) {
+    private BooleanExpression walletCondition(QTransferJpaEntity transfer, Long walletId, TransferType type) {
         return switch (type) {
             case DEPOSIT -> transfer.toWalletId.eq(walletId);
             case WITHDRAW -> transfer.fromWalletId.eq(walletId);

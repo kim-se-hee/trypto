@@ -25,7 +25,9 @@ public class RegretReportJobConfig {
 
     @Bean
     public Job regretReportJob(Step regretReportStep) {
-        return new JobBuilder("regret-report-job", jobRepository).start(regretReportStep).build();
+        return new JobBuilder("regret-report-job", jobRepository)
+                .start(regretReportStep)
+                .build();
     }
 
     @Bean

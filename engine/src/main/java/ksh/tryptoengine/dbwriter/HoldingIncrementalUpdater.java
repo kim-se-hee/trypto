@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class HoldingIncrementalUpdater {
 
-    static final HoldingState EMPTY =
-            new HoldingState(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0);
+    static final HoldingState EMPTY = new HoldingState(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0);
 
     private final JdbcTemplate jdbc;
 
@@ -34,35 +33,33 @@ public class HoldingIncrementalUpdater {
     }
 
     private void applyOne(Key key, List<FillCommand> fills) {
-        List<Map<String, Object>> rows =
-                jdbc.queryForList(
-                        "SELECT avg_buy_price, total_quantity, total_buy_amount,"
-                            + " averaging_down_count FROM position WHERE wallet_id=? AND coin_id=?",
-                        key.walletId(),
-                        key.coinId());
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT avg_buy_price, total_quantity, total_buy_amount,"
+                        + " averaging_down_count FROM position WHERE wallet_id=? AND coin_id=?",
+                key.walletId(),
+                key.coinId());
 
         HoldingState start;
         if (rows.isEmpty()) {
             start = EMPTY;
         } else {
             Map<String, Object> r = rows.get(0);
-            start =
-                    new HoldingState(
-                            (BigDecimal) r.get("avg_buy_price"),
-                            (BigDecimal) r.get("total_quantity"),
-                            (BigDecimal) r.get("total_buy_amount"),
-                            ((Number) r.get("averaging_down_count")).intValue());
+            start = new HoldingState(
+                    (BigDecimal) r.get("avg_buy_price"),
+                    (BigDecimal) r.get("total_quantity"),
+                    (BigDecimal) r.get("total_buy_amount"),
+                    ((Number) r.get("averaging_down_count")).intValue());
         }
 
         HoldingState next = applyFills(start, fills);
 
         jdbc.update(
                 "INSERT INTO position (wallet_id, coin_id, avg_buy_price, total_quantity,"
-                    + " total_buy_amount, averaging_down_count, version) VALUES (?, ?, ?, ?, ?, ?,"
-                    + " 0) ON DUPLICATE KEY UPDATE avg_buy_price=VALUES(avg_buy_price),"
-                    + " total_quantity=VALUES(total_quantity),"
-                    + " total_buy_amount=VALUES(total_buy_amount),"
-                    + " averaging_down_count=VALUES(averaging_down_count), version=version+1",
+                        + " total_buy_amount, averaging_down_count, version) VALUES (?, ?, ?, ?, ?, ?,"
+                        + " 0) ON DUPLICATE KEY UPDATE avg_buy_price=VALUES(avg_buy_price),"
+                        + " total_quantity=VALUES(total_quantity),"
+                        + " total_buy_amount=VALUES(total_buy_amount),"
+                        + " averaging_down_count=VALUES(averaging_down_count), version=version+1",
                 key.walletId(),
                 key.coinId(),
                 next.avg(),
@@ -83,12 +80,9 @@ public class HoldingIncrementalUpdater {
             BigDecimal q = o.quantity();
             if (o.side() == Side.BUY) {
                 BigDecimal newQty = qty.add(q);
-                BigDecimal newAvg =
-                        qty.signum() == 0
-                                ? p
-                                : avg.multiply(qty)
-                                        .add(p.multiply(q))
-                                        .divide(newQty, 8, RoundingMode.HALF_UP);
+                BigDecimal newAvg = qty.signum() == 0
+                        ? p
+                        : avg.multiply(qty).add(p.multiply(q)).divide(newQty, 8, RoundingMode.HALF_UP);
                 if (qty.signum() > 0 && newAvg.compareTo(avg) < 0) {
                     adCount++;
                 }

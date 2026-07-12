@@ -14,8 +14,7 @@ public class RankingCandidates {
         this.sorted = candidates.stream().sorted().toList();
     }
 
-    public List<Ranking> toRankings(
-            RankingPeriod period, LocalDate referenceDate, LocalDateTime createdAt) {
+    public List<Ranking> toRankings(RankingPeriod period, LocalDate referenceDate, LocalDateTime createdAt) {
         return IntStream.range(0, sorted.size())
                 .mapToObj(i -> toRanking(sorted.get(i), i + 1, period, referenceDate, createdAt))
                 .toList();

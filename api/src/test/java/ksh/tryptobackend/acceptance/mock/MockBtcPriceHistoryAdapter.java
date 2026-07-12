@@ -14,8 +14,7 @@ public class MockBtcPriceHistoryAdapter implements BtcPriceHistoryQueryPort {
     private final Map<String, BigDecimal> prices = new ConcurrentHashMap<>();
 
     @Override
-    public List<DailyClosePrice> findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency) {
+    public List<DailyClosePrice> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) {
         List<DailyClosePrice> result = new ArrayList<>();
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             String key = toKey(date, currency);

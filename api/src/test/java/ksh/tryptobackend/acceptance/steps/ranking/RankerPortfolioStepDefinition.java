@@ -51,8 +51,8 @@ public class RankerPortfolioStepDefinition {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
                 "INSERT IGNORE INTO user (user_id, nickname, portfolio_public, created_at,"
-                    + " updated_at) VALUES (1, '트레이더1', true, ?, ?), (2, '트레이더2', false, ?, ?), (3,"
-                    + " '트레이더3', true, ?, ?)",
+                        + " updated_at) VALUES (1, '트레이더1', true, ?, ?), (2, '트레이더2', false, ?, ?), (3,"
+                        + " '트레이더3', true, ?, ?)",
                 now,
                 now,
                 now,
@@ -62,12 +62,10 @@ public class RankerPortfolioStepDefinition {
     }
 
     private void insertExchangeAndCoins() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
-                        + " base_currency_coin_id) VALUES (1, 'UPBIT', 'DOMESTIC', 1)");
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
-                        + "(1, 'BTC', 'Bitcoin'), (2, 'ETH', 'Ethereum')");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
+                + " base_currency_coin_id) VALUES (1, 'UPBIT', 'DOMESTIC', 1)");
+        jdbcTemplate.execute("INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES "
+                + "(1, 'BTC', 'Bitcoin'), (2, 'ETH', 'Ethereum')");
     }
 
     private void insertRankings() {
@@ -130,9 +128,9 @@ public class RankerPortfolioStepDefinition {
         LocalDateTime snapshotDate = LocalDateTime.of(2026, 3, 1, 0, 0);
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot (snapshot_id, user_id, round_id, exchange_id,"
-                    + " total_asset, total_asset_krw, total_investment, total_investment_krw,"
-                    + " total_profit, total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?,"
-                    + " ?, ?, ?, ?, ?)",
+                        + " total_asset, total_asset_krw, total_investment, total_investment_krw,"
+                        + " total_profit, total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?,"
+                        + " ?, ?, ?, ?, ?)",
                 1L,
                 1L,
                 1L,
@@ -147,8 +145,8 @@ public class RankerPortfolioStepDefinition {
 
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot_detail (detail_id, snapshot_id, coin_id, quantity,"
-                    + " avg_buy_price, current_price, profit_rate, asset_ratio) VALUES (?, ?, ?, ?,"
-                    + " ?, ?, ?, ?)",
+                        + " avg_buy_price, current_price, profit_rate, asset_ratio) VALUES (?, ?, ?, ?,"
+                        + " ?, ?, ?, ?)",
                 1L,
                 1L,
                 1L,
@@ -160,8 +158,8 @@ public class RankerPortfolioStepDefinition {
 
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot_detail (detail_id, snapshot_id, coin_id, quantity,"
-                    + " avg_buy_price, current_price, profit_rate, asset_ratio) VALUES (?, ?, ?, ?,"
-                    + " ?, ?, ?, ?)",
+                        + " avg_buy_price, current_price, profit_rate, asset_ratio) VALUES (?, ?, ?, ?,"
+                        + " ?, ?, ?, ?)",
                 2L,
                 1L,
                 2L,

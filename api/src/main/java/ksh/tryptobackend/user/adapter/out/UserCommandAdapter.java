@@ -25,12 +25,13 @@ public class UserCommandAdapter implements UserCommandPort {
     @Override
     public User save(User user) {
         if (user.getUserId() == null) {
-            return userJpaRepository.saveAndFlush(UserJpaEntity.fromDomain(user)).toDomain();
+            return userJpaRepository
+                    .saveAndFlush(UserJpaEntity.fromDomain(user))
+                    .toDomain();
         }
-        UserJpaEntity entity =
-                userJpaRepository
-                        .findById(user.getUserId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserJpaEntity entity = userJpaRepository
+                .findById(user.getUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         entity.updateFromDomain(user);
         return userJpaRepository.saveAndFlush(entity).toDomain();
     }
@@ -38,7 +39,9 @@ public class UserCommandAdapter implements UserCommandPort {
     @Override
     public User register(User newUser) {
         try {
-            return userJpaRepository.saveAndFlush(UserJpaEntity.fromDomain(newUser)).toDomain();
+            return userJpaRepository
+                    .saveAndFlush(UserJpaEntity.fromDomain(newUser))
+                    .toDomain();
         } catch (DataIntegrityViolationException e) {
             if (isSocialIdentityConflict(e)) {
                 return getRegistered(newUser.getSocialIdentity());
@@ -56,8 +59,7 @@ public class UserCommandAdapter implements UserCommandPort {
                 .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
     }
 
-    private boolean violatedConstraintContains(
-            DataIntegrityViolationException e, String constraint) {
+    private boolean violatedConstraintContains(DataIntegrityViolationException e, String constraint) {
         if (e.getCause() instanceof ConstraintViolationException violation) {
             String constraintName = violation.getConstraintName();
             return constraintName != null
@@ -68,8 +70,7 @@ public class UserCommandAdapter implements UserCommandPort {
 
     private Optional<User> findBySocialIdentity(SocialIdentity socialIdentity) {
         return userJpaRepository
-                .findByProviderAndProviderId(
-                        socialIdentity.providerName(), socialIdentity.providerId())
+                .findByProviderAndProviderId(socialIdentity.providerName(), socialIdentity.providerId())
                 .map(UserJpaEntity::toDomain);
     }
 }

@@ -44,12 +44,8 @@ public class UserController {
 
     @PutMapping("/{userId}/portfolio-visibility")
     public ApiResponseDto<ChangePortfolioVisibilityResponse> changePortfolioVisibility(
-            @PathVariable Long userId,
-            @Valid @RequestBody ChangePortfolioVisibilityRequest request) {
-        User user =
-                changePortfolioVisibilityUseCase.changePortfolioVisibility(
-                        request.toCommand(userId));
-        return ApiResponseDto.success(
-                "포트폴리오 공개 설정이 변경되었습니다.", ChangePortfolioVisibilityResponse.from(user));
+            @PathVariable Long userId, @Valid @RequestBody ChangePortfolioVisibilityRequest request) {
+        User user = changePortfolioVisibilityUseCase.changePortfolioVisibility(request.toCommand(userId));
+        return ApiResponseDto.success("포트폴리오 공개 설정이 변경되었습니다.", ChangePortfolioVisibilityResponse.from(user));
     }
 }

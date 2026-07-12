@@ -30,9 +30,7 @@ public class TickerEventPublisher {
         }
         try {
             TickerBatchEvent batch = new TickerBatchEvent(
-                    exchange,
-                    tickers.stream().map(TickerBatchEvent.Item::from).toList()
-            );
+                    exchange, tickers.stream().map(TickerBatchEvent.Item::from).toList());
             byte[] body;
             try {
                 body = objectMapper.writeValueAsBytes(batch);

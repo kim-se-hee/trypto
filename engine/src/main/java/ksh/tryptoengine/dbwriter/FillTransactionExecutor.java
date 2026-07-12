@@ -56,25 +56,24 @@ public class FillTransactionExecutor {
     public void executeBatch(List<FillCommand> cmds) {
         if (cmds.isEmpty()) return;
 
-        int[] updated =
-                jdbc.batchUpdate(
-                        "UPDATE orders SET status='FILLED', filled_price=?, filled_at=?, fee=? "
-                                + "WHERE order_id=? AND status='PENDING'",
-                        new BatchPreparedStatementSetter() {
-                            @Override
-                            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                                FillCommand cmd = cmds.get(i);
-                                ps.setBigDecimal(1, cmd.executedPrice());
-                                ps.setTimestamp(2, Timestamp.valueOf(cmd.executedAt()));
-                                ps.setBigDecimal(3, fee(cmd));
-                                ps.setLong(4, cmd.order().orderId());
-                            }
+        int[] updated = jdbc.batchUpdate(
+                "UPDATE orders SET status='FILLED', filled_price=?, filled_at=?, fee=? "
+                        + "WHERE order_id=? AND status='PENDING'",
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        FillCommand cmd = cmds.get(i);
+                        ps.setBigDecimal(1, cmd.executedPrice());
+                        ps.setTimestamp(2, Timestamp.valueOf(cmd.executedAt()));
+                        ps.setBigDecimal(3, fee(cmd));
+                        ps.setLong(4, cmd.order().orderId());
+                    }
 
-                            @Override
-                            public int getBatchSize() {
-                                return cmds.size();
-                            }
-                        });
+                    @Override
+                    public int getBatchSize() {
+                        return cmds.size();
+                    }
+                });
 
         List<FillCommand> succeeded = new ArrayList<>(cmds.size());
         for (int i = 0; i < cmds.size(); i++) {
@@ -115,7 +114,7 @@ public class FillTransactionExecutor {
 
         jdbc.batchUpdate(
                 "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?, ?,"
-                    + " ?, 0) ON DUPLICATE KEY UPDATE available = available + VALUES(available)",
+                        + " ?, 0) ON DUPLICATE KEY UPDATE available = available + VALUES(available)",
                 new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
@@ -135,13 +134,8 @@ public class FillTransactionExecutor {
         List<String> payloads = new ArrayList<>(succeeded.size());
         for (FillCommand cmd : succeeded) {
             OrderDetail o = cmd.order();
-            OrderFilledEvent event =
-                    new OrderFilledEvent(
-                            o.orderId(),
-                            cmd.executedPrice(),
-                            o.quantity(),
-                            cmd.executedAt(),
-                            cmd.matchedAt());
+            OrderFilledEvent event = new OrderFilledEvent(
+                    o.orderId(), cmd.executedPrice(), o.quantity(), cmd.executedAt(), cmd.matchedAt());
             events.add(event);
             try {
                 payloads.add(objectMapper.writeValueAsString(event));
@@ -151,45 +145,39 @@ public class FillTransactionExecutor {
         }
 
         Timestamp createdAt = Timestamp.valueOf(LocalDateTime.now());
-        List<Long> outboxIds =
-                jdbc.execute(
-                        (java.sql.Connection conn) -> {
-                            try (PreparedStatement ps =
-                                    conn.prepareStatement(
-                                            "INSERT INTO outbox (event_type, payload, created_at,"
-                                                    + " matched_at) VALUES (?, ?, ?, ?)",
-                                            Statement.RETURN_GENERATED_KEYS)) {
-                                for (int i = 0; i < payloads.size(); i++) {
-                                    ps.setString(1, ORDER_FILLED);
-                                    ps.setString(2, payloads.get(i));
-                                    ps.setTimestamp(3, createdAt);
-                                    ps.setTimestamp(
-                                            4, Timestamp.valueOf(succeeded.get(i).matchedAt()));
-                                    ps.addBatch();
-                                }
-                                ps.executeBatch();
-                                List<Long> ids = new ArrayList<>(payloads.size());
-                                try (ResultSet rs = ps.getGeneratedKeys()) {
-                                    while (rs.next()) {
-                                        ids.add(rs.getLong(1));
-                                    }
-                                }
-                                return ids;
-                            }
-                        });
+        List<Long> outboxIds = jdbc.execute((java.sql.Connection conn) -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO outbox (event_type, payload, created_at," + " matched_at) VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                for (int i = 0; i < payloads.size(); i++) {
+                    ps.setString(1, ORDER_FILLED);
+                    ps.setString(2, payloads.get(i));
+                    ps.setTimestamp(3, createdAt);
+                    ps.setTimestamp(4, Timestamp.valueOf(succeeded.get(i).matchedAt()));
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+                List<Long> ids = new ArrayList<>(payloads.size());
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    while (rs.next()) {
+                        ids.add(rs.getLong(1));
+                    }
+                }
+                return ids;
+            }
+        });
 
         holdingUpdater.apply(succeeded);
 
         metrics.matches().increment(succeeded.size());
 
         if (outboxIds != null && outboxIds.size() == events.size()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            outboxPublisher.publishAsync(outboxIds, events);
-                        }
-                    });
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    outboxPublisher.publishAsync(outboxIds, events);
+                }
+            });
         } else {
             log.warn(
                     "outbox generated key count mismatch ids={} events={}; polling will pick up",
@@ -210,9 +198,7 @@ public class FillTransactionExecutor {
     }
 
     private BigDecimal fillAmount(FillCommand cmd) {
-        return cmd.executedPrice()
-                .multiply(cmd.order().quantity())
-                .setScale(MONEY_SCALE, RoundingMode.FLOOR);
+        return cmd.executedPrice().multiply(cmd.order().quantity()).setScale(MONEY_SCALE, RoundingMode.FLOOR);
     }
 
     private BigDecimal fee(FillCommand cmd) {
@@ -224,6 +210,5 @@ public class FillTransactionExecutor {
         return fillAmount(cmd).multiply(feeRate).setScale(MONEY_SCALE, RoundingMode.FLOOR);
     }
 
-    private record Settlement(
-            OrderDetail order, BigDecimal refund, Long creditCoinId, BigDecimal creditAmount) {}
+    private record Settlement(OrderDetail order, BigDecimal refund, Long creditCoinId, BigDecimal creditAmount) {}
 }

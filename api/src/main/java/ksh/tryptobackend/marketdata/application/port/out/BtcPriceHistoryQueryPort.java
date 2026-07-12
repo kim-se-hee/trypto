@@ -6,6 +6,5 @@ import ksh.tryptobackend.marketdata.domain.vo.DailyClosePrice;
 
 public interface BtcPriceHistoryQueryPort {
 
-    List<DailyClosePrice> findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency);
+    List<DailyClosePrice> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency);
 }

@@ -14,8 +14,7 @@ public class OrderExecutions {
     }
 
     public static OrderExecutions of(List<OrderExecution> executions) {
-        Map<Long, OrderExecution> map =
-                executions.stream().collect(Collectors.toMap(OrderExecution::orderId, e -> e));
+        Map<Long, OrderExecution> map = executions.stream().collect(Collectors.toMap(OrderExecution::orderId, e -> e));
         return new OrderExecutions(map);
     }
 

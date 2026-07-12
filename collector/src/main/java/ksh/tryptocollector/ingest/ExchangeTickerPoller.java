@@ -1,8 +1,7 @@
 package ksh.tryptocollector.ingest;
 
-import ksh.tryptocollector.model.Exchange;
-
 import java.util.List;
+import ksh.tryptocollector.model.Exchange;
 
 public interface ExchangeTickerPoller {
     Exchange exchange();

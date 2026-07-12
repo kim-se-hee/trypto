@@ -15,8 +15,7 @@ public class FindBtcDailyPricesService implements FindBtcDailyPricesUseCase {
     private final BtcPriceHistoryQueryPort btcPriceHistoryQueryPort;
 
     @Override
-    public List<BtcDailyPriceResult> findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency) {
+    public List<BtcDailyPriceResult> findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) {
         return btcPriceHistoryQueryPort.findBtcDailyPrices(startDate, endDate, currency).stream()
                 .map(p -> new BtcDailyPriceResult(p.date(), p.closePrice()))
                 .toList();

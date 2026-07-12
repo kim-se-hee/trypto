@@ -54,11 +54,10 @@ public class ExchangeQueryAdapter implements ExchangeQueryPort {
     }
 
     private ExchangeSummary toExchangeSummary(ExchangeJpaEntity entity) {
-        String baseCurrencySymbol =
-                coinJpaRepository
-                        .findById(entity.getBaseCurrencyCoinId())
-                        .map(CoinJpaEntity::getSymbol)
-                        .orElse("");
+        String baseCurrencySymbol = coinJpaRepository
+                .findById(entity.getBaseCurrencyCoinId())
+                .map(CoinJpaEntity::getSymbol)
+                .orElse("");
         return new ExchangeSummary(entity.getId(), entity.getName(), baseCurrencySymbol);
     }
 }

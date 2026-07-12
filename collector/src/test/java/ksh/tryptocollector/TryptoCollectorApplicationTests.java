@@ -19,7 +19,5 @@ class TryptoCollectorApplicationTests {
     ExchangeInitializer exchangeInitializer;
 
     @Test
-    void contextLoads() {
-    }
-
+    void contextLoads() {}
 }

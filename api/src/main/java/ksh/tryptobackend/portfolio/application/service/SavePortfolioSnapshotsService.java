@@ -18,7 +18,8 @@ public class SavePortfolioSnapshotsService implements SavePortfolioSnapshotsUseC
     @Override
     @Transactional
     public void saveAll(List<SnapshotResult> results) {
-        List<PortfolioSnapshot> snapshots = results.stream().map(SnapshotResult::snapshot).toList();
+        List<PortfolioSnapshot> snapshots =
+                results.stream().map(SnapshotResult::snapshot).toList();
         portfolioSnapshotCommandPort.saveAll(snapshots);
     }
 }

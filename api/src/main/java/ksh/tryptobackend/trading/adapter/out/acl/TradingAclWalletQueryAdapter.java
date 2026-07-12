@@ -31,7 +31,9 @@ public class TradingAclWalletQueryAdapter implements WalletQueryPort {
 
     @Override
     public List<WalletRef> findByRoundIds(List<Long> roundIds) {
-        return findWalletUseCase.findByRoundIds(roundIds).stream().map(this::toWalletRef).toList();
+        return findWalletUseCase.findByRoundIds(roundIds).stream()
+                .map(this::toWalletRef)
+                .toList();
     }
 
     @Override

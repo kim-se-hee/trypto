@@ -1,12 +1,11 @@
 package ksh.tryptocollector.metadata;
 
-import ksh.tryptocollector.model.Exchange;
-import ksh.tryptocollector.model.MarketInfo;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import ksh.tryptocollector.model.Exchange;
+import ksh.tryptocollector.model.MarketInfo;
+import org.springframework.stereotype.Component;
 
 @Component
 public class MarketInfoCache {

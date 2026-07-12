@@ -2,16 +2,6 @@ package ksh.tryptocollector.ingest.bithumb;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import ksh.tryptocollector.ingest.ExchangeTickerStream;
-import ksh.tryptocollector.ingest.RestPollingFallback;
-import ksh.tryptocollector.distribute.TickerSinkProcessor;
-import ksh.tryptocollector.metadata.MarketInfoCache;
-import ksh.tryptocollector.model.Exchange;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -19,6 +9,15 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.ingest.ExchangeTickerStream;
+import ksh.tryptocollector.ingest.RestPollingFallback;
+import ksh.tryptocollector.metadata.MarketInfoCache;
+import ksh.tryptocollector.model.Exchange;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
@@ -33,9 +32,12 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
     private final Counter reconnectCounter;
     private final Counter parseFailureCounter;
 
-    public BithumbWebSocketHandler(ObjectMapper objectMapper, MarketInfoCache marketInfoCache,
-                                   TickerSinkProcessor tickerSinkProcessor, RestPollingFallback restPollingFallback,
-                                   MeterRegistry registry) {
+    public BithumbWebSocketHandler(
+            ObjectMapper objectMapper,
+            MarketInfoCache marketInfoCache,
+            TickerSinkProcessor tickerSinkProcessor,
+            RestPollingFallback restPollingFallback,
+            MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
@@ -57,7 +59,8 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
-                WebSocket ws = httpClient.newWebSocketBuilder()
+                WebSocket ws = httpClient
+                        .newWebSocketBuilder()
                         .buildAsync(URI.create(wsUrl), new BithumbListener(closeLatch))
                         .join();
                 String subscribeMessage = buildSubscribeMessage();
@@ -82,14 +85,15 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
     private String buildSubscribeMessage() {
         List<String> codes = marketInfoCache.getSymbolCodes(Exchange.BITHUMB);
         log.info("빗썸 WebSocket 구독: {} 마켓", codes.size());
-        return "[{\"ticket\":\"trypto-collector\"},{\"type\":\"ticker\",\"codes\":" +
-                objectMapper.writeValueAsString(codes) + "}]";
+        return "[{\"ticket\":\"trypto-collector\"},{\"type\":\"ticker\",\"codes\":"
+                + objectMapper.writeValueAsString(codes) + "}]";
     }
 
     private void handleMessage(String payload) {
         try {
             BithumbTickerMessage ticker = objectMapper.readValue(payload, BithumbTickerMessage.class);
-            marketInfoCache.find(Exchange.BITHUMB, ticker.code())
+            marketInfoCache
+                    .find(Exchange.BITHUMB, ticker.code())
                     .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
         } catch (Exception e) {
             parseFailureCounter.increment();

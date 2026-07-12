@@ -40,8 +40,7 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding tickerMarketdataBinding(
-            Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
+    public Binding tickerMarketdataBinding(Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
         return BindingBuilder.bind(tickerMarketdataQueue).to(tickerFanoutExchange);
     }
 
@@ -62,8 +61,7 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Binding engineOrderFilledBinding(
-            Queue engineOrderFilledQueue, FanoutExchange orderFilledFanoutExchange) {
+    public Binding engineOrderFilledBinding(Queue engineOrderFilledQueue, FanoutExchange orderFilledFanoutExchange) {
         return BindingBuilder.bind(engineOrderFilledQueue).to(orderFilledFanoutExchange);
     }
 
@@ -73,8 +71,7 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(
-            ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(jsonMessageConverter);
         if (connectionFactory instanceof CachingConnectionFactory ccf) {

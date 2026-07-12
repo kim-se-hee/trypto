@@ -18,26 +18,23 @@ public record StartRoundRequest(
         List<@Valid RuleRequest> rules) {
 
     public StartRoundCommand toCommand() {
-        List<StartRoundSeedCommand> seedCommands =
-                seeds.stream()
-                        .map(seed -> new StartRoundSeedCommand(seed.exchangeId(), seed.amount()))
+        List<StartRoundSeedCommand> seedCommands = seeds.stream()
+                .map(seed -> new StartRoundSeedCommand(seed.exchangeId(), seed.amount()))
+                .toList();
+        List<StartRoundRuleCommand> ruleCommands = rules == null
+                ? List.of()
+                : rules.stream()
+                        .map(rule -> new StartRoundRuleCommand(rule.ruleType(), rule.thresholdValue()))
                         .toList();
-        List<StartRoundRuleCommand> ruleCommands =
-                rules == null
-                        ? List.of()
-                        : rules.stream()
-                                .map(
-                                        rule ->
-                                                new StartRoundRuleCommand(
-                                                        rule.ruleType(), rule.thresholdValue()))
-                                .toList();
         return new StartRoundCommand(userId, seedCommands, emergencyFundingLimit, ruleCommands);
     }
 
     public record SeedRequest(
-            @NotNull Long exchangeId, @NotNull @DecimalMin("0") BigDecimal amount) {}
+            @NotNull Long exchangeId,
+            @NotNull @DecimalMin("0") BigDecimal amount) {}
 
     public record RuleRequest(
             @NotNull RuleType ruleType,
+
             @NotNull @DecimalMin(value = "0", inclusive = false) BigDecimal thresholdValue) {}
 }

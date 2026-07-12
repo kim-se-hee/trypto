@@ -19,10 +19,7 @@ public class FindExchangeCoinMappingService implements FindExchangeCoinMappingUs
     public Optional<ExchangeCoinMappingResult> findById(Long exchangeCoinId) {
         return exchangeCoinQueryPort
                 .findById(exchangeCoinId)
-                .map(
-                        ec ->
-                                new ExchangeCoinMappingResult(
-                                        ec.exchangeCoinId(), ec.exchangeId(), ec.coinId()));
+                .map(ec -> new ExchangeCoinMappingResult(ec.exchangeCoinId(), ec.exchangeId(), ec.coinId()));
     }
 
     @Override

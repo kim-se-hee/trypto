@@ -40,8 +40,7 @@ public class FindEvaluatedHoldingsService implements FindEvaluatedHoldingsUseCas
                 .toList();
     }
 
-    private CoinExchangeMapping findCoinExchangeMapping(
-            Long exchangeId, List<HoldingInfoResult> holdings) {
+    private CoinExchangeMapping findCoinExchangeMapping(Long exchangeId, List<HoldingInfoResult> holdings) {
         List<Long> coinIds = holdings.stream().map(HoldingInfoResult::coinId).toList();
         return marketQueryPort.findCoinExchangeMapping(exchangeId, coinIds);
     }
@@ -49,7 +48,8 @@ public class FindEvaluatedHoldingsService implements FindEvaluatedHoldingsUseCas
     private EvaluatedHoldingResult toEvaluatedHoldingResult(
             HoldingInfoResult holding, CoinExchangeMapping coinExchangeMapping) {
         Long exchangeCoinId = coinExchangeMapping.getExchangeCoinId(holding.coinId());
-        BigDecimal currentPrice = marketQueryPort.getCurrentPrice(exchangeCoinId).value();
+        BigDecimal currentPrice =
+                marketQueryPort.getCurrentPrice(exchangeCoinId).value();
         return new EvaluatedHoldingResult(
                 holding.coinId(), holding.avgBuyPrice(), holding.totalQuantity(), currentPrice);
     }

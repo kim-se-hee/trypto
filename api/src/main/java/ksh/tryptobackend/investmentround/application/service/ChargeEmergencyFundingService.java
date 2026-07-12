@@ -33,8 +33,7 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
     public InvestmentRound charge(ChargeEmergencyFundingCommand command) {
         LocalDateTime now = LocalDateTime.now(clock);
         String idempotencyKey = command.idempotencyKey().toString();
-        idempotencyKeyCommandPort.preempt(
-                idempotencyKey, IdempotencyResourceType.EMERGENCY_FUNDING, now);
+        idempotencyKeyCommandPort.preempt(idempotencyKey, IdempotencyResourceType.EMERGENCY_FUNDING, now);
 
         InvestmentRound round = investmentRoundQueryPort.getByIdWithLock(command.roundId());
         round.validateOwnedBy(command.userId());

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Exchange {
-
     UPBIT("KRW"),
     BITHUMB("KRW"),
     BINANCE("USDT");

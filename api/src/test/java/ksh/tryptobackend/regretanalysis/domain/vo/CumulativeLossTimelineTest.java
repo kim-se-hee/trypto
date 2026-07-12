@@ -62,9 +62,7 @@ class CumulativeLossTimelineTest {
         void build_multipleViolations_cumulativeSum() {
             // Given
             List<ViolationDetail> violations =
-                    List.of(
-                            violationOn(DAY_1, new BigDecimal("5000")),
-                            violationOn(DAY_3, new BigDecimal("15000")));
+                    List.of(violationOn(DAY_1, new BigDecimal("5000")), violationOn(DAY_3, new BigDecimal("15000")));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3, DAY_4);
 
             // When
@@ -82,9 +80,7 @@ class CumulativeLossTimelineTest {
         void build_multipleViolationsSameDay_allSummed() {
             // Given
             List<ViolationDetail> violations =
-                    List.of(
-                            violationOn(DAY_2, new BigDecimal("3000")),
-                            violationOn(DAY_2, new BigDecimal("7000")));
+                    List.of(violationOn(DAY_2, new BigDecimal("3000")), violationOn(DAY_2, new BigDecimal("7000")));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
@@ -101,9 +97,7 @@ class CumulativeLossTimelineTest {
         void build_unsortedViolations_correctlyAccumulated() {
             // Given
             List<ViolationDetail> violations =
-                    List.of(
-                            violationOn(DAY_3, new BigDecimal("20000")),
-                            violationOn(DAY_1, new BigDecimal("5000")));
+                    List.of(violationOn(DAY_3, new BigDecimal("20000")), violationOn(DAY_1, new BigDecimal("5000")));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
@@ -125,8 +119,7 @@ class CumulativeLossTimelineTest {
         void calculateRuleFollowedAsset_addsLossToActual() {
             // Given
             List<ViolationDetail> violations = List.of(violationOn(DAY_1, new BigDecimal("50000")));
-            CumulativeLossTimeline timeline =
-                    CumulativeLossTimeline.build(violations, List.of(DAY_1, DAY_2));
+            CumulativeLossTimeline timeline = CumulativeLossTimeline.build(violations, List.of(DAY_1, DAY_2));
             BigDecimal actualAsset = new BigDecimal("900000");
 
             // When
@@ -140,8 +133,7 @@ class CumulativeLossTimelineTest {
         @DisplayName("누적 손실이 0이면 원칙 준수 자산은 실제 자산과 같다")
         void calculateRuleFollowedAsset_noLoss_equalsActual() {
             // Given
-            CumulativeLossTimeline timeline =
-                    CumulativeLossTimeline.build(List.of(), List.of(DAY_1));
+            CumulativeLossTimeline timeline = CumulativeLossTimeline.build(List.of(), List.of(DAY_1));
             BigDecimal actualAsset = new BigDecimal("1000000");
 
             // When
@@ -160,8 +152,7 @@ class CumulativeLossTimelineTest {
         @DisplayName("타임라인에 없는 날짜를 조회하면 0을 반환한다")
         void getLossAt_nonExistentDate_returnsZero() {
             // Given
-            CumulativeLossTimeline timeline =
-                    CumulativeLossTimeline.build(List.of(), List.of(DAY_1));
+            CumulativeLossTimeline timeline = CumulativeLossTimeline.build(List.of(), List.of(DAY_1));
 
             // When
             BigDecimal loss = timeline.getLossAt(DAY_3);

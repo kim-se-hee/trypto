@@ -22,8 +22,7 @@ public class User {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public static User registerWith(
-            SocialIdentity socialIdentity, Nickname nickname, LocalDateTime now) {
+    public static User registerWith(SocialIdentity socialIdentity, Nickname nickname, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)
@@ -36,10 +35,7 @@ public class User {
     }
 
     public static User create(
-            SocialIdentity socialIdentity,
-            String nickname,
-            boolean portfolioPublic,
-            LocalDateTime now) {
+            SocialIdentity socialIdentity, String nickname, boolean portfolioPublic, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)

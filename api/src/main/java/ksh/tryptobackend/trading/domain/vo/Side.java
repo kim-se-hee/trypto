@@ -5,8 +5,6 @@ public enum Side {
     SELL;
 
     public boolean canFillAt(Price limitPrice, Price executionPrice) {
-        return this == BUY
-                ? !executionPrice.isHigherThan(limitPrice)
-                : !limitPrice.isHigherThan(executionPrice);
+        return this == BUY ? !executionPrice.isHigherThan(limitPrice) : !limitPrice.isHigherThan(executionPrice);
     }
 }

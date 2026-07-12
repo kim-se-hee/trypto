@@ -11,9 +11,7 @@ public record StartRampRequest(List<PhaseRequest> phases) {
             throw new IllegalArgumentException("phases must not be empty");
         }
         List<RampProfile.Phase> mapped =
-                phases.stream()
-                        .map(PhaseRequest::toPhase)
-                        .toList();
+                phases.stream().map(PhaseRequest::toPhase).toList();
         return new RampProfile(mapped);
     }
 

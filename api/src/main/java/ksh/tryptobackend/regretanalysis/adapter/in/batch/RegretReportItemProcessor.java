@@ -17,13 +17,8 @@ public class RegretReportItemProcessor implements ItemProcessor<RegretReportInpu
 
     @Override
     public RegretReport process(RegretReportInput input) {
-        GenerateRegretReportCommand command =
-                new GenerateRegretReportCommand(
-                        input.roundId(),
-                        input.userId(),
-                        input.exchangeId(),
-                        input.walletId(),
-                        input.startedAt());
+        GenerateRegretReportCommand command = new GenerateRegretReportCommand(
+                input.roundId(), input.userId(), input.exchangeId(), input.walletId(), input.startedAt());
         return generateRegretReportUseCase.generateReport(command).orElse(null);
     }
 }

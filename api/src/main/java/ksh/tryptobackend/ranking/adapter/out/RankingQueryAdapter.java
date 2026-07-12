@@ -25,12 +25,11 @@ public class RankingQueryAdapter implements RankingQueryPort {
 
     @Override
     public Optional<LocalDate> findLatestReferenceDate(RankingPeriod period) {
-        LocalDate result =
-                queryFactory
-                        .select(ranking.referenceDate.max())
-                        .from(ranking)
-                        .where(ranking.period.eq(period))
-                        .fetchOne();
+        LocalDate result = queryFactory
+                .select(ranking.referenceDate.max())
+                .from(ranking)
+                .where(ranking.period.eq(period))
+                .fetchOne();
 
         return Optional.ofNullable(result);
     }
@@ -39,17 +38,10 @@ public class RankingQueryAdapter implements RankingQueryPort {
     public List<RankingSummary> findRankings(
             RankingPeriod period, LocalDate referenceDate, Integer cursorRank, int size) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                RankingSummary.class,
-                                ranking.rank,
-                                ranking.userId,
-                                ranking.profitRate,
-                                ranking.tradeCount))
+                .select(Projections.constructor(
+                        RankingSummary.class, ranking.rank, ranking.userId, ranking.profitRate, ranking.tradeCount))
                 .from(ranking)
-                .where(
-                        ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)),
-                        cursorRankGt(cursorRank))
+                .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)), cursorRankGt(cursorRank))
                 .orderBy(ranking.rank.asc())
                 .limit(size)
                 .fetch();
@@ -58,22 +50,15 @@ public class RankingQueryAdapter implements RankingQueryPort {
     @Override
     public Optional<RankingSummary> findByUserIdAndPeriodAndReferenceDate(
             Long userId, RankingPeriod period, LocalDate referenceDate) {
-        RankingSummary result =
-                queryFactory
-                        .select(
-                                Projections.constructor(
-                                        RankingSummary.class,
-                                        ranking.rank,
-                                        ranking.userId,
-                                        ranking.profitRate,
-                                        ranking.tradeCount))
-                        .from(ranking)
-                        .where(
-                                ranking.userId
-                                        .eq(userId)
-                                        .and(ranking.period.eq(period))
-                                        .and(ranking.referenceDate.eq(referenceDate)))
-                        .fetchOne();
+        RankingSummary result = queryFactory
+                .select(Projections.constructor(
+                        RankingSummary.class, ranking.rank, ranking.userId, ranking.profitRate, ranking.tradeCount))
+                .from(ranking)
+                .where(ranking.userId
+                        .eq(userId)
+                        .and(ranking.period.eq(period))
+                        .and(ranking.referenceDate.eq(referenceDate)))
+                .fetchOne();
 
         return Optional.ofNullable(result);
     }
@@ -81,12 +66,11 @@ public class RankingQueryAdapter implements RankingQueryPort {
     @Override
     public RankingStats getRankingStats(RankingPeriod period, LocalDate referenceDate) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                RankingStats.class,
-                                ranking.count(),
-                                ranking.profitRate.max(),
-                                ranking.profitRate.avg().castToNum(BigDecimal.class)))
+                .select(Projections.constructor(
+                        RankingStats.class,
+                        ranking.count(),
+                        ranking.profitRate.max(),
+                        ranking.profitRate.avg().castToNum(BigDecimal.class)))
                 .from(ranking)
                 .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)))
                 .fetchOne();

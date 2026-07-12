@@ -52,22 +52,12 @@ public class RegretChartStepDefinition {
 
     @When("라운드 {long} 거래소 {long} 유저 {long}로 복기 그래프를 조회한다")
     public void getRegretChart(Long roundId, Long exchangeId, Long userId) {
-        apiClient.get(
-                "/api/rounds/"
-                        + roundId
-                        + "/regret/chart?exchangeId="
-                        + exchangeId
-                        + "&userId="
-                        + userId);
+        apiClient.get("/api/rounds/" + roundId + "/regret/chart?exchangeId=" + exchangeId + "&userId=" + userId);
     }
 
     @Then("복기 그래프의 거래소 이름은 {string}이다")
     public void verifyExchangeName(String exchangeName) {
-        apiClient
-                .getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.exchangeName")
-                .isEqualTo(exchangeName);
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.exchangeName").isEqualTo(exchangeName);
     }
 
     @Then("복기 그래프의 기축통화는 {string}이다")
@@ -111,10 +101,9 @@ public class RegretChartStepDefinition {
     }
 
     private void insertExchanges() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
-                    + " base_currency_coin_id) VALUES (1, 'UPBIT', 'DOMESTIC', 1), (2, 'BITHUMB',"
-                    + " 'DOMESTIC', 1)");
+        jdbcTemplate.execute("INSERT IGNORE INTO exchange_market (exchange_id, name, market_type,"
+                + " base_currency_coin_id) VALUES (1, 'UPBIT', 'DOMESTIC', 1), (2, 'BITHUMB',"
+                + " 'DOMESTIC', 1)");
     }
 
     private void insertInvestmentRounds() {
@@ -187,13 +176,11 @@ public class RegretChartStepDefinition {
     }
 
     private void insertViolationDetails() {
-        Long reportId =
-                jdbcTemplate.queryForObject(
-                        "SELECT report_id FROM regret_report WHERE round_id = ? AND exchange_id ="
-                                + " ?",
-                        Long.class,
-                        ROUND_ID,
-                        EXCHANGE_ID_UPBIT);
+        Long reportId = jdbcTemplate.queryForObject(
+                "SELECT report_id FROM regret_report WHERE round_id = ? AND exchange_id =" + " ?",
+                Long.class,
+                ROUND_ID,
+                EXCHANGE_ID_UPBIT);
 
         jdbcTemplate.update(
                 "INSERT INTO violation_detail (report_id, order_id, rule_id, coin_id, "
@@ -251,8 +238,8 @@ public class RegretChartStepDefinition {
             BigDecimal profitRate) {
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, total_asset,"
-                    + " total_asset_krw, total_investment, total_investment_krw, total_profit,"
-                    + " total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        + " total_asset_krw, total_investment, total_investment_krw, total_profit,"
+                        + " total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 USER_ID,
                 roundId,
                 exchangeId,

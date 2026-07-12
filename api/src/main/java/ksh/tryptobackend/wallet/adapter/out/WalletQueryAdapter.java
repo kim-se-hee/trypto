@@ -19,9 +19,7 @@ public class WalletQueryAdapter implements WalletQueryPort {
 
     @Override
     public Optional<Wallet> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return walletRepository
-                .findByRoundIdAndExchangeId(roundId, exchangeId)
-                .map(WalletJpaEntity::toDomain);
+        return walletRepository.findByRoundIdAndExchangeId(roundId, exchangeId).map(WalletJpaEntity::toDomain);
     }
 
     @Override
@@ -31,8 +29,7 @@ public class WalletQueryAdapter implements WalletQueryPort {
 
     @Override
     public Wallet getById(Long walletId) {
-        return findById(walletId)
-                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        return findById(walletId).orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
     }
 
     @Override

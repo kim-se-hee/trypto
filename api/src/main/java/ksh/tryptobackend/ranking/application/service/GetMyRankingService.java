@@ -22,15 +22,9 @@ public class GetMyRankingService implements GetMyRankingUseCase {
     public MyRankingResult getMyRanking(GetMyRankingQuery query) {
         return rankingQueryPort
                 .findLatestReferenceDate(query.period())
-                .flatMap(
-                        referenceDate ->
-                                rankingQueryPort.findByUserIdAndPeriodAndReferenceDate(
-                                        query.userId(), query.period(), referenceDate))
-                .map(
-                        summary ->
-                                MyRankingResult.of(
-                                        summary,
-                                        userQueryPort.findByUserIds(Set.of(summary.userId()))))
+                .flatMap(referenceDate -> rankingQueryPort.findByUserIdAndPeriodAndReferenceDate(
+                        query.userId(), query.period(), referenceDate))
+                .map(summary -> MyRankingResult.of(summary, userQueryPort.findByUserIds(Set.of(summary.userId()))))
                 .orElse(null);
     }
 }

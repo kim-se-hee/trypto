@@ -22,7 +22,6 @@ public record FindOrderHistoryRequest(
     }
 
     public FindOrderHistoryQuery toQuery() {
-        return new FindOrderHistoryQuery(
-                walletId, exchangeCoinId, side, status, cursorOrderId, size);
+        return new FindOrderHistoryQuery(walletId, exchangeCoinId, side, status, cursorOrderId, size);
     }
 }

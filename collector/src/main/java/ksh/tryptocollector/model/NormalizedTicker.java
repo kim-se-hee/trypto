@@ -10,6 +10,4 @@ public record NormalizedTicker(
         BigDecimal lastPrice,
         BigDecimal changeRate,
         BigDecimal quoteTurnover,
-        long tsMs
-) {
-}
+        long tsMs) {}

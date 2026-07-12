@@ -34,22 +34,17 @@ public class PortfolioAclMarketDataQueryAdapter implements MarketDataQueryPort {
 
     @Override
     public ExchangeSnapshot getExchangeSnapshot(Long exchangeId) {
-        ExchangeDetailResult detail =
-                findExchangeDetailUseCase
-                        .findExchangeDetail(exchangeId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-        KrwConversionRate conversionRate =
-                detail.domestic() ? KrwConversionRate.DOMESTIC : KrwConversionRate.OVERSEAS;
+        ExchangeDetailResult detail = findExchangeDetailUseCase
+                .findExchangeDetail(exchangeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        KrwConversionRate conversionRate = detail.domestic() ? KrwConversionRate.DOMESTIC : KrwConversionRate.OVERSEAS;
         return new ExchangeSnapshot(exchangeId, detail.baseCurrencyCoinId(), conversionRate);
     }
 
     @Override
     public CoinMetadataMap findCoinMetadata(Set<Long> coinIds) {
-        Map<Long, CoinMetadata> metadata =
-                findCoinInfoUseCase.findByIds(coinIds).entrySet().stream()
-                        .collect(
-                                Collectors.toMap(
-                                        Map.Entry::getKey, entry -> toMetadata(entry.getValue())));
+        Map<Long, CoinMetadata> metadata = findCoinInfoUseCase.findByIds(coinIds).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> toMetadata(entry.getValue())));
         return new CoinMetadataMap(metadata);
     }
 

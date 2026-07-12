@@ -43,8 +43,7 @@ public class WalletJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private WalletJpaEntity(
-            Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
+    private WalletJpaEntity(Long roundId, Long exchangeId, BigDecimal seedAmount, LocalDateTime createdAt) {
         this.roundId = roundId;
         this.exchangeId = exchangeId;
         this.seedAmount = seedAmount;
@@ -53,10 +52,7 @@ public class WalletJpaEntity {
 
     public static WalletJpaEntity fromDomain(Wallet wallet) {
         return new WalletJpaEntity(
-                wallet.getRoundId(),
-                wallet.getExchangeId(),
-                wallet.getSeedAmount(),
-                wallet.getCreatedAt());
+                wallet.getRoundId(), wallet.getExchangeId(), wallet.getSeedAmount(), wallet.getCreatedAt());
     }
 
     public Wallet toDomain() {

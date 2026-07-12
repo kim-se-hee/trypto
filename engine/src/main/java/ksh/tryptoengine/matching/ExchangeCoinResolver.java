@@ -38,14 +38,13 @@ public class ExchangeCoinResolver {
 
     private Long lazyLoad(String exchange, String displayName) {
         try {
-            Long id =
-                    jdbc.queryForObject(
-                            "SELECT ec.exchange_coin_id FROM exchange_coin ec "
-                                    + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id "
-                                    + "WHERE em.name=? AND ec.display_name=?",
-                            Long.class,
-                            exchange,
-                            displayName);
+            Long id = jdbc.queryForObject(
+                    "SELECT ec.exchange_coin_id FROM exchange_coin ec "
+                            + "JOIN exchange_market em ON em.exchange_id = ec.exchange_id "
+                            + "WHERE em.name=? AND ec.display_name=?",
+                    Long.class,
+                    exchange,
+                    displayName);
             cache.put(key(exchange, displayName), id);
             return id;
         } catch (Exception e) {

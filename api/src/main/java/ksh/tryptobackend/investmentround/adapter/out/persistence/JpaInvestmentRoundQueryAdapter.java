@@ -39,9 +39,7 @@ public class JpaInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort 
 
     @Override
     public Optional<RoundOverview> findActiveRoundByUserId(Long userId) {
-        return repository
-                .findByUserIdAndStatus(userId, RoundStatus.ACTIVE)
-                .map(this::toRoundOverview);
+        return repository.findByUserIdAndStatus(userId, RoundStatus.ACTIVE).map(this::toRoundOverview);
     }
 
     @Override

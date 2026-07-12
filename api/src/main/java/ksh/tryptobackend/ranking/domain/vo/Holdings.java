@@ -23,13 +23,11 @@ public class Holdings {
 
     public List<HoldingView> describe(CoinSymbols coinSymbols, ExchangeNames exchangeNames) {
         return holdings.stream()
-                .map(
-                        holding ->
-                                new HoldingView(
-                                        coinSymbols.getSymbol(holding.coinId()),
-                                        exchangeNames.getName(holding.exchangeId()),
-                                        holding.assetRatio(),
-                                        holding.profitRate()))
+                .map(holding -> new HoldingView(
+                        coinSymbols.getSymbol(holding.coinId()),
+                        exchangeNames.getName(holding.exchangeId()),
+                        holding.assetRatio(),
+                        holding.profitRate()))
                 .toList();
     }
 

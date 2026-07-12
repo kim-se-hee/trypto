@@ -17,25 +17,21 @@ public class ChangeNicknameStepDefinition {
 
     private Long userId;
 
-    public ChangeNicknameStepDefinition(
-            CommonApiClient apiClient, UserJpaRepository userJpaRepository) {
+    public ChangeNicknameStepDefinition(CommonApiClient apiClient, UserJpaRepository userJpaRepository) {
         this.apiClient = apiClient;
         this.userJpaRepository = userJpaRepository;
     }
 
     @Given("닉네임이 {string}인 사용자가 존재한다")
     public void 닉네임이_인_사용자가_존재한다(String nickname) {
-        UserJpaEntity saved =
-                userJpaRepository.save(
-                        UserJpaEntity.fromDomain(
-                                User.create(null, nickname, false, LocalDateTime.now())));
+        UserJpaEntity saved = userJpaRepository.save(
+                UserJpaEntity.fromDomain(User.create(null, nickname, false, LocalDateTime.now())));
         userId = saved.getId();
     }
 
     @Given("닉네임이 {string}인 다른 사용자가 존재한다")
     public void 닉네임이_인_다른_사용자가_존재한다(String nickname) {
-        userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(null, nickname, false, LocalDateTime.now())));
+        userJpaRepository.save(UserJpaEntity.fromDomain(User.create(null, nickname, false, LocalDateTime.now())));
     }
 
     @When("닉네임을 {string}로 변경 요청한다")

@@ -19,8 +19,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TickerEventConflatorTest {
 
-    @Mock private TickerEventPublisher publisher;
-    @InjectMocks private TickerEventConflator conflator;
+    @Mock
+    private TickerEventPublisher publisher;
+
+    @InjectMocks
+    private TickerEventConflator conflator;
 
     @Test
     @DisplayName("같은 키로 여러 번 submit 해도 flush 시 마지막 1건만 batch 에 포함된다")
@@ -90,8 +93,13 @@ class TickerEventConflatorTest {
 
     private NormalizedTicker ticker(String exchange, String base, String quote, String price) {
         return new NormalizedTicker(
-                exchange, base, quote, base + "/" + quote,
-                new BigDecimal(price), BigDecimal.ZERO, BigDecimal.ZERO,
+                exchange,
+                base,
+                quote,
+                base + "/" + quote,
+                new BigDecimal(price),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
                 System.currentTimeMillis());
     }
 

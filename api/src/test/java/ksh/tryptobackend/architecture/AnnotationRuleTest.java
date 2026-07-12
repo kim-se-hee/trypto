@@ -12,9 +12,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class AnnotationRuleTest {
 
     @ArchTest

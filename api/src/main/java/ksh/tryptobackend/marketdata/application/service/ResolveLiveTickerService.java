@@ -17,17 +17,11 @@ public class ResolveLiveTickerService implements ResolveLiveTickerUseCase {
 
     @Override
     public Optional<LiveTickerBatchResult> resolve(ResolveLiveTickerCommand command) {
-        return LiveTickerBatchResult.from(
-                command.tickers().stream()
-                        .map(
-                                ticker ->
-                                        exchangeCoinMappingCacheQueryPort
-                                                .resolve(command.exchange(), ticker.symbol())
-                                                .map(
-                                                        mapping ->
-                                                                LiveTickerResult.of(
-                                                                        mapping, ticker)))
-                        .flatMap(Optional::stream)
-                        .toList());
+        return LiveTickerBatchResult.from(command.tickers().stream()
+                .map(ticker -> exchangeCoinMappingCacheQueryPort
+                        .resolve(command.exchange(), ticker.symbol())
+                        .map(mapping -> LiveTickerResult.of(mapping, ticker)))
+                .flatMap(Optional::stream)
+                .toList());
     }
 }

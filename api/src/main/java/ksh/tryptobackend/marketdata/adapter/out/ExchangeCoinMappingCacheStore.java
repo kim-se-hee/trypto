@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExchangeCoinMappingCacheStore {
 
-    private final ConcurrentHashMap<ExchangeSymbolKey, ExchangeCoinMapping> cache =
-            new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ExchangeSymbolKey, ExchangeCoinMapping> cache = new ConcurrentHashMap<>();
 
     public void loadAll(Map<ExchangeSymbolKey, ExchangeCoinMapping> mappings) {
         cache.clear();

@@ -31,21 +31,16 @@ public class ExchangeCoinQueryAdapter implements ExchangeCoinQueryPort {
 
     @Override
     public ExchangeCoinIdMap findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds) {
-        Map<Long, Long> map =
-                repository.findByExchangeIdAndCoinIdIn(exchangeId, coinIds).stream()
-                        .collect(
-                                Collectors.toMap(
-                                        ExchangeCoinJpaEntity::getCoinId,
-                                        ExchangeCoinJpaEntity::getId));
+        Map<Long, Long> map = repository.findByExchangeIdAndCoinIdIn(exchangeId, coinIds).stream()
+                .collect(Collectors.toMap(ExchangeCoinJpaEntity::getCoinId, ExchangeCoinJpaEntity::getId));
         return new ExchangeCoinIdMap(map);
     }
 
     @Override
     public ExchangeCoins findByExchangeId(Long exchangeId) {
-        List<ExchangeCoin> exchangeCoins =
-                repository.findByExchangeId(exchangeId).stream()
-                        .map(ExchangeCoinJpaEntity::toDomain)
-                        .toList();
+        List<ExchangeCoin> exchangeCoins = repository.findByExchangeId(exchangeId).stream()
+                .map(ExchangeCoinJpaEntity::toDomain)
+                .toList();
         return new ExchangeCoins(exchangeCoins);
     }
 }

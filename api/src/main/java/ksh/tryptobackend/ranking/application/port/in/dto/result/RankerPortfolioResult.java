@@ -7,14 +7,9 @@ import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 import ksh.tryptobackend.ranking.domain.vo.UserProfile;
 
 public record RankerPortfolioResult(
-        Long userId,
-        String nickname,
-        int rank,
-        BigDecimal profitRate,
-        List<PortfolioHoldingResult> holdings) {
+        Long userId, String nickname, int rank, BigDecimal profitRate, List<PortfolioHoldingResult> holdings) {
 
-    public static RankerPortfolioResult of(
-            RankingSummary ranking, UserProfile viewer, List<HoldingView> holdings) {
+    public static RankerPortfolioResult of(RankingSummary ranking, UserProfile viewer, List<HoldingView> holdings) {
         return new RankerPortfolioResult(
                 ranking.userId(),
                 viewer.nickname(),

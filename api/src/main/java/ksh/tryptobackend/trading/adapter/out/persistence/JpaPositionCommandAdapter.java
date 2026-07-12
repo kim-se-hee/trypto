@@ -25,9 +25,7 @@ public class JpaPositionCommandAdapter implements PositionCommandPort {
 
     @Override
     public Optional<Position> findByWalletIdAndCoinId(Long walletId, Long coinId) {
-        return repository
-                .findByWalletIdAndCoinId(walletId, coinId)
-                .map(PositionJpaEntity::toDomain);
+        return repository.findByWalletIdAndCoinId(walletId, coinId).map(PositionJpaEntity::toDomain);
     }
 
     @Override

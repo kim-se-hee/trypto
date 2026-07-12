@@ -31,7 +31,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 class WalRecoveryTest {
 
-    @TempDir Path walDir;
+    @TempDir
+    Path walDir;
 
     private ObjectMapper mapper;
     private ExchangeCoinResolver fakeResolver;
@@ -43,20 +44,18 @@ class WalRecoveryTest {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        fakeResolver =
-                new ExchangeCoinResolver(null) {
-                    @Override
-                    public Long resolve(String exchange, String displayName) {
-                        return 1L;
-                    }
-                };
-        fakeMarketRef =
-                new MarketRefResolver(null) {
-                    @Override
-                    public MarketRef resolve(Long exchangeCoinId) {
-                        return new MarketRef(2L, 1L, new BigDecimal("0.0005"));
-                    }
-                };
+        fakeResolver = new ExchangeCoinResolver(null) {
+            @Override
+            public Long resolve(String exchange, String displayName) {
+                return 1L;
+            }
+        };
+        fakeMarketRef = new MarketRefResolver(null) {
+            @Override
+            public MarketRef resolve(Long exchangeCoinId) {
+                return new MarketRef(2L, 1L, new BigDecimal("0.0005"));
+            }
+        };
         dbWriter = new CapturingDbWriter();
     }
 
@@ -79,8 +78,7 @@ class WalRecoveryTest {
 
     @Test
     void 파일이_없으면_빈_상태와_seq0_을_반환() throws IOException {
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry state = new OrderBookRegistry();
 
         long seq = recovery.recover(state);
@@ -98,8 +96,7 @@ class WalRecoveryTest {
         writer.offer(canceled(100L, 1L));
         writer.stop();
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry state = new OrderBookRegistry();
         long seq = recovery.recover(state);
 
@@ -121,8 +118,7 @@ class WalRecoveryTest {
         SnapshotWriter snapshotWriter = new SnapshotWriter(mapper, walDir.toString());
         snapshotWriter.write(original, 42);
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry recovered = new OrderBookRegistry();
         long seq = recovery.recover(recovered);
 
@@ -151,8 +147,7 @@ class WalRecoveryTest {
         writer.offer(canceled(100L, 1L));
         writer.stop();
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry recovered = new OrderBookRegistry();
         long seq = recovery.recover(recovered);
 
@@ -189,8 +184,7 @@ class WalRecoveryTest {
         }
         writer.stop();
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry recovered = new OrderBookRegistry();
         long recoveredSeq = recovery.recover(recovered);
 
@@ -210,8 +204,7 @@ class WalRecoveryTest {
         writer.offer(tick("UPBIT", "BTC", "6900"));
         writer.stop();
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry state = new OrderBookRegistry();
         long seq = recovery.recover(state);
 
@@ -231,8 +224,7 @@ class WalRecoveryTest {
         writer1.offer(placed(101L, "BUY", 1L, "7100", "1"));
         writer1.stop();
 
-        WalRecovery recovery =
-                new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
+        WalRecovery recovery = new WalRecovery(mapper, fakeResolver, fakeMarketRef, dbWriter, walDir.toString());
         OrderBookRegistry state = new OrderBookRegistry();
         long lastSeq = recovery.recover(state);
 
@@ -246,8 +238,7 @@ class WalRecoveryTest {
         assertThat(newSeq).isEqualTo(3);
     }
 
-    private OrderPlacedEvent placed(
-            long id, String side, long exchangeCoinId, String price, String qty) {
+    private OrderPlacedEvent placed(long id, String side, long exchangeCoinId, String price, String qty) {
         BigDecimal p = new BigDecimal(price);
         BigDecimal q = new BigDecimal(qty);
         return new OrderPlacedEvent(
@@ -268,10 +259,7 @@ class WalRecoveryTest {
 
     private TickReceivedEvent tick(String exchange, String displayName, String price) {
         return new TickReceivedEvent(
-                exchange,
-                displayName,
-                new BigDecimal(price),
-                LocalDateTime.of(2026, 1, 1, 1, 0, 0));
+                exchange, displayName, new BigDecimal(price), LocalDateTime.of(2026, 1, 1, 1, 0, 0));
     }
 
     private OrderDetail detail(long id, Side side, TradingPair pair, String price, String qty) {
@@ -295,19 +283,18 @@ class WalRecoveryTest {
     private void applyPlaced(OrderBookRegistry state, OrderPlacedEvent p) {
         TradingPair pair = new TradingPair(p.exchangeCoinId());
         OrderBook book = state.bookOf(pair);
-        book.tryAdd(
-                new OrderDetail(
-                        p.orderId(),
-                        p.walletId(),
-                        Side.valueOf(p.side()),
-                        pair,
-                        2L,
-                        1L,
-                        p.price(),
-                        p.quantity(),
-                        new BigDecimal("0.0005"),
-                        p.lockedAmount(),
-                        p.lockedCoinId(),
-                        p.placedAt()));
+        book.tryAdd(new OrderDetail(
+                p.orderId(),
+                p.walletId(),
+                Side.valueOf(p.side()),
+                pair,
+                2L,
+                1L,
+                p.price(),
+                p.quantity(),
+                new BigDecimal("0.0005"),
+                p.lockedAmount(),
+                p.lockedCoinId(),
+                p.placedAt()));
     }
 }

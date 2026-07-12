@@ -12,23 +12,14 @@ class EvaluatedHoldingsTest {
     @Test
     @DisplayName("여러 보유 종목의 평가금액을 합산한다")
     void totalEvaluatedAmount_multipleHoldings_sumsAll() {
-        EvaluatedHolding btc =
-                EvaluatedHolding.create(
-                        1L,
-                        new BigDecimal("90000000"),
-                        new BigDecimal("0.05"),
-                        new BigDecimal("95000000"));
+        EvaluatedHolding btc = EvaluatedHolding.create(
+                1L, new BigDecimal("90000000"), new BigDecimal("0.05"), new BigDecimal("95000000"));
         EvaluatedHolding eth =
-                EvaluatedHolding.create(
-                        2L,
-                        new BigDecimal("5000000"),
-                        new BigDecimal("1"),
-                        new BigDecimal("5500000"));
+                EvaluatedHolding.create(2L, new BigDecimal("5000000"), new BigDecimal("1"), new BigDecimal("5500000"));
 
         EvaluatedHoldings holdings = new EvaluatedHoldings(List.of(btc, eth));
 
-        assertThat(holdings.totalEvaluatedAmount())
-                .isEqualByComparingTo(new BigDecimal("10250000"));
+        assertThat(holdings.totalEvaluatedAmount()).isEqualByComparingTo(new BigDecimal("10250000"));
     }
 
     @Test
@@ -42,18 +33,10 @@ class EvaluatedHoldingsTest {
     @Test
     @DisplayName("스냅샷 상세 변환 시 비중과 수익률을 계산한다")
     void toSnapshotDetails_calculatesRatioAndProfitRate() {
-        EvaluatedHolding btc =
-                EvaluatedHolding.create(
-                        1L,
-                        new BigDecimal("90000000"),
-                        new BigDecimal("0.05"),
-                        new BigDecimal("95000000"));
+        EvaluatedHolding btc = EvaluatedHolding.create(
+                1L, new BigDecimal("90000000"), new BigDecimal("0.05"), new BigDecimal("95000000"));
         EvaluatedHolding eth =
-                EvaluatedHolding.create(
-                        2L,
-                        new BigDecimal("5000000"),
-                        new BigDecimal("1"),
-                        new BigDecimal("5500000"));
+                EvaluatedHolding.create(2L, new BigDecimal("5000000"), new BigDecimal("1"), new BigDecimal("5500000"));
 
         EvaluatedHoldings holdings = new EvaluatedHoldings(List.of(btc, eth));
         BigDecimal totalAsset = new BigDecimal("15250000");

@@ -41,16 +41,14 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<PlaceOrderResponse> createOrder(
-            @Valid @RequestBody PlaceOrderRequest request) {
+    public ApiResponseDto<PlaceOrderResponse> createOrder(@Valid @RequestBody PlaceOrderRequest request) {
         Order order;
         try {
             order = placeOrderUseCase.placeOrder(request.toCommand());
         } catch (DuplicateRequestException e) {
-            Long orderId =
-                    idempotencyKeyQueryPort
-                            .findResourceId(request.clientOrderId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+            Long orderId = idempotencyKeyQueryPort
+                    .findResourceId(request.clientOrderId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
             order = getOrderUseCase.getById(orderId);
         }
         String message = order.isMarketOrder() ? "주문이 체결되었습니다." : "주문이 등록되었습니다.";
@@ -60,21 +58,18 @@ public class OrderController {
     @GetMapping("/available")
     public ApiResponseDto<OrderAvailabilityResponse> getAvailability(
             @Valid @ModelAttribute GetOrderAvailabilityRequest request) {
-        OrderAvailabilityResult result =
-                getOrderAvailabilityUseCase.getAvailability(request.toQuery());
+        OrderAvailabilityResult result = getOrderAvailabilityUseCase.getAvailability(request.toQuery());
         return ApiResponseDto.success("조회 성공", OrderAvailabilityResponse.from(result));
     }
 
     @GetMapping
     public ApiResponseDto<CursorPageResponseDto<OrderHistoryResponse>> findOrderHistory(
             @Valid @ModelAttribute FindOrderHistoryRequest request) {
-        OrderHistoryCursorResult result =
-                findOrderHistoryUseCase.findOrderHistory(request.toQuery());
-        CursorPageResponseDto<OrderHistoryResponse> response =
-                CursorPageResponseDto.of(
-                        result.content().stream().map(OrderHistoryResponse::from).toList(),
-                        result.nextCursor(),
-                        result.hasNext());
+        OrderHistoryCursorResult result = findOrderHistoryUseCase.findOrderHistory(request.toQuery());
+        CursorPageResponseDto<OrderHistoryResponse> response = CursorPageResponseDto.of(
+                result.content().stream().map(OrderHistoryResponse::from).toList(),
+                result.nextCursor(),
+                result.hasNext());
         return ApiResponseDto.success("조회 성공", response);
     }
 

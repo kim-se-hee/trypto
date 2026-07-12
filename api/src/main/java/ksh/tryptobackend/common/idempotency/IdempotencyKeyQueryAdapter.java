@@ -14,8 +14,6 @@ public class IdempotencyKeyQueryAdapter implements IdempotencyKeyQueryPort {
     @Override
     @Transactional(readOnly = true)
     public Optional<Long> findResourceId(String idempotencyKey) {
-        return repository
-                .findByIdempotencyKey(idempotencyKey)
-                .map(IdempotencyKeyJpaEntity::getResourceId);
+        return repository.findByIdempotencyKey(idempotencyKey).map(IdempotencyKeyJpaEntity::getResourceId);
     }
 }

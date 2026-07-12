@@ -14,8 +14,7 @@ public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpa
 
     boolean existsByExchangeIdAndCoinId(Long exchangeId, Long coinId);
 
-    List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(
-            Long exchangeId, Collection<Long> coinIds);
+    List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(Long exchangeId, Collection<Long> coinIds);
 
     List<ExchangeCoinJpaEntity> findByExchangeId(Long exchangeId);
 }

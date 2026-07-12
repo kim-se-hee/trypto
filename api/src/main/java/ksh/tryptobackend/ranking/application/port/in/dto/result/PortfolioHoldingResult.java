@@ -7,7 +7,6 @@ public record PortfolioHoldingResult(
         String coinSymbol, String exchangeName, BigDecimal assetRatio, BigDecimal profitRate) {
 
     public static PortfolioHoldingResult from(HoldingView view) {
-        return new PortfolioHoldingResult(
-                view.coinSymbol(), view.exchangeName(), view.assetRatio(), view.profitRate());
+        return new PortfolioHoldingResult(view.coinSymbol(), view.exchangeName(), view.assetRatio(), view.profitRate());
     }
 }

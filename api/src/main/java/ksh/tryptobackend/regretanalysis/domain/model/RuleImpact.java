@@ -16,8 +16,7 @@ public class RuleImpact {
     private final BigDecimal totalLossAmount;
     private final ImpactGap impactGap;
 
-    public static RuleImpact create(
-            Long ruleId, int violationCount, BigDecimal totalLossAmount, ImpactGap impactGap) {
+    public static RuleImpact create(Long ruleId, int violationCount, BigDecimal totalLossAmount, ImpactGap impactGap) {
         return RuleImpact.builder()
                 .ruleId(ruleId)
                 .violationCount(violationCount)

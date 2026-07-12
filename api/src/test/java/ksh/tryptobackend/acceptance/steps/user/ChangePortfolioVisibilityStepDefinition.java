@@ -13,8 +13,7 @@ public class ChangePortfolioVisibilityStepDefinition {
     private final CommonApiClient apiClient;
     private final JdbcTemplate jdbcTemplate;
 
-    public ChangePortfolioVisibilityStepDefinition(
-            CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
+    public ChangePortfolioVisibilityStepDefinition(CommonApiClient apiClient, JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -26,8 +25,7 @@ public class ChangePortfolioVisibilityStepDefinition {
 
     @When("유저 {long}의 포트폴리오 공개 설정을 {word}로 변경한다")
     public void 유저의_포트폴리오_공개_설정을_변경한다(Long userId, String visibility) {
-        Map<String, Boolean> requestBody =
-                Map.of("portfolioPublic", Boolean.parseBoolean(visibility));
+        Map<String, Boolean> requestBody = Map.of("portfolioPublic", Boolean.parseBoolean(visibility));
         apiClient.put("/api/users/" + userId + "/portfolio-visibility", requestBody);
     }
 

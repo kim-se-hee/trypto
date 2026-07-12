@@ -32,12 +32,8 @@ public class SnapshotWriter {
         Files.createDirectories(walDir);
         List<Snapshot.PairSnapshot> pairs = new ArrayList<>();
         registry.books()
-                .forEach(
-                        (pair, book) ->
-                                pairs.add(
-                                        new Snapshot.PairSnapshot(
-                                                pair.exchangeCoinId(),
-                                                new ArrayList<>(book.allOrders()))));
+                .forEach((pair, book) ->
+                        pairs.add(new Snapshot.PairSnapshot(pair.exchangeCoinId(), new ArrayList<>(book.allOrders()))));
         Snapshot snap = new Snapshot(lastSeq, pairs);
         Path tmp = walDir.resolve(SNAPSHOT_TMP_FILE);
         Path target = walDir.resolve(SNAPSHOT_FILE);
@@ -46,11 +42,7 @@ public class SnapshotWriter {
             fos.getFD().sync();
         }
         try {
-            Files.move(
-                    tmp,
-                    target,
-                    StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
+            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
         }

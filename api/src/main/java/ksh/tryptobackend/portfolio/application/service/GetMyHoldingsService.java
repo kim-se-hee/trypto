@@ -28,21 +28,14 @@ public class GetMyHoldingsService implements GetMyHoldingsUseCase {
         wallet.verifyOwnedBy(query.userId());
 
         Long baseCurrencyCoinId = marketDataQueryPort.getBaseCurrencyCoinId(wallet.exchangeId());
-        BigDecimal baseCurrencyBalance =
-                walletQueryPort.getBaseCurrencyBalance(query.walletId(), baseCurrencyCoinId);
+        BigDecimal baseCurrencyBalance = walletQueryPort.getBaseCurrencyBalance(query.walletId(), baseCurrencyCoinId);
 
-        PortfolioHoldings holdings =
-                tradingQueryPort.findHoldings(query.walletId(), wallet.exchangeId());
+        PortfolioHoldings holdings = tradingQueryPort.findHoldings(query.walletId(), wallet.exchangeId());
         CoinMetadataMap coinMetadata =
                 marketDataQueryPort.findCoinMetadata(holdings.coinIdsIncluding(baseCurrencyCoinId));
 
         Portfolio portfolio =
-                new Portfolio(
-                        wallet.exchangeId(),
-                        baseCurrencyCoinId,
-                        baseCurrencyBalance,
-                        holdings,
-                        coinMetadata);
+                new Portfolio(wallet.exchangeId(), baseCurrencyCoinId, baseCurrencyBalance, holdings, coinMetadata);
         return MyHoldingsResult.from(portfolio);
     }
 }

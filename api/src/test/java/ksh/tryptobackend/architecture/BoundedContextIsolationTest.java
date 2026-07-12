@@ -9,9 +9,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class BoundedContextIsolationTest {
 
     @ArchTest
@@ -75,24 +73,19 @@ class BoundedContextIsolationTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAnyPackage(otherPortInPackages)
-                .as(
-                        context
-                                + " — only adapter.out.acl/service may depend on other context"
-                                + " UseCases")
+                .as(context + " — only adapter.out.acl/service may depend on other context" + " UseCases")
                 .check(classes);
 
-        FreezingArchRule.freeze(
-                        noClasses()
-                                .that()
-                                .resideInAPackage(contextPkg(context, SERVICE))
-                                .should()
-                                .dependOnClassesThat()
-                                .resideInAnyPackage(otherPortOutPackages)
-                                .as(
-                                        context
-                                                + " service should not depend on other context's"
-                                                + " OutputPort — cross-context goes through"
-                                                + " UseCase"))
+        FreezingArchRule.freeze(noClasses()
+                        .that()
+                        .resideInAPackage(contextPkg(context, SERVICE))
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAnyPackage(otherPortOutPackages)
+                        .as(context
+                                + " service should not depend on other context's"
+                                + " OutputPort — cross-context goes through"
+                                + " UseCase"))
                 .check(classes);
     }
 }

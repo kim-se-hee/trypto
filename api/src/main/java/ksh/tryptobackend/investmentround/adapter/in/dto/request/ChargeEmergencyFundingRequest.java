@@ -13,7 +13,6 @@ public record ChargeEmergencyFundingRequest(
         @NotNull UUID idempotencyKey) {
 
     public ChargeEmergencyFundingCommand toCommand(Long roundId) {
-        return new ChargeEmergencyFundingCommand(
-                roundId, userId, exchangeId, amount, idempotencyKey);
+        return new ChargeEmergencyFundingCommand(roundId, userId, exchangeId, amount, idempotencyKey);
     }
 }

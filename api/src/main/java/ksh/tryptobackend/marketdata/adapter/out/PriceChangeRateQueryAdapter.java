@@ -46,15 +46,13 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
     }
 
     private String buildRedisKey(Long exchangeCoinId) {
-        ExchangeCoinJpaEntity exchangeCoin =
-                exchangeCoinRepository
-                        .findById(exchangeCoinId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        ExchangeCoinJpaEntity exchangeCoin = exchangeCoinRepository
+                .findById(exchangeCoinId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
 
-        ExchangeJpaEntity exchange =
-                exchangeRepository
-                        .findById(exchangeCoin.getExchangeId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeJpaEntity exchange = exchangeRepository
+                .findById(exchangeCoin.getExchangeId())
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
 
         String baseSymbol = findCoinSymbol(exchangeCoin.getCoinId());
         String quoteSymbol = findCoinSymbol(exchange.getBaseCurrencyCoinId());

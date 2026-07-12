@@ -8,9 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-        name = "wallet_balance",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
+@Table(name = "wallet_balance", uniqueConstraints = @UniqueConstraint(columnNames = {"wallet_id", "coin_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WalletBalanceJpaEntity {
@@ -32,8 +30,7 @@ public class WalletBalanceJpaEntity {
     @Column(name = "locked", nullable = false, precision = 30, scale = 8)
     private BigDecimal locked;
 
-    public WalletBalanceJpaEntity(
-            Long walletId, Long coinId, BigDecimal available, BigDecimal locked) {
+    public WalletBalanceJpaEntity(Long walletId, Long coinId, BigDecimal available, BigDecimal locked) {
         this.walletId = walletId;
         this.coinId = coinId;
         this.available = available;

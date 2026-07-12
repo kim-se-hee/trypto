@@ -36,10 +36,9 @@ public class RegretAnalysisAclMarketDataQueryAdapter implements MarketDataQueryP
 
     @Override
     public AnalysisExchange getExchange(Long exchangeId) {
-        ExchangeDetailResult result =
-                findExchangeDetailUseCase
-                        .findExchangeDetail(exchangeId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+        ExchangeDetailResult result = findExchangeDetailUseCase
+                .findExchangeDetail(exchangeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         return toAnalysisExchange(exchangeId, result);
     }
 
@@ -49,20 +48,17 @@ public class RegretAnalysisAclMarketDataQueryAdapter implements MarketDataQueryP
     }
 
     @Override
-    public BtcDailyPrices findBtcDailyPrices(
-            LocalDate startDate, LocalDate endDate, String currency) {
-        List<BtcDailyPrice> prices =
-                findBtcDailyPricesUseCase.findBtcDailyPrices(startDate, endDate, currency).stream()
-                        .map(this::toBtcDailyPrice)
-                        .toList();
+    public BtcDailyPrices findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) {
+        List<BtcDailyPrice> prices = findBtcDailyPricesUseCase.findBtcDailyPrices(startDate, endDate, currency).stream()
+                .map(this::toBtcDailyPrice)
+                .toList();
         return BtcDailyPrices.of(prices);
     }
 
     @Override
     public CurrentPrices findCurrentPrices(Set<Long> exchangeCoinIds) {
         Map<Long, BigDecimal> priceByExchangeCoinId =
-                exchangeCoinIds.stream()
-                        .collect(Collectors.toMap(id -> id, getLivePriceUseCase::getCurrentPrice));
+                exchangeCoinIds.stream().collect(Collectors.toMap(id -> id, getLivePriceUseCase::getCurrentPrice));
         return new CurrentPrices(priceByExchangeCoinId);
     }
 

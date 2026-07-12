@@ -13,10 +13,7 @@ public class SnapshotSummaries {
 
     public SnapshotSummaries(List<SnapshotSummary> summaries) {
         this.totalAssetMap =
-                summaries.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        SnapshotSummary::roundKey, SnapshotSummary::totalAssetKrw));
+                summaries.stream().collect(Collectors.toMap(SnapshotSummary::roundKey, SnapshotSummary::totalAssetKrw));
     }
 
     public Optional<ProfitRate> calculateProfitRate(RoundKey key, SnapshotSummaries previous) {

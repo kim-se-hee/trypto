@@ -27,10 +27,9 @@ public class GetActiveRoundService implements GetActiveRoundUseCase {
     @Override
     @Transactional(readOnly = true)
     public GetActiveRoundResult getActiveRound(GetActiveRoundQuery query) {
-        RoundOverview round =
-                investmentRoundQueryPort
-                        .findActiveRoundByUserId(query.userId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
+        RoundOverview round = investmentRoundQueryPort
+                .findActiveRoundByUserId(query.userId())
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_ACTIVE));
         List<Rule> rules = ruleQueryPort.findByRoundId(round.roundId());
         List<RoundWallet> wallets = walletQueryPort.findWalletsByRoundId(round.roundId());
 

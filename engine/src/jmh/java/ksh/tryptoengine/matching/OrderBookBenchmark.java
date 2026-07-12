@@ -61,8 +61,7 @@ public class OrderBookBenchmark {
         nextOrderId = 1;
         for (int i = 0; i < bookSize; i++) {
             boolean bid = (i & 1) == 0;
-            BigDecimal price =
-                    bid ? bidPrices[i & PRICE_BUCKET_MASK] : askPrices[i & PRICE_BUCKET_MASK];
+            BigDecimal price = bid ? bidPrices[i & PRICE_BUCKET_MASK] : askPrices[i & PRICE_BUCKET_MASK];
             book.tryAdd(makeOrder(nextOrderId++, bid ? Side.BUY : Side.SELL, price));
         }
     }
@@ -71,10 +70,7 @@ public class OrderBookBenchmark {
     public boolean addOrder() {
         long id = nextOrderId++;
         boolean bid = (id & 1L) == 0;
-        BigDecimal price =
-                bid
-                        ? bidPrices[(int) id & PRICE_BUCKET_MASK]
-                        : askPrices[(int) id & PRICE_BUCKET_MASK];
+        BigDecimal price = bid ? bidPrices[(int) id & PRICE_BUCKET_MASK] : askPrices[(int) id & PRICE_BUCKET_MASK];
         return book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price));
     }
 
@@ -87,10 +83,7 @@ public class OrderBookBenchmark {
     public OrderDetail addAndRemove() {
         long id = nextOrderId++;
         boolean bid = (id & 1L) == 0;
-        BigDecimal price =
-                bid
-                        ? bidPrices[(int) id & PRICE_BUCKET_MASK]
-                        : askPrices[(int) id & PRICE_BUCKET_MASK];
+        BigDecimal price = bid ? bidPrices[(int) id & PRICE_BUCKET_MASK] : askPrices[(int) id & PRICE_BUCKET_MASK];
         book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price));
         return book.tryRemove(id);
     }

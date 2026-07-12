@@ -20,9 +20,7 @@ public class RegretReportQueryAdapter implements RegretReportQueryPort {
     @Override
     @Transactional(readOnly = true)
     public Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return repository
-                .findByRoundIdAndExchangeId(roundId, exchangeId)
-                .map(RegretReportJpaEntity::toDomain);
+        return repository.findByRoundIdAndExchangeId(roundId, exchangeId).map(RegretReportJpaEntity::toDomain);
     }
 
     @Override

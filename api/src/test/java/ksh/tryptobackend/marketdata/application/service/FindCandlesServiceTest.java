@@ -36,8 +36,7 @@ class FindCandlesServiceTest {
     private FindCandlesService findCandlesService;
 
     private static final ExchangeSummary UPBIT_SUMMARY = new ExchangeSummary(1L, "UPBIT", "KRW");
-    private static final ExchangeSummary BINANCE_SUMMARY =
-            new ExchangeSummary(3L, "BINANCE", "USDT");
+    private static final ExchangeSummary BINANCE_SUMMARY = new ExchangeSummary(3L, "BINANCE", "USDT");
 
     @BeforeEach
     void setUp() {
@@ -45,10 +44,8 @@ class FindCandlesServiceTest {
         exchangeQueryPort = mock(ExchangeQueryPort.class);
         findCandlesService = new FindCandlesService(candleQueryPort, exchangeQueryPort);
 
-        when(exchangeQueryPort.findExchangeSummaryByName("UPBIT"))
-                .thenReturn(Optional.of(UPBIT_SUMMARY));
-        when(exchangeQueryPort.findExchangeSummaryByName("BINANCE"))
-                .thenReturn(Optional.of(BINANCE_SUMMARY));
+        when(exchangeQueryPort.findExchangeSummaryByName("UPBIT")).thenReturn(Optional.of(UPBIT_SUMMARY));
+        when(exchangeQueryPort.findExchangeSummaryByName("BINANCE")).thenReturn(Optional.of(BINANCE_SUMMARY));
     }
 
     @Nested
@@ -75,8 +72,7 @@ class FindCandlesServiceTest {
         void findCandles_unknownExchange_throwsException() {
             // Given
             FindCandlesQuery query = new FindCandlesQuery("UNKNOWN", "BTC", "1d", 60, null);
-            when(exchangeQueryPort.findExchangeSummaryByName("UNKNOWN"))
-                    .thenReturn(Optional.empty());
+            when(exchangeQueryPort.findExchangeSummaryByName("UNKNOWN")).thenReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> findCandlesService.findCandles(query))
@@ -277,14 +273,12 @@ class FindCandlesServiceTest {
         void findCandles_returnsPortResult() {
             // Given
             FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
-            List<Candle> expected =
-                    List.of(
-                            new Candle(
-                                    Instant.parse("2026-03-10T00:00:00Z"),
-                                    new BigDecimal("68500000"),
-                                    new BigDecimal("69200000"),
-                                    new BigDecimal("67800000"),
-                                    new BigDecimal("68900000")));
+            List<Candle> expected = List.of(new Candle(
+                    Instant.parse("2026-03-10T00:00:00Z"),
+                    new BigDecimal("68500000"),
+                    new BigDecimal("69200000"),
+                    new BigDecimal("67800000"),
+                    new BigDecimal("68900000")));
             when(candleQueryPort.findByFilter(any())).thenReturn(expected);
 
             // When

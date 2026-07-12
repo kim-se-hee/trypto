@@ -23,14 +23,13 @@ public class NotifyFilledOrderService implements NotifyFilledOrderUseCase {
         Order order = orderQueryPort.getById(command.orderId());
         Long userId = walletQueryPort.getOwnerId(order.getWalletId());
 
-        OrderFilledNotification notification =
-                new OrderFilledNotification(
-                        command.orderId(),
-                        userId,
-                        command.executedPrice(),
-                        command.quantity(),
-                        command.executedAt(),
-                        command.matchedAt());
+        OrderFilledNotification notification = new OrderFilledNotification(
+                command.orderId(),
+                userId,
+                command.executedPrice(),
+                command.quantity(),
+                command.executedAt(),
+                command.matchedAt());
         orderFilledNotificationPort.push(notification);
     }
 }

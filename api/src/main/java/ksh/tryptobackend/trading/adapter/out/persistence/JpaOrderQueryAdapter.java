@@ -51,34 +51,25 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
     public List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId) {
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                FilledOrder.class,
-                                o.id,
-                                o.walletId,
-                                o.exchangeCoinId,
-                                o.side,
-                                filledAmount(o),
-                                o.quantity,
-                                o.filledPrice,
-                                o.filledAt))
+                .select(Projections.constructor(
+                        FilledOrder.class,
+                        o.id,
+                        o.walletId,
+                        o.exchangeCoinId,
+                        o.side,
+                        filledAmount(o),
+                        o.quantity,
+                        o.filledPrice,
+                        o.filledAt))
                 .from(o)
-                .where(
-                        o.walletId.eq(walletId),
-                        o.exchangeCoinId.eq(exchangeCoinId),
-                        o.status.eq(OrderStatus.FILLED))
+                .where(o.walletId.eq(walletId), o.exchangeCoinId.eq(exchangeCoinId), o.status.eq(OrderStatus.FILLED))
                 .orderBy(o.filledAt.asc(), o.id.asc())
                 .fetch();
     }
 
     @Override
     public List<Order> findByCursor(
-            Long walletId,
-            Long exchangeCoinId,
-            Side side,
-            OrderStatus status,
-            Long cursorOrderId,
-            int size) {
+            Long walletId, Long exchangeCoinId, Side side, OrderStatus status, Long cursorOrderId, int size) {
         QOrderJpaEntity order = QOrderJpaEntity.orderJpaEntity;
 
         return queryFactory
@@ -105,17 +96,16 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
 
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                FilledOrder.class,
-                                o.id,
-                                o.walletId,
-                                o.exchangeCoinId,
-                                o.side,
-                                filledAmount(o),
-                                o.quantity,
-                                o.filledPrice,
-                                o.filledAt))
+                .select(Projections.constructor(
+                        FilledOrder.class,
+                        o.id,
+                        o.walletId,
+                        o.exchangeCoinId,
+                        o.side,
+                        filledAmount(o),
+                        o.quantity,
+                        o.filledPrice,
+                        o.filledAt))
                 .from(o)
                 .where(o.id.in(orderIds), o.status.eq(OrderStatus.FILLED))
                 .fetch();
@@ -135,12 +125,11 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
     @Override
     public int countFilledByWalletId(Long walletId) {
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
-        Long count =
-                queryFactory
-                        .select(o.count())
-                        .from(o)
-                        .where(o.walletId.eq(walletId), o.status.eq(OrderStatus.FILLED))
-                        .fetchOne();
+        Long count = queryFactory
+                .select(o.count())
+                .from(o)
+                .where(o.walletId.eq(walletId), o.status.eq(OrderStatus.FILLED))
+                .fetchOne();
         return count != null ? count.intValue() : 0;
     }
 
@@ -151,39 +140,34 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
         }
 
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
-        List<Tuple> results =
-                queryFactory
-                        .select(o.walletId, o.walletId.count())
-                        .from(o)
-                        .where(o.walletId.in(walletIds), o.status.eq(OrderStatus.FILLED))
-                        .groupBy(o.walletId)
-                        .fetch();
+        List<Tuple> results = queryFactory
+                .select(o.walletId, o.walletId.count())
+                .from(o)
+                .where(o.walletId.in(walletIds), o.status.eq(OrderStatus.FILLED))
+                .groupBy(o.walletId)
+                .fetch();
 
-        Map<Long, Integer> countMap =
-                results.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        tuple -> tuple.get(o.walletId),
-                                        tuple -> tuple.get(o.walletId.count()).intValue()));
+        Map<Long, Integer> countMap = results.stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(o.walletId),
+                        tuple -> tuple.get(o.walletId.count()).intValue()));
         return new FilledOrderCounts(countMap);
     }
 
     @Override
-    public List<FilledOrder> findFilledSellOrders(
-            Long walletId, Long exchangeCoinId, LocalDateTime after) {
+    public List<FilledOrder> findFilledSellOrders(Long walletId, Long exchangeCoinId, LocalDateTime after) {
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                FilledOrder.class,
-                                o.id,
-                                o.walletId,
-                                o.exchangeCoinId,
-                                o.side,
-                                filledAmount(o),
-                                o.quantity,
-                                o.filledPrice,
-                                o.filledAt))
+                .select(Projections.constructor(
+                        FilledOrder.class,
+                        o.id,
+                        o.walletId,
+                        o.exchangeCoinId,
+                        o.side,
+                        filledAmount(o),
+                        o.quantity,
+                        o.filledPrice,
+                        o.filledAt))
                 .from(o)
                 .where(
                         o.walletId.eq(walletId),
@@ -196,18 +180,13 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
     }
 
     @Override
-    public long countByWalletIdAndCreatedAtBetween(
-            Long walletId, LocalDateTime from, LocalDateTime to) {
+    public long countByWalletIdAndCreatedAtBetween(Long walletId, LocalDateTime from, LocalDateTime to) {
         return orderJpaRepository.countByWalletIdAndCreatedAtBetween(walletId, from, to);
     }
 
-    private com.querydsl.core.types.dsl.NumberExpression<java.math.BigDecimal> filledAmount(
-            QOrderJpaEntity order) {
+    private com.querydsl.core.types.dsl.NumberExpression<java.math.BigDecimal> filledAmount(QOrderJpaEntity order) {
         return Expressions.numberTemplate(
-                java.math.BigDecimal.class,
-                "truncate({0} * {1}, 8)",
-                order.filledPrice,
-                order.quantity);
+                java.math.BigDecimal.class, "truncate({0} * {1}, 8)", order.filledPrice, order.quantity);
     }
 
     private BooleanExpression exchangeCoinIdEq(QOrderJpaEntity order, Long exchangeCoinId) {

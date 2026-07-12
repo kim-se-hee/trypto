@@ -25,15 +25,13 @@ public class ApplyBalanceChangesService implements ApplyBalanceChangesUseCase {
             return;
         }
 
-        List<Long> coinIds = changes.stream().map(BalanceChangeCommand::coinId).distinct().toList();
+        List<Long> coinIds =
+                changes.stream().map(BalanceChangeCommand::coinId).distinct().toList();
         List<WalletBalance> lockedBalances =
                 walletBalanceQueryPort.getAllByWalletIdAndCoinIdsWithLock(walletId, coinIds);
         WalletBalances balances = new WalletBalances(lockedBalances);
 
-        changes.forEach(
-                change ->
-                        change.type()
-                                .apply(balances.getByCoinId(change.coinId()), change.amount()));
+        changes.forEach(change -> change.type().apply(balances.getByCoinId(change.coinId()), change.amount()));
         walletBalanceCommandPort.saveAll(lockedBalances);
     }
 }

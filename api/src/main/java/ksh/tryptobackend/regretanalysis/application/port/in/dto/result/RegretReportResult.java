@@ -71,9 +71,7 @@ public record RegretReportResult(
     }
 
     private static List<ViolationDetailResult> toViolationDetailResults(
-            ViolationDetails violationDetails,
-            Map<Long, AnalysisRule> ruleMap,
-            Map<Long, String> coinSymbols) {
+            ViolationDetails violationDetails, Map<Long, AnalysisRule> ruleMap, Map<Long, String> coinSymbols) {
         List<ViolationDetailResult> results = new ArrayList<>();
         results.addAll(toOrderViolationResults(violationDetails, ruleMap, coinSymbols));
         results.addAll(toMonitoringViolationResults(violationDetails, ruleMap, coinSymbols));
@@ -81,38 +79,31 @@ public record RegretReportResult(
     }
 
     private static List<ViolationDetailResult> toOrderViolationResults(
-            ViolationDetails violationDetails,
-            Map<Long, AnalysisRule> ruleMap,
-            Map<Long, String> coinSymbols) {
+            ViolationDetails violationDetails, Map<Long, AnalysisRule> ruleMap, Map<Long, String> coinSymbols) {
         return violationDetails.groupByOrder().entrySet().stream()
-                .map(
-                        entry -> {
-                            ViolationDetail first = entry.getValue().getFirst();
-                            return new ViolationDetailResult(
-                                    first.getViolationDetailId(),
-                                    first.getOrderId(),
-                                    coinSymbols.getOrDefault(first.getCoinId(), ""),
-                                    extractViolatedRuleNames(entry.getValue(), ruleMap),
-                                    first.getProfitLoss(),
-                                    first.getOccurredAt());
-                        })
+                .map(entry -> {
+                    ViolationDetail first = entry.getValue().getFirst();
+                    return new ViolationDetailResult(
+                            first.getViolationDetailId(),
+                            first.getOrderId(),
+                            coinSymbols.getOrDefault(first.getCoinId(), ""),
+                            extractViolatedRuleNames(entry.getValue(), ruleMap),
+                            first.getProfitLoss(),
+                            first.getOccurredAt());
+                })
                 .toList();
     }
 
     private static List<ViolationDetailResult> toMonitoringViolationResults(
-            ViolationDetails violationDetails,
-            Map<Long, AnalysisRule> ruleMap,
-            Map<Long, String> coinSymbols) {
+            ViolationDetails violationDetails, Map<Long, AnalysisRule> ruleMap, Map<Long, String> coinSymbols) {
         return violationDetails.findMonitoringViolations().stream()
-                .map(
-                        detail ->
-                                new ViolationDetailResult(
-                                        detail.getViolationDetailId(),
-                                        null,
-                                        coinSymbols.getOrDefault(detail.getCoinId(), ""),
-                                        List.of(ruleMap.get(detail.getRuleId()).ruleType().name()),
-                                        detail.getProfitLoss(),
-                                        detail.getOccurredAt()))
+                .map(detail -> new ViolationDetailResult(
+                        detail.getViolationDetailId(),
+                        null,
+                        coinSymbols.getOrDefault(detail.getCoinId(), ""),
+                        List.of(ruleMap.get(detail.getRuleId()).ruleType().name()),
+                        detail.getProfitLoss(),
+                        detail.getOccurredAt()))
                 .toList();
     }
 

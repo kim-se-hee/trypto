@@ -19,9 +19,7 @@ public class RabbitConsumer {
     @RabbitListener(queues = "${engine.inbox.queue}", concurrency = "1")
     public void onMessage(
             byte[] payload,
-            @org.springframework.messaging.handler.annotation.Header(
-                            value = "event_type",
-                            required = false)
+            @org.springframework.messaging.handler.annotation.Header(value = "event_type", required = false)
                     String eventType)
             throws Exception {
         if (eventType == null) {

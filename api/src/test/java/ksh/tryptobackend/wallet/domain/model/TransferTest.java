@@ -44,15 +44,12 @@ class TransferTest {
 
             assertThatThrownBy(() -> Transfer.create(command, CREATED_AT))
                     .isInstanceOf(CustomException.class)
-                    .satisfies(
-                            e ->
-                                    assertThat(((CustomException) e).getErrorCode())
-                                            .isEqualTo(ErrorCode.SAME_WALLET_TRANSFER));
+                    .satisfies(e ->
+                            assertThat(((CustomException) e).getErrorCode()).isEqualTo(ErrorCode.SAME_WALLET_TRANSFER));
         }
     }
 
     private TransferCoinCommand command(Long toWalletId, BigDecimal amount) {
-        return new TransferCoinCommand(
-                UUID.randomUUID().toString(), FROM_WALLET_ID, toWalletId, COIN_ID, amount);
+        return new TransferCoinCommand(UUID.randomUUID().toString(), FROM_WALLET_ID, toWalletId, COIN_ID, amount);
     }
 }

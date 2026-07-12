@@ -1,13 +1,11 @@
 package ksh.tryptocollector.ingest.bithumb;
 
+import java.util.Arrays;
+import java.util.List;
 import ksh.tryptocollector.model.MarketInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import java.util.Arrays;
-import java.util.List;
-
 
 @Component
 public class BithumbRestClient {
@@ -25,10 +23,8 @@ public class BithumbRestClient {
     }
 
     public List<MarketInfo> fetchKrwMarkets() {
-        BithumbMarketResponse[] responses = restClient.get()
-                .uri(restUrl)
-                .retrieve()
-                .body(BithumbMarketResponse[].class);
+        BithumbMarketResponse[] responses =
+                restClient.get().uri(restUrl).retrieve().body(BithumbMarketResponse[].class);
         if (responses == null) {
             return List.of();
         }
@@ -43,7 +39,8 @@ public class BithumbRestClient {
 
     public List<BithumbTickerResponse> fetchKrwTickers(List<String> marketCodes) {
         String markets = String.join(",", marketCodes);
-        BithumbTickerResponse[] responses = restClient.get()
+        BithumbTickerResponse[] responses = restClient
+                .get()
                 .uri(tickerUrl + "?markets=" + markets)
                 .retrieve()
                 .body(BithumbTickerResponse[].class);

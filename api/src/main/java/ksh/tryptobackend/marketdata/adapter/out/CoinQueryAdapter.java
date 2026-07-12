@@ -23,9 +23,8 @@ public class CoinQueryAdapter implements CoinQueryPort {
         if (coinIds.isEmpty()) {
             return new CoinSymbols(Map.of());
         }
-        Map<Long, String> symbolMap =
-                coinJpaRepository.findByIdIn(coinIds).stream()
-                        .collect(Collectors.toMap(CoinJpaEntity::getId, CoinJpaEntity::getSymbol));
+        Map<Long, String> symbolMap = coinJpaRepository.findByIdIn(coinIds).stream()
+                .collect(Collectors.toMap(CoinJpaEntity::getId, CoinJpaEntity::getSymbol));
         return new CoinSymbols(symbolMap);
     }
 
@@ -34,6 +33,8 @@ public class CoinQueryAdapter implements CoinQueryPort {
         if (coinIds.isEmpty()) {
             return List.of();
         }
-        return coinJpaRepository.findByIdIn(coinIds).stream().map(CoinJpaEntity::toDomain).toList();
+        return coinJpaRepository.findByIdIn(coinIds).stream()
+                .map(CoinJpaEntity::toDomain)
+                .toList();
     }
 }

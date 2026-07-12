@@ -85,8 +85,7 @@ public class OrderStepDefinition {
 
     private void ensureUserRoundWallet() {
         Integer userCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM user WHERE user_id = ?", Integer.class, USER_ID);
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user WHERE user_id = ?", Integer.class, USER_ID);
         if (userCount == null || userCount == 0) {
             jdbcTemplate.update(
                     "INSERT INTO user (user_id, version, nickname, portfolio_public,"
@@ -94,24 +93,18 @@ public class OrderStepDefinition {
                     USER_ID,
                     "트레이더1");
         }
-        Integer roundCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM investment_round WHERE round_id = ?",
-                        Integer.class,
-                        ROUND_ID);
+        Integer roundCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM investment_round WHERE round_id = ?", Integer.class, ROUND_ID);
         if (roundCount == null || roundCount == 0) {
             jdbcTemplate.update(
                     "INSERT INTO investment_round (round_id, version, user_id, round_number,"
-                        + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
-                        + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', NOW())",
+                            + " initial_seed, emergency_funding_limit, emergency_charge_count, status,"
+                            + " started_at) VALUES (?, 0, ?, 1, 10000000, 1000000, 0, 'ACTIVE', NOW())",
                     ROUND_ID,
                     USER_ID);
         }
-        Integer walletCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM wallet WHERE wallet_id = ?",
-                        Integer.class,
-                        WALLET_ID);
+        Integer walletCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM wallet WHERE wallet_id = ?", Integer.class, WALLET_ID);
         if (walletCount == null || walletCount == 0) {
             jdbcTemplate.update(
                     "INSERT INTO wallet (wallet_id, round_id, exchange_id, seed_amount, created_at)"
@@ -126,16 +119,14 @@ public class OrderStepDefinition {
     }
 
     private void ensureBalanceRow(Long coinId) {
-        Integer count =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM wallet_balance WHERE wallet_id = ? AND coin_id = ?",
-                        Integer.class,
-                        WALLET_ID,
-                        coinId);
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM wallet_balance WHERE wallet_id = ? AND coin_id = ?",
+                Integer.class,
+                WALLET_ID,
+                coinId);
         if (count == null || count == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?,"
-                            + " ?, 0, 0)",
+                    "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?," + " ?, 0, 0)",
                     WALLET_ID,
                     coinId);
         }
@@ -199,11 +190,7 @@ public class OrderStepDefinition {
     @When("매수 주문 가능 정보를 조회한다")
     public void 매수_주문_가능_정보를_조회한다() {
         apiClient.get(
-                "/api/orders/available?walletId="
-                        + WALLET_ID
-                        + "&exchangeCoinId="
-                        + EXCHANGE_COIN_ID
-                        + "&side=BUY");
+                "/api/orders/available?walletId=" + WALLET_ID + "&exchangeCoinId=" + EXCHANGE_COIN_ID + "&side=BUY");
     }
 
     @When("주문 내역을 조회한다")
@@ -224,15 +211,9 @@ public class OrderStepDefinition {
 
     @Then("체결 수량은 {int}보다 크다")
     public void 체결_수량은_보다_크다(int value) {
-        apiClient
-                .getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.quantity")
-                .value(
-                        quantity -> {
-                            assertThat(new BigDecimal(quantity.toString()))
-                                    .isGreaterThan(BigDecimal.ZERO);
-                        });
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.quantity").value(quantity -> {
+            assertThat(new BigDecimal(quantity.toString())).isGreaterThan(BigDecimal.ZERO);
+        });
     }
 
     @Then("에러 코드는 {string}이다")
@@ -247,15 +228,9 @@ public class OrderStepDefinition {
 
     @Then("주문 가능 금액은 {long}이다")
     public void 주문_가능_금액은_이다(long amount) {
-        apiClient
-                .getLastResponse()
-                .expectBody()
-                .jsonPath("$.data.available")
-                .value(
-                        available -> {
-                            assertThat(new BigDecimal(available.toString()).longValue())
-                                    .isEqualTo(amount);
-                        });
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.available").value(available -> {
+            assertThat(new BigDecimal(available.toString()).longValue()).isEqualTo(amount);
+        });
     }
 
     @Then("주문 내역이 {int}건이다")
@@ -279,11 +254,8 @@ public class OrderStepDefinition {
 
     @Then("주문에 룰 위반이 {int}건 기록되어 있다")
     public void 주문에_룰_위반이_건_기록되어_있다(int count) {
-        Integer violationCount =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM rule_violation WHERE order_id = ?",
-                        Integer.class,
-                        lastOrderId);
+        Integer violationCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM rule_violation WHERE order_id = ?", Integer.class, lastOrderId);
         assertThat(violationCount).isEqualTo(count);
     }
 
@@ -318,8 +290,7 @@ public class OrderStepDefinition {
                 coinId);
     }
 
-    private Map<String, Object> createOrderBody(
-            String side, String orderType, Number volume, Number price) {
+    private Map<String, Object> createOrderBody(String side, String orderType, Number volume, Number price) {
         Map<String, Object> body = new HashMap<>();
         body.put("clientOrderId", UUID.randomUUID().toString());
         body.put("walletId", WALLET_ID);

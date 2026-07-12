@@ -8,9 +8,6 @@ public record PortfolioHoldingResponse(
 
     public static PortfolioHoldingResponse from(PortfolioHoldingResult result) {
         return new PortfolioHoldingResponse(
-                result.coinSymbol(),
-                result.exchangeName(),
-                result.assetRatio(),
-                result.profitRate());
+                result.coinSymbol(), result.exchangeName(), result.assetRatio(), result.profitRate());
     }
 }

@@ -27,15 +27,13 @@ public class RegretReportItemReader implements ItemReader<RegretReportInput> {
     }
 
     private List<RegretReportInput> buildInputList() {
-        return findRegretReportInputsUseCase.findAllInputs().stream().map(this::toInput).toList();
+        return findRegretReportInputsUseCase.findAllInputs().stream()
+                .map(this::toInput)
+                .toList();
     }
 
     private RegretReportInput toInput(RegretReportInputResult result) {
         return new RegretReportInput(
-                result.roundId(),
-                result.userId(),
-                result.exchangeId(),
-                result.walletId(),
-                result.startedAt());
+                result.roundId(), result.userId(), result.exchangeId(), result.walletId(), result.startedAt());
     }
 }

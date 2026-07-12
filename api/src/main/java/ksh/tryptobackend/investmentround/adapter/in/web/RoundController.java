@@ -56,13 +56,11 @@ public class RoundController {
     public ResponseEntity<ApiResponseDto<EndRoundResponse>> endRound(
             @PathVariable Long roundId, @Valid @RequestBody EndRoundRequest request) {
         InvestmentRound round = endRoundUseCase.endRound(request.toCommand(roundId));
-        return ResponseEntity.ok(
-                ApiResponseDto.success("라운드를 종료했습니다.", EndRoundResponse.from(round)));
+        return ResponseEntity.ok(ApiResponseDto.success("라운드를 종료했습니다.", EndRoundResponse.from(round)));
     }
 
     @GetMapping("/active")
-    public ApiResponseDto<GetActiveRoundResponse> getActiveRound(
-            @Valid @ModelAttribute GetActiveRoundRequest request) {
+    public ApiResponseDto<GetActiveRoundResponse> getActiveRound(@Valid @ModelAttribute GetActiveRoundRequest request) {
         GetActiveRoundResult result = getActiveRoundUseCase.getActiveRound(request.toQuery());
         return ApiResponseDto.success("활성 라운드를 조회했습니다.", GetActiveRoundResponse.from(result));
     }
@@ -72,20 +70,17 @@ public class RoundController {
             @PathVariable Long roundId, @Valid @RequestBody ChargeEmergencyFundingRequest request) {
         int remainingChargeCount;
         try {
-            InvestmentRound round =
-                    chargeEmergencyFundingUseCase.charge(request.toCommand(roundId));
+            InvestmentRound round = chargeEmergencyFundingUseCase.charge(request.toCommand(roundId));
             remainingChargeCount = round.getEmergencyChargeCount();
         } catch (DuplicateRequestException e) {
-            remainingChargeCount =
-                    findRoundInfoUseCase
-                            .findById(roundId)
-                            .map(RoundInfoResult::emergencyChargeCount)
-                            .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+            remainingChargeCount = findRoundInfoUseCase
+                    .findById(roundId)
+                    .map(RoundInfoResult::emergencyChargeCount)
+                    .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
         }
 
-        ChargeEmergencyFundingResponse response =
-                ChargeEmergencyFundingResponse.of(
-                        roundId, request.exchangeId(), request.amount(), remainingChargeCount);
+        ChargeEmergencyFundingResponse response = ChargeEmergencyFundingResponse.of(
+                roundId, request.exchangeId(), request.amount(), remainingChargeCount);
         return ResponseEntity.ok(ApiResponseDto.success("긴급 자금을 투입했습니다.", response));
     }
 }

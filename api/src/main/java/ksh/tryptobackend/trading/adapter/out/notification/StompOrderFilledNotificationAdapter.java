@@ -27,12 +27,11 @@ public class StompOrderFilledNotificationAdapter implements OrderFilledNotificat
 
     @PostConstruct
     void initMetrics() {
-        matchToStomp =
-                Timer.builder("trade.match.to.stomp")
-                        .description("매칭 결정 시점부터 STOMP convertAndSendToUser 직전까지의 e2e latency")
-                        .publishPercentiles(0.5, 0.95, 0.99)
-                        .publishPercentileHistogram()
-                        .register(meterRegistry);
+        matchToStomp = Timer.builder("trade.match.to.stomp")
+                .description("매칭 결정 시점부터 STOMP convertAndSendToUser 직전까지의 e2e latency")
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .publishPercentileHistogram()
+                .register(meterRegistry);
     }
 
     @Override
@@ -40,20 +39,15 @@ public class StompOrderFilledNotificationAdapter implements OrderFilledNotificat
         try {
             OrderFilledStompPayload payload = OrderFilledStompPayload.from(notification);
             if (notification.matchedAt() != null) {
-                long nanos =
-                        Duration.between(notification.matchedAt(), LocalDateTime.now()).toNanos();
+                long nanos = Duration.between(notification.matchedAt(), LocalDateTime.now())
+                        .toNanos();
                 if (nanos >= 0) {
                     matchToStomp.record(nanos, TimeUnit.NANOSECONDS);
                 }
             }
-            messagingTemplate.convertAndSendToUser(
-                    notification.userId().toString(), USER_DESTINATION, payload);
+            messagingTemplate.convertAndSendToUser(notification.userId().toString(), USER_DESTINATION, payload);
         } catch (Exception e) {
-            log.warn(
-                    "체결 알림 WebSocket 전송 실패: userId={}, orderId={}",
-                    notification.userId(),
-                    notification.orderId(),
-                    e);
+            log.warn("체결 알림 WebSocket 전송 실패: userId={}, orderId={}", notification.userId(), notification.orderId(), e);
         }
     }
 }

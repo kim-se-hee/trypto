@@ -45,9 +45,8 @@ public class TransferCoinService implements TransferCoinUseCase {
 
         Transfer transfer = Transfer.create(command, now);
 
-        TransferBalances balances =
-                walletBalanceQueryPort.getTransferBalancesWithLock(
-                        command.coinId(), command.fromWalletId(), command.toWalletId());
+        TransferBalances balances = walletBalanceQueryPort.getTransferBalancesWithLock(
+                command.coinId(), command.fromWalletId(), command.toWalletId());
         coinTransferrer.transfer(balances, command.amount());
 
         walletBalanceCommandPort.saveAll(balances.toList());

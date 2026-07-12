@@ -50,7 +50,6 @@ public class RuleImpactJpaEntity {
     }
 
     RuleImpact toDomain() {
-        return RuleImpact.reconstitute(
-                id, reportId, ruleId, violationCount, totalLossAmount, ImpactGap.of(impactGap));
+        return RuleImpact.reconstitute(id, reportId, ruleId, violationCount, totalLossAmount, ImpactGap.of(impactGap));
     }
 }

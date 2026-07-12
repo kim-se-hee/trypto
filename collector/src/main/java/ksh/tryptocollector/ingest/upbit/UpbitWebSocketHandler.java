@@ -2,16 +2,6 @@ package ksh.tryptocollector.ingest.upbit;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import ksh.tryptocollector.ingest.ExchangeTickerStream;
-import ksh.tryptocollector.ingest.RestPollingFallback;
-import ksh.tryptocollector.distribute.TickerSinkProcessor;
-import ksh.tryptocollector.metadata.MarketInfoCache;
-import ksh.tryptocollector.model.Exchange;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,6 +13,15 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
+import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.ingest.ExchangeTickerStream;
+import ksh.tryptocollector.ingest.RestPollingFallback;
+import ksh.tryptocollector.metadata.MarketInfoCache;
+import ksh.tryptocollector.model.Exchange;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
@@ -38,9 +37,12 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
     private final Counter reconnectCounter;
     private final Counter parseFailureCounter;
 
-    public UpbitWebSocketHandler(ObjectMapper objectMapper, MarketInfoCache marketInfoCache,
-                                 TickerSinkProcessor tickerSinkProcessor, RestPollingFallback restPollingFallback,
-                                 MeterRegistry registry) {
+    public UpbitWebSocketHandler(
+            ObjectMapper objectMapper,
+            MarketInfoCache marketInfoCache,
+            TickerSinkProcessor tickerSinkProcessor,
+            RestPollingFallback restPollingFallback,
+            MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
@@ -62,7 +64,8 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
-                WebSocket ws = httpClient.newWebSocketBuilder()
+                WebSocket ws = httpClient
+                        .newWebSocketBuilder()
                         .buildAsync(URI.create(wsUrl), new UpbitListener(closeLatch))
                         .join();
                 String subscribeMessage = buildSubscribeMessage();
@@ -87,15 +90,16 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
     private String buildSubscribeMessage() {
         List<String> codes = marketInfoCache.getSymbolCodes(Exchange.UPBIT);
         log.info("업비트 WebSocket 구독: {} 마켓", codes.size());
-        return "[{\"ticket\":\"trypto-collector\"},{\"type\":\"ticker\",\"codes\":" +
-                objectMapper.writeValueAsString(codes) + "}]";
+        return "[{\"ticket\":\"trypto-collector\"},{\"type\":\"ticker\",\"codes\":"
+                + objectMapper.writeValueAsString(codes) + "}]";
     }
 
     private void handleMessage(byte[] payload) {
         try {
             byte[] decompressed = decompressIfNeeded(payload);
             UpbitTickerMessage ticker = objectMapper.readValue(decompressed, UpbitTickerMessage.class);
-            marketInfoCache.find(Exchange.UPBIT, ticker.code())
+            marketInfoCache
+                    .find(Exchange.UPBIT, ticker.code())
                     .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
         } catch (Exception e) {
             parseFailureCounter.increment();
@@ -112,7 +116,7 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
 
     private byte[] decompress(byte[] compressed) throws IOException {
         try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
-             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[GZIP_BUFFER_SIZE];
             int len;
             while ((len = gis.read(buffer)) != -1) {

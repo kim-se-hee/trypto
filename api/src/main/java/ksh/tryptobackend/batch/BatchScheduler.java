@@ -33,11 +33,10 @@ public class BatchScheduler {
     @SchedulerLock(name = "daily-batch", lockAtMostFor = "PT4H", lockAtLeastFor = "PT5M")
     public void runDailyBatch() {
         LocalDate snapshotDate = LocalDate.now(KST);
-        JobParameters params =
-                new JobParametersBuilder()
-                        .addString("snapshotDate", snapshotDate.toString())
-                        .addLong("run.id", System.currentTimeMillis())
-                        .toJobParameters();
+        JobParameters params = new JobParametersBuilder()
+                .addString("snapshotDate", snapshotDate.toString())
+                .addLong("run.id", System.currentTimeMillis())
+                .toJobParameters();
 
         log.info("배치 시작: snapshotDate={}", snapshotDate);
 
@@ -60,13 +59,13 @@ public class BatchScheduler {
     }
 
     private void runParallelJobs(JobParameters params, LocalDate snapshotDate) {
-        CompletableFuture<String> regretFuture =
-                CompletableFuture.runAsync(() -> runJob(regretReportJob, params), batchTaskExecutor)
-                        .handle((result, ex) -> handleJobResult(regretReportJob.getName(), ex));
+        CompletableFuture<String> regretFuture = CompletableFuture.runAsync(
+                        () -> runJob(regretReportJob, params), batchTaskExecutor)
+                .handle((result, ex) -> handleJobResult(regretReportJob.getName(), ex));
 
-        CompletableFuture<String> rankingFuture =
-                CompletableFuture.runAsync(() -> runJob(rankingJob, params), batchTaskExecutor)
-                        .handle((result, ex) -> handleJobResult(rankingJob.getName(), ex));
+        CompletableFuture<String> rankingFuture = CompletableFuture.runAsync(
+                        () -> runJob(rankingJob, params), batchTaskExecutor)
+                .handle((result, ex) -> handleJobResult(rankingJob.getName(), ex));
 
         CompletableFuture.allOf(regretFuture, rankingFuture).join();
 

@@ -21,10 +21,7 @@ public class RedisSessionCommandAdapter implements SessionCommandPort {
         String sessionId = UUID.randomUUID().toString();
         redisTemplate
                 .opsForValue()
-                .set(
-                        SESSION_KEY_PREFIX + sessionId,
-                        String.valueOf(userId),
-                        sessionProperties.getTtl());
+                .set(SESSION_KEY_PREFIX + sessionId, String.valueOf(userId), sessionProperties.getTtl());
         return sessionId;
     }
 }

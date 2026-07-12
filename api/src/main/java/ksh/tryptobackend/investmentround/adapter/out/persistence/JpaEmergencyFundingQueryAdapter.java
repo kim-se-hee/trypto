@@ -16,24 +16,22 @@ public class JpaEmergencyFundingQueryAdapter implements EmergencyFundingQueryPor
     @Override
     public BigDecimal sumAmountByRoundId(Long roundId) {
         QEmergencyFundingJpaEntity e = QEmergencyFundingJpaEntity.emergencyFundingJpaEntity;
-        BigDecimal result =
-                queryFactory
-                        .select(e.amount.sum().coalesce(BigDecimal.ZERO))
-                        .from(e)
-                        .where(e.roundId.eq(roundId))
-                        .fetchOne();
+        BigDecimal result = queryFactory
+                .select(e.amount.sum().coalesce(BigDecimal.ZERO))
+                .from(e)
+                .where(e.roundId.eq(roundId))
+                .fetchOne();
         return result != null ? result : BigDecimal.ZERO;
     }
 
     @Override
     public BigDecimal sumAmountByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         QEmergencyFundingJpaEntity e = QEmergencyFundingJpaEntity.emergencyFundingJpaEntity;
-        BigDecimal result =
-                queryFactory
-                        .select(e.amount.sum().coalesce(BigDecimal.ZERO))
-                        .from(e)
-                        .where(e.roundId.eq(roundId), e.exchangeId.eq(exchangeId))
-                        .fetchOne();
+        BigDecimal result = queryFactory
+                .select(e.amount.sum().coalesce(BigDecimal.ZERO))
+                .from(e)
+                .where(e.roundId.eq(roundId), e.exchangeId.eq(exchangeId))
+                .fetchOne();
         return result != null ? result : BigDecimal.ZERO;
     }
 }

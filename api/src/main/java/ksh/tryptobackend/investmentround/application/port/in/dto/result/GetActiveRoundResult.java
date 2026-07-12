@@ -21,8 +21,7 @@ public record GetActiveRoundResult(
         List<GetActiveRoundRuleResult> rules,
         List<GetActiveRoundWalletResult> wallets) {
 
-    public static GetActiveRoundResult from(
-            RoundOverview round, List<Rule> rules, List<RoundWallet> wallets) {
+    public static GetActiveRoundResult from(RoundOverview round, List<Rule> rules, List<RoundWallet> wallets) {
         List<GetActiveRoundRuleResult> ruleResults =
                 rules.stream().map(GetActiveRoundRuleResult::from).toList();
         List<GetActiveRoundWalletResult> walletResults =

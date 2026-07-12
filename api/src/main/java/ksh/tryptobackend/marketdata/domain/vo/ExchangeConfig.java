@@ -4,7 +4,4 @@ import java.math.BigDecimal;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 
 public record ExchangeConfig(
-        String name,
-        ExchangeMarketType marketType,
-        String baseCurrencySymbol,
-        BigDecimal feeRate) {}
+        String name, ExchangeMarketType marketType, String baseCurrencySymbol, BigDecimal feeRate) {}

@@ -49,19 +49,17 @@ class RankingDataSeeder {
 
             for (int rank = 0; rank < profitDataList.size(); rank++) {
                 UserProfitData data = profitDataList.get(rank);
-                BigDecimal profitRateValue =
-                        new BigDecimal(data.profitRate).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal profitRateValue = new BigDecimal(data.profitRate).setScale(4, RoundingMode.HALF_UP);
 
-                Ranking ranking =
-                        Ranking.create(
-                                data.userId,
-                                data.roundId,
-                                period,
-                                rank + 1,
-                                ProfitRate.of(profitRateValue),
-                                data.tradeCount,
-                                today,
-                                now);
+                Ranking ranking = Ranking.create(
+                        data.userId,
+                        data.roundId,
+                        period,
+                        rank + 1,
+                        ProfitRate.of(profitRateValue),
+                        data.tradeCount,
+                        today,
+                        now);
                 rankings.add(RankingJpaEntity.fromDomain(ranking));
             }
         }

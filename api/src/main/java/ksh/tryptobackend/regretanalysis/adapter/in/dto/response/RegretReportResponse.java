@@ -25,8 +25,9 @@ public record RegretReportResponse(
         List<RuleImpactResponse> ruleImpactResponses =
                 result.ruleImpacts().stream().map(RuleImpactResponse::from).toList();
 
-        List<ViolationDetailResponse> violationDetailResponses =
-                result.violationDetails().stream().map(ViolationDetailResponse::from).toList();
+        List<ViolationDetailResponse> violationDetailResponses = result.violationDetails().stream()
+                .map(ViolationDetailResponse::from)
+                .toList();
 
         return new RegretReportResponse(
                 result.reportId(),
@@ -75,8 +76,7 @@ public record RegretReportResponse(
             BigDecimal profitLoss,
             LocalDateTime occurredAt) {
 
-        public static ViolationDetailResponse from(
-                RegretReportResult.ViolationDetailResult result) {
+        public static ViolationDetailResponse from(RegretReportResult.ViolationDetailResult result) {
             return new ViolationDetailResponse(
                     result.violationDetailId(),
                     result.orderId(),

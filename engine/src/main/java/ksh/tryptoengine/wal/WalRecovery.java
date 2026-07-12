@@ -60,7 +60,8 @@ public class WalRecovery {
                 for (OrderDetail o : ps.orders()) book.tryAdd(o);
             }
             lastSeq = snap.lastSeq();
-            log.info("snapshot loaded lastSeq={} pairs={}", lastSeq, snap.pairs().size());
+            log.info(
+                    "snapshot loaded lastSeq={} pairs={}", lastSeq, snap.pairs().size());
         }
 
         Path oldWal = walDir.resolve(WalWriter.WAL_OLD_FILE);
@@ -88,9 +89,7 @@ public class WalRecovery {
                 try {
                     rec = mapper.readValue(line, WalRecord.class);
                 } catch (IOException e) {
-                    log.warn(
-                            "WAL line parse failed (likely truncated tail); stop replay file={}",
-                            file.getFileName());
+                    log.warn("WAL line parse failed (likely truncated tail); stop replay file={}", file.getFileName());
                     break;
                 }
                 if (rec.sequence() > skipUpTo) {
@@ -120,20 +119,19 @@ public class WalRecovery {
                 }
                 TradingPair pair = new TradingPair(p.exchangeCoinId());
                 OrderBook book = registry.bookOf(pair);
-                book.tryAdd(
-                        new OrderDetail(
-                                p.orderId(),
-                                p.walletId(),
-                                Side.valueOf(p.side()),
-                                pair,
-                                ref.coinId(),
-                                ref.baseCoinId(),
-                                p.price(),
-                                p.quantity(),
-                                ref.feeRate(),
-                                p.lockedAmount(),
-                                p.lockedCoinId(),
-                                p.placedAt()));
+                book.tryAdd(new OrderDetail(
+                        p.orderId(),
+                        p.walletId(),
+                        Side.valueOf(p.side()),
+                        pair,
+                        ref.coinId(),
+                        ref.baseCoinId(),
+                        p.price(),
+                        p.quantity(),
+                        ref.feeRate(),
+                        p.lockedAmount(),
+                        p.lockedCoinId(),
+                        p.placedAt()));
             }
             case "OrderCanceled" -> {
                 OrderCanceledEvent c = mapper.treeToValue(rec.event(), OrderCanceledEvent.class);
@@ -152,8 +150,7 @@ public class WalRecovery {
                     dbWriter.offer(new FillCommand(o, t.tradePrice(), ts, matchedAt));
                 }
             }
-            default ->
-                    log.warn("unknown wal event type={} seq={}", rec.eventType(), rec.sequence());
+            default -> log.warn("unknown wal event type={} seq={}", rec.eventType(), rec.sequence());
         }
     }
 }

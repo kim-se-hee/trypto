@@ -48,8 +48,7 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
                 .toList();
     }
 
-    private List<ViolationResult> findViolationsByRules(
-            List<InvestmentRule> rules, Long exchangeId) {
+    private List<ViolationResult> findViolationsByRules(List<InvestmentRule> rules, Long exchangeId) {
         List<Long> ruleIds = rules.stream().map(InvestmentRule::ruleId).toList();
         List<Long> walletIds = walletQueryPort.findWalletIdsByExchangeId(exchangeId);
         return ruleViolationQueryPort.findByRuleIdsAndWalletIds(ruleIds, walletIds).stream()
@@ -90,14 +89,11 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
                 soldPortions);
     }
 
-    private List<SoldPortionResult> resolveSoldPortions(
-            FilledOrderResult execution, Long walletId) {
+    private List<SoldPortionResult> resolveSoldPortions(FilledOrderResult execution, Long walletId) {
         if ("SELL".equals(execution.side())) {
             return Collections.emptyList();
         }
-        return orderQueryPort
-                .findFilledSellOrders(walletId, execution.exchangeCoinId(), execution.filledAt())
-                .stream()
+        return orderQueryPort.findFilledSellOrders(walletId, execution.exchangeCoinId(), execution.filledAt()).stream()
                 .map(FilledOrderResult::from)
                 .map(sell -> new SoldPortionResult(sell.filledPrice(), sell.quantity()))
                 .toList();

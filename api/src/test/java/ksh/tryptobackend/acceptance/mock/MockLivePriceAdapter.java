@@ -19,11 +19,8 @@ public class MockLivePriceAdapter implements LivePriceQueryPort {
 
     @Override
     public LivePrices getCurrentPrices(Set<Long> exchangeCoinIds) {
-        Map<Long, BigDecimal> priceMap =
-                exchangeCoinIds.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        id -> id, id -> prices.getOrDefault(id, BigDecimal.ZERO)));
+        Map<Long, BigDecimal> priceMap = exchangeCoinIds.stream()
+                .collect(Collectors.toMap(id -> id, id -> prices.getOrDefault(id, BigDecimal.ZERO)));
         return new LivePrices(priceMap);
     }
 

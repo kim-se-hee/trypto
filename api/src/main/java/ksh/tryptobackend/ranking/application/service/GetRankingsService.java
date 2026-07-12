@@ -27,19 +27,13 @@ public class GetRankingsService implements GetRankingsUseCase {
     @Transactional(readOnly = true)
     public RankingCursorResult getRankings(GetRankingsQuery query) {
         LocalDate referenceDate = resolveReferenceDate(query);
-        RankingSummaries page =
-                RankingSummaries.fromOverflow(
-                        rankingQueryPort.findRankings(
-                                query.period(),
-                                referenceDate,
-                                query.cursorRank(),
-                                query.size() + 1),
-                        query.size());
+        RankingSummaries page = RankingSummaries.fromOverflow(
+                rankingQueryPort.findRankings(query.period(), referenceDate, query.cursorRank(), query.size() + 1),
+                query.size());
         UserProfiles userProfiles = userQueryPort.findByUserIds(page.userIds());
-        List<RankingItemResult> content =
-                page.toList().stream()
-                        .map(summary -> RankingItemResult.of(summary, userProfiles))
-                        .toList();
+        List<RankingItemResult> content = page.toList().stream()
+                .map(summary -> RankingItemResult.of(summary, userProfiles))
+                .toList();
         return new RankingCursorResult(content, page.nextCursorRank(), page.hasNext());
     }
 

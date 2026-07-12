@@ -29,10 +29,7 @@ public class RankingTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         LocalDate snapshotDate = LocalDate.parse(snapshotDateParam);
         RetryTemplate retryTemplate = new RetryTemplate(batchRetryPolicy);
-        retryTemplate.invoke(
-                () ->
-                        calculateRankingUseCase.calculateRanking(
-                                new CalculateRankingCommand(snapshotDate)));
+        retryTemplate.invoke(() -> calculateRankingUseCase.calculateRanking(new CalculateRankingCommand(snapshotDate)));
         return RepeatStatus.FINISHED;
     }
 }

@@ -17,12 +17,7 @@ public interface OrderQueryPort {
     List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId);
 
     List<Order> findByCursor(
-            Long walletId,
-            Long exchangeCoinId,
-            Side side,
-            OrderStatus status,
-            Long cursorOrderId,
-            int size);
+            Long walletId, Long exchangeCoinId, Side side, OrderStatus status, Long cursorOrderId, int size);
 
     List<FilledOrder> findFilledByOrderIds(List<Long> orderIds);
 

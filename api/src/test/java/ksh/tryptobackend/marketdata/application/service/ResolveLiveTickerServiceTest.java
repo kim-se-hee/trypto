@@ -22,27 +22,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ResolveLiveTickerServiceTest {
 
-    @Mock private ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
+    @Mock
+    private ExchangeCoinMappingCacheQueryPort exchangeCoinMappingCacheQueryPort;
 
-    @InjectMocks private ResolveLiveTickerService sut;
+    @InjectMocks
+    private ResolveLiveTickerService sut;
 
     @Test
     @DisplayName("매핑이 존재하면 배치 결과를 반환한다")
     void resolve_withMapping_returnsBatch() {
         // Given
         ExchangeCoinMapping mapping = new ExchangeCoinMapping(10L, 1L, 5L, "BTC");
-        when(exchangeCoinMappingCacheQueryPort.resolve("Upbit", "BTC/KRW"))
-                .thenReturn(Optional.of(mapping));
-        ResolveLiveTickerCommand command =
-                new ResolveLiveTickerCommand(
-                        "Upbit",
-                        List.of(
-                                new ExternalTickerCommand(
-                                        "BTC/KRW",
-                                        new BigDecimal("50000000"),
-                                        new BigDecimal("2.3"),
-                                        new BigDecimal("1000000000"),
-                                        1709913600000L)));
+        when(exchangeCoinMappingCacheQueryPort.resolve("Upbit", "BTC/KRW")).thenReturn(Optional.of(mapping));
+        ResolveLiveTickerCommand command = new ResolveLiveTickerCommand(
+                "Upbit",
+                List.of(new ExternalTickerCommand(
+                        "BTC/KRW",
+                        new BigDecimal("50000000"),
+                        new BigDecimal("2.3"),
+                        new BigDecimal("1000000000"),
+                        1709913600000L)));
 
         // When
         Optional<LiveTickerBatchResult> result = sut.resolve(command);
@@ -66,18 +65,15 @@ class ResolveLiveTickerServiceTest {
     @DisplayName("매핑이 없으면 빈 Optional을 반환한다")
     void resolve_withoutMapping_returnsEmpty() {
         // Given
-        when(exchangeCoinMappingCacheQueryPort.resolve("Unknown", "XYZ/KRW"))
-                .thenReturn(Optional.empty());
-        ResolveLiveTickerCommand command =
-                new ResolveLiveTickerCommand(
-                        "Unknown",
-                        List.of(
-                                new ExternalTickerCommand(
-                                        "XYZ/KRW",
-                                        new BigDecimal("1000"),
-                                        new BigDecimal("0.1"),
-                                        new BigDecimal("500000"),
-                                        1709913600000L)));
+        when(exchangeCoinMappingCacheQueryPort.resolve("Unknown", "XYZ/KRW")).thenReturn(Optional.empty());
+        ResolveLiveTickerCommand command = new ResolveLiveTickerCommand(
+                "Unknown",
+                List.of(new ExternalTickerCommand(
+                        "XYZ/KRW",
+                        new BigDecimal("1000"),
+                        new BigDecimal("0.1"),
+                        new BigDecimal("500000"),
+                        1709913600000L)));
 
         // When
         Optional<LiveTickerBatchResult> result = sut.resolve(command);

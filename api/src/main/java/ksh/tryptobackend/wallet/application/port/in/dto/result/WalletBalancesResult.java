@@ -15,19 +15,13 @@ public record WalletBalancesResult(
 
     public record CoinBalance(Long coinId, BigDecimal available, BigDecimal locked) {}
 
-    public static WalletBalancesResult of(
-            Long exchangeId, BaseCurrency baseCurrency, WalletBalances balances) {
+    public static WalletBalancesResult of(Long exchangeId, BaseCurrency baseCurrency, WalletBalances balances) {
         WalletBalance baseBalance = balances.getBaseCurrencyOrZero(baseCurrency.coinId());
-        List<CoinBalance> coinBalances =
-                balances.findCoinBalances(baseCurrency.coinId()).stream()
-                        .map(b -> new CoinBalance(b.getCoinId(), b.getAvailable(), b.getLocked()))
-                        .toList();
+        List<CoinBalance> coinBalances = balances.findCoinBalances(baseCurrency.coinId()).stream()
+                .map(b -> new CoinBalance(b.getCoinId(), b.getAvailable(), b.getLocked()))
+                .toList();
 
         return new WalletBalancesResult(
-                exchangeId,
-                baseCurrency.symbol(),
-                baseBalance.getAvailable(),
-                baseBalance.getLocked(),
-                coinBalances);
+                exchangeId, baseCurrency.symbol(), baseBalance.getAvailable(), baseBalance.getLocked(), coinBalances);
     }
 }

@@ -14,7 +14,6 @@ public record CheckRuleViolationsQuery(
         LocalDateTime now) {
 
     public RuleEvaluationInput toRuleEvaluationInput(BigDecimal changeRate) {
-        return new RuleEvaluationInput(
-                buyOrder, changeRate, atLoss, averagingDownCount, todayOrderCount, now);
+        return new RuleEvaluationInput(buyOrder, changeRate, atLoss, averagingDownCount, todayOrderCount, now);
     }
 }

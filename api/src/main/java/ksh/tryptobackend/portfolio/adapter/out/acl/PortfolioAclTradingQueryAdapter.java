@@ -21,13 +21,8 @@ public class PortfolioAclTradingQueryAdapter implements TradingQueryPort {
     public PortfolioHoldings findHoldings(Long walletId, Long exchangeId) {
         List<PortfolioHolding> holdings =
                 findEvaluatedHoldingsUseCase.findEvaluatedHoldings(walletId, exchangeId).stream()
-                        .map(
-                                result ->
-                                        new PortfolioHolding(
-                                                result.coinId(),
-                                                result.avgBuyPrice(),
-                                                result.totalQuantity(),
-                                                result.currentPrice()))
+                        .map(result -> new PortfolioHolding(
+                                result.coinId(), result.avgBuyPrice(), result.totalQuantity(), result.currentPrice()))
                         .toList();
         return new PortfolioHoldings(holdings);
     }
@@ -43,9 +38,6 @@ public class PortfolioAclTradingQueryAdapter implements TradingQueryPort {
 
     private EvaluatedHolding toEvaluatedHolding(EvaluatedHoldingResult result) {
         return EvaluatedHolding.create(
-                result.coinId(),
-                result.avgBuyPrice(),
-                result.totalQuantity(),
-                result.currentPrice());
+                result.coinId(), result.avgBuyPrice(), result.totalQuantity(), result.currentPrice());
     }
 }

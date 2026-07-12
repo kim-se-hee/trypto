@@ -111,8 +111,7 @@ public class InvestmentRound {
         this.endedAt = endedAt;
     }
 
-    public EmergencyFunding chargeEmergencyFunding(
-            Long exchangeId, BigDecimal amount, LocalDateTime now) {
+    public EmergencyFunding chargeEmergencyFunding(Long exchangeId, BigDecimal amount, LocalDateTime now) {
         if (status != RoundStatus.ACTIVE) {
             throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
         }

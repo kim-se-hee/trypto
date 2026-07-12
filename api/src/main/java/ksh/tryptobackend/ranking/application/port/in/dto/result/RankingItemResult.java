@@ -5,12 +5,7 @@ import ksh.tryptobackend.ranking.domain.vo.RankingSummary;
 import ksh.tryptobackend.ranking.domain.vo.UserProfiles;
 
 public record RankingItemResult(
-        int rank,
-        Long userId,
-        String nickname,
-        BigDecimal profitRate,
-        int tradeCount,
-        boolean portfolioPublic) {
+        int rank, Long userId, String nickname, BigDecimal profitRate, int tradeCount, boolean portfolioPublic) {
 
     public static RankingItemResult of(RankingSummary summary, UserProfiles userProfiles) {
         return new RankingItemResult(

@@ -43,9 +43,7 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
 
     private void validateWalletOwnership(Long walletId, Long userId) {
         Wallet wallet =
-                walletQueryPort
-                        .findById(walletId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                walletQueryPort.findById(walletId).orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
         Long ownerId = investmentRoundQueryPort.getOwnerId(wallet.getRoundId());
         if (!wallet.isOwnedBy(userId, ownerId)) {
             throw new CustomException(ErrorCode.WALLET_ACCESS_DENIED);
@@ -65,13 +63,9 @@ public class FindTransferHistoryService implements FindTransferHistoryUseCase {
     private TransferHistoryCursorResult buildCursorResult(
             List<Transfer> transfers, Long viewerWalletId, boolean hasNext) {
         Map<Long, String> coinSymbols = resolveCoinSymbols(transfers);
-        List<TransferHistoryResult> content =
-                transfers.stream()
-                        .map(
-                                transfer ->
-                                        TransferHistoryResult.from(
-                                                transfer, viewerWalletId, coinSymbols))
-                        .toList();
+        List<TransferHistoryResult> content = transfers.stream()
+                .map(transfer -> TransferHistoryResult.from(transfer, viewerWalletId, coinSymbols))
+                .toList();
         Long nextCursor = hasNext ? transfers.getLast().getTransferId() : null;
         return new TransferHistoryCursorResult(content, nextCursor, hasNext);
     }

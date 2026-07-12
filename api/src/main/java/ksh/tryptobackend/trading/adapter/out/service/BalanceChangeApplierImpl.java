@@ -29,15 +29,11 @@ public class BalanceChangeApplierImpl implements BalanceChangeApplier {
     private BalanceChangeCommand translate(BalanceChange change) {
         return switch (change) {
             case BalanceChange.AddAvailable a ->
-                    new BalanceChangeCommand(
-                            BalanceChangeType.ADD_AVAILABLE, a.coinId(), a.amount());
-            case BalanceChange.Lock l ->
-                    new BalanceChangeCommand(BalanceChangeType.LOCK, l.coinId(), l.amount());
-            case BalanceChange.Unlock u ->
-                    new BalanceChangeCommand(BalanceChangeType.UNLOCK, u.coinId(), u.amount());
+                new BalanceChangeCommand(BalanceChangeType.ADD_AVAILABLE, a.coinId(), a.amount());
+            case BalanceChange.Lock l -> new BalanceChangeCommand(BalanceChangeType.LOCK, l.coinId(), l.amount());
+            case BalanceChange.Unlock u -> new BalanceChangeCommand(BalanceChangeType.UNLOCK, u.coinId(), u.amount());
             case BalanceChange.ConsumeLocked s ->
-                    new BalanceChangeCommand(
-                            BalanceChangeType.CONSUME_LOCKED, s.coinId(), s.amount());
+                new BalanceChangeCommand(BalanceChangeType.CONSUME_LOCKED, s.coinId(), s.amount());
         };
     }
 }

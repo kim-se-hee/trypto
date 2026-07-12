@@ -22,9 +22,7 @@ public class JpaInvestmentRoundCommandAdapter implements InvestmentRoundCommandP
             return repository.save(InvestmentRoundJpaEntity.fromDomain(round)).toDomain();
         }
         InvestmentRoundJpaEntity entity =
-                repository
-                        .findById(round.getId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+                repository.findById(round.getId()).orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
         entity.updateFrom(round);
         return repository.saveAndFlush(entity).toDomain();
     }

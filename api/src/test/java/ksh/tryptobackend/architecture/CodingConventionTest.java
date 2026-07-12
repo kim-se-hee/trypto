@@ -30,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 
-@AnalyzeClasses(
-        packages = "ksh.tryptobackend",
-        importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "ksh.tryptobackend", importOptions = ImportOption.DoNotIncludeTests.class)
 class CodingConventionTest {
 
     private static final Logger log = LoggerFactory.getLogger(CodingConventionTest.class);
@@ -142,9 +140,8 @@ class CodingConventionTest {
                 .that()
                 .resideInAnyPackage(allContextPackages(DOMAIN_SERVICE))
                 .should(beInterfaceIfDependingOnAnotherContext())
-                .as(
-                        "Integration domain services (those depending on another bounded context)"
-                            + " must be interfaces — implementations live in adapter.out.service")
+                .as("Integration domain services (those depending on another bounded context)"
+                        + " must be interfaces — implementations live in adapter.out.service")
                 .check(classes);
     }
 
@@ -156,21 +153,19 @@ class CodingConventionTest {
                     return;
                 }
                 String ownContext = contextOf(javaClass.getPackageName());
-                Set<String> foreignContexts =
-                        javaClass.getDirectDependenciesFromSelf().stream()
-                                .map(dep -> contextOf(dep.getTargetClass().getPackageName()))
-                                .filter(ctx -> ctx != null && !ctx.equals(ownContext))
-                                .collect(Collectors.toCollection(TreeSet::new));
+                Set<String> foreignContexts = javaClass.getDirectDependenciesFromSelf().stream()
+                        .map(dep -> contextOf(dep.getTargetClass().getPackageName()))
+                        .filter(ctx -> ctx != null && !ctx.equals(ownContext))
+                        .collect(Collectors.toCollection(TreeSet::new));
                 if (!foreignContexts.isEmpty()) {
-                    events.add(
-                            SimpleConditionEvent.violated(
-                                    javaClass,
-                                    javaClass.getFullName()
-                                            + " is a concrete domain service depending on other"
-                                            + " bounded context(s) "
-                                            + foreignContexts
-                                            + " — make it an interface and move the impl to"
-                                            + " adapter.out.service"));
+                    events.add(SimpleConditionEvent.violated(
+                            javaClass,
+                            javaClass.getFullName()
+                                    + " is a concrete domain service depending on other"
+                                    + " bounded context(s) "
+                                    + foreignContexts
+                                    + " — make it an interface and move the impl to"
+                                    + " adapter.out.service"));
                 }
             }
         };
@@ -191,15 +186,13 @@ class CodingConventionTest {
         noMethods()
                 .that()
                 .areDeclaredInClassesThat()
-                .resideInAnyPackage(
-                        merge(allContextPackages(APPLICATION), allContextPackages(DOMAIN)))
+                .resideInAnyPackage(merge(allContextPackages(APPLICATION), allContextPackages(DOMAIN)))
                 .should()
                 .beAnnotatedWith("org.springframework.transaction.event.TransactionalEventListener")
                 .orShould()
                 .beAnnotatedWith("org.springframework.context.event.EventListener")
-                .as(
-                        "@TransactionalEventListener/@EventListener must be declared in adapters,"
-                                + " not in application or domain")
+                .as("@TransactionalEventListener/@EventListener must be declared in adapters,"
+                        + " not in application or domain")
                 .check(classes);
     }
 
@@ -207,15 +200,14 @@ class CodingConventionTest {
     void usecases_should_declare_exactly_one_method(JavaClasses classes) {
         // 조회 UseCase 는 응집된 조회를 한 인터페이스에 묶는 경우가 많아 위반이 반복된다.
         // 규칙은 유지하되 빌드를 막지 않고 경고만 남긴다.
-        EvaluationResult result =
-                classes()
-                        .that()
-                        .resideInAnyPackage(allContextDirectPackages(PORT_IN))
-                        .and()
-                        .areInterfaces()
-                        .should(declareExactlyOneMethod())
-                        .as("UseCases should declare exactly one method")
-                        .evaluate(classes);
+        EvaluationResult result = classes()
+                .that()
+                .resideInAnyPackage(allContextDirectPackages(PORT_IN))
+                .and()
+                .areInterfaces()
+                .should(declareExactlyOneMethod())
+                .as("UseCases should declare exactly one method")
+                .evaluate(classes);
 
         if (result.hasViolation()) {
             log.warn(
@@ -233,9 +225,8 @@ class CodingConventionTest {
                 .and()
                 .arePublic()
                 .should(returnApiResponseDtoOrWrapper())
-                .as(
-                        "@RestController public methods should return ApiResponseDto or"
-                                + " ResponseEntity<ApiResponseDto>")
+                .as("@RestController public methods should return ApiResponseDto or"
+                        + " ResponseEntity<ApiResponseDto>")
                 .check(classes);
     }
 
@@ -246,12 +237,9 @@ class CodingConventionTest {
                 if (returnsApiResponseDto(method) || returnsApiResponseDtoWrapper(method)) {
                     return;
                 }
-                events.add(
-                        SimpleConditionEvent.violated(
-                                method,
-                                method.getFullName()
-                                        + " should return ApiResponseDto or"
-                                        + " ResponseEntity<ApiResponseDto>"));
+                events.add(SimpleConditionEvent.violated(
+                        method,
+                        method.getFullName() + " should return ApiResponseDto or" + " ResponseEntity<ApiResponseDto>"));
             }
         };
     }
@@ -266,34 +254,26 @@ class CodingConventionTest {
         }
         if (method.getReturnType() instanceof JavaParameterizedType parameterized) {
             List<JavaType> typeArguments = parameterized.getActualTypeArguments();
-            return typeArguments.size() == 1
-                    && typeArguments.get(0).toErasure().isEquivalentTo(ApiResponseDto.class);
+            return typeArguments.size() == 1 && typeArguments.get(0).toErasure().isEquivalentTo(ApiResponseDto.class);
         }
         return false;
     }
 
     @ArchTest
     void controller_methods_should_not_return_domain_or_result(JavaClasses classes) {
-        DescribedPredicate<JavaClass> domainOrResult =
-                resideInAnyPackage(
-                                merge(
-                                        allContextPackages(DOMAIN),
-                                        allContextPackages(".application.port.in.dto.result..")))
-                        .as("domain or Result DTO");
+        DescribedPredicate<JavaClass> domainOrResult = resideInAnyPackage(
+                        merge(allContextPackages(DOMAIN), allContextPackages(".application.port.in.dto.result..")))
+                .as("domain or Result DTO");
 
-        FreezingArchRule.freeze(
-                        methods()
-                                .that()
-                                .areDeclaredInClassesThat()
-                                .areAnnotatedWith(
-                                        "org.springframework.web.bind.annotation.RestController")
-                                .and()
-                                .arePublic()
-                                .should()
-                                .notHaveRawReturnType(domainOrResult)
-                                .as(
-                                        "@RestController public methods should not directly return"
-                                                + " domain or Result DTO"))
+        FreezingArchRule.freeze(methods()
+                        .that()
+                        .areDeclaredInClassesThat()
+                        .areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
+                        .and()
+                        .arePublic()
+                        .should()
+                        .notHaveRawReturnType(domainOrResult)
+                        .as("@RestController public methods should not directly return" + " domain or Result DTO"))
                 .check(classes);
     }
 
@@ -303,13 +283,12 @@ class CodingConventionTest {
             public void check(JavaClass javaClass, ConditionEvents events) {
                 long methodCount = javaClass.getMethods().size();
                 if (methodCount != 1) {
-                    events.add(
-                            SimpleConditionEvent.violated(
-                                    javaClass,
-                                    javaClass.getFullName()
-                                            + " declares "
-                                            + methodCount
-                                            + " methods, but UseCase should declare exactly one"));
+                    events.add(SimpleConditionEvent.violated(
+                            javaClass,
+                            javaClass.getFullName()
+                                    + " declares "
+                                    + methodCount
+                                    + " methods, but UseCase should declare exactly one"));
                 }
             }
         };
@@ -319,25 +298,20 @@ class CodingConventionTest {
         return new ArchCondition<>("implement exactly one UseCase interface") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
-                long useCaseCount =
-                        javaClass.getAllRawInterfaces().stream()
-                                .filter(i -> i.getSimpleName().endsWith("UseCase"))
-                                .count();
+                long useCaseCount = javaClass.getAllRawInterfaces().stream()
+                        .filter(i -> i.getSimpleName().endsWith("UseCase"))
+                        .count();
                 if (useCaseCount == 0) {
-                    events.add(
-                            SimpleConditionEvent.violated(
-                                    javaClass,
-                                    javaClass.getFullName()
-                                            + " does not implement any UseCase interface"));
+                    events.add(SimpleConditionEvent.violated(
+                            javaClass, javaClass.getFullName() + " does not implement any UseCase interface"));
                 } else if (useCaseCount > 1) {
-                    events.add(
-                            SimpleConditionEvent.violated(
-                                    javaClass,
-                                    javaClass.getFullName()
-                                            + " implements "
-                                            + useCaseCount
-                                            + " UseCase interfaces, but should implement exactly"
-                                            + " one"));
+                    events.add(SimpleConditionEvent.violated(
+                            javaClass,
+                            javaClass.getFullName()
+                                    + " implements "
+                                    + useCaseCount
+                                    + " UseCase interfaces, but should implement exactly"
+                                    + " one"));
                 }
             }
         };

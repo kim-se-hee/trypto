@@ -28,8 +28,7 @@ public class RegretController {
     @GetMapping
     public ApiResponseDto<RegretReportResponse> getRegretReport(
             @PathVariable Long roundId, @Valid @ModelAttribute GetRegretReportRequest request) {
-        RegretReportResult result =
-                getRegretReportUseCase.getRegretReport(request.toQuery(roundId));
+        RegretReportResult result = getRegretReportUseCase.getRegretReport(request.toQuery(roundId));
         return ApiResponseDto.success("투자 복기 리포트를 조회했습니다.", RegretReportResponse.from(result));
     }
 

@@ -23,29 +23,22 @@ public class OutboundLatencyInterceptor implements ExecutorChannelInterceptor {
     private final Counter e2eHeaderMissing;
 
     public OutboundLatencyInterceptor(MeterRegistry registry) {
-        this.handleTimer =
-                Timer.builder(HANDLE_TIMER_NAME)
-                        .description("clientOutbound 채널 핸들러가 메시지 1건을 처리(소켓 write 포함)하는 데 걸린 시간")
-                        .publishPercentileHistogram()
-                        .register(registry);
-        this.e2eTimer =
-                Timer.builder(E2E_TIMER_NAME)
-                        .description(
-                                "collector 가 ticker 를 publish 한 시각부터 api 가 outbound socket write 를"
-                                        + " 시작하기 직전까지의 시간")
-                        .publishPercentileHistogram()
-                        .register(registry);
-        this.e2eHeaderMissing =
-                Counter.builder(E2E_HEADER_MISSING)
-                        .description(
-                                "outbound 단계에서 publishedAtMs 헤더를 못 찾아 e2e timer 에 기록 못 한 메시지 수. e2e"
-                                        + " 패널이 비면 이 카운터를 본다.")
-                        .register(registry);
+        this.handleTimer = Timer.builder(HANDLE_TIMER_NAME)
+                .description("clientOutbound 채널 핸들러가 메시지 1건을 처리(소켓 write 포함)하는 데 걸린 시간")
+                .publishPercentileHistogram()
+                .register(registry);
+        this.e2eTimer = Timer.builder(E2E_TIMER_NAME)
+                .description("collector 가 ticker 를 publish 한 시각부터 api 가 outbound socket write 를" + " 시작하기 직전까지의 시간")
+                .publishPercentileHistogram()
+                .register(registry);
+        this.e2eHeaderMissing = Counter.builder(E2E_HEADER_MISSING)
+                .description(
+                        "outbound 단계에서 publishedAtMs 헤더를 못 찾아 e2e timer 에 기록 못 한 메시지 수. e2e" + " 패널이 비면 이 카운터를 본다.")
+                .register(registry);
     }
 
     @Override
-    public Message<?> beforeHandle(
-            Message<?> message, MessageChannel channel, MessageHandler handler) {
+    public Message<?> beforeHandle(Message<?> message, MessageChannel channel, MessageHandler handler) {
         START_NANOS.set(System.nanoTime());
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         String raw = accessor.getFirstNativeHeader(LiveTickerEventListener.PUBLISHED_AT_MS_HEADER);
@@ -66,8 +59,7 @@ public class OutboundLatencyInterceptor implements ExecutorChannelInterceptor {
     }
 
     @Override
-    public void afterMessageHandled(
-            Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
+    public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
         Long start = START_NANOS.get();
         if (start == null) {
             return;

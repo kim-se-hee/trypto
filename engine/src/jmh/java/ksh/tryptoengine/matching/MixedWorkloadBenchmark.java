@@ -108,8 +108,7 @@ public class MixedWorkloadBenchmark {
             case 0 -> {
                 long id = nextOrderId++;
                 boolean bid = (id & 1L) == 0;
-                BigDecimal price =
-                        bid ? bidPrices[(int) id & PRICE_MASK] : askPrices[(int) id & PRICE_MASK];
+                BigDecimal price = bid ? bidPrices[(int) id & PRICE_MASK] : askPrices[(int) id & PRICE_MASK];
                 if (book.tryAdd(makeOrder(id, bid ? Side.BUY : Side.SELL, price))) {
                     pushActive(id);
                 }

@@ -43,8 +43,7 @@ public class Position {
         this.averagingDownCount = 0;
         for (FilledOrder filled : filledOrders) {
             Price filledPrice = Price.of(filled.filledPrice());
-            ExecutedFill fill =
-                    ExecutedFill.of(filled.side(), filledPrice, Quantity.of(filled.quantity()));
+            ExecutedFill fill = ExecutedFill.of(filled.side(), filledPrice, Quantity.of(filled.quantity()));
             applyFill(fill, filledPrice);
         }
     }

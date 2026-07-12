@@ -28,16 +28,13 @@ public class GetWalletBalancesService implements GetWalletBalancesUseCase {
     @Override
     @Transactional(readOnly = true)
     public WalletBalancesResult getWalletBalances(GetWalletBalancesQuery query) {
-        Wallet wallet =
-                walletQueryPort
-                        .findById(query.walletId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
-        wallet.verifyOwnedBy(
-                query.userId(), investmentRoundQueryPort.getOwnerId(wallet.getRoundId()));
+        Wallet wallet = walletQueryPort
+                .findById(query.walletId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+        wallet.verifyOwnedBy(query.userId(), investmentRoundQueryPort.getOwnerId(wallet.getRoundId()));
 
         BaseCurrency baseCurrency = marketDataQueryPort.getBaseCurrency(wallet.getExchangeId());
-        WalletBalances balances =
-                new WalletBalances(walletBalanceQueryPort.findByWalletId(query.walletId()));
+        WalletBalances balances = new WalletBalances(walletBalanceQueryPort.findByWalletId(query.walletId()));
 
         return WalletBalancesResult.of(wallet.getExchangeId(), baseCurrency, balances);
     }

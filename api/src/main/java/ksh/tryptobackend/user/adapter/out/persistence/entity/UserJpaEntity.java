@@ -80,8 +80,7 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return User.reconstitute(
-                id, version, toSocialIdentity(), nickname, portfolioPublic, createdAt, updatedAt);
+        return User.reconstitute(id, version, toSocialIdentity(), nickname, portfolioPublic, createdAt, updatedAt);
     }
 
     private SocialIdentity toSocialIdentity() {

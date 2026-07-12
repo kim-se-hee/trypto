@@ -53,8 +53,7 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
 
     @Override
     public CoinExchangeMapping findCoinExchangeMapping(Long exchangeId, List<Long> coinIds) {
-        return new CoinExchangeMapping(
-                findExchangeCoinMappingUseCase.findExchangeCoinIdMap(exchangeId, coinIds));
+        return new CoinExchangeMapping(findExchangeCoinMappingUseCase.findExchangeCoinIdMap(exchangeId, coinIds));
     }
 
     private ExchangeCoinMappingResult getMapping(Long exchangeCoinId) {
@@ -70,8 +69,7 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
     }
 
     private ExchangeInfo toExchangeInfo(ExchangeDetailResult detail) {
-        OrderAmountPolicy policy =
-                detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
+        OrderAmountPolicy policy = detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
         return new ExchangeInfo(detail.feeRate(), policy.getMinAmount(), policy.getMaxAmount());
     }
 }

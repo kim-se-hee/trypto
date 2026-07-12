@@ -21,9 +21,8 @@ public class RankingAclUserQueryAdapter implements UserQueryPort {
 
     @Override
     public UserProfiles findByUserIds(Set<Long> userIds) {
-        Map<Long, UserProfile> profileByUserId =
-                findUserPublicInfoUseCase.findByUserIds(userIds).stream()
-                        .collect(Collectors.toMap(UserPublicInfoResult::userId, this::toProfile));
+        Map<Long, UserProfile> profileByUserId = findUserPublicInfoUseCase.findByUserIds(userIds).stream()
+                .collect(Collectors.toMap(UserPublicInfoResult::userId, this::toProfile));
         return new UserProfiles(profileByUserId);
     }
 

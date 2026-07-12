@@ -14,11 +14,9 @@ public class IdempotencyKeyCommandAdapter implements IdempotencyKeyCommandPort {
     private final IdempotencyKeyJpaRepository repository;
 
     @Override
-    public void preempt(
-            String idempotencyKey, IdempotencyResourceType resourceType, LocalDateTime now) {
+    public void preempt(String idempotencyKey, IdempotencyResourceType resourceType, LocalDateTime now) {
         try {
-            repository.saveAndFlush(
-                    IdempotencyKeyJpaEntity.preempt(idempotencyKey, resourceType, now));
+            repository.saveAndFlush(IdempotencyKeyJpaEntity.preempt(idempotencyKey, resourceType, now));
         } catch (DataIntegrityViolationException e) {
             throw new DuplicateRequestException();
         }
@@ -26,14 +24,10 @@ public class IdempotencyKeyCommandAdapter implements IdempotencyKeyCommandPort {
 
     @Override
     public void linkResource(String idempotencyKey, Long resourceId) {
-        IdempotencyKeyJpaEntity entity =
-                repository
-                        .findByIdempotencyKey(idempotencyKey)
-                        .orElseThrow(
-                                () ->
-                                        new IllegalStateException(
-                                                "preempted idempotency key must exist: "
-                                                        + idempotencyKey));
+        IdempotencyKeyJpaEntity entity = repository
+                .findByIdempotencyKey(idempotencyKey)
+                .orElseThrow(
+                        () -> new IllegalStateException("preempted idempotency key must exist: " + idempotencyKey));
         entity.assignResource(resourceId);
     }
 }

@@ -28,19 +28,17 @@ public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentR
 
     @Override
     public AnalysisRound getRound(Long roundId) {
-        RoundInfoResult result =
-                findRoundInfoUseCase
-                        .findById(roundId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+        RoundInfoResult result = findRoundInfoUseCase
+                .findById(roundId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
         return toAnalysisRound(result);
     }
 
     @Override
     public AnalysisRules findRules(Long roundId) {
-        return new AnalysisRules(
-                findInvestmentRulesUseCase.findByRoundId(roundId).stream()
-                        .map(this::toAnalysisRule)
-                        .toList());
+        return new AnalysisRules(findInvestmentRulesUseCase.findByRoundId(roundId).stream()
+                .map(this::toAnalysisRule)
+                .toList());
     }
 
     @Override

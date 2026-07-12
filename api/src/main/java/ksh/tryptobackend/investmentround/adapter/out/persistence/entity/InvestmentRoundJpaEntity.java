@@ -72,15 +72,13 @@ public class InvestmentRoundJpaEntity {
         entity.startedAt = round.getStartedAt();
         entity.endedAt = round.getEndedAt();
 
-        entity.rules =
-                round.getRules().rules().stream()
-                        .map(InvestmentRuleJpaEntity::fromDomain)
-                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        entity.rules = round.getRules().rules().stream()
+                .map(InvestmentRuleJpaEntity::fromDomain)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
-        entity.fundings =
-                round.getFundings().values().stream()
-                        .map(EmergencyFundingJpaEntity::fromDomain)
-                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        entity.fundings = round.getFundings().values().stream()
+                .map(EmergencyFundingJpaEntity::fromDomain)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         return entity;
     }

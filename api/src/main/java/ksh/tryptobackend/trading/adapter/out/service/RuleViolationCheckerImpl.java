@@ -26,14 +26,12 @@ public class RuleViolationCheckerImpl implements RuleViolationChecker {
 
     @Override
     public List<RuleViolation> check(OrderPlacedEvent event) {
-        Position position =
-                positionQueryPort
-                        .findByWalletIdAndCoinId(event.walletId(), event.coinId())
-                        .orElseGet(() -> Position.empty(event.walletId(), event.coinId()));
+        Position position = positionQueryPort
+                .findByWalletIdAndCoinId(event.walletId(), event.coinId())
+                .orElseGet(() -> Position.empty(event.walletId(), event.coinId()));
         long todayOrderCount = countTodayOrders(event.walletId(), event.createdAt());
 
-        CheckRuleViolationsQuery query =
-                RuleViolationTranslator.toQuery(event, position, todayOrderCount);
+        CheckRuleViolationsQuery query = RuleViolationTranslator.toQuery(event, position, todayOrderCount);
         List<RuleViolationCheckResult> results = checkRuleViolationsUseCase.checkViolations(query);
         return RuleViolationTranslator.toRuleViolations(results);
     }

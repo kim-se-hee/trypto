@@ -23,11 +23,7 @@ public class ViolationDetails {
     public Map<Long, List<ViolationDetail>> groupByOrder() {
         return details.stream()
                 .filter(ViolationDetail::isOrderViolation)
-                .collect(
-                        Collectors.groupingBy(
-                                ViolationDetail::getOrderId,
-                                LinkedHashMap::new,
-                                Collectors.toList()));
+                .collect(Collectors.groupingBy(ViolationDetail::getOrderId, LinkedHashMap::new, Collectors.toList()));
     }
 
     public List<ViolationDetail> findMonitoringViolations() {
@@ -35,20 +31,14 @@ public class ViolationDetails {
     }
 
     public List<RuleImpact> toRuleImpacts(BigDecimal totalInvestment) {
-        return details.stream()
-                .collect(Collectors.groupingBy(ViolationDetail::getRuleId))
-                .entrySet()
-                .stream()
-                .map(
-                        entry -> {
-                            BigDecimal totalLoss =
-                                    entry.getValue().stream()
-                                            .map(ViolationDetail::getLossAmount)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                            ImpactGap gap = ImpactGap.calculate(totalLoss, totalInvestment);
-                            return RuleImpact.create(
-                                    entry.getKey(), entry.getValue().size(), totalLoss, gap);
-                        })
+        return details.stream().collect(Collectors.groupingBy(ViolationDetail::getRuleId)).entrySet().stream()
+                .map(entry -> {
+                    BigDecimal totalLoss = entry.getValue().stream()
+                            .map(ViolationDetail::getLossAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    ImpactGap gap = ImpactGap.calculate(totalLoss, totalInvestment);
+                    return RuleImpact.create(entry.getKey(), entry.getValue().size(), totalLoss, gap);
+                })
                 .toList();
     }
 

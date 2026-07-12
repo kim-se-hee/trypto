@@ -36,12 +36,10 @@ public class FindExchangeCoinsService implements FindExchangeCoinsUseCase {
         TickerSnapshots tickerSnapshots =
                 tickerSnapshotQueryPort.findByExchangeCoinIds(exchangeCoins.exchangeCoinIds());
         return exchangeCoins.values().stream()
-                .map(
-                        exchangeCoin ->
-                                ExchangeCoinListResult.of(
-                                        exchangeCoin,
-                                        coinSymbols.getSymbol(exchangeCoin.coinId()),
-                                        tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId())))
+                .map(exchangeCoin -> ExchangeCoinListResult.of(
+                        exchangeCoin,
+                        coinSymbols.getSymbol(exchangeCoin.coinId()),
+                        tickerSnapshots.getSnapshot(exchangeCoin.exchangeCoinId())))
                 .toList();
     }
 }

@@ -27,7 +27,10 @@ public record Rules(List<Rule> rules) {
     }
 
     public List<DetectedViolation> check(RuleEvaluationInput context) {
-        return rules.stream().map(rule -> rule.check(context)).flatMap(Optional::stream).toList();
+        return rules.stream()
+                .map(rule -> rule.check(context))
+                .flatMap(Optional::stream)
+                .toList();
     }
 
     public boolean isEmpty() {

@@ -105,7 +105,11 @@ public class RoundStepDefinition {
 
     @Then("원칙 개수는 {int}개이다")
     public void 원칙_개수는_개이다(int count) {
-        apiClient.getLastResponse().expectBody().jsonPath("$.data.rules.length()").isEqualTo(count);
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.rules.length()")
+                .isEqualTo(count);
     }
 
     @Then("지갑 개수는 {int}개이다")
@@ -131,21 +135,19 @@ public class RoundStepDefinition {
 
     @Given("파산 상태의 라운드가 존재한다")
     public void 파산_상태의_라운드가_존재한다() {
-        InvestmentRoundJpaEntity entity =
-                InvestmentRoundJpaEntity.fromDomain(
-                        InvestmentRound.reconstitute(
-                                null,
-                                null,
-                                USER_ID,
-                                1L,
-                                new BigDecimal("1000000"),
-                                new BigDecimal("500000"),
-                                3,
-                                RoundStatus.BANKRUPT,
-                                LocalDateTime.now(),
-                                null,
-                                List.of(),
-                                List.of()));
+        InvestmentRoundJpaEntity entity = InvestmentRoundJpaEntity.fromDomain(InvestmentRound.reconstitute(
+                null,
+                null,
+                USER_ID,
+                1L,
+                new BigDecimal("1000000"),
+                new BigDecimal("500000"),
+                3,
+                RoundStatus.BANKRUPT,
+                LocalDateTime.now(),
+                null,
+                List.of(),
+                List.of()));
         InvestmentRoundJpaEntity saved = investmentRoundJpaRepository.save(entity);
         lastRoundId = saved.getId();
     }

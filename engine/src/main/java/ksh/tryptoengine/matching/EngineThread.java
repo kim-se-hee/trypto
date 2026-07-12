@@ -106,26 +106,23 @@ public class EngineThread {
         MarketRefResolver.MarketRef ref = marketRefResolver.resolve(e.exchangeCoinId());
         if (ref == null) {
             log.error(
-                    "market ref missing, order skipped orderId={} exchangeCoinId={}",
-                    e.orderId(),
-                    e.exchangeCoinId());
+                    "market ref missing, order skipped orderId={} exchangeCoinId={}", e.orderId(), e.exchangeCoinId());
             return;
         }
         TradingPair pair = new TradingPair(e.exchangeCoinId());
-        OrderDetail detail =
-                new OrderDetail(
-                        e.orderId(),
-                        e.walletId(),
-                        Side.valueOf(e.side()),
-                        pair,
-                        ref.coinId(),
-                        ref.baseCoinId(),
-                        e.price(),
-                        e.quantity(),
-                        ref.feeRate(),
-                        e.lockedAmount(),
-                        e.lockedCoinId(),
-                        e.placedAt());
+        OrderDetail detail = new OrderDetail(
+                e.orderId(),
+                e.walletId(),
+                Side.valueOf(e.side()),
+                pair,
+                ref.coinId(),
+                ref.baseCoinId(),
+                e.price(),
+                e.quantity(),
+                ref.feeRate(),
+                e.lockedAmount(),
+                e.lockedCoinId(),
+                e.placedAt());
         OrderBook book = orderBookRegistry.bookOf(pair);
         if (!book.tryAdd(detail)) {
             log.debug("duplicate OrderPlaced ignored orderId={}", e.orderId());

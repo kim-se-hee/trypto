@@ -25,6 +25,8 @@ public class FindUserPublicInfoService implements FindUserPublicInfoUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<UserPublicInfoResult> findByUserIds(Set<Long> userIds) {
-        return userQueryPort.findByIds(userIds).stream().map(UserPublicInfoResult::from).toList();
+        return userQueryPort.findByIds(userIds).stream()
+                .map(UserPublicInfoResult::from)
+                .toList();
     }
 }

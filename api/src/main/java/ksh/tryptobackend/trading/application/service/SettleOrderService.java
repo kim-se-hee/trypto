@@ -28,10 +28,8 @@ public class SettleOrderService implements SettleOrderUseCase {
 
         balanceChangeApplier.applyAll(order.getWalletId(), order.planSettlementChanges(pair));
 
-        Position position =
-                positionCommandPort.getOrCreate(order.getWalletId(), pair.tradedCoinId());
-        ExecutedFill executedFill =
-                ExecutedFill.of(order.getSide(), order.getFilledPrice(), order.getQuantity());
+        Position position = positionCommandPort.getOrCreate(order.getWalletId(), pair.tradedCoinId());
+        ExecutedFill executedFill = ExecutedFill.of(order.getSide(), order.getFilledPrice(), order.getQuantity());
         position.applyFill(executedFill, Price.of(event.currentPrice()));
         positionCommandPort.save(position);
     }

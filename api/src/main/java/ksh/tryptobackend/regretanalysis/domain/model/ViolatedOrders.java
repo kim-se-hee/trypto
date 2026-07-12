@@ -26,10 +26,8 @@ public class ViolatedOrders {
         return values.stream().map(v -> toViolationDetail(v, currentPrices)).toList();
     }
 
-    private ViolationDetail toViolationDetail(
-            ViolatedOrder violation, CurrentPrices currentPrices) {
-        BigDecimal lossAmount =
-                violation.calculateLoss(currentPrices.getPrice(violation.getExchangeCoinId()));
+    private ViolationDetail toViolationDetail(ViolatedOrder violation, CurrentPrices currentPrices) {
+        BigDecimal lossAmount = violation.calculateLoss(currentPrices.getPrice(violation.getExchangeCoinId()));
         return ViolationDetail.create(
                 violation.getOrderId(),
                 violation.getRuleId(),

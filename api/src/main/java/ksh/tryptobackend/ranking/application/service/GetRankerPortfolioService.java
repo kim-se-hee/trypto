@@ -33,16 +33,12 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
     @Override
     @Transactional(readOnly = true)
     public RankerPortfolioResult getRankerPortfolio(GetRankerPortfolioQuery query) {
-        LocalDate referenceDate =
-                rankingQueryPort
-                        .findLatestReferenceDate(query.period())
-                        .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
-        RankingSummary ranking =
-                rankingQueryPort
-                        .findByUserIdAndPeriodAndReferenceDate(
-                                query.userId(), query.period(), referenceDate)
-                        .orElseThrow(
-                                () -> new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED));
+        LocalDate referenceDate = rankingQueryPort
+                .findLatestReferenceDate(query.period())
+                .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
+        RankingSummary ranking = rankingQueryPort
+                .findByUserIdAndPeriodAndReferenceDate(query.userId(), query.period(), referenceDate)
+                .orElseThrow(() -> new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED));
         ranking.assertViewable();
         UserProfile viewer = userQueryPort.getByUserId(query.userId());
         viewer.assertPortfolioPublic();
@@ -51,7 +47,6 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
         CoinSymbols coinSymbols = marketDataQueryPort.findCoinSymbols(holdings.coinIds());
         ExchangeNames exchangeNames = marketDataQueryPort.findExchangeNames(holdings.exchangeIds());
 
-        return RankerPortfolioResult.of(
-                ranking, viewer, holdings.describe(coinSymbols, exchangeNames));
+        return RankerPortfolioResult.of(ranking, viewer, holdings.describe(coinSymbols, exchangeNames));
     }
 }

@@ -44,17 +44,19 @@ public class CandleQueryAdapter implements CandleQueryPort {
 
         StringBuilder sb = new StringBuilder();
         sb.append("from(bucket: \"").append(bucket).append("\")");
-        sb.append(" |> range(start: ").append(start).append(", stop: ").append(end).append(")");
+        sb.append(" |> range(start: ")
+                .append(start)
+                .append(", stop: ")
+                .append(end)
+                .append(")");
         sb.append(" |> filter(fn: (r) => r._measurement == \"")
                 .append(filter.interval().getMeasurement())
                 .append("\"");
         sb.append(" and r.exchange == \"").append(filter.exchange()).append("\"");
         sb.append(" and r.coin == \"").append(filter.coin()).append("\"");
-        sb.append(
-                " and (r._field == \"open\" or r._field == \"high\" or r._field == \"low\" or"
-                        + " r._field == \"close\"))");
-        sb.append(
-                " |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")");
+        sb.append(" and (r._field == \"open\" or r._field == \"high\" or r._field == \"low\" or"
+                + " r._field == \"close\"))");
+        sb.append(" |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")");
         sb.append(" |> sort(columns: [\"_time\"], desc: true)");
         sb.append(" |> limit(n: ").append(filter.limit()).append(")");
         return sb.toString();
@@ -69,13 +71,12 @@ public class CandleQueryAdapter implements CandleQueryPort {
         List<Candle> candles = new ArrayList<>();
         for (FluxTable table : tables) {
             for (FluxRecord record : table.getRecords()) {
-                candles.add(
-                        new Candle(
-                                record.getTime(),
-                                toBigDecimal(record.getValueByKey("open"), "open"),
-                                toBigDecimal(record.getValueByKey("high"), "high"),
-                                toBigDecimal(record.getValueByKey("low"), "low"),
-                                toBigDecimal(record.getValueByKey("close"), "close")));
+                candles.add(new Candle(
+                        record.getTime(),
+                        toBigDecimal(record.getValueByKey("open"), "open"),
+                        toBigDecimal(record.getValueByKey("high"), "high"),
+                        toBigDecimal(record.getValueByKey("low"), "low"),
+                        toBigDecimal(record.getValueByKey("close"), "close")));
             }
         }
         return candles;
@@ -85,7 +86,6 @@ public class CandleQueryAdapter implements CandleQueryPort {
         if (value instanceof Number number) {
             return BigDecimal.valueOf(number.doubleValue());
         }
-        throw new IllegalStateException(
-                "InfluxDB 캔들 필드 '" + fieldName + "'의 값이 유효하지 않습니다: " + value);
+        throw new IllegalStateException("InfluxDB 캔들 필드 '" + fieldName + "'의 값이 유효하지 않습니다: " + value);
     }
 }

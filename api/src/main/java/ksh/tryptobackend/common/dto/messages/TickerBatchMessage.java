@@ -5,9 +5,5 @@ import java.util.List;
 
 public record TickerBatchMessage(String exchange, List<Item> tickers) {
     public record Item(
-            String symbol,
-            BigDecimal currentPrice,
-            BigDecimal changeRate,
-            BigDecimal quoteTurnover,
-            Long timestamp) {}
+            String symbol, BigDecimal currentPrice, BigDecimal changeRate, BigDecimal quoteTurnover, Long timestamp) {}
 }

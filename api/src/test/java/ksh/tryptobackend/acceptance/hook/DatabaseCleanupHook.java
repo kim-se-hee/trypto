@@ -31,11 +31,8 @@ public class DatabaseCleanupHook {
 
     @Before
     public void cleanUp() throws Exception {
-        List<String> tables =
-                jdbcTemplate.queryForList(
-                        "SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA ="
-                                + " DATABASE()",
-                        String.class);
+        List<String> tables = jdbcTemplate.queryForList(
+                "SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA =" + " DATABASE()", String.class);
 
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
         for (String table : tables) {

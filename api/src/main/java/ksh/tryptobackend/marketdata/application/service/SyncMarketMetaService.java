@@ -49,8 +49,7 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
     }
 
     private Map<String, Long> syncCoins(
-            Map<String, List<MarketMetaEntry>> marketMetaMap,
-            List<ExchangeConfig> exchangeConfigs) {
+            Map<String, List<MarketMetaEntry>> marketMetaMap, List<ExchangeConfig> exchangeConfigs) {
         Map<String, String> symbolToName = resolveSymbolNames(marketMetaMap, exchangeConfigs);
 
         Map<String, Long> coinIdBySymbol = new HashMap<>();
@@ -63,8 +62,7 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
     }
 
     private Map<String, String> resolveSymbolNames(
-            Map<String, List<MarketMetaEntry>> marketMetaMap,
-            List<ExchangeConfig> exchangeConfigs) {
+            Map<String, List<MarketMetaEntry>> marketMetaMap, List<ExchangeConfig> exchangeConfigs) {
         Set<String> domesticExchanges = domesticExchangeNames(exchangeConfigs);
 
         Map<String, String> symbolToName = new LinkedHashMap<>();
@@ -86,19 +84,18 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
             Map<String, String> symbolToName,
             Set<String> domesticExchanges,
             boolean domestic) {
-        marketMetaMap.forEach(
-                (exchangeName, entries) -> {
-                    if (domesticExchanges.contains(exchangeName) != domestic) {
-                        return;
-                    }
-                    for (MarketMetaEntry entry : entries) {
-                        if (domestic) {
-                            symbolToName.put(entry.base(), entry.displayName());
-                        } else {
-                            symbolToName.putIfAbsent(entry.base(), entry.displayName());
-                        }
-                    }
-                });
+        marketMetaMap.forEach((exchangeName, entries) -> {
+            if (domesticExchanges.contains(exchangeName) != domestic) {
+                return;
+            }
+            for (MarketMetaEntry entry : entries) {
+                if (domestic) {
+                    symbolToName.put(entry.base(), entry.displayName());
+                } else {
+                    symbolToName.putIfAbsent(entry.base(), entry.displayName());
+                }
+            }
+        });
     }
 
     private void putQuoteSymbolNames(
@@ -110,26 +107,18 @@ public class SyncMarketMetaService implements SyncMarketMetaUseCase {
                 .forEach(quote -> symbolToName.putIfAbsent(quote, quote));
     }
 
-    private Map<String, Long> syncExchanges(
-            List<ExchangeConfig> exchangeConfigs, Map<String, Long> coinIdBySymbol) {
+    private Map<String, Long> syncExchanges(List<ExchangeConfig> exchangeConfigs, Map<String, Long> coinIdBySymbol) {
         Map<String, Long> exchangeIdByName = new HashMap<>();
 
         for (ExchangeConfig config : exchangeConfigs) {
             Long baseCurrencyCoinId = coinIdBySymbol.get(config.baseCurrencySymbol());
             if (baseCurrencyCoinId == null) {
-                log.error(
-                        "기축통화 심볼 {}에 해당하는 coin이 없습니다. 거래소 {} 건너뜀",
-                        config.baseCurrencySymbol(),
-                        config.name());
+                log.error("기축통화 심볼 {}에 해당하는 coin이 없습니다. 거래소 {} 건너뜀", config.baseCurrencySymbol(), config.name());
                 continue;
             }
 
             Exchange exchange =
-                    exchangeCommandPort.save(
-                            config.name(),
-                            config.marketType(),
-                            baseCurrencyCoinId,
-                            config.feeRate());
+                    exchangeCommandPort.save(config.name(), config.marketType(), baseCurrencyCoinId, config.feeRate());
             exchangeIdByName.put(exchange.getName(), exchange.getExchangeId());
         }
         log.info("exchange_market 동기화 완료: {}건", exchangeIdByName.size());

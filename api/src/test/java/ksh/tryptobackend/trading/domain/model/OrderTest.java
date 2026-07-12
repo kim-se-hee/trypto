@@ -28,15 +28,12 @@ import org.junit.jupiter.api.Test;
 class OrderTest {
 
     private static final ExchangeInfo DOMESTIC_EXCHANGE_INFO =
-            new ExchangeInfo(
-                    new BigDecimal("0.0005"), new BigDecimal("5000"), new BigDecimal("1000000000"));
+            new ExchangeInfo(new BigDecimal("0.0005"), new BigDecimal("5000"), new BigDecimal("1000000000"));
     private static final TradingPair PAIR = new TradingPair(100L, 1L);
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
 
-    private static PlaceOrderCommand cmd(
-            Side side, OrderType orderType, BigDecimal volume, BigDecimal price) {
-        return new PlaceOrderCommand(
-                UUID.randomUUID().toString(), 1L, 1L, side, orderType, volume, price);
+    private static PlaceOrderCommand cmd(Side side, OrderType orderType, BigDecimal volume, BigDecimal price) {
+        return new PlaceOrderCommand(UUID.randomUUID().toString(), 1L, 1L, side, orderType, volume, price);
     }
 
     private static MarketInfo ctx(BigDecimal currentPrice) {
@@ -88,12 +85,8 @@ class OrderTest {
         @Test
         @DisplayName("시장가 매수 — price(주문 총액) 누락이면 PRICE_REQUIRED")
         void marketBuy_withoutPrice_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(Side.BUY, OrderType.MARKET, null, null),
-                                            ctx(new BigDecimal("100274000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.BUY, OrderType.MARKET, null, null), ctx(new BigDecimal("100274000")), NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.PRICE_REQUIRED);
@@ -102,16 +95,10 @@ class OrderTest {
         @Test
         @DisplayName("시장가 매수 — volume을 보내면 VOLUME_NOT_ALLOWED")
         void marketBuy_withVolume_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.BUY,
-                                                    OrderType.MARKET,
-                                                    new BigDecimal("0.001"),
-                                                    new BigDecimal("100000")),
-                                            ctx(new BigDecimal("100274000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.BUY, OrderType.MARKET, new BigDecimal("0.001"), new BigDecimal("100000")),
+                            ctx(new BigDecimal("100274000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.VOLUME_NOT_ALLOWED);
@@ -120,12 +107,8 @@ class OrderTest {
         @Test
         @DisplayName("시장가 매도 — volume 누락이면 VOLUME_REQUIRED")
         void marketSell_withoutVolume_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(Side.SELL, OrderType.MARKET, null, null),
-                                            ctx(new BigDecimal("100274000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.SELL, OrderType.MARKET, null, null), ctx(new BigDecimal("100274000")), NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.VOLUME_REQUIRED);
@@ -134,16 +117,10 @@ class OrderTest {
         @Test
         @DisplayName("시장가 매도 — price를 보내면 PRICE_NOT_ALLOWED")
         void marketSell_withPrice_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.SELL,
-                                                    OrderType.MARKET,
-                                                    new BigDecimal("0.001"),
-                                                    new BigDecimal("100000000")),
-                                            ctx(new BigDecimal("100274000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.SELL, OrderType.MARKET, new BigDecimal("0.001"), new BigDecimal("100000000")),
+                            ctx(new BigDecimal("100274000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.PRICE_NOT_ALLOWED);
@@ -152,16 +129,10 @@ class OrderTest {
         @Test
         @DisplayName("지정가 — volume 누락이면 VOLUME_REQUIRED")
         void limit_withoutVolume_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.BUY,
-                                                    OrderType.LIMIT,
-                                                    null,
-                                                    new BigDecimal("100000000")),
-                                            ctx(new BigDecimal("100000000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.BUY, OrderType.LIMIT, null, new BigDecimal("100000000")),
+                            ctx(new BigDecimal("100000000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.VOLUME_REQUIRED);
@@ -170,16 +141,10 @@ class OrderTest {
         @Test
         @DisplayName("지정가 — price 누락이면 PRICE_REQUIRED")
         void limit_withoutPrice_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.BUY,
-                                                    OrderType.LIMIT,
-                                                    new BigDecimal("0.005"),
-                                                    null),
-                                            ctx(new BigDecimal("100000000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), null),
+                            ctx(new BigDecimal("100000000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.PRICE_REQUIRED);
@@ -188,16 +153,10 @@ class OrderTest {
         @Test
         @DisplayName("시장가 매도 — 주문 금액(volume × 현재가)이 최소 미달이면 BELOW_MIN_ORDER_AMOUNT")
         void marketSell_belowMinOrderAmount_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.SELL,
-                                                    OrderType.MARKET,
-                                                    new BigDecimal("0.00000001"),
-                                                    null),
-                                            ctx(new BigDecimal("100274000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.SELL, OrderType.MARKET, new BigDecimal("0.00000001"), null),
+                            ctx(new BigDecimal("100274000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.BELOW_MIN_ORDER_AMOUNT);
@@ -206,16 +165,10 @@ class OrderTest {
         @Test
         @DisplayName("지정가 매수 — 주문 금액(volume × 지정가)이 최소 미달이면 BELOW_MIN_ORDER_AMOUNT")
         void limitBuy_belowMinOrderAmount_throws() {
-            assertThatThrownBy(
-                            () ->
-                                    Order.create(
-                                            cmd(
-                                                    Side.BUY,
-                                                    OrderType.LIMIT,
-                                                    new BigDecimal("0.00000001"),
-                                                    new BigDecimal("100000000")),
-                                            ctx(new BigDecimal("100000000")),
-                                            NOW))
+            assertThatThrownBy(() -> Order.create(
+                            cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.00000001"), new BigDecimal("100000000")),
+                            ctx(new BigDecimal("100000000")),
+                            NOW))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.BELOW_MIN_ORDER_AMOUNT);
@@ -232,11 +185,7 @@ class OrderTest {
             BigDecimal totalPrice = new BigDecimal("100000");
             BigDecimal currentPrice = new BigDecimal("100274000");
 
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, totalPrice),
-                            ctx(currentPrice),
-                            NOW);
+            Order order = Order.create(cmd(Side.BUY, OrderType.MARKET, null, totalPrice), ctx(currentPrice), NOW);
 
             BigDecimal expectedAmount = order.getQuantity().value().multiply(currentPrice);
             assertThat(order.getFilledAmount().value()).isEqualByComparingTo(expectedAmount);
@@ -248,11 +197,7 @@ class OrderTest {
             BigDecimal sellQuantity = new BigDecimal("0.5");
             BigDecimal currentPrice = new BigDecimal("100274000");
 
-            Order order =
-                    Order.create(
-                            cmd(Side.SELL, OrderType.MARKET, sellQuantity, null),
-                            ctx(currentPrice),
-                            NOW);
+            Order order = Order.create(cmd(Side.SELL, OrderType.MARKET, sellQuantity, null), ctx(currentPrice), NOW);
 
             BigDecimal expectedAmount = sellQuantity.multiply(currentPrice);
             assertThat(order.getFilledAmount().value()).isEqualByComparingTo(expectedAmount);
@@ -265,11 +210,7 @@ class OrderTest {
             BigDecimal limitPrice = new BigDecimal("100000000");
             BigDecimal executionPrice = new BigDecimal("99000000");
 
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.LIMIT, volume, limitPrice),
-                            ctx(limitPrice),
-                            NOW);
+            Order order = Order.create(cmd(Side.BUY, OrderType.LIMIT, volume, limitPrice), ctx(limitPrice), NOW);
 
             assertThat(order.getFilledAmount()).isNull();
             assertThat(order.getFeeAmount()).isNull();
@@ -289,11 +230,7 @@ class OrderTest {
             BigDecimal limitPrice = new BigDecimal("110000000");
             BigDecimal executionPrice = new BigDecimal("111000000");
 
-            Order order =
-                    Order.create(
-                            cmd(Side.SELL, OrderType.LIMIT, sellQuantity, limitPrice),
-                            ctx(limitPrice),
-                            NOW);
+            Order order = Order.create(cmd(Side.SELL, OrderType.LIMIT, sellQuantity, limitPrice), ctx(limitPrice), NOW);
 
             assertThat(order.getFilledAmount()).isNull();
 
@@ -311,12 +248,8 @@ class OrderTest {
         @Test
         @DisplayName("정상 수수료 계산 — 체결 금액(가격 × 수량) × 수수료율")
         void settle_normal_correctFee() {
-            Fill fill =
-                    Fill.settle(
-                            Price.of(new BigDecimal("99726.44")),
-                            Quantity.of(BigDecimal.ONE),
-                            new BigDecimal("0.0005"),
-                            NOW);
+            Fill fill = Fill.settle(
+                    Price.of(new BigDecimal("99726.44")), Quantity.of(BigDecimal.ONE), new BigDecimal("0.0005"), NOW);
 
             assertThat(fill.fee().value()).isEqualByComparingTo(new BigDecimal("49.86322000"));
         }
@@ -325,11 +258,7 @@ class OrderTest {
         @DisplayName("수수료율 0% — 수수료 0")
         void settle_zeroRate_zeroFee() {
             Fill fill =
-                    Fill.settle(
-                            Price.of(new BigDecimal("1000000")),
-                            Quantity.of(BigDecimal.ONE),
-                            BigDecimal.ZERO,
-                            NOW);
+                    Fill.settle(Price.of(new BigDecimal("1000000")), Quantity.of(BigDecimal.ONE), BigDecimal.ZERO, NOW);
 
             assertThat(fill.fee().value()).isEqualByComparingTo(BigDecimal.ZERO);
         }
@@ -342,15 +271,10 @@ class OrderTest {
         @Test
         @DisplayName("PENDING 주문 체결 성공 - 상태가 FILLED로 변경되고 filledAt이 설정된다")
         void fill_pendingOrder_filledSuccessfully() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
             LocalDateTime fillTime = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
 
             order.fill(Price.of(new BigDecimal("100000000")), fillTime);
@@ -362,32 +286,22 @@ class OrderTest {
         @Test
         @DisplayName("FILLED 주문에 fill 시도 - 예외 발생")
         void fill_filledOrder_throwsException() {
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
-                            ctx(new BigDecimal("100274000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
+                    ctx(new BigDecimal("100274000")),
+                    NOW);
 
-            assertThatThrownBy(
-                            () ->
-                                    order.fill(
-                                            Price.of(new BigDecimal("100274000")),
-                                            LocalDateTime.now()))
+            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("100274000")), LocalDateTime.now()))
                     .isInstanceOf(CustomException.class);
         }
 
         @Test
         @DisplayName("지정가 매수 - 지정가보다 높은 체결가로 fill 시도 - 예외 발생")
         void fill_buyAboveLimitPrice_throwsException() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
 
             assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("100000001")), NOW))
                     .isInstanceOf(CustomException.class);
@@ -396,15 +310,10 @@ class OrderTest {
         @Test
         @DisplayName("지정가 매도 - 지정가보다 낮은 체결가로 fill 시도 - 예외 발생")
         void fill_sellBelowLimitPrice_throwsException() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.SELL,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.001"),
-                                    new BigDecimal("110000000")),
-                            ctx(new BigDecimal("110000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.SELL, OrderType.LIMIT, new BigDecimal("0.001"), new BigDecimal("110000000")),
+                    ctx(new BigDecimal("110000000")),
+                    NOW);
 
             assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("109999999")), NOW))
                     .isInstanceOf(CustomException.class);
@@ -418,34 +327,25 @@ class OrderTest {
         @Test
         @DisplayName("PENDING 지정가 주문 취소 - 상태가 CANCELED로 바뀌고 취소 이벤트가 등록된다")
         void cancel_pendingOrder_cancelled() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
             order.pullDomainEvents();
 
             order.cancel(1L, PAIR);
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
-            assertThat(order.pullDomainEvents())
-                    .hasSize(1)
-                    .first()
-                    .isInstanceOf(OrderCanceledEvent.class);
+            assertThat(order.pullDomainEvents()).hasSize(1).first().isInstanceOf(OrderCanceledEvent.class);
         }
 
         @Test
         @DisplayName("체결된 주문 취소 시도 - 예외 발생")
         void cancel_filledOrder_throwsException() {
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
-                            ctx(new BigDecimal("100274000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
+                    ctx(new BigDecimal("100274000")),
+                    NOW);
 
             assertThatThrownBy(() -> order.cancel(1L, PAIR)).isInstanceOf(CustomException.class);
         }
@@ -458,11 +358,10 @@ class OrderTest {
         @Test
         @DisplayName("시장가 주문 생성 - OrderPlacedEvent와 OrderFilledEvent가 등록된다")
         void create_marketOrder_registersPlacedAndFilledEvents() {
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
-                            ctx(new BigDecimal("100274000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
+                    ctx(new BigDecimal("100274000")),
+                    NOW);
 
             assertThat(order.pullDomainEvents())
                     .hasSize(2)
@@ -472,29 +371,21 @@ class OrderTest {
         @Test
         @DisplayName("지정가 주문 생성 - OrderPlacedEvent만 등록된다")
         void create_limitOrder_registersPlacedEventOnly() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
 
-            assertThat(order.pullDomainEvents())
-                    .hasSize(1)
-                    .hasExactlyElementsOfTypes(OrderPlacedEvent.class);
+            assertThat(order.pullDomainEvents()).hasSize(1).hasExactlyElementsOfTypes(OrderPlacedEvent.class);
         }
 
         @Test
         @DisplayName("이벤트는 한 번 꺼내면 비워진다")
         void pullDomainEvents_clearsEvents() {
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
-                            ctx(new BigDecimal("100274000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
+                    ctx(new BigDecimal("100274000")),
+                    NOW);
 
             order.pullDomainEvents();
 
@@ -509,15 +400,10 @@ class OrderTest {
         @Test
         @DisplayName("지정가 주문 생성 직후 - isPending이 true")
         void isPending_limitOrder_true() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
 
             assertThat(order.isPending()).isTrue();
         }
@@ -525,11 +411,10 @@ class OrderTest {
         @Test
         @DisplayName("시장가 주문 생성 직후 - isPending이 false")
         void isPending_marketOrder_false() {
-            Order order =
-                    Order.create(
-                            cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
-                            ctx(new BigDecimal("100274000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.MARKET, null, new BigDecimal("100000")),
+                    ctx(new BigDecimal("100274000")),
+                    NOW);
 
             assertThat(order.isPending()).isFalse();
         }
@@ -537,15 +422,10 @@ class OrderTest {
         @Test
         @DisplayName("체결된 주문 - isPending이 false")
         void isPending_filledOrder_false() {
-            Order order =
-                    Order.create(
-                            cmd(
-                                    Side.BUY,
-                                    OrderType.LIMIT,
-                                    new BigDecimal("0.005"),
-                                    new BigDecimal("100000000")),
-                            ctx(new BigDecimal("100000000")),
-                            NOW);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
+                    ctx(new BigDecimal("100000000")),
+                    NOW);
             order.fill(Price.of(new BigDecimal("100000000")), LocalDateTime.now());
 
             assertThat(order.isPending()).isFalse();

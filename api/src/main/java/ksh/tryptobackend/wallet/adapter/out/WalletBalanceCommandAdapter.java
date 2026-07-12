@@ -23,18 +23,13 @@ public class WalletBalanceCommandAdapter implements WalletBalanceCommandPort {
 
     private void save(WalletBalance balance) {
         if (balance.getId() == null) {
-            walletBalanceRepository.save(
-                    new WalletBalanceJpaEntity(
-                            balance.getWalletId(),
-                            balance.getCoinId(),
-                            balance.getAvailable(),
-                            balance.getLocked()));
+            walletBalanceRepository.save(new WalletBalanceJpaEntity(
+                    balance.getWalletId(), balance.getCoinId(), balance.getAvailable(), balance.getLocked()));
             return;
         }
-        WalletBalanceJpaEntity entity =
-                walletBalanceRepository
-                        .findById(balance.getId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.WALLET_BALANCE_NOT_FOUND));
+        WalletBalanceJpaEntity entity = walletBalanceRepository
+                .findById(balance.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.WALLET_BALANCE_NOT_FOUND));
         entity.updateFrom(balance);
     }
 }

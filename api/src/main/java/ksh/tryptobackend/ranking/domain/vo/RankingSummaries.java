@@ -17,8 +17,7 @@ public class RankingSummaries {
 
     public static RankingSummaries fromOverflow(List<RankingSummary> fetched, int requestedSize) {
         boolean hasNext = fetched.size() > requestedSize;
-        List<RankingSummary> trimmed =
-                hasNext ? List.copyOf(fetched.subList(0, requestedSize)) : List.copyOf(fetched);
+        List<RankingSummary> trimmed = hasNext ? List.copyOf(fetched.subList(0, requestedSize)) : List.copyOf(fetched);
         return new RankingSummaries(trimmed, hasNext);
     }
 

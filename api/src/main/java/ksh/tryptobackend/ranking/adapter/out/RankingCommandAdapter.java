@@ -24,8 +24,7 @@ public class RankingCommandAdapter implements RankingCommandPort {
 
     @Override
     @Transactional
-    public void replaceByPeriodAndDate(
-            List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate) {
+    public void replaceByPeriodAndDate(List<Ranking> rankings, RankingPeriod period, LocalDate referenceDate) {
         queryFactory
                 .delete(ranking)
                 .where(ranking.period.eq(period).and(ranking.referenceDate.eq(referenceDate)))

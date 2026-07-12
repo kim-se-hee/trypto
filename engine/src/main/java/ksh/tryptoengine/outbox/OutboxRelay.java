@@ -30,9 +30,7 @@ public class OutboxRelay {
     private String fanoutExchange;
 
     public OutboxRelay(
-            JdbcTemplate jdbc,
-            @Qualifier("engineObjectMapper") ObjectMapper objectMapper,
-            RabbitTemplate rabbit) {
+            JdbcTemplate jdbc, @Qualifier("engineObjectMapper") ObjectMapper objectMapper, RabbitTemplate rabbit) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
         this.rabbit = rabbit;
@@ -40,18 +38,16 @@ public class OutboxRelay {
 
     @Scheduled(fixedDelayString = "${engine.outbox.relay-fixed-delay-ms:50}")
     public void relay() {
-        List<Row> rows =
-                jdbc.query(
-                        "SELECT id, payload FROM outbox WHERE sent_at IS NULL ORDER BY id LIMIT ?",
-                        (rs, i) -> new Row(rs.getLong("id"), rs.getString("payload")),
-                        BATCH_SIZE);
+        List<Row> rows = jdbc.query(
+                "SELECT id, payload FROM outbox WHERE sent_at IS NULL ORDER BY id LIMIT ?",
+                (rs, i) -> new Row(rs.getLong("id"), rs.getString("payload")),
+                BATCH_SIZE);
         if (rows.isEmpty()) return;
 
         List<Long> sentIds = new ArrayList<>(rows.size());
         for (Row row : rows) {
             try {
-                OrderFilledEvent event =
-                        objectMapper.readValue(row.payload, OrderFilledEvent.class);
+                OrderFilledEvent event = objectMapper.readValue(row.payload, OrderFilledEvent.class);
                 rabbit.convertAndSend(fanoutExchange, "", event);
                 sentIds.add(row.id);
             } catch (Exception e) {
@@ -61,20 +57,18 @@ public class OutboxRelay {
         if (sentIds.isEmpty()) return;
 
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-        jdbc.batchUpdate(
-                "UPDATE outbox SET sent_at = ? WHERE id = ?",
-                new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setTimestamp(1, now);
-                        ps.setLong(2, sentIds.get(i));
-                    }
+        jdbc.batchUpdate("UPDATE outbox SET sent_at = ? WHERE id = ?", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setTimestamp(1, now);
+                ps.setLong(2, sentIds.get(i));
+            }
 
-                    @Override
-                    public int getBatchSize() {
-                        return sentIds.size();
-                    }
-                });
+            @Override
+            public int getBatchSize() {
+                return sentIds.size();
+            }
+        });
     }
 
     private record Row(long id, String payload) {}

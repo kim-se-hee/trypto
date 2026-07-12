@@ -41,8 +41,7 @@ public class RegretReport {
         BigDecimal actualProfitRate = snapshot.getTotalProfitRate();
         BigDecimal missedProfit = sumLossAmounts(violationDetails);
         BigDecimal ruleFollowedProfitRate =
-                calculateRuleFollowedRate(
-                        actualProfitRate, missedProfit, snapshot.getTotalInvestment());
+                calculateRuleFollowedRate(actualProfitRate, missedProfit, snapshot.getTotalInvestment());
 
         return RegretReport.builder()
                 .userId(userId)
@@ -62,9 +61,7 @@ public class RegretReport {
 
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
         BigDecimal sum =
-                violationDetails.stream()
-                        .map(ViolationDetail::getLossAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                violationDetails.stream().map(ViolationDetail::getLossAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         return sum.max(BigDecimal.ZERO);
     }
 
@@ -73,10 +70,9 @@ public class RegretReport {
         if (totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
             return actualProfitRate;
         }
-        BigDecimal impactRate =
-                missedProfit
-                        .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
-                        .multiply(new BigDecimal("100"));
+        BigDecimal impactRate = missedProfit
+                .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"));
         return actualProfitRate.add(impactRate);
     }
 
