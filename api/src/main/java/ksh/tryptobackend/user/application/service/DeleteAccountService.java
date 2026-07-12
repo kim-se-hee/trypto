@@ -13,7 +13,7 @@ import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
-import ksh.tryptobackend.user.domain.service.AnonymousNicknameGenerator;
+import ksh.tryptobackend.user.domain.service.AccountWithdrawalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class DeleteAccountService implements DeleteAccountUseCase {
     private final SocialAccountQueryPort socialAccountQueryPort;
     private final SocialAccountCommandPort socialAccountCommandPort;
     private final SessionCommandPort sessionCommandPort;
-    private final AnonymousNicknameGenerator anonymousNicknameGenerator;
+    private final AccountWithdrawalService accountWithdrawalService;
     private final Clock clock;
 
     @Override
@@ -36,13 +36,12 @@ public class DeleteAccountService implements DeleteAccountUseCase {
         User user = userQueryPort
                 .findById(command.userId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        user.withdraw(anonymousNicknameGenerator.generate(), LocalDateTime.now(clock));
-        userCommandPort.save(user);
-
         SocialAccount socialAccount = socialAccountQueryPort.getById(user.getSocialAccountId());
-        socialAccount.disconnect();
-        socialAccountCommandPort.save(socialAccount);
 
+        accountWithdrawalService.withdraw(user, socialAccount, LocalDateTime.now(clock));
+
+        userCommandPort.save(user);
+        socialAccountCommandPort.save(socialAccount);
         sessionCommandPort.deleteAllOf(user.getUserId());
     }
 }
