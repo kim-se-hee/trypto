@@ -2,6 +2,7 @@ package ksh.tryptobackend.acceptance.testclient;
 
 import io.cucumber.spring.ScenarioScope;
 import ksh.tryptobackend.user.application.port.out.SessionCommandPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.client.RestTestClient;
@@ -26,6 +27,20 @@ public class CommonApiClient {
     /** 주어진 유저로 세션을 발급받아 이후 요청에 SESSION 쿠키를 실어 보낸다. */
     public void loginAs(Long userId) {
         this.sessionId = sessionCommandPort.create(userId);
+    }
+
+    /** 마지막 응답의 Set-Cookie 에서 SESSION 값을 뽑아 이후 요청에 실어 보낸다. */
+    public void adoptSessionFromLastResponse() {
+        lastResponse.expectHeader().value(HttpHeaders.SET_COOKIE, this::extractSession);
+    }
+
+    private void extractSession(String setCookie) {
+        String prefix = SESSION_COOKIE_NAME + "=";
+        if (setCookie.startsWith(prefix)) {
+            String rest = setCookie.substring(prefix.length());
+            int semicolon = rest.indexOf(';');
+            this.sessionId = semicolon >= 0 ? rest.substring(0, semicolon) : rest;
+        }
     }
 
     public RestTestClient.ResponseSpec get(String path) {
