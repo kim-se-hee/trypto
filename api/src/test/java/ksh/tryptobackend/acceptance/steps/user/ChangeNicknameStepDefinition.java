@@ -36,22 +36,26 @@ public class ChangeNicknameStepDefinition {
 
     @When("닉네임을 {string}로 변경 요청한다")
     public void 닉네임을_로_변경_요청한다(String nickname) {
-        apiClient.put("/api/users/" + userId + "/nickname", Map.of("nickname", nickname));
+        apiClient.loginAs(userId);
+        apiClient.put("/api/users/me/nickname", Map.of("nickname", nickname));
     }
 
     @When("닉네임을 {string}으로 변경 요청한다")
     public void 닉네임을_으로_변경_요청한다(String nickname) {
-        apiClient.put("/api/users/" + userId + "/nickname", Map.of("nickname", nickname));
+        apiClient.loginAs(userId);
+        apiClient.put("/api/users/me/nickname", Map.of("nickname", nickname));
     }
 
     @When("존재하지 않는 사용자의 닉네임을 {string}로 변경 요청한다")
     public void 존재하지_않는_사용자의_닉네임을_로_변경_요청한다(String nickname) {
-        apiClient.put("/api/users/999999/nickname", Map.of("nickname", nickname));
+        apiClient.loginAs(999999L);
+        apiClient.put("/api/users/me/nickname", Map.of("nickname", nickname));
     }
 
     @When("존재하지 않는 사용자의 닉네임을 {string}으로 변경 요청한다")
     public void 존재하지_않는_사용자의_닉네임을_으로_변경_요청한다(String nickname) {
-        apiClient.put("/api/users/999999/nickname", Map.of("nickname", nickname));
+        apiClient.loginAs(999999L);
+        apiClient.put("/api/users/me/nickname", Map.of("nickname", nickname));
     }
 
     @Then("응답 코드는 {string}이다")

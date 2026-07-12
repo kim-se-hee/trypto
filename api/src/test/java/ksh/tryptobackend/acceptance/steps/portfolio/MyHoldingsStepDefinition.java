@@ -49,7 +49,8 @@ public class MyHoldingsStepDefinition {
 
     @When("유저 {long}이 지갑 {long}의 포트폴리오를 조회한다")
     public void 유저가_지갑의_포트폴리오를_조회한다(Long userId, Long walletId) {
-        apiClient.get("/api/users/" + userId + "/wallets/" + walletId + "/portfolio");
+        apiClient.loginAs(userId);
+        apiClient.get("/api/wallets/" + walletId + "/portfolio");
     }
 
     @Then("거래소 ID는 {long}이다")

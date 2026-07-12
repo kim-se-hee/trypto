@@ -41,7 +41,8 @@ public class RankingMyStepDefinition {
 
     @When("유저 {long}이 기간 {string}로 내 랭킹을 조회한다")
     public void 유저_이_기간_로_내_랭킹을_조회한다(long userId, String period) {
-        apiClient.get("/api/rankings/me?userId=" + userId + "&period=" + period);
+        apiClient.loginAs(userId);
+        apiClient.get("/api/rankings/me?period=" + period);
     }
 
     @Then("내 순위는 {int}이다")

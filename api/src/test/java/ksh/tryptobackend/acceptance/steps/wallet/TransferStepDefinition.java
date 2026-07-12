@@ -49,6 +49,8 @@ public class TransferStepDefinition {
         createWallet(TO_WALLET_ID, ROUND_ID, EXCHANGE_ID_2);
         // 프로덕션에선 지갑 생성 시 모든 코인 잔고가 0으로 사전 생성된다. 도착 지갑 잔고 행도 동일하게 준비한다.
         createZeroBalance(TO_WALLET_ID, COIN_ID);
+        // 라운드 소유자(user_id = ROUND_ID)로 로그인해 출금 지갑 소유권 검증을 통과시킨다.
+        apiClient.loginAs(ROUND_ID);
     }
 
     private void createZeroBalance(Long walletId, Long coinId) {

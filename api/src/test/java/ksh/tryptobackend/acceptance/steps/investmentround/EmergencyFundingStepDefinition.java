@@ -53,11 +53,13 @@ public class EmergencyFundingStepDefinition {
     }
 
     @Given("긴급자금용 거래소 메타데이터가 준비되어 있다")
-    public void 긴급자금용_거래소_메타데이터가_준비되어_있다() {}
+    public void 긴급자금용_거래소_메타데이터가_준비되어_있다() {
+        apiClient.loginAs(USER_ID);
+    }
 
     @Given("활성 라운드가 존재한다")
     public void 활성_라운드가_존재한다() {
-        apiClient.post("/api/rounds", roundRequest(USER_ID, new BigDecimal("500000")));
+        apiClient.post("/api/rounds", roundRequest(new BigDecimal("500000")));
         activeRoundId = extractRoundId();
     }
 
@@ -69,7 +71,7 @@ public class EmergencyFundingStepDefinition {
         walletJpaRepository.deleteAllInBatch();
         investmentRoundJpaRepository.deleteAllInBatch();
 
-        apiClient.post("/api/rounds", roundRequest(USER_ID, BigDecimal.ZERO));
+        apiClient.post("/api/rounds", roundRequest(BigDecimal.ZERO));
         disabledFundingRoundId = extractRoundId();
     }
 
@@ -78,28 +80,29 @@ public class EmergencyFundingStepDefinition {
         lastIdempotencyKey = UUID.randomUUID();
         apiClient.post(
                 "/api/rounds/" + activeRoundId + "/emergency-funding",
-                fundingRequest(USER_ID, exchangeId, new BigDecimal(amount), lastIdempotencyKey));
+                fundingRequest(exchangeId, new BigDecimal(amount), lastIdempotencyKey));
     }
 
     @When("동일 멱등 키로 거래소 {long}에 {long}원 긴급 자금 충전을 요청한다")
     public void 동일_멱등_키로_거래소에_원_긴급_자금_충전을_요청한다(long exchangeId, long amount) {
         apiClient.post(
                 "/api/rounds/" + activeRoundId + "/emergency-funding",
-                fundingRequest(USER_ID, exchangeId, new BigDecimal(amount), lastIdempotencyKey));
+                fundingRequest(exchangeId, new BigDecimal(amount), lastIdempotencyKey));
     }
 
     @When("존재하지 않는 라운드에 긴급 자금 충전을 요청한다")
     public void 존재하지_않는_라운드에_긴급_자금_충전을_요청한다() {
         apiClient.post(
                 "/api/rounds/999999/emergency-funding",
-                fundingRequest(USER_ID, EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
+                fundingRequest(EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
     }
 
     @When("다른 사용자로 긴급 자금 충전을 요청한다")
     public void 다른_사용자로_긴급_자금_충전을_요청한다() {
+        apiClient.loginAs(OTHER_USER_ID);
         apiClient.post(
                 "/api/rounds/" + activeRoundId + "/emergency-funding",
-                fundingRequest(OTHER_USER_ID, EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
+                fundingRequest(EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
     }
 
     @When("지갑이 없는 거래소에 긴급 자금 충전을 요청한다")
@@ -107,14 +110,14 @@ public class EmergencyFundingStepDefinition {
         Long nonExistentExchangeId = 999L;
         apiClient.post(
                 "/api/rounds/" + activeRoundId + "/emergency-funding",
-                fundingRequest(USER_ID, nonExistentExchangeId, new BigDecimal("100000"), UUID.randomUUID()));
+                fundingRequest(nonExistentExchangeId, new BigDecimal("100000"), UUID.randomUUID()));
     }
 
     @When("비활성 라운드에 긴급 자금 충전을 요청한다")
     public void 비활성_라운드에_긴급_자금_충전을_요청한다() {
         apiClient.post(
                 "/api/rounds/" + disabledFundingRoundId + "/emergency-funding",
-                fundingRequest(USER_ID, EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
+                fundingRequest(EXCHANGE_ID, new BigDecimal("100000"), UUID.randomUUID()));
     }
 
     @Then("충전 금액은 {long}이다")
@@ -140,9 +143,8 @@ public class EmergencyFundingStepDefinition {
         return ((Number) JsonPath.read(new String(body), "$.data.roundId")).longValue();
     }
 
-    private Map<String, Object> roundRequest(Long userId, BigDecimal emergencyFundingLimit) {
+    private Map<String, Object> roundRequest(BigDecimal emergencyFundingLimit) {
         Map<String, Object> body = new HashMap<>();
-        body.put("userId", userId);
         body.put("seeds", List.of(seed(1L, new BigDecimal("5000000")), seed(2L, new BigDecimal("3000000"))));
         body.put("emergencyFundingLimit", emergencyFundingLimit);
         body.put("rules", List.of());
@@ -156,9 +158,8 @@ public class EmergencyFundingStepDefinition {
         return seed;
     }
 
-    private Map<String, Object> fundingRequest(Long userId, Long exchangeId, BigDecimal amount, UUID idempotencyKey) {
+    private Map<String, Object> fundingRequest(Long exchangeId, BigDecimal amount, UUID idempotencyKey) {
         Map<String, Object> body = new HashMap<>();
-        body.put("userId", userId);
         body.put("exchangeId", exchangeId);
         body.put("amount", amount);
         body.put("idempotencyKey", idempotencyKey.toString());

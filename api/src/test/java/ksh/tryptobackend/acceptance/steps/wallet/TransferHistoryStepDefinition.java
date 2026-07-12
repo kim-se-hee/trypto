@@ -75,32 +75,38 @@ public class TransferHistoryStepDefinition {
 
     @When("지갑의 송금 내역을 ALL 타입으로 조회한다")
     public void 지갑의_송금_내역을_ALL_타입으로_조회한다() {
-        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=ALL");
+        apiClient.loginAs(USER_ID);
+        apiClient.get("/api/wallets/" + walletId + "/transfers?type=ALL");
     }
 
     @When("지갑의 송금 내역을 DEPOSIT 타입으로 조회한다")
     public void 지갑의_송금_내역을_DEPOSIT_타입으로_조회한다() {
-        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=DEPOSIT");
+        apiClient.loginAs(USER_ID);
+        apiClient.get("/api/wallets/" + walletId + "/transfers?type=DEPOSIT");
     }
 
     @When("지갑의 송금 내역을 WITHDRAW 타입으로 조회한다")
     public void 지갑의_송금_내역을_WITHDRAW_타입으로_조회한다() {
-        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&type=WITHDRAW");
+        apiClient.loginAs(USER_ID);
+        apiClient.get("/api/wallets/" + walletId + "/transfers?type=WITHDRAW");
     }
 
     @When("지갑의 송금 내역을 size {int}로 조회한다")
     public void 지갑의_송금_내역을_size로_조회한다(int size) {
-        apiClient.get("/api/wallets/" + walletId + "/transfers?userId=" + USER_ID + "&size=" + size);
+        apiClient.loginAs(USER_ID);
+        apiClient.get("/api/wallets/" + walletId + "/transfers?size=" + size);
     }
 
     @When("다른 사용자의 지갑으로 송금 내역을 조회한다")
     public void 다른_사용자의_지갑으로_송금_내역을_조회한다() {
-        apiClient.get("/api/wallets/" + WALLET_ID + "/transfers?userId=" + OTHER_USER_ID);
+        apiClient.loginAs(OTHER_USER_ID);
+        apiClient.get("/api/wallets/" + WALLET_ID + "/transfers");
     }
 
     @When("존재하지 않는 지갑으로 송금 내역을 조회한다")
     public void 존재하지_않는_지갑으로_송금_내역을_조회한다() {
-        apiClient.get("/api/wallets/999999/transfers?userId=" + USER_ID);
+        apiClient.loginAs(USER_ID);
+        apiClient.get("/api/wallets/999999/transfers");
     }
 
     @Then("송금 내역이 {int}건 조회된다")

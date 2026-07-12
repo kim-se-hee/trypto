@@ -30,6 +30,7 @@ public class RankerPortfolioStepDefinition {
 
     @When("유저 {long}의 포트폴리오를 기간 {string}로 조회한다")
     public void 유저의_포트폴리오를_기간으로_조회한다(Long userId, String period) {
+        apiClient.loginAs(userId);
         apiClient.get("/api/rankings/" + userId + "/portfolio?period=" + period);
     }
 

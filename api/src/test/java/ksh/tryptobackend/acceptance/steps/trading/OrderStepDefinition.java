@@ -59,6 +59,7 @@ public class OrderStepDefinition {
     public void 업비트_거래소가_등록되어_있다() {
         // seed-data.sql 에서 exchange/coin/exchange_coin 적재. 시나리오용 user/round/wallet 만 별도 생성.
         ensureUserRoundWallet();
+        apiClient.loginAs(USER_ID);
     }
 
     @Given("업비트에 BTC가 상장되어 있다")

@@ -52,7 +52,8 @@ public class RegretChartStepDefinition {
 
     @When("라운드 {long} 거래소 {long} 유저 {long}로 복기 그래프를 조회한다")
     public void getRegretChart(Long roundId, Long exchangeId, Long userId) {
-        apiClient.get("/api/rounds/" + roundId + "/regret/chart?exchangeId=" + exchangeId + "&userId=" + userId);
+        apiClient.loginAs(userId);
+        apiClient.get("/api/rounds/" + roundId + "/regret/chart?exchangeId=" + exchangeId);
     }
 
     @Then("복기 그래프의 거래소 이름은 {string}이다")
