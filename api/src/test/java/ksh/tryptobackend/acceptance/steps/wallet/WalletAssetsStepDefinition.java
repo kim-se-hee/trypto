@@ -102,10 +102,9 @@ public class WalletAssetsStepDefinition {
     }
 
     private void insertUsers() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public) VALUES "
-                        + "(1, 'KAKAO', 'test-1', '트레이더1', true), "
-                        + "(2, 'KAKAO', 'test-2', '트레이더2', true)");
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_identity_id, nickname, portfolio_public) VALUES "
+                + "(1, 1, '트레이더1', true), "
+                + "(2, 2, '트레이더2', true)");
     }
 
     private void insertCoins() {

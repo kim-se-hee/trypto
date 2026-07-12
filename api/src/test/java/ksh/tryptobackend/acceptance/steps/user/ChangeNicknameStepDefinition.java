@@ -6,8 +6,11 @@ import io.cucumber.java.en.When;
 import java.time.LocalDateTime;
 import java.util.Map;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.SocialAccountJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.SocialAccountJpaRepository;
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
+import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
@@ -16,29 +19,35 @@ public class ChangeNicknameStepDefinition {
 
     private final CommonApiClient apiClient;
     private final UserJpaRepository userJpaRepository;
+    private final SocialAccountJpaRepository socialAccountJpaRepository;
 
     private Long userId;
 
-    public ChangeNicknameStepDefinition(CommonApiClient apiClient, UserJpaRepository userJpaRepository) {
+    public ChangeNicknameStepDefinition(
+            CommonApiClient apiClient,
+            UserJpaRepository userJpaRepository,
+            SocialAccountJpaRepository socialAccountJpaRepository) {
         this.apiClient = apiClient;
         this.userJpaRepository = userJpaRepository;
+        this.socialAccountJpaRepository = socialAccountJpaRepository;
     }
 
     @Given("닉네임이 {string}인 사용자가 존재한다")
     public void 닉네임이_인_사용자가_존재한다(String nickname) {
-        UserJpaEntity saved = userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(socialIdentity(nickname), nickname, false, LocalDateTime.now())));
-        userId = saved.getId();
+        userId = createUser(nickname);
     }
 
     @Given("닉네임이 {string}인 다른 사용자가 존재한다")
     public void 닉네임이_인_다른_사용자가_존재한다(String nickname) {
-        userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(socialIdentity(nickname), nickname, false, LocalDateTime.now())));
+        createUser(nickname);
     }
 
-    private static SocialIdentity socialIdentity(String nickname) {
-        return SocialIdentity.of(Provider.KAKAO, "test-" + nickname);
+    private Long createUser(String nickname) {
+        SocialAccountJpaEntity account = socialAccountJpaRepository.save(SocialAccountJpaEntity.fromDomain(
+                SocialAccount.register(SocialIdentity.of(Provider.KAKAO, "test-" + nickname), LocalDateTime.now())));
+        UserJpaEntity saved = userJpaRepository.save(
+                UserJpaEntity.fromDomain(User.create(account.getId(), nickname, false, LocalDateTime.now())));
+        return saved.getId();
     }
 
     @When("닉네임을 {string}로 변경 요청한다")
