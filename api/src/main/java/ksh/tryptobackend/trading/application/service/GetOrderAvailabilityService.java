@@ -18,10 +18,13 @@ public class GetOrderAvailabilityService implements GetOrderAvailabilityUseCase 
 
     private final MarketQueryPort marketQueryPort;
     private final WalletQueryPort walletQueryPort;
+    private final WalletOwnershipVerifier walletOwnershipVerifier;
 
     @Override
     @Transactional(readOnly = true)
     public OrderAvailabilityResult getAvailability(GetOrderAvailabilityQuery query) {
+        walletOwnershipVerifier.verify(query.walletId(), query.requesterId());
+
         TradingPair tradingPair = marketQueryPort.getTradingPair(query.exchangeCoinId());
 
         BigDecimal available = getAvailableBalance(query.walletId(), query.side(), tradingPair);

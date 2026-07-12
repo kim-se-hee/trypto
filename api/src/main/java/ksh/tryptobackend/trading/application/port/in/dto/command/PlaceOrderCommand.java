@@ -6,6 +6,7 @@ import ksh.tryptobackend.trading.domain.vo.Side;
 
 public record PlaceOrderCommand(
         String idempotencyKey,
+        Long requesterId,
         Long walletId,
         Long exchangeCoinId,
         Side side,

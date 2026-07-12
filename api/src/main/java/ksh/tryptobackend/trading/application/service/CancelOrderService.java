@@ -22,11 +22,13 @@ public class CancelOrderService implements CancelOrderUseCase {
     private final OrderCommandPort orderCommandPort;
     private final MarketQueryPort marketQueryPort;
     private final BalanceChangeApplier balanceChangeApplier;
+    private final WalletOwnershipVerifier walletOwnershipVerifier;
 
     @Override
     @Transactional
     public Order cancelOrder(CancelOrderCommand command) {
         Order order = orderQueryPort.getByIdWithLock(command.orderId());
+        walletOwnershipVerifier.verify(order.getWalletId(), command.requesterId());
 
         TradingPair pair = marketQueryPort.getTradingPair(order.getExchangeCoinId());
         List<BalanceChange> refund = order.cancel(command.walletId(), pair);

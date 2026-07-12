@@ -24,11 +24,14 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final OrderCommandPort orderCommandPort;
     private final MarketQueryPort marketQueryPort;
     private final BalanceChangeApplier balanceChangeApplier;
+    private final WalletOwnershipVerifier walletOwnershipVerifier;
     private final Clock clock;
 
     @Override
     @Transactional
     public Order placeOrder(PlaceOrderCommand cmd) {
+        walletOwnershipVerifier.verify(cmd.walletId(), cmd.requesterId());
+
         LocalDateTime now = LocalDateTime.now(clock);
         idempotencyKeyCommandPort.preempt(cmd.idempotencyKey(), IdempotencyResourceType.PLACE_ORDER, now);
 

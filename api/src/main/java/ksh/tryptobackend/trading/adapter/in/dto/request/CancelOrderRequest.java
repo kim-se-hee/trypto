@@ -5,7 +5,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.command.CancelOrderComm
 
 public record CancelOrderRequest(@NotNull Long walletId) {
 
-    public CancelOrderCommand toCommand(Long orderId) {
-        return new CancelOrderCommand(orderId, walletId);
+    public CancelOrderCommand toCommand(Long orderId, Long requesterId) {
+        return new CancelOrderCommand(orderId, requesterId, walletId);
     }
 }
