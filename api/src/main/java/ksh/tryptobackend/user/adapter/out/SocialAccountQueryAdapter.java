@@ -22,7 +22,7 @@ public class SocialAccountQueryAdapter implements SocialAccountQueryPort {
         return socialAccountJpaRepository
                 .findById(socialAccountId)
                 .map(SocialAccountJpaEntity::toDomain)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_ACCOUNT_NOT_FOUND));
     }
 
     @Override

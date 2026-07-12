@@ -39,7 +39,7 @@ public class SocialAccountCommandAdapter implements SocialAccountCommandPort {
     public void save(SocialAccount socialAccount) {
         SocialAccountJpaEntity entity = socialAccountJpaRepository
                 .findById(socialAccount.getId())
-                .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED));
+                .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_ACCOUNT_NOT_FOUND));
         entity.updateFromDomain(socialAccount);
         socialAccountJpaRepository.saveAndFlush(entity);
     }
