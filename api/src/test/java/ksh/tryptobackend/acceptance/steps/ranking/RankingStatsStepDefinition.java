@@ -21,10 +21,9 @@ public class RankingStatsStepDefinition {
 
     @Given("랭킹 통계 테스트 데이터가 준비되어 있다")
     public void 랭킹_통계_테스트_데이터가_준비되어_있다() {
-        jdbcTemplate.execute(
-                "INSERT IGNORE INTO user (user_id, provider, provider_id, nickname, portfolio_public) VALUES "
-                        + "(1, 'KAKAO', 'test-1', 'user1', true), (2, 'KAKAO', 'test-2', 'user2', true), (3,"
-                        + " 'KAKAO', 'test-3', 'user3', true)");
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_identity_id, nickname, portfolio_public) VALUES "
+                + "(1, 1, 'user1', true), (2, 2, 'user2', true), (3,"
+                + " 3, 'user3', true)");
 
         LocalDate referenceDate = LocalDate.of(2026, 3, 1);
         LocalDateTime now = LocalDateTime.now();

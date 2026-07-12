@@ -5,8 +5,10 @@ import ksh.tryptobackend.acceptance.mock.MockCandleAdapter;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
+import ksh.tryptobackend.acceptance.mock.MockSocialIdentityQueryAdapter;
 import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
+import ksh.tryptobackend.user.application.port.out.SocialIdentityQueryPort;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -42,5 +44,11 @@ public class MockAdapterConfiguration {
     @Primary
     public MockCandleAdapter mockCandleAdapter() {
         return new MockCandleAdapter();
+    }
+
+    @Bean
+    @Primary
+    public SocialIdentityQueryPort socialIdentityQueryPort() {
+        return new MockSocialIdentityQueryAdapter();
     }
 }

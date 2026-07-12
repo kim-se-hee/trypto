@@ -7,7 +7,6 @@ import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.User;
-import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,9 +29,9 @@ public class UserQueryAdapter implements UserQueryPort {
     }
 
     @Override
-    public Optional<User> findBySocialIdentity(SocialIdentity socialIdentity) {
+    public Optional<User> findLatestWithdrawnBySocialAccountId(Long socialAccountId) {
         return userJpaRepository
-                .findByProviderAndProviderId(socialIdentity.providerName(), socialIdentity.providerId())
+                .findFirstBySocialAccountIdAndDeletedAtIsNotNullOrderByDeletedAtDesc(socialAccountId)
                 .map(UserJpaEntity::toDomain);
     }
 

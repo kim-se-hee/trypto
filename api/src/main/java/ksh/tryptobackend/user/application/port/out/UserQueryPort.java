@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import ksh.tryptobackend.user.domain.model.User;
-import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 
 public interface UserQueryPort {
 
@@ -12,7 +11,7 @@ public interface UserQueryPort {
 
     List<User> findByIds(Set<Long> userIds);
 
-    Optional<User> findBySocialIdentity(SocialIdentity socialIdentity);
+    Optional<User> findLatestWithdrawnBySocialAccountId(Long socialAccountId);
 
     boolean existsByNickname(String nickname);
 }

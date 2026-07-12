@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.domain.vo.Nickname;
-import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,35 +12,38 @@ import lombok.Getter;
 public class User {
 
     private static final boolean DEFAULT_PORTFOLIO_PUBLIC = true;
+    private static final int RESIGNUP_RESTRICTION_DAYS = 30;
 
     private final Long userId;
     private final Long version;
-    private final SocialIdentity socialIdentity;
+    private final Long socialAccountId;
     private Nickname nickname;
     private boolean portfolioPublic;
+    private final LocalDateTime deletedAt;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public static User registerWith(SocialIdentity socialIdentity, Nickname nickname, LocalDateTime now) {
+    public static User registerWith(Long socialAccountId, Nickname nickname, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)
-                .socialIdentity(socialIdentity)
+                .socialAccountId(socialAccountId)
                 .nickname(nickname)
                 .portfolioPublic(DEFAULT_PORTFOLIO_PUBLIC)
+                .deletedAt(null)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
     }
 
-    public static User create(
-            SocialIdentity socialIdentity, String nickname, boolean portfolioPublic, LocalDateTime now) {
+    public static User create(Long socialAccountId, String nickname, boolean portfolioPublic, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)
-                .socialIdentity(socialIdentity)
+                .socialAccountId(socialAccountId)
                 .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
+                .deletedAt(null)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -50,20 +52,28 @@ public class User {
     public static User reconstitute(
             Long userId,
             Long version,
-            SocialIdentity socialIdentity,
+            Long socialAccountId,
             String nickname,
             boolean portfolioPublic,
+            LocalDateTime deletedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         return User.builder()
                 .userId(userId)
                 .version(version)
-                .socialIdentity(socialIdentity)
+                .socialAccountId(socialAccountId)
                 .nickname(Nickname.of(nickname))
                 .portfolioPublic(portfolioPublic)
+                .deletedAt(deletedAt)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();
+    }
+
+    public static void ensureReSignupAllowed(LocalDateTime lastWithdrawnAt, LocalDateTime now) {
+        if (!now.isAfter(lastWithdrawnAt.plusDays(RESIGNUP_RESTRICTION_DAYS))) {
+            throw new CustomException(ErrorCode.SIGNUP_RESTRICTED);
+        }
     }
 
     public void changeNickname(String newNickname) {

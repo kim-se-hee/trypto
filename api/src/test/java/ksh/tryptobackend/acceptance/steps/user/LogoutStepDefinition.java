@@ -7,8 +7,11 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import ksh.tryptobackend.user.adapter.out.persistence.entity.SocialAccountJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
+import ksh.tryptobackend.user.adapter.out.persistence.repository.SocialAccountJpaRepository;
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
+import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
@@ -20,16 +23,23 @@ public class LogoutStepDefinition {
 
     private final CommonApiClient apiClient;
     private final UserJpaRepository userJpaRepository;
+    private final SocialAccountJpaRepository socialAccountJpaRepository;
 
-    public LogoutStepDefinition(CommonApiClient apiClient, UserJpaRepository userJpaRepository) {
+    public LogoutStepDefinition(
+            CommonApiClient apiClient,
+            UserJpaRepository userJpaRepository,
+            SocialAccountJpaRepository socialAccountJpaRepository) {
         this.apiClient = apiClient;
         this.userJpaRepository = userJpaRepository;
+        this.socialAccountJpaRepository = socialAccountJpaRepository;
     }
 
     @Given("로그인된 사용자가 존재한다")
     public void 로그인된_사용자가_존재한다() {
-        UserJpaEntity saved = userJpaRepository.save(UserJpaEntity.fromDomain(
-                User.create(SocialIdentity.of(Provider.KAKAO, "test-logout"), "로그아웃유저", false, LocalDateTime.now())));
+        SocialAccountJpaEntity account = socialAccountJpaRepository.save(SocialAccountJpaEntity.fromDomain(
+                SocialAccount.register(SocialIdentity.of(Provider.KAKAO, "test-logout"), LocalDateTime.now())));
+        UserJpaEntity saved = userJpaRepository.save(
+                UserJpaEntity.fromDomain(User.create(account.getId(), "로그아웃유저", false, LocalDateTime.now())));
         apiClient.loginAs(saved.getId());
     }
 
