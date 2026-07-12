@@ -9,6 +9,8 @@ import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.domain.model.User;
+import ksh.tryptobackend.user.domain.vo.Provider;
+import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 
 public class ChangeNicknameStepDefinition {
 
@@ -25,13 +27,18 @@ public class ChangeNicknameStepDefinition {
     @Given("닉네임이 {string}인 사용자가 존재한다")
     public void 닉네임이_인_사용자가_존재한다(String nickname) {
         UserJpaEntity saved = userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(null, nickname, false, LocalDateTime.now())));
+                UserJpaEntity.fromDomain(User.create(socialIdentity(nickname), nickname, false, LocalDateTime.now())));
         userId = saved.getId();
     }
 
     @Given("닉네임이 {string}인 다른 사용자가 존재한다")
     public void 닉네임이_인_다른_사용자가_존재한다(String nickname) {
-        userJpaRepository.save(UserJpaEntity.fromDomain(User.create(null, nickname, false, LocalDateTime.now())));
+        userJpaRepository.save(
+                UserJpaEntity.fromDomain(User.create(socialIdentity(nickname), nickname, false, LocalDateTime.now())));
+    }
+
+    private static SocialIdentity socialIdentity(String nickname) {
+        return SocialIdentity.of(Provider.KAKAO, "test-" + nickname);
     }
 
     @When("닉네임을 {string}로 변경 요청한다")
