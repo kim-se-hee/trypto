@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { MockUser } from "@/lib/types/user";
 import { MOCK_USERS } from "@/mocks/auth";
+import { logout as logoutApi } from "@/lib/api/auth-api";
 
 /** true로 바꾸면 로그인 없이 바로 메인 진입 (로그인 화면을 보려면 false) */
 const DEV_SKIP_AUTH = false;
@@ -15,7 +16,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string) => boolean;
   loginWithKakao: (result: KakaoLoginUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password" | "portfolioPublic">>) => void;
 }
 
@@ -42,7 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // 서버 세션 정리 실패와 무관하게 클라이언트 인증 상태는 반드시 비운다.
+    }
     setUser(null);
   }, []);
 
