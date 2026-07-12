@@ -9,3 +9,4 @@ user 컨텍스트 — 회원, 프로필, 소셜 로그인·인증 세션.
 - [get-profile/](get-profile/index.md) — 프로필 조회
 - [change-nickname/](change-nickname/index.md) — 닉네임 변경
 - [change-portfolio-visibility/](change-portfolio-visibility/index.md) — 포트폴리오 공개 여부 변경
+- [delete-account/](delete-account/index.md) — 회원 탈퇴 (소셜 신원 연결 해제 · 익명 닉네임 부여 · 세션 종료)
