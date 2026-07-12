@@ -1,8 +1,10 @@
 package ksh.tryptobackend.user.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import ksh.tryptobackend.common.config.SessionProperties;
+import ksh.tryptobackend.common.web.auth.SessionReader;
 import ksh.tryptobackend.user.application.port.out.SessionCommandPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RedisSessionCommandAdapter implements SessionCommandPort {
+public class RedisSessionCommandAdapter implements SessionCommandPort, SessionReader {
 
     private static final String SESSION_KEY_PREFIX = "session:";
     private static final String USER_SESSIONS_KEY_PREFIX = "user-sessions:";
@@ -63,6 +65,17 @@ public class RedisSessionCommandAdapter implements SessionCommandPort {
     @Override
     public void deleteAllOf(Long userId) {
         redisTemplate.execute(DELETE_ALL_SCRIPT, List.of(userSessionsKey(userId)), SESSION_KEY_PREFIX);
+    }
+
+    @Override
+    public Optional<Long> findUserId(String sessionId) {
+        String userId = redisTemplate.opsForValue().get(sessionKey(sessionId));
+        if (userId == null) {
+            return Optional.empty();
+        }
+        redisTemplate.expire(sessionKey(sessionId), sessionProperties.getTtl());
+        redisTemplate.expire(userSessionsKey(Long.valueOf(userId)), sessionProperties.getTtl());
+        return Optional.of(Long.valueOf(userId));
     }
 
     private String sessionKey(String sessionId) {
