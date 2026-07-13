@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AccountWithdrawalService {
+public class AccountClosureService {
 
     private final AnonymousNicknameGenerator anonymousNicknameGenerator;
 
-    public void withdraw(User user, SocialAccount socialAccount, LocalDateTime now) {
+    public void close(User user, SocialAccount socialAccount, LocalDateTime now) {
         user.withdraw(anonymousNicknameGenerator.generate(), now);
         socialAccount.disconnect();
     }

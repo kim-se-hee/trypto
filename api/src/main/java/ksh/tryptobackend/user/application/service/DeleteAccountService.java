@@ -13,7 +13,7 @@ import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
-import ksh.tryptobackend.user.domain.service.AccountWithdrawalService;
+import ksh.tryptobackend.user.domain.service.AccountClosureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class DeleteAccountService implements DeleteAccountUseCase {
     private final SocialAccountQueryPort socialAccountQueryPort;
     private final SocialAccountCommandPort socialAccountCommandPort;
     private final SessionCommandPort sessionCommandPort;
-    private final AccountWithdrawalService accountWithdrawalService;
+    private final AccountClosureService accountClosureService;
     private final Clock clock;
 
     @Override
@@ -38,7 +38,7 @@ public class DeleteAccountService implements DeleteAccountUseCase {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         SocialAccount socialAccount = socialAccountQueryPort.getById(user.getSocialAccountId());
 
-        accountWithdrawalService.withdraw(user, socialAccount, LocalDateTime.now(clock));
+        accountClosureService.close(user, socialAccount, LocalDateTime.now(clock));
 
         userCommandPort.save(user);
         socialAccountCommandPort.save(socialAccount);
