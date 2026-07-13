@@ -9,7 +9,6 @@ export interface RankingItem {
   nickname: string;
   profitRate: number;
   tradeCount: number;
-  portfolioPublic: boolean;
 }
 
 export interface MyRanking {

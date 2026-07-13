@@ -14,7 +14,6 @@ export interface RankingEntry {
   nickname: string;
   profitRate: number; // 수익률 (%)
   tradeCount: number;
-  portfolioPublic: boolean;
   portfolio: PortfolioItem[];
 }
 
@@ -98,7 +97,6 @@ function generateRanking(period: string): RankingEntry[] {
       nickname: shuffledNames[i],
       profitRate,
       tradeCount: Math.floor(rand() * 150) + 5,
-      portfolioPublic: rand() > 0.15,
       portfolio: generatePortfolio(seededRandom(periodSeed * 10000 + i)),
     });
   }
