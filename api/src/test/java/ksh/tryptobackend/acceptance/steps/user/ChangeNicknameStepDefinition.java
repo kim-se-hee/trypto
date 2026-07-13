@@ -46,7 +46,7 @@ public class ChangeNicknameStepDefinition {
         SocialAccountJpaEntity account = socialAccountJpaRepository.save(SocialAccountJpaEntity.fromDomain(
                 SocialAccount.register(SocialIdentity.of(Provider.KAKAO, "test-" + nickname), LocalDateTime.now())));
         UserJpaEntity saved = userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(account.getId(), nickname, false, LocalDateTime.now())));
+                UserJpaEntity.fromDomain(User.create(account.getId(), nickname, LocalDateTime.now())));
         return saved.getId();
     }
 

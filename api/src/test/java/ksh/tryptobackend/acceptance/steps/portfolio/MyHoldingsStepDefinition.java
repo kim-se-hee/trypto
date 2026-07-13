@@ -104,9 +104,9 @@ public class MyHoldingsStepDefinition {
     }
 
     private void insertUsers() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_identity_id, nickname, portfolio_public) VALUES "
-                + "(1, 1, '트레이더1', true), "
-                + "(2, 2, '트레이더2', true)");
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_identity_id, nickname) VALUES "
+                + "(1, 1, '트레이더1'), "
+                + "(2, 2, '트레이더2')");
     }
 
     private void insertExchangeAndCoins() {

@@ -31,8 +31,8 @@ case "$SCENARIO" in
     # 조회 시나리오도 loadtest 프로파일로 띄운다 — loadtest.sql 로 기본 시드(coin/user/wallet) 적재 + market-meta-sync off
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
-  get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|my_ranking.js|ranking_stats.js|regret_report.js|regret_chart.js|transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
-    # 신규 15개 기능 시나리오 — base(loadtest.sql 확장 시드) + 시나리오별 추가 시드. market-meta-sync off.
+  get_profile.js|wallet_assets.js|active_round.js|exchange_coins.js|my_ranking.js|ranking_stats.js|regret_report.js|regret_chart.js|transfer.js|change_nickname.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
+    # 신규 14개 기능 시나리오 — base(loadtest.sql 확장 시드) + 시나리오별 추가 시드. market-meta-sync off.
     COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
 esac
@@ -52,7 +52,7 @@ esac
 # write-warm 가능 여부 — 신규 쓰기 시나리오 + mysql healthy. cold 대신 생성행만 비우고 base 가변상태를 복원한다.
 WRITE_WARM=0
 case "$SCENARIO" in
-  transfer.js|change_nickname.js|change_visibility.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
+  transfer.js|change_nickname.js|cancel_order.js|start_round.js|end_round.js|emergency_funding.js)
     MYSQL_CID=$(docker compose "${COMPOSE_ARGS[@]}" ps -q mysql 2>/dev/null || true)
     if [ -n "$MYSQL_CID" ] \
        && [ "$(docker inspect -f '{{.State.Health.Status}}' "$MYSQL_CID" 2>/dev/null)" = "healthy" ]; then
@@ -157,7 +157,7 @@ UPDATE investment_round
    SET emergency_funding_limit = 1000000.00000000, emergency_charge_count = 1000000,
        status = 'ACTIVE', ended_at = NULL
  WHERE round_id BETWEEN 1 AND 1000;
-UPDATE user SET nickname = CONCAT('loadtest', user_id), portfolio_public = true WHERE user_id BETWEEN 1 AND 1200;
+UPDATE user SET nickname = CONCAT('loadtest', user_id) WHERE user_id BETWEEN 1 AND 1200;
 SQL
 
   echo "[write-warm 2/4] rabbitmq 큐 purge (cancel 가 engine.inbox 로 보낸 미처리 주문)"

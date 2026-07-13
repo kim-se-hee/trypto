@@ -17,7 +17,7 @@ interface AuthContextValue {
   login: (email: string) => boolean;
   loginWithKakao: (result: KakaoLoginUser) => void;
   logout: () => Promise<void>;
-  updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password" | "portfolioPublic">>) => void;
+  updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password">>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nickname: result.nickname,
       email: "",
       password: "",
-      portfolioPublic: true,
       createdAt: new Date().toISOString(),
     });
   }, []);
@@ -53,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateUser = useCallback(
-    (updates: Partial<Pick<MockUser, "nickname" | "password" | "portfolioPublic">>) => {
+    (updates: Partial<Pick<MockUser, "nickname" | "password">>) => {
       setUser((prev) => (prev ? { ...prev, ...updates } : prev));
     },
     [],

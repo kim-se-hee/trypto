@@ -41,11 +41,11 @@ INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)
   (10, 1, 11, 'POL');
 
 -- user 1~@WALLET_COUNT@
-INSERT INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at)
+INSERT INTO user (user_id, email, nickname, created_at, updated_at)
 WITH RECURSIVE seq AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < @WALLET_COUNT@
 )
-SELECT n, CONCAT('loadtest', n, '@trypto.local'), CONCAT('loadtest', n), true, NOW(), NOW() FROM seq;
+SELECT n, CONCAT('loadtest', n, '@trypto.local'), CONCAT('loadtest', n), NOW(), NOW() FROM seq;
 
 -- investment_round 1~@WALLET_COUNT@ (user n → round n)
 INSERT INTO investment_round (

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BarChart3, Lock, Trophy, Users } from "lucide-react";
+import { BarChart3, Trophy, Users } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { CoinIcon } from "@/components/market/CoinIcon";
 import { useAuth } from "@/contexts/AuthContext";
@@ -157,7 +157,7 @@ export function RankingPage() {
     const nextExpanded = expandedUserId === entry.userId ? null : entry.userId;
     setExpandedUserId(nextExpanded);
 
-    if (nextExpanded && entry.portfolioPublic) {
+    if (nextExpanded) {
       void loadPortfolio(entry.userId);
     }
   }
@@ -313,7 +313,6 @@ export function RankingPage() {
                           <p className="truncate text-sm font-semibold">{entry.nickname}</p>
                           <p className="text-[11px] text-muted-foreground">{entry.tradeCount}회 거래</p>
                         </div>
-                        {!entry.portfolioPublic && <Lock className="h-4 w-4 text-muted-foreground" />}
                         <span className={cn(
                           "font-mono text-sm font-bold tabular-nums",
                           entry.profitRate >= 0 ? "text-positive" : "text-negative",
@@ -324,19 +323,15 @@ export function RankingPage() {
 
                       {isExpanded && (
                         <div className="border-t border-border/50 px-4 py-3">
-                          {!entry.portfolioPublic && (
-                            <p className="text-xs text-muted-foreground">비공개 포트폴리오입니다.</p>
-                          )}
-
-                          {entry.portfolioPublic && loadingPortfolio && (
+                          {loadingPortfolio && (
                             <p className="text-xs text-muted-foreground">포트폴리오를 불러오는 중입니다...</p>
                           )}
 
-                          {entry.portfolioPublic && portfolioError && (
+                          {portfolioError && (
                             <p className="text-xs text-destructive">{portfolioError}</p>
                           )}
 
-                          {entry.portfolioPublic && portfolio && (
+                          {portfolio && (
                             <div className="space-y-2">
                               {portfolio.holdings.length === 0 && (
                                 <p className="text-xs text-muted-foreground">보유 자산 정보가 없습니다.</p>

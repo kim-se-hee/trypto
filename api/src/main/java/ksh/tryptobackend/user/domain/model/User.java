@@ -11,7 +11,6 @@ import lombok.Getter;
 @Builder
 public class User {
 
-    private static final boolean DEFAULT_PORTFOLIO_PUBLIC = true;
     private static final int RESIGNUP_RESTRICTION_DAYS = 30;
 
     private final Long userId;
@@ -19,7 +18,6 @@ public class User {
     private final Long socialAccountId;
     private final LocalDateTime createdAt;
     private Nickname nickname;
-    private boolean portfolioPublic;
     private LocalDateTime deletedAt;
     private LocalDateTime updatedAt;
 
@@ -29,20 +27,18 @@ public class User {
                 .version(null)
                 .socialAccountId(socialAccountId)
                 .nickname(nickname)
-                .portfolioPublic(DEFAULT_PORTFOLIO_PUBLIC)
                 .deletedAt(null)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
     }
 
-    public static User create(Long socialAccountId, String nickname, boolean portfolioPublic, LocalDateTime now) {
+    public static User create(Long socialAccountId, String nickname, LocalDateTime now) {
         return User.builder()
                 .userId(null)
                 .version(null)
                 .socialAccountId(socialAccountId)
                 .nickname(Nickname.of(nickname))
-                .portfolioPublic(portfolioPublic)
                 .deletedAt(null)
                 .createdAt(now)
                 .updatedAt(now)
@@ -54,7 +50,6 @@ public class User {
             Long version,
             Long socialAccountId,
             String nickname,
-            boolean portfolioPublic,
             LocalDateTime deletedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
@@ -63,7 +58,6 @@ public class User {
                 .version(version)
                 .socialAccountId(socialAccountId)
                 .nickname(Nickname.of(nickname))
-                .portfolioPublic(portfolioPublic)
                 .deletedAt(deletedAt)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
@@ -90,10 +84,6 @@ public class User {
             throw new CustomException(ErrorCode.NICKNAME_SAME_AS_CURRENT);
         }
         this.nickname = Nickname.of(newNickname);
-    }
-
-    public void changePortfolioVisibility(boolean portfolioPublic) {
-        this.portfolioPublic = portfolioPublic;
     }
 
     public boolean isWithdrawn() {

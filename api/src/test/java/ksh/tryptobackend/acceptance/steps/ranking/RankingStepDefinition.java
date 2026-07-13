@@ -24,9 +24,9 @@ public class RankingStepDefinition {
 
     @Given("랭킹 테스트 데이터가 준비되어 있다")
     public void 랭킹_테스트_데이터가_준비되어_있다() {
-        insertUser(101L, "유저A", true);
-        insertUser(102L, "유저B", false);
-        insertUser(103L, "유저C", true);
+        insertUser(101L, "유저A");
+        insertUser(102L, "유저B");
+        insertUser(103L, "유저C");
 
         insertRanking(101L, 1, new BigDecimal("15.5000"), 10);
         insertRanking(102L, 2, new BigDecimal("10.2500"), 7);
@@ -81,15 +81,14 @@ public class RankingStepDefinition {
         apiClient.getLastResponse().expectBody().jsonPath("$.data.hasNext").isEqualTo(false);
     }
 
-    private void insertUser(Long userId, String nickname, boolean portfolioPublic) {
+    private void insertUser(Long userId, String nickname) {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT INTO user (user_id, version, social_identity_id, nickname, portfolio_public,"
-                        + " created_at, updated_at) VALUES (?, 0, ?, ?, ?, ?, ?)",
+                "INSERT INTO user (user_id, version, social_identity_id, nickname,"
+                        + " created_at, updated_at) VALUES (?, 0, ?, ?, ?, ?)",
                 userId,
                 userId,
                 nickname,
-                portfolioPublic,
                 now,
                 now);
     }

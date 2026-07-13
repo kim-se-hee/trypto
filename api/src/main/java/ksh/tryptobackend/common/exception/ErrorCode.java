@@ -36,7 +36,6 @@ public enum ErrorCode {
 
     INVALID_RANKING_PERIOD(400, "invalid.ranking.period"),
     PORTFOLIO_VIEW_NOT_ALLOWED(403, "portfolio.view.not.allowed"),
-    PORTFOLIO_PRIVATE(403, "portfolio.private"),
 
     WALLET_NOT_FOUND(404, "wallet.not.found"),
     WALLET_BALANCE_NOT_FOUND(404, "wallet.balance.not.found"),

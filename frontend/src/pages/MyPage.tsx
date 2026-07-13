@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
-import { changeNickname, changePortfolioVisibility } from "@/lib/api/user-api";
+import { changeNickname } from "@/lib/api/user-api";
 import { endRound } from "@/lib/api/round-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -70,23 +69,13 @@ export function MyPage() {
       return;
     }
     try {
-      await changeNickname(user.userId, trimmed);
+      await changeNickname(trimmed);
       updateUser({ nickname: trimmed });
     } catch (error) {
       console.error("Failed to change nickname", error);
     }
     setEditingNickname(false);
   }, [nicknameInput, user, updateUser]);
-
-  const handlePortfolioToggle = useCallback(async (checked: boolean) => {
-    if (!user) return;
-    try {
-      await changePortfolioVisibility(user.userId, checked);
-      updateUser({ portfolioPublic: checked });
-    } catch (error) {
-      console.error("Failed to change portfolio visibility", error);
-    }
-  }, [user, updateUser]);
 
   const handleEndRound = useCallback(async () => {
     if (!activeRound || !user) return;
@@ -166,19 +155,6 @@ export function MyPage() {
                 <span className="text-sm">
                   {user?.createdAt ? formatDate(user.createdAt) : "-"}
                 </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">포트폴리오 공개</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {user?.portfolioPublic ? "공개" : "비공개"}
-                  </span>
-                  <Switch
-                    checked={user?.portfolioPublic ?? false}
-                    onCheckedChange={handlePortfolioToggle}
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
