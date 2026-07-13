@@ -2,7 +2,7 @@
 @login
 기능: 로그인
 
-  # 제공자 연동(토큰 교환·PKCE)은 SocialIdentityQueryPort 를 목으로 대체하고,
+  # 제공자 연동(토큰 교환·PKCE)은 SocialAuthenticator 를 목으로 대체하고,
   # 인가 코드를 지정한 소셜 신원으로 매핑한 상태를 전제로 한다.
   # 제공자 인증 실패 계열(SOCIAL_LOGIN_FAILED·SOCIAL_SERVER_ERROR)은 어댑터 테스트가 담당한다.
 

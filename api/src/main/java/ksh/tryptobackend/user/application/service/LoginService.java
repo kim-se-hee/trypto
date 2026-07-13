@@ -10,11 +10,11 @@ import ksh.tryptobackend.user.application.port.in.dto.result.LoginResult;
 import ksh.tryptobackend.user.application.port.out.SessionCommandPort;
 import ksh.tryptobackend.user.application.port.out.SocialAccountCommandPort;
 import ksh.tryptobackend.user.application.port.out.SocialAccountQueryPort;
-import ksh.tryptobackend.user.application.port.out.SocialIdentityQueryPort;
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
 import ksh.tryptobackend.user.application.port.out.UserQueryPort;
 import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
+import ksh.tryptobackend.user.domain.service.SocialAuthenticator;
 import ksh.tryptobackend.user.domain.service.UniqueNicknameGenerator;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoginService implements LoginUseCase {
 
-    private final SocialIdentityQueryPort socialIdentityQueryPort;
+    private final SocialAuthenticator socialAuthenticator;
     private final SocialAccountQueryPort socialAccountQueryPort;
     private final SocialAccountCommandPort socialAccountCommandPort;
     private final UserQueryPort userQueryPort;
@@ -37,8 +37,8 @@ public class LoginService implements LoginUseCase {
     @Override
     @Transactional
     public LoginResult login(LoginCommand command) {
-        SocialIdentity identity = socialIdentityQueryPort.getByAuthorizationCode(
-                command.provider(), command.code(), command.codeVerifier());
+        SocialIdentity identity =
+                socialAuthenticator.authenticate(command.provider(), command.code(), command.codeVerifier());
         LocalDateTime now = LocalDateTime.now(clock);
 
         SocialAccount account = socialAccountQueryPort
