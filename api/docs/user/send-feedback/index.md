@@ -1,7 +1,10 @@
-- 단계: implement
-- 리뷰 회차: 0/3
+- 단계: review
+- 리뷰 회차: 2/3
 - QA 회차: 0/3
 
 ## 산출물
 - [spec.md](spec.md)
 - [plan.md](plan.md)
+
+## 리뷰
+- [review.md](review.md)

@@ -14,3 +14,11 @@
 - [api/src/main/java/ksh/tryptobackend/user/application/port/in/SendFeedbackUseCase.java:8] `sendFeedback` 의 반환값(`Feedback`)이 컨트롤러에서 사용되지 않는다 (출처: oop)
 - [api/src/test/java/ksh/tryptobackend/acceptance/steps/user/SendFeedbackStepDefinition.java:23-33] 조사(라는/이라는)만 다른 스텝 3 개가 동일한 본문을 중복한다 (출처: oop)
 - [api/src/test/java/ksh/tryptobackend/acceptance/testclient/CommonApiClient.java:34] `getLoggedInUserId()` 에 Javadoc 주석이 붙었다 — 컨벤션은 주석을 금하나 같은 파일의 기존 관례를 따른 것이다 (출처: 컨벤션)
+
+## 2차 차단 이슈
+
+없음. 1차 차단 이슈 수정분(`25c19192..HEAD`)을 다섯 리뷰어가 재검토한 결과 차단 이슈 0 건으로 통과했다.
+
+## 2차 참고 이슈 (수정 안 함, 보고용)
+
+- [api/docs/user/send-feedback/plan.md:17] Request Body 표의 `content` 검증이 여전히 `@NotBlank` 로 적혀 있어 코드(`@NotNull` + 도메인 검증)와 어긋난다 (출처: ddd, 컨벤션)
