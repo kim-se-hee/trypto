@@ -41,7 +41,6 @@ public class GetRankerPortfolioService implements GetRankerPortfolioUseCase {
                 .orElseThrow(() -> new CustomException(ErrorCode.PORTFOLIO_VIEW_NOT_ALLOWED));
         ranking.assertViewable();
         UserProfile viewer = userQueryPort.getByUserId(query.userId());
-        viewer.assertPortfolioPublic();
         Long roundId = investmentRoundQueryPort.getActiveRoundId(query.userId());
         Holdings holdings = portfolioQueryPort.findLatestHoldings(query.userId(), roundId);
         CoinSymbols coinSymbols = marketDataQueryPort.findCoinSymbols(holdings.coinIds());

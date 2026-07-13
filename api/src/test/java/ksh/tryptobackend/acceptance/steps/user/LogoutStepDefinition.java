@@ -39,7 +39,7 @@ public class LogoutStepDefinition {
         SocialAccountJpaEntity account = socialAccountJpaRepository.save(SocialAccountJpaEntity.fromDomain(
                 SocialAccount.register(SocialIdentity.of(Provider.KAKAO, "test-logout"), LocalDateTime.now())));
         UserJpaEntity saved = userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(account.getId(), "로그아웃유저", false, LocalDateTime.now())));
+                UserJpaEntity.fromDomain(User.create(account.getId(), "로그아웃유저", LocalDateTime.now())));
         apiClient.loginAs(saved.getId());
     }
 

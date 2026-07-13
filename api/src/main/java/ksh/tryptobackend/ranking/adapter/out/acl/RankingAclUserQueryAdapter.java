@@ -35,6 +35,6 @@ public class RankingAclUserQueryAdapter implements UserQueryPort {
     }
 
     private UserProfile toProfile(UserPublicInfoResult result) {
-        return new UserProfile(result.userId(), result.nickname(), result.portfolioPublic());
+        return new UserProfile(result.userId(), result.nickname());
     }
 }

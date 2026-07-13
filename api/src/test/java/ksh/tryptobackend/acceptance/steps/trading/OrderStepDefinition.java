@@ -89,8 +89,8 @@ public class OrderStepDefinition {
                 jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user WHERE user_id = ?", Integer.class, USER_ID);
         if (userCount == null || userCount == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO user (user_id, version, social_identity_id, nickname, portfolio_public,"
-                            + " created_at, updated_at) VALUES (?, 0, ?, ?, true, NOW(), NOW())",
+                    "INSERT INTO user (user_id, version, social_identity_id, nickname,"
+                            + " created_at, updated_at) VALUES (?, 0, ?, ?, NOW(), NOW())",
                     USER_ID,
                     USER_ID,
                     "트레이더1");

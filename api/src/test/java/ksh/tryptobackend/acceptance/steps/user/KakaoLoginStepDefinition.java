@@ -46,7 +46,7 @@ public class KakaoLoginStepDefinition {
     public void 카카오_신원에_연결된_회원이_존재한다(String providerId) {
         SocialAccountJpaEntity account = saveDisconnectedAccount(providerId);
         UserJpaEntity user = userJpaRepository.save(
-                UserJpaEntity.fromDomain(User.create(account.getId(), "기존회원" + providerId, true, LocalDateTime.now())));
+                UserJpaEntity.fromDomain(User.create(account.getId(), "기존회원" + providerId, LocalDateTime.now())));
         account.connectTo(user.getId());
         socialAccountJpaRepository.save(account);
         existingUserId = user.getId();
@@ -71,7 +71,6 @@ public class KakaoLoginStepDefinition {
                 entity.getVersion(),
                 entity.getSocialAccountId(),
                 entity.getNickname(),
-                entity.isPortfolioPublic(),
                 LocalDateTime.now().minusDays(days),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt());

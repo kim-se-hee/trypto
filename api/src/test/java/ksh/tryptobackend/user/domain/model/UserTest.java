@@ -90,6 +90,6 @@ class UserTest {
     }
 
     private static User createUser(String nickname) {
-        return User.reconstitute(1L, 0L, 1L, nickname, false, null, LocalDateTime.now(), LocalDateTime.now());
+        return User.reconstitute(1L, 0L, 1L, nickname, null, LocalDateTime.now(), LocalDateTime.now());
     }
 }

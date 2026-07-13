@@ -41,9 +41,6 @@ public class UserJpaEntity {
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
-    @Column(name = "portfolio_public", nullable = false)
-    private boolean portfolioPublic;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -59,7 +56,6 @@ public class UserJpaEntity {
         entity.version = user.getVersion();
         entity.socialAccountId = user.getSocialAccountId();
         entity.nickname = user.getNickname().value();
-        entity.portfolioPublic = user.isPortfolioPublic();
         entity.deletedAt = user.getDeletedAt();
         entity.createdAt = user.getCreatedAt();
         entity.updatedAt = user.getUpdatedAt();
@@ -68,13 +64,11 @@ public class UserJpaEntity {
 
     public void updateFromDomain(User user) {
         this.nickname = user.getNickname().value();
-        this.portfolioPublic = user.isPortfolioPublic();
         this.deletedAt = user.getDeletedAt();
         this.updatedAt = user.getUpdatedAt();
     }
 
     public User toDomain() {
-        return User.reconstitute(
-                id, version, socialAccountId, nickname, portfolioPublic, deletedAt, createdAt, updatedAt);
+        return User.reconstitute(id, version, socialAccountId, nickname, deletedAt, createdAt, updatedAt);
     }
 }

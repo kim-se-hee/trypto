@@ -18,11 +18,6 @@ public class UserProfiles {
         return profile != null ? profile.nickname() : UNKNOWN_NICKNAME;
     }
 
-    public boolean isPortfolioPublicOf(Long userId) {
-        UserProfile profile = profileByUserId.get(userId);
-        return profile != null && profile.portfolioPublic();
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
