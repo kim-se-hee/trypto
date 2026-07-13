@@ -3,7 +3,7 @@ import { PublicRoute } from "@/components/auth/PublicRoute";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RoundGuard } from "@/components/auth/RoundGuard";
 import { LoginPage } from "@/pages/LoginPage";
-import { KakaoCallbackPage } from "@/pages/KakaoCallbackPage";
+import { SocialCallbackPage } from "@/pages/SocialCallbackPage";
 import { RoundCreatePage } from "@/pages/RoundCreatePage";
 import { MarketPage } from "@/pages/MarketPage";
 import { PortfolioPage } from "@/pages/PortfolioPage";
@@ -20,8 +20,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
       </Route>
 
-      {/* 카카오 인가 콜백: 인증 여부와 무관하게 항상 처리 */}
-      <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
+      {/* 소셜 인가 콜백: 인증 여부와 무관하게 항상 처리 */}
+      <Route path="/auth/:provider/callback" element={<SocialCallbackPage />} />
 
       {/* Round guard: 인증됨 + 라운드 없을 때만 접근 */}
       <Route element={<RoundGuard />}>

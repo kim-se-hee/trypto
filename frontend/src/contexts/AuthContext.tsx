@@ -6,7 +6,7 @@ import { logout as logoutApi } from "@/lib/api/auth-api";
 /** true로 바꾸면 로그인 없이 바로 메인 진입 (로그인 화면을 보려면 false) */
 const DEV_SKIP_AUTH = false;
 
-interface KakaoLoginUser {
+interface SocialLoginUser {
   userId: number;
   nickname: string;
 }
@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: MockUser | null;
   isAuthenticated: boolean;
   login: (email: string) => boolean;
-  loginWithKakao: (result: KakaoLoginUser) => void;
+  loginWithSocial: (result: SocialLoginUser) => void;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password">>) => void;
 }
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  const loginWithKakao = useCallback((result: KakaoLoginUser) => {
+  const loginWithSocial = useCallback((result: SocialLoginUser) => {
     setUser({
       userId: result.userId,
       nickname: result.nickname,
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, loginWithKakao, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, loginWithSocial, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
