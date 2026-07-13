@@ -2,7 +2,7 @@
 
 ## 1차 차단 이슈
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/user/adapter/in/dto/request/SendFeedbackRequest.java:6] 공백만인 본문 검증이 두 계층에 분산되어 문서화된 오류 코드와 실제 동작이 어긋난다** (출처: oop)
+- [x] **[api/src/main/java/ksh/tryptobackend/user/adapter/in/dto/request/SendFeedbackRequest.java:6] 공백만인 본문 검증이 두 계층에 분산되어 문서화된 오류 코드와 실제 동작이 어긋난다** (출처: oop)
   - **설명:** spec.md 는 "공백만으로 채운 본문은 빈 본문으로 본다" 를, plan.md 는 이를 `INVALID_FEEDBACK_LENGTH(400)` 로 응답하도록 명시한다. `FeedbackContent.of()` 가 `strip()` 후 길이를 검사해 이 규칙을 구현하고 있으나, `SendFeedbackRequest.content` 에 붙은 `@NotBlank` 가 공백 문자열을 컨트롤러 진입 전에 걸러 `MethodArgumentNotValidException` 을 던진다. 그 결과 `GlobalControllerAdvice` 가 `VALIDATION_ERROR` 로 응답하며, 도메인이 던지도록 구현한 `INVALID_FEEDBACK_LENGTH` 경로는 실제 요청 흐름에서 절대 실행되지 않는 죽은 코드가 된다. 인수 테스트의 "공백만 채운 본문이면 실패" 시나리오가 상태코드 400 만 검증하고 `code` 값은 검증하지 않아 이 불일치가 걸러지지 않는다.
   - **수정 제안:** `SendFeedbackRequest.content` 의 `@NotBlank` 를 `@NotNull` 로 완화한다. `null` 은 여전히 컨트롤러 진입 전에 걸러지고, 공백만인 본문과 짧은 본문은 모두 `FeedbackContent` 가 스펙대로 `INVALID_FEEDBACK_LENGTH` 로 일관되게 처리한다. 아울러 `send-feedback.feature` 의 "공백만 채운 본문이면 실패" 시나리오에 `그리고 응답 코드는 "INVALID_FEEDBACK_LENGTH"이다` 를 추가해 회귀를 막는다.
 
