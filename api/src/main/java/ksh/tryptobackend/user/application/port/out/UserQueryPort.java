@@ -7,6 +7,8 @@ import ksh.tryptobackend.user.domain.model.User;
 
 public interface UserQueryPort {
 
+    User getById(Long userId);
+
     Optional<User> findById(Long userId);
 
     List<User> findByIds(Set<Long> userIds);

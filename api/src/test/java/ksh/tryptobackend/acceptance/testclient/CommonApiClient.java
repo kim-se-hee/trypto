@@ -69,6 +69,12 @@ public class CommonApiClient {
         return lastResponse;
     }
 
+    public RestTestClient.ResponseSpec delete(String path) {
+        RestTestClient.RequestHeadersSpec<?> spec = restTestClient.delete().uri(path);
+        lastResponse = attachSession(spec).exchange();
+        return lastResponse;
+    }
+
     public RestTestClient.ResponseSpec getLastResponse() {
         return lastResponse;
     }

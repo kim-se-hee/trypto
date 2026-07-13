@@ -37,6 +37,10 @@ public class SocialAccount {
         this.userId = userId;
     }
 
+    public void disconnect() {
+        this.userId = null;
+    }
+
     public boolean isConnected() {
         return userId != null;
     }

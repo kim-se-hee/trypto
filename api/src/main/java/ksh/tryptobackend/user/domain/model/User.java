@@ -17,11 +17,11 @@ public class User {
     private final Long userId;
     private final Long version;
     private final Long socialAccountId;
+    private final LocalDateTime createdAt;
     private Nickname nickname;
     private boolean portfolioPublic;
-    private final LocalDateTime deletedAt;
-    private final LocalDateTime createdAt;
-    private final LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime updatedAt;
 
     public static User registerWith(Long socialAccountId, Nickname nickname, LocalDateTime now) {
         return User.builder()
@@ -76,6 +76,15 @@ public class User {
         }
     }
 
+    public void withdraw(Nickname anonymousNickname, LocalDateTime now) {
+        if (isWithdrawn()) {
+            throw new CustomException(ErrorCode.USER_ALREADY_DELETED);
+        }
+        this.nickname = anonymousNickname;
+        this.deletedAt = now;
+        this.updatedAt = now;
+    }
+
     public void changeNickname(String newNickname) {
         if (nickname.hasSameValueAs(newNickname)) {
             throw new CustomException(ErrorCode.NICKNAME_SAME_AS_CURRENT);
@@ -85,5 +94,9 @@ public class User {
 
     public void changePortfolioVisibility(boolean portfolioPublic) {
         this.portfolioPublic = portfolioPublic;
+    }
+
+    public boolean isWithdrawn() {
+        return deletedAt != null;
     }
 }

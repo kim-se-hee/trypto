@@ -6,5 +6,7 @@ import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 
 public interface SocialAccountQueryPort {
 
+    SocialAccount getById(Long socialAccountId);
+
     Optional<SocialAccount> findByIdentity(SocialIdentity socialIdentity);
 }

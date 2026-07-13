@@ -62,6 +62,10 @@ public class SocialAccountJpaEntity {
         this.userId = userId;
     }
 
+    public void updateFromDomain(SocialAccount socialAccount) {
+        this.userId = socialAccount.getUserId();
+    }
+
     public SocialAccount toDomain() {
         return SocialAccount.reconstitute(
                 id, SocialIdentity.of(Provider.valueOf(provider), providerId), userId, createdAt);

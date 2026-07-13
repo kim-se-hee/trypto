@@ -8,6 +8,7 @@ import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.SocialAccountJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
@@ -51,19 +52,15 @@ public class KakaoLoginStepDefinition {
         existingUserId = user.getId();
     }
 
-    @Given("카카오 신원 {string}로 가입한 회원이 탈퇴하여 연결이 해제되어 있다")
-    public void 카카오_신원으로_가입한_회원이_탈퇴하여_연결이_해제되어_있다(String providerId) {
-        SocialAccountJpaEntity account = saveDisconnectedAccount(providerId);
-        UserJpaEntity withdrawn = userJpaRepository.save(UserJpaEntity.fromDomain(User.reconstitute(
-                null,
-                null,
-                account.getId(),
-                "탈퇴한사용자" + providerId,
-                true,
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                LocalDateTime.now())));
-        withdrawnUserId = withdrawn.getId();
+    @Given("카카오 신원 {string}로 로그인한 회원이 탈퇴한다")
+    public void 카카오_신원으로_로그인한_회원이_탈퇴한다(String providerId) {
+        login(providerId);
+        apiClient.getLastResponse().expectStatus().isEqualTo(200);
+        apiClient.adoptSessionFromLastResponse();
+        withdrawnUserId = extractUserId();
+
+        apiClient.delete("/api/users/me");
+        apiClient.getLastResponse().expectStatus().isEqualTo(200);
     }
 
     @Given("그 회원의 탈퇴 시점으로부터 {int}일이 지난 시점이다")
@@ -146,6 +143,16 @@ public class KakaoLoginStepDefinition {
     @Then("새로운 회원이 생성되지 않는다")
     public void 새로운_회원이_생성되지_않는다() {
         assertThat(userJpaRepository.count()).isEqualTo(userCountBeforeLogin);
+    }
+
+    private Long extractUserId() {
+        AtomicLong userId = new AtomicLong();
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.userId")
+                .value(id -> userId.set(new BigDecimal(id.toString()).longValue()));
+        return userId.get();
     }
 
     private SocialAccountJpaEntity saveDisconnectedAccount(String providerId) {
