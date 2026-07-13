@@ -1,0 +1,34 @@
+# 프로덕션 프론트엔드 오버레이.
+# 기본 compose 의 frontend 는 Vite 개발 서버(소스 마운트 + HMR)라 배포에 쓸 수 없다.
+# 이 파일을 겹쳐 올리면 같은 자리에 빌드된 정적 번들을 nginx 가 서빙한다.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build frontend
+#
+# VITE_ 값은 빌드 시점에 번들에 박히므로, 값을 바꾸면 반드시 --build 로 다시 굽는다.
+services:
+  frontend:
+    image: ${FRONTEND_IMAGE:-kimsehee98/trypto-frontend:v1}
+    build:
+      context: ./frontend
+      args:
+        VITE_KAKAO_CLIENT_ID: ${VITE_KAKAO_CLIENT_ID:-}
+        VITE_KAKAO_REDIRECT_URI: ${VITE_KAKAO_REDIRECT_URI:-http://localhost:5173/auth/kakao/callback}
+        VITE_KAKAO_AUTH_URL: ${VITE_KAKAO_AUTH_URL:-https://kauth.kakao.com/oauth/authorize}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_GOOGLE_REDIRECT_URI: ${VITE_GOOGLE_REDIRECT_URI:-http://localhost:5173/auth/google/callback}
+        VITE_GOOGLE_AUTH_URL: ${VITE_GOOGLE_AUTH_URL:-https://accounts.google.com/o/oauth2/v2/auth}
+    # 개발 서버용 설정을 전부 걷어낸다 (소스 마운트·npm run dev·파일 감시).
+    # ports 와 volumes 는 오버레이가 이어붙이는 필드라 !override / !reset 로 명시적으로 덮어쓴다.
+    # 그러지 않으면 5173:5173 과 5173:80 이 함께 남아 컨테이너가 자기 포트와 충돌한다.
+    command: !override []
+    working_dir: /
+    volumes: !reset []
+    environment: !reset {}
+    ports: !override
+      - "5173:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
