@@ -40,11 +40,11 @@ INSERT INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name)
   (10, 1, 11, 'POL');
 
 -- user 1~1000
-INSERT INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at)
+INSERT INTO user (user_id, email, nickname, created_at, updated_at)
 WITH RECURSIVE seq AS (
   SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1000
 )
-SELECT n, CONCAT('loadtest', n, '@trypto.local'), CONCAT('loadtest', n), true, NOW(), NOW() FROM seq;
+SELECT n, CONCAT('loadtest', n, '@trypto.local'), CONCAT('loadtest', n), NOW(), NOW() FROM seq;
 
 -- investment_round 1~1000 (user n → round n)
 INSERT INTO investment_round (
@@ -91,9 +91,9 @@ WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 1
 SELECT 1000 + n, 1000 + n, 1, 10000000000.00000000, 0.00000000 FROM seq;
 
 -- 라운드 없는 유저 풀 (user 1001~1200): 라운드 생성 부하용 (start→end 자급자족, 동시성 여유로 200명)
-INSERT INTO user (user_id, email, nickname, portfolio_public, created_at, updated_at)
+INSERT INTO user (user_id, email, nickname, created_at, updated_at)
 WITH RECURSIVE seq AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM seq WHERE n < 200)
-SELECT 1000 + n, CONCAT('loadtest', 1000 + n, '@trypto.local'), CONCAT('loadtest', 1000 + n), true, NOW(), NOW() FROM seq;
+SELECT 1000 + n, CONCAT('loadtest', 1000 + n, '@trypto.local'), CONCAT('loadtest', 1000 + n), NOW(), NOW() FROM seq;
 
 -- 긴급충전 부하용: 한도 0 → 100만(도메인 MAX_EMERGENCY_FUNDING_LIMIT), 충전 횟수 0 → 100만(run 중 소진 방지)
 UPDATE investment_round SET emergency_funding_limit = 1000000.00000000, emergency_charge_count = 1000000 WHERE round_id BETWEEN 1 AND 1000;
