@@ -292,6 +292,11 @@ export function OrderPanel({
   };
 
   async function handleCancel(orderId: number) {
+    if (!orderTargetIds) {
+      setHistoryError("선택한 거래소/코인의 주문 매핑이 없습니다.");
+      return;
+    }
+
     try {
       await cancelOrder(orderId, orderTargetIds.walletId);
       setHistoryItems((prev) => prev.filter((item) => item.orderId !== orderId));
