@@ -51,7 +51,7 @@ public class RankerPortfolioStepDefinition {
     private void insertUsers() {
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(
-                "INSERT IGNORE INTO user (user_id, social_identity_id, nickname,"
+                "INSERT IGNORE INTO user (user_id, social_account_id, nickname,"
                         + " created_at, updated_at) VALUES (1, 1, '트레이더1', ?, ?), (2,"
                         + " 2, '트레이더2', ?, ?), (3, 3, '트레이더3', ?,"
                         + " ?)",

@@ -35,7 +35,7 @@ public class UserJpaEntity {
     @Column(name = "version", nullable = false)
     private Long version;
 
-    @Column(name = "social_identity_id", nullable = false)
+    @Column(name = "social_account_id", nullable = false)
     private Long socialAccountId;
 
     @Column(name = "nickname", nullable = false)

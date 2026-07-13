@@ -17,13 +17,13 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-        name = "social_identity",
+        name = "social_account",
         uniqueConstraints = {
             @UniqueConstraint(
-                    name = "uk_social_identity_provider",
+                    name = "uk_social_account_provider",
                     columnNames = {"provider", "provider_id"}),
             @UniqueConstraint(
-                    name = "uk_social_identity_user",
+                    name = "uk_social_account_user",
                     columnNames = {"user_id"})
         })
 @Getter
@@ -32,7 +32,7 @@ public class SocialAccountJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "social_identity_id")
+    @Column(name = "social_account_id")
     private Long id;
 
     @Column(name = "provider", nullable = false, length = 20)

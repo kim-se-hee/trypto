@@ -21,7 +21,7 @@ public class RankingMyStepDefinition {
 
     @Given("내 랭킹 테스트 데이터가 준비되어 있다")
     public void 내_랭킹_테스트_데이터가_준비되어_있다() {
-        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_identity_id, nickname,"
+        jdbcTemplate.execute("INSERT IGNORE INTO user (user_id, social_account_id, nickname,"
                 + " created_at, updated_at) VALUES (1, 1, '테스터', NOW(), NOW())");
 
         LocalDate referenceDate = LocalDate.of(2026, 3, 1);

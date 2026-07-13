@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SocialAccountCommandAdapter implements SocialAccountCommandPort {
 
-    private static final String PROVIDER_CONSTRAINT = "uk_social_identity_provider";
+    private static final String PROVIDER_CONSTRAINT = "uk_social_account_provider";
 
     private final SocialAccountJpaRepository socialAccountJpaRepository;
 
