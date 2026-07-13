@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import ksh.tryptocollector.distribute.rabbitmq.TickerEventConflator;
+import ksh.tryptocollector.distribute.rabbitmq.TickerEventPublisher;
 import ksh.tryptocollector.metadata.MarketInfoCache;
 import ksh.tryptocollector.model.Exchange;
 import ksh.tryptocollector.model.MarketInfo;
@@ -40,7 +40,7 @@ public class SyntheticTickerGenerator {
     private static final String THREAD_NAME = "synthetic-ticker";
     private static final String METRIC_NAME = "loadtest.synthetic.ticker.published";
 
-    private final TickerEventConflator conflator;
+    private final TickerEventPublisher publisher;
     private final MarketInfoCache marketInfoCache;
     private final MeterRegistry meterRegistry;
 
@@ -125,7 +125,8 @@ public class SyntheticTickerGenerator {
         for (int i = 0; i < toPublish; i++) {
             int idx = Math.floorMod(index.getAndIncrement(), markets.size());
             try {
-                conflator.submit(buildTicker(exchange, markets.get(idx)));
+                NormalizedTicker ticker = buildTicker(exchange, markets.get(idx));
+                publisher.publishBatch(ticker.exchange(), List.of(ticker));
                 counter.increment();
             } catch (Exception e) {
                 log.warn("synthetic ticker 제출 실패: exchange={}", exchange, e);

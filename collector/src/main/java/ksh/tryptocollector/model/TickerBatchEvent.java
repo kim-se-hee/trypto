@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * ticker.exchange 채널의 발행 단위. 같은 거래소의 1 윈도우(50ms) batch.
+ * ticker.exchange 채널의 발행 단위. 같은 거래소의 ticker 묶음이며, 현재는 tick 1건이 들어오는 즉시 크기 1 batch 로 발행된다.
  * 페이로드 약속은 docs/contracts/ticker-exchange.md.
  */
 public record TickerBatchEvent(String exchange, List<Item> tickers) {
