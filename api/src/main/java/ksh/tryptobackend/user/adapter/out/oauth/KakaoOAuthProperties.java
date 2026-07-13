@@ -1,4 +1,4 @@
-package ksh.tryptobackend.user.adapter.out.acl;
+package ksh.tryptobackend.user.adapter.out.oauth;
 
 import java.time.Duration;
 import lombok.Getter;

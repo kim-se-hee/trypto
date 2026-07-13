@@ -7,6 +7,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
@@ -20,9 +21,9 @@ import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import org.springframework.http.HttpHeaders;
 
-public class KakaoLoginStepDefinition {
+public class LoginStepDefinition {
 
-    private static final String BRAND_NEW_CODE = "kakao-brand-new";
+    private static final String BRAND_NEW_CODE = "brand-new";
     private static final String CODE_VERIFIER = "test-verifier";
 
     private final CommonApiClient apiClient;
@@ -33,7 +34,7 @@ public class KakaoLoginStepDefinition {
     private Long withdrawnUserId;
     private long userCountBeforeLogin;
 
-    public KakaoLoginStepDefinition(
+    public LoginStepDefinition(
             CommonApiClient apiClient,
             UserJpaRepository userJpaRepository,
             SocialAccountJpaRepository socialAccountJpaRepository) {
@@ -42,9 +43,10 @@ public class KakaoLoginStepDefinition {
         this.socialAccountJpaRepository = socialAccountJpaRepository;
     }
 
-    @Given("카카오 신원 {string}에 연결된 회원이 존재한다")
-    public void 카카오_신원에_연결된_회원이_존재한다(String providerId) {
-        SocialAccountJpaEntity account = saveDisconnectedAccount(providerId);
+    @Given("{word} 신원 {string}에 연결된 회원이 존재한다")
+    public void 신원에_연결된_회원이_존재한다(String providerLabel, String providerId) {
+        Provider provider = providerOf(providerLabel);
+        SocialAccountJpaEntity account = saveDisconnectedAccount(provider, providerId);
         UserJpaEntity user = userJpaRepository.save(
                 UserJpaEntity.fromDomain(User.create(account.getId(), "기존회원" + providerId, LocalDateTime.now())));
         account.connectTo(user.getId());
@@ -52,9 +54,9 @@ public class KakaoLoginStepDefinition {
         existingUserId = user.getId();
     }
 
-    @Given("카카오 신원 {string}로 로그인한 회원이 탈퇴한다")
-    public void 카카오_신원으로_로그인한_회원이_탈퇴한다(String providerId) {
-        login(providerId);
+    @Given("{word} 신원 {string}로 로그인한 회원이 탈퇴한다")
+    public void 신원으로_로그인한_회원이_탈퇴한다(String providerLabel, String providerId) {
+        login(providerOf(providerLabel), providerId);
         apiClient.getLastResponse().expectStatus().isEqualTo(200);
         apiClient.adoptSessionFromLastResponse();
         withdrawnUserId = extractUserId();
@@ -77,21 +79,28 @@ public class KakaoLoginStepDefinition {
         userJpaRepository.saveAndFlush(UserJpaEntity.fromDomain(updated));
     }
 
-    @Given("카카오 신원 {string}로 로그인에 성공한다")
-    public void 카카오_신원으로_로그인에_성공한다(String providerId) {
-        login(providerId);
+    @Given("{word} 신원 {string}로 로그인에 성공한다")
+    public void 신원으로_로그인에_성공한다(String providerLabel, String providerId) {
+        login(providerOf(providerLabel), providerId);
         apiClient.getLastResponse().expectStatus().isEqualTo(200);
         apiClient.adoptSessionFromLastResponse();
     }
 
-    @When("연결된 회원이 없는 카카오 신원으로 로그인을 요청한다")
-    public void 연결된_회원이_없는_카카오_신원으로_로그인을_요청한다() {
-        login(BRAND_NEW_CODE);
+    @When("연결된 회원이 없는 {word} 신원으로 로그인을 요청한다")
+    public void 연결된_회원이_없는_신원으로_로그인을_요청한다(String providerLabel) {
+        login(providerOf(providerLabel), BRAND_NEW_CODE);
     }
 
-    @When("카카오 신원 {string}로 로그인을 요청한다")
-    public void 카카오_신원으로_로그인을_요청한다(String providerId) {
-        login(providerId);
+    @When("{word} 신원 {string}로 로그인을 요청한다")
+    public void 신원으로_로그인을_요청한다(String providerLabel, String providerId) {
+        login(providerOf(providerLabel), providerId);
+    }
+
+    @When("지원하지 않는 제공자 {string}로 로그인을 요청한다")
+    public void 지원하지_않는_제공자로_로그인을_요청한다(String provider) {
+        userCountBeforeLogin = userJpaRepository.count();
+        apiClient.post(
+                "/api/auth/" + provider + "/login", Map.of("code", BRAND_NEW_CODE, "codeVerifier", CODE_VERIFIER));
     }
 
     @When("발급받은 세션으로 내 프로필을 조회한다")
@@ -144,6 +153,14 @@ public class KakaoLoginStepDefinition {
         assertThat(userJpaRepository.count()).isEqualTo(userCountBeforeLogin);
     }
 
+    private static Provider providerOf(String label) {
+        return switch (label) {
+            case "카카오" -> Provider.KAKAO;
+            case "구글" -> Provider.GOOGLE;
+            default -> throw new IllegalArgumentException("지원하지 않는 제공자 표기: " + label);
+        };
+    }
+
     private Long extractUserId() {
         AtomicLong userId = new AtomicLong();
         apiClient
@@ -154,13 +171,15 @@ public class KakaoLoginStepDefinition {
         return userId.get();
     }
 
-    private SocialAccountJpaEntity saveDisconnectedAccount(String providerId) {
+    private SocialAccountJpaEntity saveDisconnectedAccount(Provider provider, String providerId) {
         return socialAccountJpaRepository.save(SocialAccountJpaEntity.fromDomain(
-                SocialAccount.register(SocialIdentity.of(Provider.KAKAO, providerId), LocalDateTime.now())));
+                SocialAccount.register(SocialIdentity.of(provider, providerId), LocalDateTime.now())));
     }
 
-    private void login(String code) {
+    private void login(Provider provider, String code) {
         userCountBeforeLogin = userJpaRepository.count();
-        apiClient.post("/api/auth/kakao/login", Map.of("code", code, "codeVerifier", CODE_VERIFIER));
+        apiClient.post(
+                "/api/auth/" + provider.name().toLowerCase(Locale.ROOT) + "/login",
+                Map.of("code", code, "codeVerifier", CODE_VERIFIER));
     }
 }
