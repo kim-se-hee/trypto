@@ -6,14 +6,14 @@
 
 ### 생애주기 예 : 가입 → 탈퇴 → 30일 후 재가입
 
-| 시점 | social_identity | user |
+| 시점 | social_account | user |
 |---|---|---|
 | 가입 | id=7 · kakao/123 · user_id=42 | 42 · identity=7 · 코인왕 · deleted_at=NULL |
 | 탈퇴(7/13) | id=7 · kakao/123 · user_id=NULL | 42 · identity=7 · 탈퇴한사용자77 · deleted_at=7/13 |
 | 재가입(8/15) | id=7 · kakao/123 · user_id=99 | 42 행 그대로 + 99 · identity=7 · 무던한사용자88 · deleted_at=NULL |
 
 - 소셜 신원 행(id=7)은 세대가 바뀌어도 그대로 남아 그 소셜 계정의 이력 앵커가 된다.
-- 재가입 30일 판정: `user` 에서 `social_identity_id = 7` 이고 deleted_at 이 있는 행들의 가장 최근 탈퇴 시각을 본다.
+- 재가입 30일 판정: `user` 에서 `social_account_id = 7` 이고 deleted_at 이 있는 행들의 가장 최근 탈퇴 시각을 본다.
 
 ## API 명세
 
