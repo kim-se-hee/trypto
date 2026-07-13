@@ -37,7 +37,6 @@ GET /api/users/1
     "userId": 1,
     "email": "user@example.com",
     "nickname": "포지션마스터",
-    "portfolioPublic": true,
     "createdAt": "2026-02-27T14:30:00"
   }
 }

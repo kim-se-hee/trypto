@@ -8,7 +8,6 @@ erDiagram
         number version "낙관적 잠금 버전"
         id social_identity_id FK "소셜 신원 ID"
         string nickname UK "닉네임"
-        boolean portfolio_public "포트폴리오 공개 여부"
         datetime deleted_at "탈퇴 시각 (nullable, 재가입 제한 기준)"
         datetime created_at "가입일"
         datetime updated_at "수정일"

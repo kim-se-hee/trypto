@@ -5,7 +5,7 @@
 ## FindUserPublicInfoUseCase
 - `findByUserId(Long userId) → Optional<UserPublicInfoResult>`
 - `findByUserIds(Set<Long> userIds) → List<UserPublicInfoResult>`
-- Returns `UserPublicInfoResult { userId: Long, nickname: String, portfolioPublic: boolean }`
+- Returns `UserPublicInfoResult { userId: Long, nickname: String }`
 
 # 의존
 

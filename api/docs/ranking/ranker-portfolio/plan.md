@@ -3,7 +3,6 @@
 ### 참고사항
 
 - 랭킹 화면에서 특정 유저를 클릭하여 진입하는 흐름이다
-- 비공개 유저는 랭킹에는 노출되지만 포트폴리오 열람 시 `PORTFOLIO_PRIVATE` 에러를 반환한다
 
 `GET /api/rankings/{userId}/portfolio`
 
@@ -68,5 +67,4 @@ GET /api/rankings/42/portfolio?period=DAILY
 | INVALID_RANKING_PERIOD | 400 | 유효하지 않은 기간 값 |
 | USER_NOT_FOUND | 404 | 유저를 찾을 수 없음 |
 | PORTFOLIO_VIEW_NOT_ALLOWED | 403 | 100위 이내가 아닌 유저의 포트폴리오 열람 시도 |
-| PORTFOLIO_PRIVATE | 403 | 포트폴리오 비공개 유저 |
 | ROUND_NOT_ACTIVE | 404 | 진행 중인 라운드가 없음 |

@@ -43,24 +43,21 @@ GET /api/rankings?period=DAILY&cursorRank=20&size=20
         "userId": 42,
         "nickname": "코인마스터",
         "profitRate": 15.23,
-        "tradeCount": 12,
-        "portfolioPublic": true
+        "tradeCount": 12
       },
       {
         "rank": 2,
         "userId": 17,
         "nickname": "홀드러",
         "profitRate": 12.87,
-        "tradeCount": 5,
-        "portfolioPublic": false
+        "tradeCount": 5
       },
       {
         "rank": 3,
         "userId": 88,
         "nickname": "스윙트레이더",
         "profitRate": 12.87,
-        "tradeCount": 8,
-        "portfolioPublic": true
+        "tradeCount": 8
       }
     ],
     "nextCursor": 3,

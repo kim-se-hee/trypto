@@ -27,4 +27,4 @@ ranking 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 않
 
 ### UserQueryPort ← User (`RankingAclUserQueryAdapter`)
 소비 UseCase 를 사용자 공개 프로필로 번역한다.
-- `FindUserPublicInfoUseCase` — 닉네임/공개 여부 조회
+- `FindUserPublicInfoUseCase` — 닉네임 조회
