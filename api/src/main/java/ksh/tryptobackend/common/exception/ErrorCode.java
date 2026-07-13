@@ -52,6 +52,7 @@ public enum ErrorCode {
     NICKNAME_SAME_AS_CURRENT(400, "nickname.same.as.current"),
     INVALID_NICKNAME_LENGTH(400, "invalid.nickname.length"),
     NICKNAME_ALREADY_EXISTS(409, "nickname.already.exists"),
+    INVALID_FEEDBACK_LENGTH(400, "invalid.feedback.length"),
 
     USER_NOT_FOUND(404, "user.not.found"),
     USER_ALREADY_DELETED(409, "user.already.deleted"),
