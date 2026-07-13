@@ -1,7 +1,5 @@
 package ksh.tryptobackend.user.application.service;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.in.ChangeNicknameUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.ChangeNicknameCommand;
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
@@ -23,9 +21,7 @@ public class ChangeNicknameService implements ChangeNicknameUseCase {
     @Override
     @Transactional
     public User changeNickname(ChangeNicknameCommand command) {
-        User user = userQueryPort
-                .findById(command.userId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userQueryPort.getById(command.userId());
         user.changeNickname(command.nickname());
         nicknameUniquenessChecker.ensureUnique(user.getNickname());
         return userCommandPort.save(user);

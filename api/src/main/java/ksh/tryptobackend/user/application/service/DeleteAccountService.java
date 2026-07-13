@@ -2,8 +2,6 @@ package ksh.tryptobackend.user.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.in.DeleteAccountUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.DeleteAccountCommand;
 import ksh.tryptobackend.user.application.port.out.SessionCommandPort;
@@ -33,9 +31,7 @@ public class DeleteAccountService implements DeleteAccountUseCase {
     @Override
     @Transactional
     public void deleteAccount(DeleteAccountCommand command) {
-        User user = userQueryPort
-                .findById(command.userId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userQueryPort.getById(command.userId());
         SocialAccount socialAccount = socialAccountQueryPort.getById(user.getSocialAccountId());
 
         accountClosureService.close(user, socialAccount, LocalDateTime.now(clock));

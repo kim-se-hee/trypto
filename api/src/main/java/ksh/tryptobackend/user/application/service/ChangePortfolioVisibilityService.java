@@ -1,7 +1,5 @@
 package ksh.tryptobackend.user.application.service;
 
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.application.port.in.ChangePortfolioVisibilityUseCase;
 import ksh.tryptobackend.user.application.port.in.dto.command.ChangePortfolioVisibilityCommand;
 import ksh.tryptobackend.user.application.port.out.UserCommandPort;
@@ -21,9 +19,7 @@ public class ChangePortfolioVisibilityService implements ChangePortfolioVisibili
     @Override
     @Transactional
     public User changePortfolioVisibility(ChangePortfolioVisibilityCommand command) {
-        User user = userQueryPort
-                .findById(command.userId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userQueryPort.getById(command.userId());
         user.changePortfolioVisibility(command.portfolioPublic());
         return userCommandPort.save(user);
     }
