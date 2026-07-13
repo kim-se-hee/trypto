@@ -25,7 +25,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(DEV_SKIP_AUTH ? MOCK_USERS[0] : null);
 
+  /** 목 이메일 로그인. 개발 환경 전용이며 프로덕션 빌드에서는 MOCK_USERS 와 함께 제거된다. */
   const login = useCallback((email: string): boolean => {
+    if (!import.meta.env.DEV) return false;
+
     const found = MOCK_USERS.find((u) => u.email === email);
     if (!found) return false;
     setUser(found);
