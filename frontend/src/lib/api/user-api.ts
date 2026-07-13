@@ -12,13 +12,10 @@ export interface ChangeNicknameResponse {
   nickname: string;
 }
 
-export function getUserProfile(userId: number): Promise<UserProfileResponse> {
-  return apiGet<UserProfileResponse>(`/api/users/${userId}`);
+export function getUserProfile(): Promise<UserProfileResponse> {
+  return apiGet<UserProfileResponse>("/api/users/me");
 }
 
-export function changeNickname(
-  userId: number,
-  nickname: string,
-): Promise<ChangeNicknameResponse> {
-  return apiPut<ChangeNicknameResponse>(`/api/users/${userId}/nickname`, { nickname });
+export function changeNickname(nickname: string): Promise<ChangeNicknameResponse> {
+  return apiPut<ChangeNicknameResponse>("/api/users/me/nickname", { nickname });
 }

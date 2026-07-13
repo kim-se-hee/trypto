@@ -69,7 +69,7 @@ export function MyPage() {
       return;
     }
     try {
-      await changeNickname(user.userId, trimmed);
+      await changeNickname(trimmed);
       updateUser({ nickname: trimmed });
     } catch (error) {
       console.error("Failed to change nickname", error);
