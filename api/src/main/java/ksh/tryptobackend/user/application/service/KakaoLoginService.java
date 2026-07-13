@@ -19,6 +19,7 @@ import ksh.tryptobackend.user.domain.service.UniqueNicknameGenerator;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,7 @@ public class KakaoLoginService implements KakaoLoginUseCase {
     private final Clock clock;
 
     @Override
+    @Transactional
     public KakaoLoginResult login(KakaoLoginCommand command) {
         SocialIdentity identity =
                 socialIdentityQueryPort.getByAuthorizationCode(command.code(), command.codeVerifier());
