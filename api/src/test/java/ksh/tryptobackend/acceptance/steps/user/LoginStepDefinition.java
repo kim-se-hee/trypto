@@ -138,6 +138,16 @@ public class LoginStepDefinition {
                         assertThat(new BigDecimal(id.toString()).longValue()).isEqualTo(existingUserId));
     }
 
+    @Then("응답의 userId는 기존 회원과 다르다")
+    public void 응답의_userId는_기존_회원과_다르다() {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.userId")
+                .value(id ->
+                        assertThat(new BigDecimal(id.toString()).longValue()).isNotEqualTo(existingUserId));
+    }
+
     @Then("응답의 userId는 이전 탈퇴 회원과 다르다")
     public void 응답의_userId는_이전_탈퇴_회원과_다르다() {
         apiClient
