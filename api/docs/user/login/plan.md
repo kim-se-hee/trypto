@@ -73,9 +73,10 @@
 
 회원 확인/등록·세션 발급 로직은 제공자와 무관하므로 응용 서비스(`LoginService`)는 하나만 둔다. 제공자 선택은 어댑터 계층 안에서 끝낸다.
 
-- `SocialIdentityQueryPort.getByAuthorizationCode(provider, code, codeVerifier)` — 응용 계층은 이 포트 하나만 안다.
-- 구현체 `SocialIdentityQueryAdapter`(adapter/out)는 `OAuthClient` 인터페이스의 제공자별 구현(`KakaoOAuthClient`, `GoogleOAuthClient`)을 `Map<Provider, OAuthClient>` 로 조립해 두고, 요청의 provider 값으로 위임한다. 제공자가 늘면 `OAuthClient` 구현 하나를 추가한다.
-- 구 `UserAclSocialIdentityQueryAdapter` 는 `SocialIdentityQueryAdapter` 로 개명하고 `adapter/out/acl/` 에서 `adapter/out/` 루트로 옮긴다. acl 명명 패턴 `{자기 컨텍스트}Acl{타 컨텍스트}QueryAdapter` 의 타 컨텍스트 자리에 자기 컨텍스트 VO 가 들어가 규칙과 어긋났기 때문이다. 제공자별 연동 코드는 `adapter/out/oauth/` 하위에 둔다.
+- 제공자 인증은 연동형 도메인 서비스 `SocialAuthenticator.authenticate(provider, code, codeVerifier)` 로 표현한다. 응용 계층은 이 인터페이스 하나만 안다.
+  - 아웃풋 포트(`...QueryPort`)로 두지 않는 이유: 조회 포트는 애그리거트 단위 규칙인데 `SocialIdentity` 는 VO 이고, 행위의 본질도 저장소 조회가 아니라 외부 시스템과의 인증(일회용 인가 코드 소모·토큰 교환)이기 때문이다.
+- 구현체 `SocialAuthenticatorImpl`(adapter/out/service)은 `OAuthClient` 인터페이스의 제공자별 구현(`KakaoOAuthClient`, `GoogleOAuthClient`)을 `Map<Provider, OAuthClient>` 로 조립해 두고, 요청의 provider 값으로 위임한다. 제공자가 늘면 `OAuthClient` 구현 하나를 추가한다.
+- 제공자별 연동 코드는 `adapter/out/oauth/` 하위에 둔다. 도메인 서비스 이름은 유비쿼터스 언어(인증기), 인프라 클래스 이름은 연동 실체(`~OAuthClient`)가 드러나게 짓는다.
 
 | 항목 | 카카오 | 구글 |
 |---|---|---|
