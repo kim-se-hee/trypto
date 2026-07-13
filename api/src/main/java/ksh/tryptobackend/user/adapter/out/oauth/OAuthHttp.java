@@ -9,7 +9,6 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-/** 제공자 공통 HTTP 구성. 타임아웃 있는 RestClient 생성과 상태코드별 실패 변환을 담당한다. */
 final class OAuthHttp {
 
     private OAuthHttp() {}
