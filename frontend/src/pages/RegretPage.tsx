@@ -9,8 +9,7 @@ import type { RuleType } from "@/lib/types/round";
 import type { AssetSnapshot, RegretSummary, ViolationMarker, RuleToggleItem, BenchmarkItem, ViolationTrade } from "@/lib/types/regret";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
-import { EXCHANGES } from "@/lib/types/coins";
-import { getRegretReport, getRegretChart, type RegretReportData, type RegretChartData } from "@/lib/api/regret-api";
+import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
 
 export function RegretPage() {
   const { user } = useAuth();

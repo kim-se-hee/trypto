@@ -55,7 +55,7 @@ function formatDate(iso: string): string {
 
 export function MyPage() {
   const { user, updateUser } = useAuth();
-  const { activeRound, clearRound, refreshActiveRound } = useRound();
+  const { activeRound, clearRound } = useRound();
   const navigate = useNavigate();
 
   const [editingNickname, setEditingNickname] = useState(false);
