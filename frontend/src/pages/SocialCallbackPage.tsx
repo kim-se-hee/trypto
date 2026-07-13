@@ -1,18 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Activity, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { kakaoLogin } from "@/lib/api/kakao-api";
-import { KAKAO_STATE_KEY, KAKAO_VERIFIER_KEY } from "@/lib/auth/kakao";
+import { socialLogin } from "@/lib/api/auth-api";
+import {
+  OAUTH_STATE_KEY,
+  OAUTH_VERIFIER_KEY,
+  isSocialProvider,
+  providerLabel,
+} from "@/lib/auth/social";
 import { isApiClientError } from "@/lib/api/types";
 
 /**
- * 카카오 인가 콜백. 카카오가 ?code=&state= 를 붙여 되돌린 페이지.
+ * 소셜 인가 콜백. 제공자가 ?code=&state= 를 붙여 되돌린 페이지 (/auth/:provider/callback).
  * state 대조 → 백엔드 로그인 호출 → 성공 시 /market 이동.
  */
-export function KakaoCallbackPage() {
+export function SocialCallbackPage() {
   const navigate = useNavigate();
-  const { loginWithKakao } = useAuth();
+  const { provider } = useParams();
+  const { loginWithSocial } = useAuth();
   const [error, setError] = useState<string | null>(null);
   // 인가 코드는 일회용이라 StrictMode 이중 실행 시 두 번째 교환이 실패한다. ref 로 한 번만 실행.
   const startedRef = useRef(false);
@@ -21,18 +27,23 @@ export function KakaoCallbackPage() {
     if (startedRef.current) return;
     startedRef.current = true;
 
+    if (!isSocialProvider(provider)) {
+      setError("지원하지 않는 소셜 제공자입니다.");
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const errorParam = params.get("error");
     const code = params.get("code");
     const returnedState = params.get("state");
 
-    const savedState = sessionStorage.getItem(KAKAO_STATE_KEY);
-    const verifier = sessionStorage.getItem(KAKAO_VERIFIER_KEY);
-    sessionStorage.removeItem(KAKAO_STATE_KEY);
-    sessionStorage.removeItem(KAKAO_VERIFIER_KEY);
+    const savedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+    const verifier = sessionStorage.getItem(OAUTH_VERIFIER_KEY);
+    sessionStorage.removeItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_VERIFIER_KEY);
 
     if (errorParam) {
-      setError("카카오 로그인이 취소되었거나 실패했습니다.");
+      setError(`${providerLabel(provider)} 로그인이 취소되었거나 실패했습니다.`);
       return;
     }
     if (!code || !returnedState) {
@@ -48,9 +59,9 @@ export function KakaoCallbackPage() {
       return;
     }
 
-    kakaoLogin(code, verifier)
+    socialLogin(provider, code, verifier)
       .then((result) => {
-        loginWithKakao({ userId: result.userId, nickname: result.nickname });
+        loginWithSocial({ userId: result.userId, nickname: result.nickname });
         navigate("/market", { replace: true });
       })
       .catch((e: unknown) => {
@@ -58,7 +69,7 @@ export function KakaoCallbackPage() {
           isApiClientError(e) ? e.message : "로그인 처리 중 오류가 발생했습니다.",
         );
       });
-  }, [navigate, loginWithKakao]);
+  }, [navigate, loginWithSocial, provider]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -84,7 +95,9 @@ export function KakaoCallbackPage() {
         ) : (
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm">카카오 로그인 처리 중…</p>
+            <p className="text-sm">
+              {isSocialProvider(provider) ? `${providerLabel(provider)} 로그인 처리 중…` : "로그인 처리 중…"}
+            </p>
           </div>
         )}
       </div>

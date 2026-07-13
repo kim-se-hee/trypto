@@ -1,6 +1,6 @@
-package ksh.tryptobackend.user.adapter.out.acl;
+package ksh.tryptobackend.user.adapter.out.oauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record KakaoTokenResponse(
+public record GoogleTokenResponse(
         @JsonProperty("access_token") String accessToken) {}

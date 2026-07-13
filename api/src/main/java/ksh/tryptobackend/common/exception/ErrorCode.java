@@ -56,6 +56,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "user.not.found"),
     USER_ALREADY_DELETED(409, "user.already.deleted"),
     UNAUTHENTICATED(401, "unauthenticated"),
+    INVALID_PROVIDER(400, "invalid.provider"),
     SOCIAL_LOGIN_FAILED(401, "social.login.failed"),
     SOCIAL_ACCOUNT_NOT_FOUND(404, "social.account.not.found"),
     SIGNUP_RESTRICTED(403, "signup.restricted"),

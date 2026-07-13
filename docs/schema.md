@@ -6,15 +6,15 @@ erDiagram
     USER {
         id user_id PK "주 식별자"
         number version "낙관적 잠금 버전"
-        id social_identity_id FK "소셜 신원 ID"
+        id social_account_id FK "소셜 계정 ID"
         string nickname UK "닉네임"
         datetime deleted_at "탈퇴 시각 (nullable, 재가입 제한 기준)"
         datetime created_at "가입일"
         datetime updated_at "수정일"
     }
 
-    SOCIAL_IDENTITY {
-        id social_identity_id PK "주 식별자"
+    SOCIAL_ACCOUNT {
+        id social_account_id PK "주 식별자"
         string provider UK "소셜 제공자 (provider_id 와 복합 유니크)"
         string provider_id UK "제공자 회원번호"
         id user_id FK UK "현재 연결된 회원 ID (nullable, 탈퇴 시 해제)"
@@ -246,7 +246,7 @@ erDiagram
     }
 
     %% === 관계 ===
-    SOCIAL_IDENTITY |o--o| USER : ""
+    SOCIAL_ACCOUNT |o--o| USER : ""
     USER ||--|{ INVESTMENT_ROUND : ""
     INVESTMENT_ROUND ||--|{ WALLET : ""
     USER ||--o{ PORTFOLIO_SNAPSHOT : ""
