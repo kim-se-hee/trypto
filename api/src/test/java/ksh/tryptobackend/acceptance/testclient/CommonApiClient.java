@@ -18,6 +18,7 @@ public class CommonApiClient {
 
     private RestTestClient.ResponseSpec lastResponse;
     private String sessionId;
+    private Long loggedInUserId;
 
     public CommonApiClient(RestTestClient restTestClient, SessionCommandPort sessionCommandPort) {
         this.restTestClient = restTestClient;
@@ -27,6 +28,12 @@ public class CommonApiClient {
     /** 주어진 유저로 세션을 발급받아 이후 요청에 SESSION 쿠키를 실어 보낸다. */
     public void loginAs(Long userId) {
         this.sessionId = sessionCommandPort.create(userId);
+        this.loggedInUserId = userId;
+    }
+
+    /** 마지막으로 loginAs 한 유저의 식별자. 로그인하지 않았다면 null. */
+    public Long getLoggedInUserId() {
+        return loggedInUserId;
     }
 
     /** 마지막 응답의 Set-Cookie 에서 SESSION 값을 뽑아 이후 요청에 실어 보낸다. */

@@ -25,6 +25,13 @@ erDiagram
         id nickname_sequence_id PK "자동 닉네임 번호표"
     }
 
+    FEEDBACK {
+        id feedback_id PK "주 식별자"
+        id user_id FK "작성자 ID (탈퇴해도 보존)"
+        string content "피드백 본문 (20자 이상 1000자 이하)"
+        datetime created_at "작성 시각"
+    }
+
     INVESTMENT_ROUND {
         id round_id PK "주 식별자"
         id user_id FK "유저 ID"
@@ -247,6 +254,7 @@ erDiagram
 
     %% === 관계 ===
     SOCIAL_ACCOUNT |o--o| USER : ""
+    USER ||--o{ FEEDBACK : ""
     USER ||--|{ INVESTMENT_ROUND : ""
     INVESTMENT_ROUND ||--|{ WALLET : ""
     USER ||--o{ PORTFOLIO_SNAPSHOT : ""
