@@ -15,7 +15,6 @@
 - 소셜 신원 행(id=7)은 세대가 바뀌어도 그대로 남아 그 소셜 계정의 이력 앵커가 된다.
 - 재가입 30일 판정: `user` 에서 `social_identity_id = 7` 이고 deleted_at 이 있는 행들의 가장 최근 탈퇴 시각을 본다.
 
-
 ## API 명세
 
 ### `DELETE /api/users/me`

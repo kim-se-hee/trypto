@@ -29,7 +29,7 @@
 - [SocialAccount.java:40-42] `disconnect()` 에 불변식 검증이 없어 이미 해제된 상태에서도 조용히 통과 — `User.withdraw()` 와 방어 강도가 비대칭 (출처: ddd)
 - [SessionCommandPort.java:8] `deleteAllOf` 네이밍이 모호 — `deleteAllByUserId` 등이 더 명확 (출처: oop)
 - [DeleteAccountStepDefinition.java:16-22] 두 스텝 정의 본문이 동일하며 세션 유무가 클라이언트 내부 상태로 결정됨 (출처: oop)
-- [spec.md:36] "탈퇴 시 미체결 주문 모두 취소" 부수 효과가 미구현 — plan.md 에 설계가 없어 이번 범위에서 제외됨. trading·wallet 컨텍스트 확장이 필요하므로 계획 보강 후 별도 진행 필요 (출처: ddd, oop)
+- [spec.md] "탈퇴 시 미체결 주문 모두 취소" — 리뷰 이후 **요구사항 자체를 철회**했다. 도메인 이벤트 기반 취소를 구현했으나, 라운드 종료 시에도 미체결 주문을 취소하지 않는 기존 관례와 어긋나고 확장 범위 대비 이득이 적어 되돌렸다. 근거는 spec.md 의 "미체결 주문 — 취소하지 않는다" 절에 있다 (출처: ddd, oop)
 
 ## 2차 차단 이슈
 
@@ -37,9 +37,9 @@
 
 ## 2차 참고 이슈 (수정 안 함, 보고용)
 
-- [AccountWithdrawalService.java:15-18] 협력 불변식 검증 부재 — 넘겨받은 `SocialAccount` 가 해당 `User` 와 실제로 연결된 계정인지 확인하지 않는다. `SocialAccount.isConnectedTo(userId)` 로 검증하면 도메인 서비스가 협력 불변식의 수문장이 된다 (출처: ddd)
+- [AccountClosureService.java:15-18] 협력 불변식 검증 부재 — 넘겨받은 `SocialAccount` 가 해당 `User` 와 실제로 연결된 계정인지 확인하지 않는다. `SocialAccount.isConnectedTo(userId)` 로 검증하면 도메인 서비스가 협력 불변식의 수문장이 된다 (출처: ddd)
 - [RedisSessionCommandAdapter.java:16,66-75] `Command` 어댑터가 `SessionReader` 조회 책임까지 겸한다 — 키 소유권 일원화를 위한 의도적 선택이나, 클래스명을 `RedisSessionAdapter` 로 바꾸거나 키·TTL 전용 컴포넌트로 분리하는 방안 (출처: ddd)
-- [AccountWithdrawalService.java:11] 이름이 wallet 컨텍스트의 "출금(withdrawal)" 과 혼동될 소지 — `AccountClosureService` 등 고려 (출처: ddd)
+- [AccountClosureService.java:11] 이름이 wallet 컨텍스트의 "출금(withdrawal)" 과 혼동될 소지 — `AccountClosureService` 로 개명해 반영함 (출처: ddd)
 - [RedisSessionCommandAdapter.java:64-79] 인증 핫패스 `findUserId` 의 `GET` + `EXPIRE` 2회가 여전히 비원자적 3회 왕복 — 다른 명령처럼 Lua 로 묶는 방안 (출처: 동시성, oop)
 - [RedisSessionCommandAdapter.java:21-43] Lua 스크립트 자체를 검증하는 통합 테스트 부재 — Testcontainers 로 `create` → `deleteAllOf` 경로 검증 권장 (출처: oop)
 - [DeleteAccountService.java:41-45] 1차 참고 이슈(트랜잭션 커밋 전 Redis 세션 삭제)가 그대로 남아 있음 — 커밋 전 세션을 지우면 미커밋 상태를 읽은 재로그인이 새 세션을 만들어 탈퇴 후에도 살아남을 수 있다. `afterCommit` 훅으로 이전 권장 (출처: 동시성)
