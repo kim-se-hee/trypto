@@ -10,7 +10,6 @@ const BACKEND_EXCHANGE_ID_MAP: Record<string, number> = {
   upbit: 1,
   bithumb: 2,
   binance: 3,
-  jupiter: 4,
 };
 
 // 거래소별 코인 목록 캐시
