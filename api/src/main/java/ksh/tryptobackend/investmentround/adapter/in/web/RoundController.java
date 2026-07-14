@@ -92,8 +92,8 @@ public class RoundController {
                     .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
         }
 
-        ChargeEmergencyFundingResponse response = ChargeEmergencyFundingResponse.of(
-                roundId, request.exchangeId(), request.amount(), remainingChargeCount);
+        ChargeEmergencyFundingResponse response =
+                ChargeEmergencyFundingResponse.of(roundId, request.amount(), remainingChargeCount);
         return ResponseEntity.ok(ApiResponseDto.success("긴급 자금을 투입했습니다.", response));
     }
 }
