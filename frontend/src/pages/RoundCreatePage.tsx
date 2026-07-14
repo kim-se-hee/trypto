@@ -5,13 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { RoundCreateHeader } from "@/components/round/RoundCreateHeader";
 import { SeedMoneyCard } from "@/components/round/SeedMoneyCard";
+import { InvestmentRulesSection } from "@/components/round/InvestmentRulesSection";
 import {
-  InvestmentRulesSection,
   getDefaultRules,
   type RulesMap,
   type RuleState,
   type SelectableRuleType,
-} from "@/components/round/InvestmentRulesSection";
+} from "@/components/round/rules";
 
 export function RoundCreatePage() {
   const { user } = useAuth();
