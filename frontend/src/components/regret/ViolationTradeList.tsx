@@ -11,7 +11,6 @@ import {
   Swords,
   type LucideIcon,
 } from "lucide-react";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import type { ViolationTrade } from "@/lib/types/regret";
 import {
   RULE_LABELS,
@@ -104,8 +103,6 @@ export function ViolationTradeList({ trades }: ViolationTradeListProps) {
               key={trade.id}
               className="flex items-center gap-3 rounded-xl border border-border/40 px-4 py-3 transition-colors hover:bg-primary/[0.02]"
             >
-              <CoinIcon symbol={trade.coinSymbol} size={28} />
-
               <span className="text-sm font-bold">{trade.coinSymbol}</span>
               <span className="text-xs text-muted-foreground">{trade.date}</span>
 

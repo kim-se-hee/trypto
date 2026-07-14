@@ -1,6 +1,5 @@
 import { X, ArrowUpFromLine } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity, formatFiatEstimate } from "@/lib/formatters";
 import type { WalletCoinBalance } from "@/lib/types/wallet";
 
@@ -26,7 +25,6 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onTransfer }: W
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/30 px-5 py-4">
         <div className="flex items-center gap-3">
-          <CoinIcon symbol={coin.coinSymbol} size={36} />
           <div>
             <p className="text-sm font-bold">{coin.coinSymbol}</p>
             <p className="text-xs text-muted-foreground">{coin.coinName}</p>

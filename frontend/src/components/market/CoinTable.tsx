@@ -5,7 +5,6 @@ import { SortIcon } from "@/components/ui/SortIcon";
 import type { SortDir } from "@/hooks/useSort";
 import { useVirtualList, virtualRowStyle } from "@/hooks/useVirtualList";
 import { usePriceFlash } from "@/hooks/usePriceFlash";
-import { CoinIcon } from "./CoinIcon";
 import type { CoinData } from "@/lib/types/coins";
 
 export type CoinSortKey = "name" | "price" | "change" | "volume";
@@ -65,7 +64,6 @@ const CoinRow = memo(function CoinRow({
       )}
     >
       <div className="flex items-center gap-3">
-        <CoinIcon symbol={coin.symbol} size={32} />
         <div className="flex flex-col leading-tight">
           <span className="text-[13px] font-semibold tracking-wide">{coin.symbol}</span>
           <span className="text-[11px] text-muted-foreground">{coin.name}</span>

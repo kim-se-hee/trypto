@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity } from "@/lib/formatters";
 import { createTransfer } from "@/lib/api/transfer-api";
 import type { WalletCoinBalance } from "@/lib/types/wallet";
@@ -113,7 +112,6 @@ export function TransferModal({
         {/* Header */}
         <DialogHeader className="border-b border-border/30 px-6 py-5">
           <div className="flex items-center gap-3">
-            <CoinIcon symbol={coin.coinSymbol} size={32} />
             <div>
               <DialogTitle>{coin.coinSymbol} 출금</DialogTitle>
               <DialogDescription className="mt-0.5">
