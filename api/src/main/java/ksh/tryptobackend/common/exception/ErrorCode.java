@@ -58,10 +58,12 @@ public enum ErrorCode {
     USER_ALREADY_DELETED(409, "user.already.deleted"),
     UNAUTHENTICATED(401, "unauthenticated"),
     INVALID_PROVIDER(400, "invalid.provider"),
+    INVALID_CLIENT_TYPE(400, "invalid.client.type"),
     SOCIAL_LOGIN_FAILED(401, "social.login.failed"),
     SOCIAL_ACCOUNT_NOT_FOUND(404, "social.account.not.found"),
     SIGNUP_RESTRICTED(403, "signup.restricted"),
     SOCIAL_SERVER_ERROR(502, "social.server.error"),
+    SOCIAL_LOGIN_NOT_CONFIGURED(503, "social.login.not.configured"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 
