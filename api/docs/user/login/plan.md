@@ -94,8 +94,9 @@
 - 클라이언트가 `redirectUri` 를 직접 보내면 서버가 임의의 주소로 인가 코드를 넘겨주는 오픈 리다이렉터가 된다. 따라서 클라이언트는 자기 유형(`clientType`)만 보내고, 서버는 미리 등록해 둔 자격증명 묶음 중 하나를 고른다.
 - 자격증명은 `clientId` · `clientSecret` · `redirectUri` 세 값을 한 묶음으로 다룬다(`OAuthCredentials`). 구글은 Android/iOS 클라이언트에 웹과 다른 `clientId` 를 발급하고 `clientSecret` 을 발급하지 않으므로, `redirectUri` 하나만 교체하는 방식으로는 동작하지 않는다.
 - `clientSecret` 이 비어 있으면 토큰 교환 폼에서 `client_secret` 필드를 아예 제외한다. 빈 문자열을 보내면 제공자가 인증 실패로 처리한다.
-- 클라이언트 유형은 `ClientType` enum(`WEB`, `MOBILE`)으로 표현한다. 요청에 값이 없으면 `WEB` 으로 간주하여 기존 웹 프론트엔드와의 하위 호환을 유지한다.
-- 요청한 유형의 자격증명이 설정되지 않았으면 `SOCIAL_LOGIN_NOT_CONFIGURED` 로 응답한다.
+- 클라이언트 유형은 `ClientType` enum(`WEB`, `ANDROID`, `IOS`)으로 표현한다. 요청에 값이 없으면 `WEB` 으로 간주하여 기존 웹 프론트엔드와의 하위 호환을 유지한다.
+- 안드로이드와 아이폰을 하나의 모바일 유형으로 묶지 않는다. 구글은 Android 클라이언트와 iOS 클라이언트에 서로 다른 `clientId` 를 발급하고, 토큰 교환의 `client_id` 는 인가 요청에 쓴 값과 같아야 하므로 두 운영체제가 자격증명을 공유하면 한쪽은 반드시 실패한다.
+- 요청한 유형의 자격증명이 설정되지 않았으면 `SOCIAL_LOGIN_NOT_CONFIGURED` 로 응답한다. 자격증명은 유형별로 독립이므로 안드로이드·아이폰 자격증명이 비어 있어도 웹 로그인은 영향을 받지 않는다.
 
 ### 최초 로그인 동시성 문제
 
@@ -123,7 +124,7 @@ Request Body
 |------|------|------|------|
 | code | String | O | 제공자 인가 코드 |
 | codeVerifier | String | O | PKCE 검증값(code_verifier) |
-| clientType | String | X | 클라이언트 유형. `web` 또는 `mobile` (대소문자 구분 없음). 생략하면 `web` 으로 간주한다 |
+| clientType | String | X | 클라이언트 유형. `web` · `android` · `ios` 중 하나 (대소문자 구분 없음). 생략하면 `web` 으로 간주한다 |
 
 - 성공: `200` + `Set-Cookie: SESSION=...` + 아래 바디
 
