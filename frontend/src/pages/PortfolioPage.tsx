@@ -124,6 +124,7 @@ export function PortfolioPage() {
                   baseCurrency={portfolio.baseCurrency}
                 />
                 <DonutChart
+                  availableCash={portfolio.availableCash}
                   holdings={portfolio.holdings}
                   baseCurrency={portfolio.baseCurrency}
                 />

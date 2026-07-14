@@ -4,6 +4,7 @@ import { getCoinColor } from "@/lib/types/coins";
 import type { HoldingData } from "@/lib/types/portfolio";
 
 interface DonutChartProps {
+  availableCash: number;
   holdings: HoldingData[];
   baseCurrency: string;
 }
@@ -16,38 +17,58 @@ interface Segment {
 }
 
 const OTHER_COLOR = "#8b949e";
+const CASH_COLOR = "#c2b8ab";
 
-function buildSegments(holdings: HoldingData[]): Segment[] {
-  const total = holdings.reduce((sum, h) => sum + h.currentPrice * h.quantity, 0);
+/** 보유 현금은 코인이 하나도 없어도 항상 한 조각으로 남는다. */
+function buildSegments(
+  availableCash: number,
+  holdings: HoldingData[],
+  baseCurrency: string,
+): Segment[] {
+  const total =
+    availableCash + holdings.reduce((sum, h) => sum + h.currentPrice * h.quantity, 0);
   if (total === 0) return [];
 
-  const items = holdings
+  const coins = holdings
     .map((h) => ({
       label: h.coinSymbol,
       value: h.currentPrice * h.quantity,
       ratio: (h.currentPrice * h.quantity) / total,
       color: getCoinColor(h.coinSymbol),
     }))
+    .filter((c) => c.value > 0)
     .sort((a, b) => b.value - a.value);
 
-  if (items.length <= 7) return items;
+  const shown = coins.length <= 6 ? coins : coins.slice(0, 5);
+  const rest = coins.slice(shown.length);
+  if (rest.length > 0) {
+    const otherValue = rest.reduce((s, r) => s + r.value, 0);
+    shown.push({
+      label: "기타",
+      value: otherValue,
+      ratio: otherValue / total,
+      color: OTHER_COLOR,
+    });
+  }
 
-  const top = items.slice(0, 6);
-  const rest = items.slice(6);
-  const otherValue = rest.reduce((s, r) => s + r.value, 0);
-  top.push({
-    label: "기타",
-    value: otherValue,
-    ratio: otherValue / total,
-    color: OTHER_COLOR,
-  });
-  return top;
+  if (availableCash <= 0) return shown;
+
+  return [
+    {
+      label: baseCurrency,
+      value: availableCash,
+      ratio: availableCash / total,
+      color: CASH_COLOR,
+    },
+    ...shown,
+  ];
 }
 
-export function DonutChart({ holdings, baseCurrency }: DonutChartProps) {
+export function DonutChart({ availableCash, holdings, baseCurrency }: DonutChartProps) {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
-  const totalEval = holdings.reduce((sum, h) => sum + h.currentPrice * h.quantity, 0);
-  const segments = buildSegments(holdings);
+  const totalAsset =
+    availableCash + holdings.reduce((sum, h) => sum + h.currentPrice * h.quantity, 0);
+  const segments = buildSegments(availableCash, holdings, baseCurrency);
 
   const size = 180;
   const strokeWidth = 28;
@@ -104,9 +125,9 @@ export function DonutChart({ holdings, baseCurrency }: DonutChartProps) {
           </svg>
           {/* Center label */}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[10px] font-medium text-muted-foreground">총 평가</span>
+            <span className="text-[10px] font-medium text-muted-foreground">총 자산</span>
             <span className="font-mono text-sm font-bold tabular-nums">
-              {formatCurrency(totalEval, baseCurrency)}
+              {formatCurrency(totalAsset, baseCurrency)}
             </span>
           </div>
         </div>
