@@ -12,6 +12,7 @@ import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { EXCHANGES } from "@/lib/types/coins";
+import { cn } from "@/lib/utils";
 import { isChosungQuery, toChosung, toJamo } from "@/lib/hangul";
 import { resolveOrderTargetIds, type OrderTargetResult } from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
@@ -201,7 +202,13 @@ export function MarketPage() {
             코인 목록을 불러오는 중...
           </div>
         ) : (
-          <div className="animate-enter-delay-3 mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div
+            className={cn(
+              "animate-enter-delay-3 mt-6 grid grid-cols-1 gap-6",
+              // 라운드가 없으면 옆 칸에 띄울 것이 없다. 빈 열을 남기지 않고 차트와 목록이 폭을 다 쓰게 한다.
+              activeRound && "lg:grid-cols-[minmax(0,1fr)_360px]",
+            )}
+          >
             <div className="space-y-5">
               {selectedCoin && (
                 <CandleChartPanel
@@ -225,26 +232,26 @@ export function MarketPage() {
             </div>
 
             {/* Side panel */}
-            <div className="space-y-5">
-              {activeRound && (
+            {activeRound && (
+              <div className="space-y-5">
                 <EmergencyFundingCard
                   round={activeRound}
                   onCharge={(amount) => chargeEmergencyFunding(amount, exchange.id)}
                 />
-              )}
-              {selectedCoin && (
-                <OrderPanel
-                  baseCurrency={exchange.baseCurrency}
-                  coinSymbol={selectedCoin.symbol}
-                  coinName={selectedCoin.name}
-                  currentPrice={selectedCoin.currentPrice}
-                  feeRate={0.0005}
-                  orderTargetIds={orderTargetIds}
-                  orderTargetFailure={orderTargetFailure}
-                  orderFilledEvent={orderFilledEvent}
-                />
-              )}
-            </div>
+                {selectedCoin && (
+                  <OrderPanel
+                    baseCurrency={exchange.baseCurrency}
+                    coinSymbol={selectedCoin.symbol}
+                    coinName={selectedCoin.name}
+                    currentPrice={selectedCoin.currentPrice}
+                    feeRate={0.0005}
+                    orderTargetIds={orderTargetIds}
+                    orderTargetFailure={orderTargetFailure}
+                    orderFilledEvent={orderFilledEvent}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
