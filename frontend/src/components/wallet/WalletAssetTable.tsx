@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Search, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import { formatQuantity, formatCurrencyCompact, SMALL_AMOUNT_THRESHOLD } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
@@ -187,7 +186,6 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
                   >
                     {/* Coin info */}
                     <div className="flex items-center gap-3">
-                      <CoinIcon symbol={b.coinSymbol} size={36} />
                       <div className="flex flex-col leading-tight">
                         <span className="text-[13px] font-semibold tracking-wide">{b.coinSymbol}</span>
                         <span className="text-[11px] text-muted-foreground">{b.coinName}</span>

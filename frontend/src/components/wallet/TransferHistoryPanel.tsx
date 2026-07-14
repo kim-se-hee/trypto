@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import { cn } from "@/lib/utils";
 import { formatQuantity } from "@/lib/formatters";
 import type { TransferRecord, WalletData } from "@/lib/types/wallet";
@@ -168,7 +167,6 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <span className="flex items-center gap-2">
-                    <CoinIcon symbol={item.asset} size={26} />
                     <span className="flex flex-col text-xs">
                       <span className="font-semibold text-foreground">{item.asset}</span>
                       <span className="text-muted-foreground">{coinName}</span>

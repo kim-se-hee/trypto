@@ -4,7 +4,6 @@ import { formatPrice, formatQuantity, formatCurrencyCompact } from "@/lib/format
 import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
-import { CoinIcon } from "@/components/market/CoinIcon";
 import type { HoldingData } from "@/lib/types/portfolio";
 
 interface HoldingsTableProps {
@@ -106,7 +105,6 @@ export function HoldingsTable({ holdings, baseCurrency }: HoldingsTableProps) {
                 >
                   {/* Coin info */}
                   <div className="flex items-center gap-3">
-                    <CoinIcon symbol={h.coinSymbol} size={32} />
                     <div className="flex flex-col leading-tight">
                       <span className="text-[13px] font-semibold tracking-wide">{h.coinSymbol}</span>
                       <span className="text-[11px] text-muted-foreground">{h.coinName}</span>

@@ -1,6 +1,5 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CoinIcon } from "./CoinIcon";
 import type { CoinData } from "@/lib/types/coins";
 
 interface MarketOverviewCardsProps {
@@ -63,7 +62,6 @@ export function MarketOverviewCards({ coins, baseCurrency, highlightSymbols }: M
 
             <div className="relative flex items-start justify-between">
               <div className="flex items-center gap-2.5">
-                <CoinIcon symbol={coin.symbol} size={32} />
                 <div>
                   <span className="text-sm font-semibold">{coin.symbol}</span>
                   <span className="ml-1.5 text-xs text-muted-foreground">{coin.name}</span>
