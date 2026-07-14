@@ -8,4 +8,5 @@ investmentround 컨텍스트 — 투자 라운드, 투자 원칙, 긴급 충전.
 - [start-round/](start-round/index.md) — 라운드 시작
 - [end-round/](end-round/index.md) — 라운드 종료
 - [active-round/](active-round/index.md) — 활성 라운드 조회
+- [round-summary/](round-summary/index.md) — 라운드 요약 조회(누적 횟수)
 - [emergency-funding/](emergency-funding/index.md) — 긴급 충전
