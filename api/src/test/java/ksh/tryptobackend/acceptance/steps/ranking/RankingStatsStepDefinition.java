@@ -94,4 +94,22 @@ public class RankingStatsStepDefinition {
                 .jsonPath("$.data.avgProfitRate")
                 .isNotEmpty();
     }
+
+    @Then("최고 수익률은 {int}이다")
+    public void 최고_수익률은_이다(int value) {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.maxProfitRate")
+                .isEqualTo(value);
+    }
+
+    @Then("평균 수익률은 {int}이다")
+    public void 평균_수익률은_이다(int value) {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.avgProfitRate")
+                .isEqualTo(value);
+    }
 }
