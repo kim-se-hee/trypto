@@ -11,6 +11,10 @@ import type { AssetSnapshot, RegretSummary, ViolationMarker, RuleToggleItem, Ben
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
+import { isApiClientError } from "@/lib/api/types";
+
+/** 복기 리포트는 야간 배치로 생성된다. 배치 전에는 아직 집계되지 않은 정상 상태다. */
+const NOT_AGGREGATED_CODES = new Set(["REPORT_NOT_FOUND", "SNAPSHOT_NOT_FOUND"]);
 
 export function RegretPage() {
   const { user } = useAuth();
@@ -21,6 +25,7 @@ export function RegretPage() {
   );
   const [btcHoldEnabled, setBtcHoldEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [notAggregated, setNotAggregated] = useState(false);
 
   // API 데이터 상태
   const [summary, setSummary] = useState<RegretSummary | null>(null);
@@ -42,6 +47,7 @@ export function RegretPage() {
     if (!firstWallet) return;
 
     setLoading(true);
+    setNotAggregated(false);
     try {
       const [reportData, chartData] = await Promise.all([
         getRegretReport(activeRound.roundId, firstWallet.exchangeId, user.userId),
@@ -57,6 +63,10 @@ export function RegretPage() {
       setMarkers(chartData.markers);
       setTotalDays(chartData.totalDays);
     } catch (error) {
+      if (isApiClientError(error) && NOT_AGGREGATED_CODES.has(error.code)) {
+        setNotAggregated(true);
+        return;
+      }
       console.error("Failed to load regret data", error);
     } finally {
       setLoading(false);
@@ -125,6 +135,10 @@ export function RegretPage() {
               <ViolationTradeList trades={violationTrades} />
             </div>
           </div>
+        ) : notAggregated ? (
+          <p className="text-sm text-muted-foreground">
+            아직 복기할 내역이 집계되지 않았습니다. 매일 자정에 집계되며, 다음 날부터 확인할 수 있습니다.
+          </p>
         ) : activeRound ? (
           <p className="text-sm text-muted-foreground">복기 데이터를 불러올 수 없습니다.</p>
         ) : (
