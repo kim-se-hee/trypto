@@ -57,23 +57,19 @@ export interface CreateRoundParams {
 
 interface ChargeEmergencyFundingRequestBody {
   userId: number;
-  exchangeId: number;
   amount: number;
   idempotencyKey: string;
 }
 
 interface ChargeEmergencyFundingResponse {
   roundId: number;
-  exchangeId: number;
   chargedAmount: number;
   remainingChargeCount: number;
-  chargedAt: string;
 }
 
 export interface ChargeEmergencyFundingParams {
   roundId: number;
   userId: number;
-  exchangeId: number;
   amount: number;
   idempotencyKey: string;
 }
@@ -104,6 +100,7 @@ function mapRound(data: BackendRound): InvestmentRound {
 function toStartRoundBody(params: CreateRoundParams): StartRoundRequestBody {
   return {
     userId: params.userId,
+    // 시드머니는 업비트에만 넣을 수 있다. 나머지 거래소는 0원으로 보내 송금받을 지갑만 만든다.
     seeds: [
       { exchangeId: 1, amount: params.initialSeed },
       { exchangeId: 2, amount: 0 },
@@ -146,7 +143,6 @@ export async function chargeEmergencyFunding(
 ): Promise<ChargeEmergencyFundingResponse> {
   const requestBody: ChargeEmergencyFundingRequestBody = {
     userId: params.userId,
-    exchangeId: params.exchangeId,
     amount: params.amount,
     idempotencyKey: params.idempotencyKey,
   };

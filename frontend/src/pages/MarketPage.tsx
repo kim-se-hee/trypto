@@ -237,7 +237,7 @@ export function MarketPage() {
               <div className="space-y-5">
                 <EmergencyFundingCard
                   round={activeRound}
-                  onCharge={(amount) => chargeEmergencyFunding(amount, exchange.id)}
+                  onCharge={(amount) => chargeEmergencyFunding(amount)}
                 />
                 {selectedCoin && (
                   <OrderPanel

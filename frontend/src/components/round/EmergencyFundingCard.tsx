@@ -65,7 +65,7 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
           <div>
             <p className="text-sm font-semibold">긴급 자금 투입</p>
             <p className="text-xs text-muted-foreground">
-              라운드 진행 중 최대 3회까지 가능합니다.
+              업비트 원화 지갑에 들어갑니다. 라운드 진행 중 최대 3회까지 가능합니다.
             </p>
           </div>
         </div>
@@ -96,7 +96,8 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
           <DialogHeader>
             <DialogTitle>긴급 자금 투입</DialogTitle>
             <DialogDescription>
-              1회 상한은 {formatKRW(round.emergencyFundingLimit)} 입니다.
+              업비트 원화 지갑에 투입됩니다. 1회 상한은 {formatKRW(round.emergencyFundingLimit)} 입니다.
+              다른 거래소 자금이 필요하면 투입 후 송금해주세요.
             </DialogDescription>
           </DialogHeader>
 

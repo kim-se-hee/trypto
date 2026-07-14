@@ -13,7 +13,7 @@ export interface RoundContextValue {
   createRound: (params: CreateRoundParams) => Promise<InvestmentRound | null>;
   clearRound: () => void;
   refreshActiveRound: () => Promise<void>;
-  chargeEmergencyFunding: (amount: number, exchangeId: number) => Promise<boolean>;
+  chargeEmergencyFunding: (amount: number) => Promise<boolean>;
   getWalletId: (exchangeId: number) => number | null;
   // 거래소마다 상장 코인이 다르다. 미상장 거래소로는 송금할 수 없으므로 화면에서 미리 걸러낸다.
   isCoinListed: (exchangeId: number, coinId: number) => boolean;
