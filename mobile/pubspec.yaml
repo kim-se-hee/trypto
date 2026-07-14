@@ -4,7 +4,9 @@ publish_to: none
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.6.0 <4.0.0"
+  # json_serializable 이 includeIfNull: false 필드에 null-aware element(`?instance.x`) 를
+  # 생성한다. 이 문법은 Dart 3.8 부터라 하한을 3.6 에 두면 생성 코드가 파싱되지 않는다.
+  sdk: ">=3.8.0 <4.0.0"
   flutter: ">=3.27.0"
 
 dependencies:
