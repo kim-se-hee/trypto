@@ -55,5 +55,5 @@ management:
 
 logging:
   level:
-    ksh.tryptocollector: DEBUG
+    ksh.tryptocollector: ${LOG_LEVEL_APP:DEBUG}
     ksh.tryptocollector.ingest: INFO
