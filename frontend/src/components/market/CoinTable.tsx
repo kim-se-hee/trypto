@@ -5,6 +5,7 @@ import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
 import { useVirtualList, virtualRowStyle } from "@/hooks/useVirtualList";
+import { usePriceFlash } from "@/hooks/usePriceFlash";
 import { CoinIcon } from "./CoinIcon";
 import type { CoinData } from "@/lib/types/coins";
 
@@ -45,6 +46,7 @@ const CoinRow = memo(function CoinRow({
   onSelect,
 }: CoinRowProps) {
   const handleClick = () => onSelect?.(coin.symbol);
+  const flash = usePriceFlash(coin.currentPrice, coin.tickedAt);
 
   return (
     <div
@@ -66,13 +68,25 @@ const CoinRow = memo(function CoinRow({
       </div>
 
       <div className={cn(
-        "text-right font-mono text-sm font-semibold tabular-nums",
+        "relative text-right font-mono text-sm font-semibold tabular-nums",
         coin.changeRate > 0 && "text-positive",
         coin.changeRate < 0 && "text-negative",
       )}>
         {coin.currentPrice > 0
           ? <>{currencySymbol}{formatPrice(coin.currentPrice, baseCurrency)}</>
           : <span className="text-muted-foreground">-</span>}
+        {flash && (
+          // 글자색이나 배경을 건드리면 정작 읽어야 할 숫자가 흔들린다. 테두리만 잠깐 두른다.
+          <span
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute left-0 -right-2 -inset-y-2.5 rounded-md border",
+              flash === "up" && "border-positive",
+              flash === "down" && "border-negative",
+              flash === "same" && "border-muted-foreground/40",
+            )}
+          />
+        )}
       </div>
 
       <div className="flex justify-end">
