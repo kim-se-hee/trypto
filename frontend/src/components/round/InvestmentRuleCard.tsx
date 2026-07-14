@@ -1,4 +1,3 @@
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -31,30 +30,40 @@ export function InvestmentRuleCard({
   return (
     <div
       className={cn(
-        "rounded-xl border px-4 py-3.5 transition-all duration-200",
-        enabled ? "border-border bg-card" : "border-transparent bg-secondary/30",
+        "rounded-xl border transition-all duration-200",
+        enabled ? "border-primary/50 bg-card" : "border-transparent bg-secondary/30",
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className={cn(
-            "text-sm font-bold transition-colors",
-            !enabled && "text-muted-foreground",
-          )}>
-            {label}
-          </p>
-          <p className={cn(
-            "text-[11px] transition-colors",
-            enabled ? "text-muted-foreground" : "text-muted-foreground/60",
-          )}>
-            {description}
-          </p>
-        </div>
-        <Switch checked={enabled} onCheckedChange={onToggle} />
+      <div
+        role="switch"
+        aria-checked={enabled}
+        aria-label={label}
+        tabIndex={0}
+        onClick={() => onToggle(!enabled)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle(!enabled);
+          }
+        }}
+        className="cursor-pointer select-none rounded-xl px-4 py-3.5 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        <p className={cn(
+          "text-sm font-bold transition-colors",
+          !enabled && "text-muted-foreground",
+        )}>
+          {label}
+        </p>
+        <p className={cn(
+          "text-[11px] transition-colors",
+          enabled ? "text-muted-foreground" : "text-muted-foreground/60",
+        )}>
+          {description}
+        </p>
       </div>
 
       {enabled && (
-        <div className="mt-3 flex items-center gap-3">
+        <div className="flex items-center gap-3 px-4 pb-3.5">
           {inputType === "slider" ? (
             <>
               <Slider
