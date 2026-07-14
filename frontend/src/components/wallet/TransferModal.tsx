@@ -28,6 +28,7 @@ export interface TransferDestination {
 interface TransferModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   coin: WalletCoinBalance;
   baseCurrency: string;
   fromWalletId: number;
@@ -37,6 +38,7 @@ interface TransferModalProps {
 export function TransferModal({
   isOpen,
   onClose,
+  onSuccess,
   coin,
   baseCurrency,
   fromWalletId,
@@ -45,6 +47,7 @@ export function TransferModal({
   const [selectedDestination, setSelectedDestination] = useState("");
   const [amountStr, setAmountStr] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const amount = parseFloat(amountStr) || 0;
@@ -65,12 +68,14 @@ export function TransferModal({
   async function handleSubmit() {
     setSubmitted(true);
     setError(null);
+    if (submitting) return;
     if (!selectedDestination || amount <= 0 || amount > coin.available) return;
     if (!coin.coinId) return;
 
     const dest = destinations.find((d) => d.exchangeId === selectedDestination);
     if (!dest) return;
 
+    setSubmitting(true);
     try {
       await createTransfer({
         idempotencyKey: crypto.randomUUID(),
@@ -79,9 +84,12 @@ export function TransferModal({
         coinId: coin.coinId,
         amount,
       });
+      onSuccess?.();
       onClose();
     } catch {
       setError("송금에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -176,8 +184,8 @@ export function TransferModal({
           )}
 
           {/* Submit */}
-          <Button className="w-full" onClick={handleSubmit}>
-            출금하기
+          <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "출금 중..." : "출금하기"}
           </Button>
         </div>
       </DialogContent>
