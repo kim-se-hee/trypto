@@ -1,14 +1,11 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,16 +26,18 @@ class AssetTimelineTest {
     class OfTest {
 
         @Test
-        @DisplayName("빈 스냅샷 목록으로 생성하면 SNAPSHOT_NOT_FOUND 예외가 발생한다")
-        void of_emptySnapshots_throwsException() {
+        @DisplayName("빈 스냅샷 목록으로 생성하면 빈 타임라인이 된다")
+        void of_emptySnapshots_createsEmptyTimeline() {
             // Given
             List<AssetSnapshot> emptySnapshots = List.of();
 
-            // When & Then
-            assertThatThrownBy(() -> AssetTimeline.of(emptySnapshots))
-                    .isInstanceOf(CustomException.class)
-                    .extracting(e -> ((CustomException) e).getErrorCode())
-                    .isEqualTo(ErrorCode.SNAPSHOT_NOT_FOUND);
+            // When
+            AssetTimeline timeline = AssetTimeline.of(emptySnapshots);
+
+            // Then
+            assertThat(timeline.isEmpty()).isTrue();
+            assertThat(timeline.getDates()).isEmpty();
+            assertThat(timeline.calculateTotalDays()).isZero();
         }
 
         @Test
