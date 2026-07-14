@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { formatChangeRate, formatPrice, getCurrencySymbol } from "@/lib/formatters";
 import {
@@ -250,35 +250,43 @@ export function CandleChartPanel({
       )
     : 8;
 
-  function moveViewport(nextEndIndex: number) {
-    const safeVisibleCount = Math.min(visibleCount, candles.length);
-    const minEndIndex = safeVisibleCount;
-    const maxEndIndex = candles.length;
-    setEndIndex(clamp(nextEndIndex, minEndIndex, maxEndIndex));
-  }
+  // 휠 이벤트 리스너가 이 둘을 붙잡고 있다. 매 렌더마다 새로 만들면 리스너를 그때마다
+  // 다시 등록해야 하므로, 실제로 쓰는 값이 바뀔 때만 새로 만든다.
+  const moveViewport = useCallback(
+    (nextEndIndex: number) => {
+      const safeVisibleCount = Math.min(visibleCount, candles.length);
+      const minEndIndex = safeVisibleCount;
+      const maxEndIndex = candles.length;
+      setEndIndex(clamp(nextEndIndex, minEndIndex, maxEndIndex));
+    },
+    [visibleCount, candles.length],
+  );
 
-  function zoomTo(nextVisibleCount: number, anchorGlobalIndex?: number) {
-    const boundedVisibleCount = clamp(nextVisibleCount, MIN_VISIBLE_COUNT, candles.length);
-    const previousVisibleCount = Math.min(visibleCount, candles.length);
-    const previousStartIndex = Math.max(0, endIndex - previousVisibleCount);
-    const fallbackAnchor = previousStartIndex + Math.floor(previousVisibleCount / 2);
-    const anchorIndex = clamp(
-      anchorGlobalIndex ?? fallbackAnchor,
-      0,
-      Math.max(candles.length - 1, 0),
-    );
-    const ratio =
-      previousVisibleCount <= 1 ? 1 : (anchorIndex - previousStartIndex) / previousVisibleCount;
-    const nextStartIndex = clamp(
-      Math.round(anchorIndex - boundedVisibleCount * ratio),
-      0,
-      Math.max(candles.length - boundedVisibleCount, 0),
-    );
+  const zoomTo = useCallback(
+    (nextVisibleCount: number, anchorGlobalIndex?: number) => {
+      const boundedVisibleCount = clamp(nextVisibleCount, MIN_VISIBLE_COUNT, candles.length);
+      const previousVisibleCount = Math.min(visibleCount, candles.length);
+      const previousStartIndex = Math.max(0, endIndex - previousVisibleCount);
+      const fallbackAnchor = previousStartIndex + Math.floor(previousVisibleCount / 2);
+      const anchorIndex = clamp(
+        anchorGlobalIndex ?? fallbackAnchor,
+        0,
+        Math.max(candles.length - 1, 0),
+      );
+      const ratio =
+        previousVisibleCount <= 1 ? 1 : (anchorIndex - previousStartIndex) / previousVisibleCount;
+      const nextStartIndex = clamp(
+        Math.round(anchorIndex - boundedVisibleCount * ratio),
+        0,
+        Math.max(candles.length - boundedVisibleCount, 0),
+      );
 
-    setVisibleCount(boundedVisibleCount);
-    setEndIndex(nextStartIndex + boundedVisibleCount);
-    setHoveredIndex(null);
-  }
+      setVisibleCount(boundedVisibleCount);
+      setEndIndex(nextStartIndex + boundedVisibleCount);
+      setHoveredIndex(null);
+    },
+    [candles.length, visibleCount, endIndex],
+  );
 
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
     dragStateRef.current = {
@@ -411,6 +419,8 @@ export function CandleChartPanel({
     candles.length,
     chartData,
     endIndex,
+    moveViewport,
+    zoomTo,
     visibleCandles.length,
     visibleCount,
     visibleStartIndex,

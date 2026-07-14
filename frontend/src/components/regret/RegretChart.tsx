@@ -106,7 +106,7 @@ export function RegretChart({
     }));
 
     return { actualPath, simPath, btcPath, yTicks, xLabels, markerPoints, hoverPoints };
-  }, [snapshots, markers, simulationLine, btcHoldValues]);
+  }, [snapshots, markers, simulationLine, btcHoldValues, totalDays]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
