@@ -87,6 +87,16 @@
 - 구글도 카카오와 동일하게 액세스 토큰으로 사용자 정보 엔드포인트를 호출해 회원번호(`sub`)를 얻는다. `id_token`(JWT) 검증 방식은 서명 검증·키 회전 관리가 추가로 필요하므로 도입하지 않는다. 토큰을 TLS 로 구글에서 직접 받으므로 사용자 정보 조회 방식으로 충분하다.
 - 외부 HTTP 호출에는 connect/read 타임아웃을 설정한다(카카오 리뷰 반영 사항과 동일 기준).
 
+### 클라이언트 유형별 자격증명
+
+웹 프론트엔드와 네이티브 모바일 앱은 서로 다른 리다이렉트 주소로 인가를 시작한다. OAuth2 규격상 토큰 교환의 `redirect_uri` 는 인가 요청에 쓴 값과 완전히 같아야 하므로, 서버가 하나의 `redirect_uri` 만 알고 있으면 모바일 로그인은 `redirect_uri_mismatch` 로 실패한다.
+
+- 클라이언트가 `redirectUri` 를 직접 보내면 서버가 임의의 주소로 인가 코드를 넘겨주는 오픈 리다이렉터가 된다. 따라서 클라이언트는 자기 유형(`clientType`)만 보내고, 서버는 미리 등록해 둔 자격증명 묶음 중 하나를 고른다.
+- 자격증명은 `clientId` · `clientSecret` · `redirectUri` 세 값을 한 묶음으로 다룬다(`OAuthCredentials`). 구글은 Android/iOS 클라이언트에 웹과 다른 `clientId` 를 발급하고 `clientSecret` 을 발급하지 않으므로, `redirectUri` 하나만 교체하는 방식으로는 동작하지 않는다.
+- `clientSecret` 이 비어 있으면 토큰 교환 폼에서 `client_secret` 필드를 아예 제외한다. 빈 문자열을 보내면 제공자가 인증 실패로 처리한다.
+- 클라이언트 유형은 `ClientType` enum(`WEB`, `MOBILE`)으로 표현한다. 요청에 값이 없으면 `WEB` 으로 간주하여 기존 웹 프론트엔드와의 하위 호환을 유지한다.
+- 요청한 유형의 자격증명이 설정되지 않았으면 `SOCIAL_LOGIN_NOT_CONFIGURED` 로 응답한다.
+
 ### 최초 로그인 동시성 문제
 
 같은 소셜 계정으로 최초 로그인이 동시에 두 번 들어오면 회원이 중복 생성될 수 있다.
@@ -113,6 +123,7 @@ Request Body
 |------|------|------|------|
 | code | String | O | 제공자 인가 코드 |
 | codeVerifier | String | O | PKCE 검증값(code_verifier) |
+| clientType | String | X | 클라이언트 유형. `web` 또는 `mobile` (대소문자 구분 없음). 생략하면 `web` 으로 간주한다 |
 
 - 성공: `200` + `Set-Cookie: SESSION=...` + 아래 바디
 
@@ -132,9 +143,11 @@ Request Body
 | code | status | 설명 |
 |------|--------|------|
 | INVALID_PROVIDER | 400 | 지원하지 않는 제공자 |
+| INVALID_CLIENT_TYPE | 400 | 지원하지 않는 클라이언트 유형 |
 | SOCIAL_LOGIN_FAILED | 401 | 인가 코드 무효/만료, PKCE 검증 실패 등 인증 실패 |
 | SIGNUP_RESTRICTED | 403 | 같은 소셜 신원의 탈퇴 회원이 재가입 제한 기간 내인 경우 가입 거부 |
 | SOCIAL_SERVER_ERROR | 502 | 제공자 서버 오류·사용자 정보 조회 실패 |
+| SOCIAL_LOGIN_NOT_CONFIGURED | 503 | 요청한 클라이언트 유형의 자격증명이 서버에 설정되지 않음 |
 
 ## 범위 밖 작업
 
