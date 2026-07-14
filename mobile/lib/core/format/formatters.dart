@@ -107,6 +107,13 @@ String formatChangeRate(double rate) {
   return '$sign${percent.toStringAsFixed(2)}%';
 }
 
+/// 수익률. **입력은 퍼센트 값 그 자체다**(12.34 → `+12.34%`). 티커 [formatChangeRate] 의 입력이
+/// 비율(0.0234)인 것과 단위가 다르다(사양서 §1.8-5). 랭킹·복기가 이 함수를 쓴다.
+String formatProfitPercent(double percent) {
+  final sign = percent > 0 ? '+' : '';
+  return '$sign${percent.toStringAsFixed(2)}%';
+}
+
 /// 통화 기호. USDT 는 빈 문자열이다. §8.5.10
 String getCurrencySymbol(String baseCurrency) => switch (baseCurrency) {
   'KRW' => '₩',
