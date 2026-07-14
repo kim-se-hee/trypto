@@ -30,7 +30,7 @@ export function getExchangeKeyById(exchangeId: number): string | null {
   return entry?.[0] ?? null;
 }
 
-async function fetchExchangeCoinsWithCache(exchangeId: number): Promise<ExchangeCoinResponse[]> {
+export async function fetchExchangeCoinsWithCache(exchangeId: number): Promise<ExchangeCoinResponse[]> {
   const cached = exchangeCoinsCache.get(exchangeId);
   if (cached) return cached;
 

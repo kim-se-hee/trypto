@@ -16,12 +16,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatQuantity } from "@/lib/formatters";
 import { createTransfer } from "@/lib/api/transfer-api";
+import { isApiClientError } from "@/lib/api/types";
 import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 export interface TransferDestination {
   walletId: number;
   exchangeId: string;
   exchangeName: string;
+  // 해당 거래소가 이 코인을 취급하는지. 취급하지 않으면 선택할 수 없다.
+  listed: boolean;
 }
 
 interface TransferModalProps {
@@ -60,6 +63,8 @@ export function TransferModal({
     return e;
   }, [submitted, selectedDestination, amount, coin.available]);
 
+  const hasReachableDestination = destinations.some((d) => d.listed);
+
   function handleMaxClick() {
     setAmountStr(coin.available.toString());
   }
@@ -72,7 +77,7 @@ export function TransferModal({
     if (!coin.coinId) return;
 
     const dest = destinations.find((d) => d.exchangeId === selectedDestination);
-    if (!dest) return;
+    if (!dest || !dest.listed) return;
 
     setSubmitting(true);
     try {
@@ -85,8 +90,12 @@ export function TransferModal({
       });
       onSuccess?.();
       onClose();
-    } catch {
-      setError("송금에 실패했습니다.");
+    } catch (e) {
+      if (isApiClientError(e) && e.code === "COIN_NOT_LISTED_ON_EXCHANGE") {
+        setError(`${dest.exchangeName}에는 ${coin.coinSymbol}이(가) 상장되어 있지 않습니다.`);
+      } else {
+        setError("송금에 실패했습니다.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -131,8 +140,13 @@ export function TransferModal({
               </SelectTrigger>
               <SelectContent>
                 {destinations.map((dest) => (
-                  <SelectItem key={dest.exchangeId} value={dest.exchangeId}>
+                  <SelectItem key={dest.exchangeId} value={dest.exchangeId} disabled={!dest.listed}>
                     {dest.exchangeName}
+                    {!dest.listed && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {coin.coinSymbol} 미상장
+                      </span>
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -177,12 +191,22 @@ export function TransferModal({
             )}
           </div>
 
+          {!hasReachableDestination && (
+            <p className="text-center text-sm text-muted-foreground">
+              {coin.coinSymbol}을(를) 취급하는 다른 거래소가 없어 출금할 수 없습니다.
+            </p>
+          )}
+
           {error && (
             <p className="text-center text-sm text-destructive">{error}</p>
           )}
 
           {/* Submit */}
-          <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={submitting || !hasReachableDestination}
+          >
             {submitting ? "출금 중..." : "출금하기"}
           </Button>
         </div>

@@ -35,7 +35,7 @@ function mapTransferItem(item: TransferHistoryItem, currentExchangeName: string)
 export function WalletPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { activeRound } = useRound();
+  const { activeRound, isCoinListed } = useRound();
 
   const exchangeTabItems = useMemo(() => {
     if (!activeRound) return [];
@@ -130,8 +130,11 @@ export function WalletPage() {
     void loadWalletData();
   }, [loadWalletData]);
 
+  // 도착지 후보는 옮기려는 코인마다 달라진다. 그 코인을 취급하지 않는 거래소는 목록에서 지우지 않고
+  // 사유와 함께 비활성화해, 왜 보낼 수 없는지가 화면에 남도록 한다.
   const transferDestinations = useMemo<TransferDestination[]>(() => {
-    if (!activeRound) return [];
+    if (!activeRound || !transferCoin?.coinId) return [];
+    const coinId = transferCoin.coinId;
     return exchangeTabItems
       .filter((e) => e.id !== selectedExchange)
       .map((e) => {
@@ -143,9 +146,21 @@ export function WalletPage() {
           walletId: walletEntry?.walletId ?? 0,
           exchangeId: e.id,
           exchangeName: e.name,
+          listed: exchange ? isCoinListed(exchange.id, coinId) : false,
         };
       });
-  }, [exchangeTabItems, selectedExchange, activeRound]);
+  }, [exchangeTabItems, selectedExchange, activeRound, transferCoin, isCoinListed]);
+
+  // 다른 거래소 어디에도 상장되어 있지 않으면 보낼 곳이 없다. 이 경우 출금 자체를 막아,
+  // 도착지가 모두 비활성화된 모달을 열게 두지 않는다.
+  const canTransferSelectedCoin = useMemo(() => {
+    if (!activeRound || !selectedCoin?.coinId) return false;
+    const coinId = selectedCoin.coinId;
+    const currentExchange = EXCHANGES.find((e) => e.key === selectedExchange);
+    return activeRound.wallets.some(
+      (w) => w.exchangeId !== currentExchange?.id && isCoinListed(w.exchangeId, coinId),
+    );
+  }, [activeRound, selectedCoin, selectedExchange, isCoinListed]);
 
   const handleExchangeChange = (exchangeId: string) => {
     setSearchParams({ exchange: exchangeId });
@@ -224,6 +239,7 @@ export function WalletPage() {
                       baseCurrency={wallet.baseCurrency}
                       onClose={() => setSelectedCoin(null)}
                       onTransfer={handleTransfer}
+                      canTransfer={canTransferSelectedCoin}
                     />
                     <TransferHistoryPanel
                       exchangeId={wallet.exchangeId}
@@ -261,6 +277,7 @@ export function WalletPage() {
               baseCurrency={wallet.baseCurrency}
               onClose={() => setSelectedCoin(null)}
               onTransfer={handleTransfer}
+              canTransfer={canTransferSelectedCoin}
             />
             <div className="px-4 pb-6">
               <TransferHistoryPanel

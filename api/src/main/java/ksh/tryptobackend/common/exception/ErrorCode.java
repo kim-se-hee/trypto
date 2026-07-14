@@ -24,6 +24,7 @@ public enum ErrorCode {
     BELOW_MIN_WITHDRAWAL(400, "below.min.withdrawal"),
     SAME_WALLET_TRANSFER(400, "same.wallet.transfer"),
     DIFFERENT_ROUND_TRANSFER(400, "different.round.transfer"),
+    COIN_NOT_LISTED_ON_EXCHANGE(400, "coin.not.listed.on.exchange"),
     ACTIVE_ROUND_EXISTS(409, "active.round.exists"),
     INVALID_SEED_AMOUNT(400, "invalid.seed.amount"),
     DUPLICATE_EXCHANGE(400, "duplicate.exchange"),

@@ -8,6 +8,8 @@ interface WalletAssetDetailProps {
   baseCurrency: string;
   onClose: () => void;
   onTransfer?: (coin: WalletCoinBalance) => void;
+  // 다른 거래소 어디에도 상장되지 않은 코인은 보낼 곳이 없다.
+  canTransfer?: boolean;
 }
 
 function formatDisplay(quantity: number, coinSymbol: string, baseCurrency: string): string {
@@ -15,7 +17,13 @@ function formatDisplay(quantity: number, coinSymbol: string, baseCurrency: strin
   return formatQuantity(quantity);
 }
 
-export function WalletAssetDetail({ coin, baseCurrency, onClose, onTransfer }: WalletAssetDetailProps) {
+export function WalletAssetDetail({
+  coin,
+  baseCurrency,
+  onClose,
+  onTransfer,
+  canTransfer = true,
+}: WalletAssetDetailProps) {
   const total = coin.available + coin.locked;
   const totalValue = total * coin.currentPrice;
   const isBase = coin.coinSymbol === baseCurrency;
@@ -52,14 +60,25 @@ export function WalletAssetDetail({ coin, baseCurrency, onClose, onTransfer }: W
 
         {/* Action buttons — 출금 for coins only */}
         {!isBase && (
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2">
             <button
               onClick={() => onTransfer?.(coin)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.97]"
+              disabled={!canTransfer}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                canTransfer
+                  ? "bg-primary/10 text-primary hover:bg-primary/20 active:scale-[0.97]"
+                  : "cursor-not-allowed bg-muted text-muted-foreground",
+              )}
             >
               <ArrowUpFromLine className="h-4 w-4" />
               출금
             </button>
+            {!canTransfer && (
+              <p className="text-center text-xs text-muted-foreground">
+                다른 거래소에 상장되지 않아 출금할 수 없습니다.
+              </p>
+            )}
           </div>
         )}
       </div>
