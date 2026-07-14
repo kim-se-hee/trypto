@@ -151,15 +151,15 @@ enum SocialProvider {
   final String wire;
 }
 
-/// 백엔드가 로그인 바디에서 받기로 한 값(계획서 §9-2). 값을 채우는 플랫폼 판별은 인증 단위에서
-/// 붙인다. **현행 서버 `LoginRequest` 에는 아직 이 필드가 없다** — 그래서 null 이면 전송하지 않는다.
+/// 로그인 바디의 `clientType`. 서버는 제공자 자격증명을 이 값으로 고른다 — 구글의 Android·iOS
+/// 클라이언트 ID 가 별개이기 때문이다. 생략하면 서버가 `WEB` 으로 간주한다.
 enum ClientType {
-  @JsonValue('WEB')
-  web('WEB'),
-  @JsonValue('ANDROID')
-  android('ANDROID'),
-  @JsonValue('IOS')
-  ios('IOS');
+  @JsonValue('web')
+  web('web'),
+  @JsonValue('android')
+  android('android'),
+  @JsonValue('ios')
+  ios('ios');
 
   const ClientType(this.wire);
 

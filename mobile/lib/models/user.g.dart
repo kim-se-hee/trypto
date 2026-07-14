@@ -14,9 +14,9 @@ Map<String, dynamic> _$LoginRequestToJson(LoginRequest instance) =>
     };
 
 const _$ClientTypeEnumMap = {
-  ClientType.web: 'WEB',
-  ClientType.android: 'ANDROID',
-  ClientType.ios: 'IOS',
+  ClientType.web: 'web',
+  ClientType.android: 'android',
+  ClientType.ios: 'ios',
 };
 
 LoginResponse _$LoginResponseFromJson(Map<String, dynamic> json) =>
