@@ -6,6 +6,7 @@ import '../../core/api/api_exception.dart';
 import '../../core/api/query.dart';
 import '../../models/candle.dart';
 import '../../models/enums.dart';
+import 'live_candles.dart';
 
 class CandleRepository {
   const CandleRepository(this._dio);
@@ -43,3 +44,20 @@ class CandleRepository {
 final candleRepositoryProvider = Provider<CandleRepository>(
   (ref) => CandleRepository(ref.watch(dioProvider)),
 );
+
+/// 서버 캔들만 담는다. 저빈도(진입·간격 변경·15초 재조정)이므로 Riverpod 그래프를 탄다 —
+/// 실시간 봉은 `LiveCandleFolder` 가 따로 들고 있다(계획서 §5.4 ①).
+///
+/// 키가 [CandleRequest] 이므로 코인·거래소·간격이 바뀌면 이전 캔들이 화면에 남지 않는다.
+final candlesProvider = FutureProvider.autoDispose
+    .family<List<Candle>, CandleRequest>((ref, request) async {
+      final candles = await ref
+          .watch(candleRepositoryProvider)
+          .getCandles(
+            exchange: request.exchangeCode,
+            coin: request.symbol,
+            interval: request.interval,
+            limit: request.limit,
+          );
+      return normalizeCandles(candles, request.interval);
+    });

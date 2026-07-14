@@ -5,6 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../features/auth/auth_controller.dart';
 import '../../features/auth/login_page.dart';
+import '../../features/market/chart_fullscreen_page.dart';
+import '../../features/market/coin_detail_page.dart';
 import '../../features/market/market_page.dart';
 import '../../features/mypage/mypage_page.dart';
 import '../../features/portfolio/portfolio_page.dart';
@@ -13,11 +15,18 @@ import '../../features/regret/regret_page.dart';
 import '../../features/round/round_controller.dart';
 import '../../features/round/round_create_page.dart';
 import '../../features/wallet/wallet_page.dart';
+import '../../models/enums.dart';
 import '../../splash_page.dart';
 import 'guard.dart';
 import 'refresh.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// 라우트 쿼리에서 오는 값이라 무엇이든 들어올 수 있다. 대소문자를 구분한다(`1M` 은 월봉).
+CandleInterval _intervalOf(String? wire) => CandleInterval.values.firstWhere(
+  (interval) => interval.wire == wire,
+  orElse: () => CandleInterval.day1,
+);
 
 /// 소셜 콜백 스킴은 라우터에 등록하지 않는다(계획서 §4.3.1). `flutter_web_auth_2` 가 콜백
 /// 인텐트를 자기 액티비티에서 소비해 `authenticate()` 의 반환값으로 준다. 라우터에도 스킴을
@@ -67,6 +76,28 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Routes.market,
                 builder: (context, state) => const MarketPage(),
+                routes: [
+                  GoRoute(
+                    path: 'coin/:symbol',
+                    // 탭바 위를 덮는다. 마켓 브랜치는 선택 상태로 남아 티커 구독이 유지된다.
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => CoinDetailPage(
+                      symbol: state.pathParameters['symbol']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'chart',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) => ChartFullscreenPage(
+                          symbol: state.pathParameters['symbol']!,
+                          interval: _intervalOf(
+                            state.uri.queryParameters['interval'],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
