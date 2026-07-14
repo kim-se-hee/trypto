@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   type OrderStatus,
 } from "@/lib/api/order-api";
 import { isApiClientError } from "@/lib/api/types";
-import type { OrderTargetIds } from "@/lib/api/id-mapping";
+import type { OrderTargetFailure, OrderTargetIds } from "@/lib/api/id-mapping";
 import type { UserEvent } from "@/lib/api/websocket";
 
 type OrderTab = "buy" | "sell" | "history";
@@ -26,6 +27,7 @@ interface OrderPanelProps {
   currentPrice: number;
   feeRate: number;
   orderTargetIds: OrderTargetIds | null;
+  orderTargetFailure: OrderTargetFailure | null;
   orderFilledEvent: UserEvent | null;
 }
 
@@ -97,6 +99,7 @@ export function OrderPanel({
   currentPrice,
   feeRate,
   orderTargetIds,
+  orderTargetFailure,
   orderFilledEvent,
 }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState<OrderTab>("buy");
@@ -380,9 +383,27 @@ export function OrderPanel({
             </div>
           </div>
 
-          {mappedUnavailable && (
+          {mappedUnavailable && orderTargetFailure === "NO_ROUND" && (
+            <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 px-3 py-3 text-xs text-warning-foreground">
+              <p>진행 중인 라운드가 없어 주문할 수 없습니다.</p>
+              <Link
+                to="/round/new"
+                className="mt-2 inline-block font-semibold underline underline-offset-2"
+              >
+                라운드 시작하기
+              </Link>
+            </div>
+          )}
+
+          {mappedUnavailable && orderTargetFailure === "COIN_UNLISTED" && (
             <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
-              이 코인은 아직 주문 ID 매핑이 없어 주문 API를 호출할 수 없습니다.
+              이 코인은 아직 주문을 지원하지 않습니다.
+            </div>
+          )}
+
+          {mappedUnavailable && orderTargetFailure === "LOOKUP_FAILED" && (
+            <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+              주문 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
             </div>
           )}
 

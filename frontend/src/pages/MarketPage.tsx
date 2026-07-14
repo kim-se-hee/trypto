@@ -12,7 +12,7 @@ import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { EXCHANGES } from "@/lib/types/coins";
-import { resolveOrderTargetIds, type OrderTargetIds } from "@/lib/api/id-mapping";
+import { resolveOrderTargetIds, type OrderTargetResult } from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
 import { useUserEvents } from "@/hooks/useUserEvents";
@@ -78,19 +78,22 @@ export function MarketPage() {
     return fromSelection ?? filteredCoins[0] ?? coins[0];
   }, [coins, filteredCoins, selectedSymbol]);
 
-  const [orderTargetIds, setOrderTargetIds] = useState<OrderTargetIds | null>(null);
+  const [orderTarget, setOrderTarget] = useState<OrderTargetResult | null>(null);
   const selectedCoinSymbol = selectedCoin?.symbol ?? null;
   useEffect(() => {
     if (!selectedCoinSymbol) {
-      setOrderTargetIds(null);
+      setOrderTarget(null);
       return;
     }
     let cancelled = false;
-    void resolveOrderTargetIds(exchange.key, selectedCoinSymbol, getWalletId).then((ids) => {
-      if (!cancelled) setOrderTargetIds(ids);
+    void resolveOrderTargetIds(exchange.key, selectedCoinSymbol, getWalletId).then((result) => {
+      if (!cancelled) setOrderTarget(result);
     });
     return () => { cancelled = true; };
   }, [exchange.key, selectedCoinSymbol, getWalletId]);
+
+  const orderTargetIds = orderTarget?.ok ? orderTarget.ids : null;
+  const orderTargetFailure = orderTarget && !orderTarget.ok ? orderTarget.reason : null;
 
   const handleExchangeChange = (key: string) => {
     setSearchParams({ exchange: key });
@@ -183,6 +186,7 @@ export function MarketPage() {
                   currentPrice={selectedCoin.currentPrice}
                   feeRate={0.0005}
                   orderTargetIds={orderTargetIds}
+                  orderTargetFailure={orderTargetFailure}
                   orderFilledEvent={orderFilledEvent}
                 />
               )}
