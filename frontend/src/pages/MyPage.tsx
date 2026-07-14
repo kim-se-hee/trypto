@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { FeedbackCard } from "@/components/feedback/FeedbackCard";
 import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
@@ -273,6 +274,9 @@ export function MyPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* 피드백 */}
+          <FeedbackCard />
         </div>
       </main>
 
