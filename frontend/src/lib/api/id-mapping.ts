@@ -6,6 +6,12 @@ export interface OrderTargetIds {
   exchangeCoinId: number;
 }
 
+export type OrderTargetFailure = "NO_ROUND" | "COIN_UNLISTED" | "LOOKUP_FAILED";
+
+export type OrderTargetResult =
+  | { ok: true; ids: OrderTargetIds }
+  | { ok: false; reason: OrderTargetFailure };
+
 const BACKEND_EXCHANGE_ID_MAP: Record<string, number> = {
   upbit: 1,
   bithumb: 2,
@@ -41,24 +47,27 @@ export async function resolveOrderTargetIds(
   exchangeKey: string,
   coinSymbol: string,
   getWalletId: (exchangeId: number) => number | null,
-): Promise<OrderTargetIds | null> {
+): Promise<OrderTargetResult> {
   const exchangeId = getBackendExchangeId(exchangeKey);
-  if (!exchangeId) return null;
+  if (!exchangeId) return { ok: false, reason: "LOOKUP_FAILED" };
 
   const walletId = getWalletId(exchangeId);
-  if (!walletId) return null;
+  if (!walletId) return { ok: false, reason: "NO_ROUND" };
 
   try {
     const coins = await fetchExchangeCoinsWithCache(exchangeId);
     const coin = coins.find((c) => c.coinSymbol.toUpperCase() === coinSymbol.toUpperCase());
-    if (!coin) return null;
+    if (!coin) return { ok: false, reason: "COIN_UNLISTED" };
 
     return {
-      exchangeId,
-      walletId,
-      exchangeCoinId: coin.exchangeCoinId,
+      ok: true,
+      ids: {
+        exchangeId,
+        walletId,
+        exchangeCoinId: coin.exchangeCoinId,
+      },
     };
   } catch {
-    return null;
+    return { ok: false, reason: "LOOKUP_FAILED" };
   }
 }
