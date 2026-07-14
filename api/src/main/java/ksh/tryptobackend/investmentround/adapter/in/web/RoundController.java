@@ -11,16 +11,20 @@ import ksh.tryptobackend.investmentround.adapter.in.dto.request.StartRoundReques
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.ChargeEmergencyFundingResponse;
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.EndRoundResponse;
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.GetActiveRoundResponse;
+import ksh.tryptobackend.investmentround.adapter.in.dto.response.RoundSummaryResponse;
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.StartRoundResponse;
 import ksh.tryptobackend.investmentround.application.port.in.ChargeEmergencyFundingUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.EndRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.GetActiveRoundUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.GetRoundSummaryUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.StartRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.EndRoundCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetActiveRoundQuery;
+import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetRoundSummaryQuery;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundSummaryResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +45,7 @@ public class RoundController {
     private final StartRoundUseCase startRoundUseCase;
     private final EndRoundUseCase endRoundUseCase;
     private final GetActiveRoundUseCase getActiveRoundUseCase;
+    private final GetRoundSummaryUseCase getRoundSummaryUseCase;
     private final ChargeEmergencyFundingUseCase chargeEmergencyFundingUseCase;
     private final FindRoundInfoUseCase findRoundInfoUseCase;
 
@@ -63,6 +68,12 @@ public class RoundController {
     public ApiResponseDto<GetActiveRoundResponse> getActiveRound(@LoginUser Long userId) {
         GetActiveRoundResult result = getActiveRoundUseCase.getActiveRound(new GetActiveRoundQuery(userId));
         return ApiResponseDto.success("활성 라운드를 조회했습니다.", GetActiveRoundResponse.from(result));
+    }
+
+    @GetMapping("/summary")
+    public ApiResponseDto<RoundSummaryResponse> getRoundSummary(@LoginUser Long userId) {
+        RoundSummaryResult result = getRoundSummaryUseCase.getRoundSummary(new GetRoundSummaryQuery(userId));
+        return ApiResponseDto.success("라운드 요약을 조회했습니다.", RoundSummaryResponse.from(result));
     }
 
     @PostMapping("/{roundId}/emergency-funding")
