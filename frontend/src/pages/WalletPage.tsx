@@ -218,20 +218,20 @@ export function WalletPage() {
               {/* Desktop: side panel */}
               {selectedCoin && (
                 <div className="hidden lg:block">
-                  <div className="sticky top-24">
+                  <div className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col gap-4 overflow-y-auto">
                     <WalletAssetDetail
                       coin={selectedCoin}
                       baseCurrency={wallet.baseCurrency}
                       onClose={() => setSelectedCoin(null)}
                       onTransfer={handleTransfer}
                     />
+                    <TransferHistoryPanel
+                      exchangeId={wallet.exchangeId}
+                      exchanges={walletList}
+                      records={transfers}
+                      assetFilter={selectedCoin.coinSymbol}
+                    />
                   </div>
-                  <TransferHistoryPanel
-                    exchangeId={wallet.exchangeId}
-                    exchanges={walletList}
-                    records={transfers}
-                    assetFilter={selectedCoin.coinSymbol}
-                  />
                 </div>
               )}
             </div>
@@ -279,6 +279,7 @@ export function WalletPage() {
         <TransferModal
           isOpen
           onClose={() => setTransferCoin(null)}
+          onSuccess={() => { void loadWalletData(); }}
           coin={transferCoin}
           baseCurrency={wallet.baseCurrency}
           fromWalletId={wallet.walletId}
