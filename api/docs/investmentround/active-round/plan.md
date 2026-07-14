@@ -53,4 +53,4 @@ GET /api/rounds/active?userId=1
 
 | code | status | 설명 |
 |------|--------|------|
-| ROUND_NOT_ACTIVE | 404 | 진행 중인 라운드가 없음 |
+| ROUND_NOT_ACTIVE | 409 | 진행 중인 라운드가 없음 |
