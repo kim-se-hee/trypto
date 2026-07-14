@@ -14,9 +14,13 @@ import '../../core/widgets/empty_view.dart';
 import '../../core/widgets/numeric_text.dart';
 import '../../core/widgets/profit_badge.dart';
 import '../../models/enums.dart';
+import '../round/round_controller.dart';
 import 'candle_chart.dart';
 import 'live_candles.dart';
 import 'market_controller.dart';
+import 'order_history_tab.dart';
+import 'order_sheet.dart';
+import 'order_target.dart';
 
 /// 마켓 셸 브랜치 **위로** push 된다. 마켓 탭은 계속 선택 상태이므로 `TickerStore` 가 살아
 /// 있고 차트는 별도로 토픽을 구독하지 않는다(계획서 §5.4).
@@ -32,12 +36,21 @@ class CoinDetailPage extends ConsumerStatefulWidget {
 class _CoinDetailPageState extends ConsumerState<CoinDetailPage> {
   CandleInterval _interval = CandleInterval.day1;
 
+  /// 주문이 나갈 때마다 올린다. 거래내역 탭이 이 값을 보고 다시 읽는다 — 체결 이벤트 큐는
+  /// 서버에서 동작하지 않으므로(사양서 R3) 반영은 전부 REST 재조회다.
+  int _revision = 0;
+
+  void _refresh() => setState(() => _revision++);
+
   @override
   Widget build(BuildContext context) {
     final exchange = ExchangeIds.byKey(
       GoRouterState.of(context).uri.queryParameters['exchange'],
     );
     final coins = ref.watch(marketCoinsProvider(exchange.id));
+    final walletId = ref.watch(
+      roundControllerProvider.select((round) => round.walletIdOf(exchange.id)),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -66,41 +79,205 @@ class _CoinDetailPageState extends ConsumerState<CoinDetailPage> {
             );
           }
 
-          final request = CandleRequest(
-            exchangeCode: exchange.candleCode,
+          final resolution = resolveOrderTarget(
+            exchange: exchange,
             symbol: entry.symbol,
-            interval: _interval,
+            walletId: walletId,
+            coins: data,
           );
 
-          return Column(
-            children: [
-              // 헤더는 티커가 올 때마다 갱신되고 캔들 레이어는 실시간 봉이 보일 때만 다시
-              // 칠해진다. 경계가 없으면 헤더 한 줄이 200개 캔들을 다시 칠한다.
-              RepaintBoundary(
-                child: CoinDetailHeader(
-                  entry: entry,
-                  row: ref.watch(tickerStoreProvider).row(entry.symbol),
-                  baseCurrency: exchange.baseCurrency,
-                ),
-              ),
-              IntervalChips(
-                interval: _interval,
-                onChanged: (interval) => setState(() => _interval = interval),
-              ),
-              Expanded(
-                child: RepaintBoundary(
-                  child: CandleChart(
-                    key: ValueKey(request),
-                    request: request,
+          return DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                // 헤더는 티커가 올 때마다 갱신되고 캔들 레이어는 실시간 봉이 보일 때만 다시
+                // 칠해진다. 경계가 없으면 헤더 한 줄이 200개 캔들을 다시 칠한다.
+                RepaintBoundary(
+                  child: CoinDetailHeader(
+                    entry: entry,
+                    row: ref.watch(tickerStoreProvider).row(entry.symbol),
                     baseCurrency: exchange.baseCurrency,
                   ),
                 ),
-              ),
-            ],
+                const TabBar(tabs: [Tab(text: '차트'), Tab(text: '거래내역')]),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _ChartTab(
+                        entry: entry,
+                        exchange: exchange,
+                        interval: _interval,
+                        onInterval: (interval) =>
+                            setState(() => _interval = interval),
+                      ),
+                      if (resolution.target case final target?)
+                        OrderHistoryTab(
+                          target: target,
+                          symbol: entry.symbol,
+                          revision: _revision,
+                        )
+                      else
+                        _TargetFailureView(failure: resolution.failure!),
+                    ],
+                  ),
+                ),
+                _OrderCta(
+                  target: resolution.target,
+                  failure: resolution.failure,
+                  entry: entry,
+                  onPlaced: _refresh,
+                ),
+              ],
+            ),
           );
         },
       ),
     );
+  }
+}
+
+class _ChartTab extends StatelessWidget {
+  const _ChartTab({
+    required this.entry,
+    required this.exchange,
+    required this.interval,
+    required this.onInterval,
+  });
+
+  final CoinEntry entry;
+  final Exchange exchange;
+  final CandleInterval interval;
+  final ValueChanged<CandleInterval> onInterval;
+
+  @override
+  Widget build(BuildContext context) {
+    final request = CandleRequest(
+      exchangeCode: exchange.candleCode,
+      symbol: entry.symbol,
+      interval: interval,
+    );
+
+    return Column(
+      children: [
+        IntervalChips(interval: interval, onChanged: onInterval),
+        Expanded(
+          child: RepaintBoundary(
+            child: CandleChart(
+              key: ValueKey(request),
+              request: request,
+              baseCurrency: exchange.baseCurrency,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 하단 고정 CTA 2개(계획서 §4.6.1). 주문 대상이 해석되지 않으면 사유를 알리고 비활성한다 —
+/// 라운드가 없어도 시세 조회는 계속되고 **주문만** 막힌다.
+class _OrderCta extends StatelessWidget {
+  const _OrderCta({
+    required this.target,
+    required this.failure,
+    required this.entry,
+    required this.onPlaced,
+  });
+
+  final OrderTarget? target;
+  final OrderTargetFailure? failure;
+  final CoinEntry entry;
+  final VoidCallback onPlaced;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.tryptoColors;
+    final resolved = target;
+
+    Widget button(Side side) {
+      final buy = side == Side.buy;
+      final color = buy ? colors.positive : colors.negative;
+
+      return Expanded(
+        child: SizedBox(
+          height: 48,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: color.withValues(alpha: 0.4),
+              disabledForegroundColor: Colors.white,
+            ),
+            onPressed: resolved == null
+                ? null
+                : () => showOrderSheet(
+                    context,
+                    target: resolved,
+                    entry: entry,
+                    side: side,
+                    onPlaced: onPlaced,
+                  ),
+            child: Text(buy ? '매수' : '매도'),
+          ),
+        ),
+      );
+    }
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.all(TryptoSpacing.screen),
+        decoration: const BoxDecoration(
+          color: TryptoPalette.card,
+          border: Border(top: BorderSide(color: TryptoPalette.border)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (failure != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      failure!.message,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  if (failure == OrderTargetFailure.noRound)
+                    TextButton(
+                      style: TryptoButtons.link,
+                      onPressed: () => context.go(Routes.roundNew),
+                      child: const Text('라운드 시작하기'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: TryptoSpacing.sm),
+            ],
+            Row(
+              children: [
+                button(Side.buy),
+                const SizedBox(width: TryptoSpacing.sm),
+                button(Side.sell),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TargetFailureView extends StatelessWidget {
+  const _TargetFailureView({required this.failure});
+
+  final OrderTargetFailure failure;
+
+  @override
+  Widget build(BuildContext context) {
+    return EmptyView(icon: LucideIcons.receipt, message: failure.message);
   }
 }
 
