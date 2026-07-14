@@ -78,20 +78,23 @@ export function MarketPage() {
     return fromSelection ?? filteredCoins[0] ?? coins[0];
   }, [coins, filteredCoins, selectedSymbol]);
 
-  const [orderTarget, setOrderTarget] = useState<OrderTargetResult | null>(null);
+  // 해석 결과에 어느 코인의 것인지를 함께 담는다. 그래야 다른 코인으로 옮긴 직후
+  // 아직 해석이 끝나지 않은 사이에 이전 코인의 주문 대상이 그대로 쓰이는 일이 없다.
+  const [resolved, setResolved] = useState<{ target: string; result: OrderTargetResult } | null>(null);
   const selectedCoinSymbol = selectedCoin?.symbol ?? null;
+  const orderTargetKey = selectedCoinSymbol ? `${exchange.key}:${selectedCoinSymbol}` : null;
+
   useEffect(() => {
-    if (!selectedCoinSymbol) {
-      setOrderTarget(null);
-      return;
-    }
+    if (!selectedCoinSymbol || !orderTargetKey) return;
+
     let cancelled = false;
     void resolveOrderTargetIds(exchange.key, selectedCoinSymbol, getWalletId).then((result) => {
-      if (!cancelled) setOrderTarget(result);
+      if (!cancelled) setResolved({ target: orderTargetKey, result });
     });
     return () => { cancelled = true; };
-  }, [exchange.key, selectedCoinSymbol, getWalletId]);
+  }, [exchange.key, selectedCoinSymbol, orderTargetKey, getWalletId]);
 
+  const orderTarget = resolved?.target === orderTargetKey ? resolved.result : null;
   const orderTargetIds = orderTarget?.ok ? orderTarget.ids : null;
   const orderTargetFailure = orderTarget && !orderTarget.ok ? orderTarget.reason : null;
 
