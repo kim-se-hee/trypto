@@ -74,8 +74,8 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
                 + " and r.exchange == \""
                 + source.exchange()
                 + "\""
-                + " and r.coin == \""
-                + source.coin()
+                + " and r.symbol == \""
+                + source.symbol()
                 + "\" and r._field == \"close\") |> aggregateWindow(every: 1d, fn: last,"
                 + " createEmpty: false, timeSrc: \"_start\") |> sort(columns: [\"_time\"])";
     }
@@ -115,7 +115,7 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
     }
 
     private BigDecimal queryTickerPrice(BtcPriceSource source) {
-        String key = TICKER_KEY_PREFIX + source.exchange() + ":" + source.coin();
+        String key = TICKER_KEY_PREFIX + source.exchange() + ":" + source.symbol();
         String json = redisTemplate.opsForValue().get(key);
         if (json == null) {
             return null;
@@ -136,5 +136,5 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
         return BigDecimal.ZERO;
     }
 
-    private record BtcPriceSource(String exchange, String coin) {}
+    private record BtcPriceSource(String exchange, String symbol) {}
 }

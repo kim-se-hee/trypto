@@ -24,7 +24,7 @@
 | 구분 | 이름 | 타입 | 설명 |
 |------|------|------|------|
 | tag | `exchange` | String | 거래소 식별자 (UPBIT, BITHUMB, BINANCE) |
-| tag | `coin` | String | 코인 심볼 (BTC, ETH 등) |
+| tag | `symbol` | String | 마켓 심볼, `BASE/QUOTE` 형식 (BTC/KRW, ETH/USDT 등) |
 | field | `open` | Float | 시가 |
 | field | `high` | Float | 고가 |
 | field | `low` | Float | 저가 |

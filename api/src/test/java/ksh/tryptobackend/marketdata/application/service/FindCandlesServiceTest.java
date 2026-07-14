@@ -119,7 +119,7 @@ class FindCandlesServiceTest {
 
             // Then
             verify(candleQueryPort).findByFilter(captor.capture());
-            assertThat(captor.getValue().coin()).isEqualTo("BTC/KRW");
+            assertThat(captor.getValue().symbol()).isEqualTo("BTC/KRW");
         }
 
         @Test
@@ -135,7 +135,7 @@ class FindCandlesServiceTest {
 
             // Then
             verify(candleQueryPort).findByFilter(captor.capture());
-            assertThat(captor.getValue().coin()).isEqualTo("ETH/USDT");
+            assertThat(captor.getValue().symbol()).isEqualTo("ETH/USDT");
         }
     }
 
