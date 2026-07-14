@@ -72,7 +72,6 @@ const EXCHANGE_CODE_MAP: Record<string, string> = {
   upbit: "UPBIT",
   bithumb: "BITHUMB",
   binance: "BINANCE",
-  jupiter: "JUPITER",
 };
 
 export function resolveCandleExchangeCode(exchangeKey: string): string | null {

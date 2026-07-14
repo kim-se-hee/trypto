@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { MarketOverviewCards } from "@/components/market/MarketOverviewCards";
-import { MarketTypeTabs } from "@/components/market/MarketTypeTabs";
 import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { CoinSearchInput } from "@/components/market/CoinSearchInput";
 import { FilterChips } from "@/components/market/FilterChips";
@@ -18,11 +17,7 @@ import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
 import { useUserEvents } from "@/hooks/useUserEvents";
 import type { UserEvent } from "@/lib/api/websocket";
-import type { MarketType } from "@/components/market/MarketTypeTabs";
 import type { FilterType } from "@/components/market/FilterChips";
-
-const CEX_EXCHANGES = EXCHANGES.filter((e) => e.type === "CEX");
-const DEX_EXCHANGES = EXCHANGES.filter((e) => e.type === "DEX");
 
 export function MarketPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,14 +30,10 @@ export function MarketPage() {
   }, []);
   useUserEvents({ userId: user?.userId ?? null, onOrderFilled: handleOrderFilled });
 
-  const marketType = (searchParams.get("type") === "dex" ? "dex" : "cex") as MarketType;
-  const isCex = marketType === "cex";
-  const activeExchanges = isCex ? CEX_EXCHANGES : DEX_EXCHANGES;
-
-  const selectedExchangeKey = searchParams.get("exchange") ?? activeExchanges[0].key;
+  const selectedExchangeKey = searchParams.get("exchange") ?? EXCHANGES[0].key;
   const exchange = useMemo(
-    () => activeExchanges.find((e) => e.key === selectedExchangeKey) ?? activeExchanges[0],
-    [activeExchanges, selectedExchangeKey],
+    () => EXCHANGES.find((e) => e.key === selectedExchangeKey) ?? EXCHANGES[0],
+    [selectedExchangeKey],
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,22 +92,14 @@ export function MarketPage() {
     return () => { cancelled = true; };
   }, [exchange.key, selectedCoinSymbol, getWalletId]);
 
-  const handleMarketTypeChange = (type: MarketType) => {
-    const newExchanges = type === "cex" ? CEX_EXCHANGES : DEX_EXCHANGES;
-    setSearchParams({ type, exchange: newExchanges[0].key });
-    setSearchQuery("");
-    setFilter("all");
-    setSelectedSymbol(null);
-  };
-
   const handleExchangeChange = (key: string) => {
-    setSearchParams({ type: marketType, exchange: key });
+    setSearchParams({ exchange: key });
     setSearchQuery("");
     setFilter("all");
     setSelectedSymbol(null);
   };
 
-  const exchangeTabItems = activeExchanges.map((e) => ({
+  const exchangeTabItems = EXCHANGES.map((e) => ({
     id: e.key,
     name: e.name,
     baseCurrency: e.baseCurrency,
@@ -131,14 +114,11 @@ export function MarketPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-display text-3xl tracking-tight">
-                {isCex ? "코인 시세" : "DEX 시세"}
-              </h1>
+              <h1 className="font-display text-3xl tracking-tight">코인 시세</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {exchange.name} 기준 · {exchange.baseCurrency} 마켓
               </p>
             </div>
-            <MarketTypeTabs selected={marketType} onSelect={handleMarketTypeChange} />
           </div>
         </div>
       </section>
@@ -156,7 +136,7 @@ export function MarketPage() {
             selected={selectedExchangeKey}
             onSelect={handleExchangeChange}
           />
-          {activeExchanges.length > 1 && <div className="h-6 w-px bg-border/60" />}
+          {EXCHANGES.length > 1 && <div className="h-6 w-px bg-border/60" />}
           <FilterChips selected={filter} onSelect={setFilter} />
           <div className="ml-auto">
             <CoinSearchInput value={searchQuery} onChange={setSearchQuery} />

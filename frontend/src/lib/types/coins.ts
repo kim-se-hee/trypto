@@ -48,5 +48,4 @@ export const EXCHANGES = [
   { id: 1, key: "upbit", name: "업비트", type: "CEX" as const, baseCurrency: "KRW" },
   { id: 2, key: "bithumb", name: "빗썸", type: "CEX" as const, baseCurrency: "KRW" },
   { id: 3, key: "binance", name: "바이낸스", type: "CEX" as const, baseCurrency: "USDT" },
-  { id: 4, key: "jupiter", name: "Jupiter", type: "DEX" as const, baseCurrency: "SOL" },
 ];
