@@ -3,6 +3,7 @@ import { Activity, Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRound } from "@/contexts/RoundContext";
 
 const navItems = [
   { path: "/market", label: "마켓" },
@@ -15,7 +16,9 @@ const navItems = [
 export function Header() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { hasActiveRound, isRoundLoading } = useRound();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const showRoundStart = !isRoundLoading && !hasActiveRound;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md">
@@ -48,6 +51,14 @@ export function Header() {
 
         {/* Desktop user info */}
         <div className="hidden items-center gap-2 sm:flex">
+          {showRoundStart && (
+            <Link
+              to="/round/new"
+              className="rounded-lg bg-primary px-3 py-1.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              라운드 시작
+            </Link>
+          )}
           {user && (
             <Link
               to="/mypage"
@@ -96,6 +107,16 @@ export function Header() {
               </Link>
             );
           })}
+
+          {showRoundStart && (
+            <Link
+              to="/round/new"
+              onClick={() => setMobileOpen(false)}
+              className="mt-1 block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground"
+            >
+              라운드 시작
+            </Link>
+          )}
 
           <div className="mt-2 flex items-center justify-between border-t border-border/40 px-3 pt-3">
             {user && (

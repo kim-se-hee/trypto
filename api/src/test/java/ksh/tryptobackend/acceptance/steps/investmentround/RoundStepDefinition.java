@@ -88,6 +88,20 @@ public class RoundStepDefinition {
         apiClient.get("/api/rounds/active");
     }
 
+    @When("라운드 요약 조회 요청을 보낸다")
+    public void 라운드_요약_조회_요청을_보낸다() {
+        apiClient.get("/api/rounds/summary");
+    }
+
+    @Then("누적 라운드 횟수는 {int}회이다")
+    public void 누적_라운드_횟수는_회이다(int count) {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.totalRoundCount")
+                .isEqualTo(count);
+    }
+
     @When("거래소 {long}의 시드머니를 0으로 라운드 시작 요청을 보낸다")
     public void 거래소_의_시드머니를_0으로_라운드_시작_요청을_보낸다(long exchangeId) {
         Map<String, Object> request = defaultRequest();

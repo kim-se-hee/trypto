@@ -5,6 +5,7 @@ import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { AssetSummaryCard } from "@/components/portfolio/AssetSummaryCard";
 import { DonutChart } from "@/components/portfolio/DonutChart";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
+import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { EXCHANGES } from "@/lib/types/coins";
@@ -51,6 +52,10 @@ export function PortfolioPage() {
   const defaultExchange = exchangeTabItems[0]?.id ?? "upbit";
   const selectedExchange = searchParams.get("exchange") ?? defaultExchange;
 
+  // 부제는 지금 보고 있는 거래소 지갑을 설명하는 문장이다. 라운드가 없으면 설명할 지갑이 없고,
+  // 라운드가 있으면 포트폴리오를 다 불러오기 전에도 고른 탭을 곧바로 따라가야 한다.
+  const selectedExchangeItem = exchangeTabItems.find((e) => e.id === selectedExchange);
+
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -89,9 +94,11 @@ export function PortfolioPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="font-display text-3xl tracking-tight">투자내역</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {portfolio?.exchangeName ?? selectedExchange} 기준 · {portfolio?.baseCurrency ?? ""} 마켓
-              </p>
+              {selectedExchangeItem && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {selectedExchangeItem.name} 기준 · {selectedExchangeItem.baseCurrency} 마켓
+                </p>
+              )}
             </div>
             <ExchangeTabs
               exchanges={exchangeTabItems}
@@ -134,10 +141,12 @@ export function PortfolioPage() {
               * 모의투자 데이터입니다.
             </p>
           </>
-        ) : (
+        ) : activeRound ? (
           <p className="text-sm text-muted-foreground">
-            {activeRound ? "포트폴리오 데이터를 불러올 수 없습니다." : "진행 중인 라운드가 없습니다."}
+            포트폴리오 데이터를 불러올 수 없습니다.
           </p>
+        ) : (
+          <NoRoundNotice description="진행 중인 라운드가 없어 포트폴리오가 비어 있습니다." />
         )}
       </main>
     </div>

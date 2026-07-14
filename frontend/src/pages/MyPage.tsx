@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { changeNickname, getUserProfile } from "@/lib/api/user-api";
@@ -262,14 +263,7 @@ export function MyPage() {
                   </Dialog>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    진행 중인 라운드가 없습니다.
-                  </p>
-                  <Button variant="outline" onClick={() => navigate("/round/new")}>
-                    새 라운드 시작
-                  </Button>
-                </div>
+                <NoRoundNotice />
               )}
             </CardContent>
           </Card>

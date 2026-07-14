@@ -13,6 +13,8 @@ public interface InvestmentRoundQueryPort {
 
     List<RoundOverview> findAllActiveRounds();
 
+    long countByUserId(Long userId);
+
     InvestmentRound getById(Long roundId);
 
     InvestmentRound getByIdWithLock(Long roundId);

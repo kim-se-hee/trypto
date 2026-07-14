@@ -54,6 +54,12 @@ public class JpaInvestmentRoundQueryAdapter implements InvestmentRoundQueryPort 
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public long countByUserId(Long userId) {
+        return repository.countByUserId(userId);
+    }
+
     private RoundOverview toRoundOverview(InvestmentRoundJpaEntity entity) {
         return new RoundOverview(
                 entity.getId(),

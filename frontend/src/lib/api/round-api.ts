@@ -122,16 +122,23 @@ export async function createRound(params: CreateRoundParams): Promise<Investment
   return mapRound(data);
 }
 
+const ROUND_NOT_ACTIVE = "ROUND_NOT_ACTIVE";
+
 export async function fetchActiveRound(userId: number): Promise<InvestmentRound | null> {
   try {
     const data = await apiGet<BackendRound>("/api/rounds/active", { userId });
     return mapRound(data);
   } catch (error) {
-    if (isApiClientError(error) && error.status === 404) {
+    if (isApiClientError(error) && error.code === ROUND_NOT_ACTIVE) {
       return null;
     }
     throw error;
   }
+}
+
+export async function fetchTotalRoundCount(userId: number): Promise<number> {
+  const data = await apiGet<{ totalRoundCount: number }>("/api/rounds/summary", { userId });
+  return data.totalRoundCount;
 }
 
 export async function chargeEmergencyFunding(

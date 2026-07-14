@@ -4,6 +4,7 @@ import { BarChart3 } from "lucide-react";
 import { RegretChart } from "@/components/regret/RegretChart";
 import { MeVsMe } from "@/components/regret/MeVsMe";
 import { ViolationTradeList } from "@/components/regret/ViolationTradeList";
+import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { computeSimulationLine } from "@/lib/types/regret";
 import type { RuleType } from "@/lib/types/round";
 import type { AssetSnapshot, RegretSummary, ViolationMarker, RuleToggleItem, BenchmarkItem, ViolationTrade } from "@/lib/types/regret";
@@ -124,10 +125,10 @@ export function RegretPage() {
               <ViolationTradeList trades={violationTrades} />
             </div>
           </div>
+        ) : activeRound ? (
+          <p className="text-sm text-muted-foreground">복기 데이터를 불러올 수 없습니다.</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {activeRound ? "복기 데이터를 불러올 수 없습니다." : "진행 중인 라운드가 없습니다."}
-          </p>
+          <NoRoundNotice description="진행 중인 라운드가 없어 복기할 내역이 없습니다." />
         )}
 
         <p className="mt-3 text-[11px] text-muted-foreground/60">
