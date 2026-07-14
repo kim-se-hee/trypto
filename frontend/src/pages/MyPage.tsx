@@ -62,6 +62,7 @@ export function MyPage() {
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState(user?.nickname ?? "");
   const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [endedDialogOpen, setEndedDialogOpen] = useState(false);
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,11 +99,16 @@ export function MyPage() {
       await endRound(activeRound.roundId, user.userId);
       clearRound();
       setEndDialogOpen(false);
-      navigate("/round/new", { replace: true });
+      setEndedDialogOpen(true);
     } catch (error) {
       console.error("Failed to end round", error);
     }
-  }, [activeRound, user, clearRound, navigate]);
+  }, [activeRound, user, clearRound]);
+
+  const handleEndedConfirm = useCallback(() => {
+    setEndedDialogOpen(false);
+    navigate("/market", { replace: true });
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -269,6 +275,21 @@ export function MyPage() {
           </Card>
         </div>
       </main>
+
+      {/* 라운드 종료 완료 */}
+      <Dialog open={endedDialogOpen} onOpenChange={(open) => !open && handleEndedConfirm()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>수고하셨어요. 한 라운드를 마무리했습니다.</DialogTitle>
+            <DialogDescription>
+              시세는 계속 둘러보실 수 있어요. 준비되면 새 라운드를 시작해보세요.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleEndedConfirm}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
