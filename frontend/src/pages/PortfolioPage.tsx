@@ -70,7 +70,7 @@ export function PortfolioPage() {
 
     setLoading(true);
     try {
-      const data = await getMyHoldings(user.userId, wallet.walletId);
+      const data = await getMyHoldings(wallet.walletId);
       setPortfolio(toPortfolioSummary(exchange.id, data));
     } catch (error) {
       console.error("Failed to load portfolio", error);

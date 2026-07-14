@@ -16,9 +16,6 @@ export interface MyHoldingsResponse {
   holdings: HoldingItem[];
 }
 
-export function getMyHoldings(
-  userId: number,
-  walletId: number,
-): Promise<MyHoldingsResponse> {
-  return apiGet<MyHoldingsResponse>(`/api/users/${userId}/wallets/${walletId}/portfolio`);
+export function getMyHoldings(walletId: number): Promise<MyHoldingsResponse> {
+  return apiGet<MyHoldingsResponse>(`/api/wallets/${walletId}/portfolio`);
 }

@@ -14,9 +14,6 @@ export interface WalletBalancesResponse {
   balances: WalletBalanceItem[];
 }
 
-export function getWalletBalances(
-  userId: number,
-  walletId: number,
-): Promise<WalletBalancesResponse> {
-  return apiGet<WalletBalancesResponse>(`/api/users/${userId}/wallets/${walletId}/balances`);
+export function getWalletBalances(walletId: number): Promise<WalletBalancesResponse> {
+  return apiGet<WalletBalancesResponse>(`/api/wallets/${walletId}/balances`);
 }
