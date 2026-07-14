@@ -8,6 +8,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.adapter.out.oauth.OAuthClient;
 import ksh.tryptobackend.user.domain.service.SocialAuthenticator;
+import ksh.tryptobackend.user.domain.vo.ClientType;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import org.springframework.stereotype.Component;
@@ -23,11 +24,12 @@ public class SocialAuthenticatorImpl implements SocialAuthenticator {
     }
 
     @Override
-    public SocialIdentity authenticate(Provider provider, String authorizationCode, String codeVerifier) {
+    public SocialIdentity authenticate(
+            Provider provider, String authorizationCode, String codeVerifier, ClientType clientType) {
         OAuthClient client = clients.get(provider);
         if (client == null) {
             throw new CustomException(ErrorCode.INVALID_PROVIDER);
         }
-        return client.getIdentity(authorizationCode, codeVerifier);
+        return client.getIdentity(authorizationCode, codeVerifier, clientType);
     }
 }

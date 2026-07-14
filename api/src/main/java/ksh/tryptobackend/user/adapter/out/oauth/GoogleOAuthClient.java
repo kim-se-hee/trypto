@@ -2,20 +2,18 @@ package ksh.tryptobackend.user.adapter.out.oauth;
 
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.user.domain.vo.ClientType;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Component
 public class GoogleOAuthClient implements OAuthClient {
-
-    private static final String GRANT_TYPE = "authorization_code";
 
     private final GoogleOAuthProperties properties;
     private final RestClient restClient;
@@ -31,20 +29,15 @@ public class GoogleOAuthClient implements OAuthClient {
     }
 
     @Override
-    public SocialIdentity getIdentity(String authorizationCode, String codeVerifier) {
-        String accessToken = exchangeAccessToken(authorizationCode, codeVerifier);
+    public SocialIdentity getIdentity(String authorizationCode, String codeVerifier, ClientType clientType) {
+        String accessToken = exchangeAccessToken(authorizationCode, codeVerifier, clientType);
         String memberId = fetchMemberId(accessToken);
         return SocialIdentity.of(Provider.GOOGLE, memberId);
     }
 
-    private String exchangeAccessToken(String authorizationCode, String codeVerifier) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", GRANT_TYPE);
-        form.add("client_id", properties.getClientId());
-        form.add("client_secret", properties.getClientSecret());
-        form.add("redirect_uri", properties.getRedirectUri());
-        form.add("code", authorizationCode);
-        form.add("code_verifier", codeVerifier);
+    private String exchangeAccessToken(String authorizationCode, String codeVerifier, ClientType clientType) {
+        MultiValueMap<String, String> form =
+                OAuthHttp.authorizationCodeForm(properties.credentialsFor(clientType), authorizationCode, codeVerifier);
 
         GoogleTokenResponse response = requestToken(form);
         if (response == null || response.accessToken() == null) {
