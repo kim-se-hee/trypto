@@ -12,6 +12,7 @@ import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { EXCHANGES } from "@/lib/types/coins";
+import { isChosungQuery, toChosung, toJamo } from "@/lib/hangul";
 import { resolveOrderTargetIds, type OrderTargetResult } from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
@@ -49,16 +50,37 @@ export function MarketPage() {
     initialCoins: staticCoins,
   });
 
+  // 코인 이름의 초성·자모는 시세가 갱신돼도 변하지 않는다. 목록을 받아올 때 한 번만 풀어 둔다.
+  const searchIndex = useMemo(() => {
+    const index = new Map<string, { chosung: string; jamo: string }>();
+    staticCoins.forEach((coin) => {
+      index.set(coin.symbol, {
+        chosung: toChosung(coin.name).toLowerCase(),
+        jamo: toJamo(coin.name).toLowerCase(),
+      });
+    });
+    return index;
+  }, [staticCoins]);
+
   const filteredCoins = useMemo(() => {
     let filtered = coins;
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      filtered = filtered.filter(
-        (coin) =>
-          coin.symbol.toLowerCase().includes(query) ||
-          coin.name.toLowerCase().includes(query),
-      );
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      const chosungQuery = isChosungQuery(query);
+      const jamoQuery = toJamo(query);
+      filtered = filtered.filter((coin) => {
+        if (coin.symbol.toLowerCase().includes(query)) return true;
+
+        const index = searchIndex.get(coin.symbol);
+        if (!index) return false;
+
+        // 자음만 친 'ㅂㅌ' 은 이름 원문에 없는 글자다. 초성을 앞에서부터 맞춘다.
+        // 그 밖의 입력은 조합 중이든 완성됐든 자모로 풀어서 부분 일치를 본다.
+        return chosungQuery
+          ? index.chosung.startsWith(query)
+          : index.jamo.includes(jamoQuery);
+      });
     }
 
     switch (filter) {
@@ -71,7 +93,7 @@ export function MarketPage() {
     }
 
     return filtered;
-  }, [coins, searchQuery, filter]);
+  }, [coins, searchIndex, searchQuery, filter]);
 
   const selectedCoin = useMemo(() => {
     const fromSelection = coins.find((coin) => coin.symbol === selectedSymbol);
