@@ -27,6 +27,7 @@ public enum ErrorCode {
     COIN_NOT_LISTED_ON_EXCHANGE(400, "coin.not.listed.on.exchange"),
     ACTIVE_ROUND_EXISTS(409, "active.round.exists"),
     INVALID_SEED_AMOUNT(400, "invalid.seed.amount"),
+    SEED_NOT_ALLOWED_FOR_EXCHANGE(400, "seed.not.allowed.for.exchange"),
     DUPLICATE_EXCHANGE(400, "duplicate.exchange"),
     INVALID_EMERGENCY_FUNDING_LIMIT(400, "invalid.emergency.funding.limit"),
     INVALID_RULE_THRESHOLD(400, "invalid.rule.threshold"),

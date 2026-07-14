@@ -10,4 +10,6 @@ public interface MarketDataQueryPort {
     Long getBaseCurrencyCoinId(Long exchangeId);
 
     SeedFundingSpec getSeedFundingSpec(Long exchangeId);
+
+    Long getCashInflowExchangeId();
 }

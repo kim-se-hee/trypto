@@ -27,7 +27,7 @@
 # 의존
 
 ## MarketData
-- `FindExchangeDetailUseCase` — 거래소 기축통화 확인
+- `FindExchangeDetailUseCase` — 거래소 기축통화 확인, 현금 유입 거래소(업비트) 아이디 조회
 
 ## Wallet
 - `CreateWalletWithBalanceUseCase` — 라운드 시작 시 지갑 생성

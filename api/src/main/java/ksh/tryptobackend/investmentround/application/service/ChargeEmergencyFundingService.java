@@ -35,12 +35,14 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
         String idempotencyKey = command.idempotencyKey().toString();
         idempotencyKeyCommandPort.preempt(idempotencyKey, IdempotencyResourceType.EMERGENCY_FUNDING, now);
 
+        Long exchangeId = marketDataQueryPort.getCashInflowExchangeId();
+
         InvestmentRound round = investmentRoundQueryPort.getByIdWithLock(command.roundId());
         round.validateOwnedBy(command.userId());
-        round.chargeEmergencyFunding(command.exchangeId(), command.amount(), now);
+        round.chargeEmergencyFunding(exchangeId, command.amount(), now);
 
-        Long walletId = walletQueryPort.getWalletId(command.roundId(), command.exchangeId());
-        Long baseCurrencyCoinId = marketDataQueryPort.getBaseCurrencyCoinId(command.exchangeId());
+        Long walletId = walletQueryPort.getWalletId(command.roundId(), exchangeId);
+        Long baseCurrencyCoinId = marketDataQueryPort.getBaseCurrencyCoinId(exchangeId);
         fundsDepositor.deposit(walletId, baseCurrencyCoinId, command.amount());
 
         InvestmentRound saved = investmentRoundCommandPort.save(round);

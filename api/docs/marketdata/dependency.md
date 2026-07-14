@@ -5,6 +5,7 @@
 ## FindExchangeDetailUseCase
 - `findExchangeDetail(Long exchangeId) → Optional<ExchangeDetailResult>`
 - Returns `ExchangeDetailResult { name: String, baseCurrencyCoinId: Long, domestic: boolean, feeRate: BigDecimal }`
+- `findExchangeIdByName(String name) → Optional<Long>`
 
 ## FindExchangeNamesUseCase
 - `findExchangeNames(Set<Long> exchangeIds) → Map<Long, String>`

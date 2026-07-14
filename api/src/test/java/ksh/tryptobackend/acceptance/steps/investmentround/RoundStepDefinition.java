@@ -1,5 +1,7 @@
 package ksh.tryptobackend.acceptance.steps.investmentround;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -14,24 +16,37 @@ import ksh.tryptobackend.investmentround.adapter.out.persistence.repository.Inve
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity;
+import ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletJpaEntity;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
+import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletJpaRepository;
 
 public class RoundStepDefinition {
 
     private static final Long USER_ID = 1L;
+    private static final Long UPBIT_EXCHANGE_ID = 1L;
+    private static final Long KRW_COIN_ID = 1L;
+    private static final BigDecimal UPBIT_SEED = new BigDecimal("5000000");
 
     private final CommonApiClient apiClient;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final InvestmentRoundJpaRepository investmentRoundJpaRepository;
+    private final WalletJpaRepository walletJpaRepository;
+    private final WalletBalanceJpaRepository walletBalanceJpaRepository;
 
     private Long lastRoundId;
 
     public RoundStepDefinition(
             CommonApiClient apiClient,
             ExchangeJpaRepository exchangeJpaRepository,
-            InvestmentRoundJpaRepository investmentRoundJpaRepository) {
+            InvestmentRoundJpaRepository investmentRoundJpaRepository,
+            WalletJpaRepository walletJpaRepository,
+            WalletBalanceJpaRepository walletBalanceJpaRepository) {
         this.apiClient = apiClient;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.investmentRoundJpaRepository = investmentRoundJpaRepository;
+        this.walletJpaRepository = walletJpaRepository;
+        this.walletBalanceJpaRepository = walletBalanceJpaRepository;
     }
 
     @Given("라운드용 거래소 메타데이터가 준비되어 있다")
@@ -45,19 +60,14 @@ public class RoundStepDefinition {
         extractRoundIdIfSuccess();
     }
 
-    @When("국내 거래소 시드머니를 {long}원으로 라운드 시작 요청을 보낸다")
-    public void 국내_거래소_시드머니를_원으로_라운드_시작_요청을_보낸다(long amount) {
+    @When("거래소 {long}의 시드머니를 {long}원으로 라운드 시작 요청을 보낸다")
+    public void 거래소의_시드머니를_원으로_라운드_시작_요청을_보낸다(long exchangeId, long amount) {
         Map<String, Object> request = defaultRequest();
-        List<Map<String, Object>> seeds = getSeeds(request);
-        seeds.get(0).put("amount", amount);
-        apiClient.post("/api/rounds", request);
-    }
-
-    @When("해외 거래소 시드머니를 {int} USDT로 라운드 시작 요청을 보낸다")
-    public void 해외_거래소_시드머니를_usdt로_라운드_시작_요청을_보낸다(int amount) {
-        Map<String, Object> request = defaultRequest();
-        List<Map<String, Object>> seeds = getSeeds(request);
-        seeds.get(2).put("amount", amount);
+        for (Map<String, Object> seed : getSeeds(request)) {
+            if (((Number) seed.get("exchangeId")).longValue() == exchangeId) {
+                seed.put("amount", amount);
+            }
+        }
         apiClient.post("/api/rounds", request);
     }
 
@@ -102,16 +112,17 @@ public class RoundStepDefinition {
                 .isEqualTo(count);
     }
 
-    @When("거래소 {long}의 시드머니를 0으로 라운드 시작 요청을 보낸다")
-    public void 거래소_의_시드머니를_0으로_라운드_시작_요청을_보낸다(long exchangeId) {
-        Map<String, Object> request = defaultRequest();
-        List<Map<String, Object>> seeds = getSeeds(request);
-        for (Map<String, Object> seed : seeds) {
-            if (((Number) seed.get("exchangeId")).longValue() == exchangeId) {
-                seed.put("amount", 0);
-            }
+    @Then("시드머니는 업비트 원화 지갑에만 들어간다")
+    public void 시드머니는_업비트_원화_지갑에만_들어간다() {
+        for (WalletJpaEntity wallet : walletJpaRepository.findByRoundId(lastRoundId)) {
+            BigDecimal krwBalance = walletBalanceJpaRepository
+                    .findByWalletIdAndCoinId(wallet.getId(), KRW_COIN_ID)
+                    .map(WalletBalanceJpaEntity::getAvailable)
+                    .orElse(BigDecimal.ZERO);
+            BigDecimal expected = UPBIT_EXCHANGE_ID.equals(wallet.getExchangeId()) ? UPBIT_SEED : BigDecimal.ZERO;
+
+            assertThat(krwBalance).isEqualByComparingTo(expected);
         }
-        apiClient.post("/api/rounds", request);
     }
 
     @Then("라운드 상태는 {string}이다")
@@ -176,10 +187,7 @@ public class RoundStepDefinition {
         Map<String, Object> body = new HashMap<>();
         body.put(
                 "seeds",
-                List.of(
-                        seed(1L, new BigDecimal("5000000")),
-                        seed(2L, new BigDecimal("3000000")),
-                        seed(3L, new BigDecimal("100"))));
+                List.of(seed(UPBIT_EXCHANGE_ID, UPBIT_SEED), seed(2L, BigDecimal.ZERO), seed(3L, BigDecimal.ZERO)));
         body.put("emergencyFundingLimit", new BigDecimal("500000"));
         body.put(
                 "rules",

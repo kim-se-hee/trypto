@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.out.MarketDataQueryPort;
+import ksh.tryptobackend.investmentround.domain.vo.CashInflowExchange;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAmountPolicy;
 import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
@@ -40,7 +41,15 @@ public class InvestmentRoundAclMarketDataQueryAdapter implements MarketDataQuery
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 
+    @Override
+    public Long getCashInflowExchangeId() {
+        return findExchangeDetailUseCase
+                .findExchangeIdByName(CashInflowExchange.NAME)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
+    }
+
     private SeedFundingSpec toSeedFundingSpec(ExchangeDetailResult detail) {
-        return new SeedFundingSpec(detail.baseCurrencyCoinId(), SeedAmountPolicy.forDomestic(detail.domestic()));
+        return new SeedFundingSpec(
+                detail.baseCurrencyCoinId(), SeedAmountPolicy.forCashInflow(CashInflowExchange.matches(detail.name())));
     }
 }

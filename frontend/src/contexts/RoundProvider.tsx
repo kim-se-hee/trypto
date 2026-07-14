@@ -111,7 +111,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
   );
 
   const chargeEmergencyFunding = useCallback(
-    async (amount: number, exchangeId: number): Promise<boolean> => {
+    async (amount: number): Promise<boolean> => {
       if (!activeRound || !user) return false;
       if (activeRound.status !== "ACTIVE") return false;
       if (activeRound.emergencyChargeCount <= 0) return false;
@@ -121,7 +121,6 @@ export function RoundProvider({ children }: { children: ReactNode }) {
         const result = await chargeEmergencyFundingApi({
           roundId: activeRound.roundId,
           userId: user.userId,
-          exchangeId,
           amount,
           idempotencyKey: createIdempotencyKey(),
         });
