@@ -52,6 +52,10 @@ export function PortfolioPage() {
   const defaultExchange = exchangeTabItems[0]?.id ?? "upbit";
   const selectedExchange = searchParams.get("exchange") ?? defaultExchange;
 
+  // 부제는 지금 보고 있는 거래소 지갑을 설명하는 문장이다. 라운드가 없으면 설명할 지갑이 없고,
+  // 라운드가 있으면 포트폴리오를 다 불러오기 전에도 고른 탭을 곧바로 따라가야 한다.
+  const selectedExchangeItem = exchangeTabItems.find((e) => e.id === selectedExchange);
+
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -90,9 +94,11 @@ export function PortfolioPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="font-display text-3xl tracking-tight">투자내역</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {portfolio?.exchangeName ?? selectedExchange} 기준 · {portfolio?.baseCurrency ?? ""} 마켓
-              </p>
+              {selectedExchangeItem && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {selectedExchangeItem.name} 기준 · {selectedExchangeItem.baseCurrency} 마켓
+                </p>
+              )}
             </div>
             <ExchangeTabs
               exchanges={exchangeTabItems}
