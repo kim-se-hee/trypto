@@ -131,6 +131,7 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolb
 
   const { sorted: sortedCoins, sortKey, sortDir, handleSort } = useSort<CoinData, SortKey>({
     items: coins,
+    defaultKey: "volume",
     comparator,
   });
 
