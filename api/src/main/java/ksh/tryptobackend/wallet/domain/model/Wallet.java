@@ -51,6 +51,12 @@ public class Wallet {
         }
     }
 
+    public void verifyHandles(Long coinId, List<Long> tradableCoinIds) {
+        if (!tradableCoinIds.contains(coinId)) {
+            throw new CustomException(ErrorCode.COIN_NOT_LISTED_ON_EXCHANGE);
+        }
+    }
+
     private WalletBalance openBalance(Long coinId, Long baseCurrencyCoinId) {
         WalletBalance balance = WalletBalance.createEmpty(walletId, coinId);
         if (coinId.equals(baseCurrencyCoinId)) {
