@@ -8,6 +8,7 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -22,10 +23,10 @@ class ClientTypeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"MOBILE", "mobile"})
+    @CsvSource({"WEB,WEB", "web,WEB", "ANDROID,ANDROID", "android,ANDROID"})
     @DisplayName("대소문자와 무관하게 클라이언트 유형을 해석한다")
-    void fromNullable_mobileValue_returnsMobile(String name) {
-        assertThat(ClientType.fromNullable(name)).isEqualTo(ClientType.MOBILE);
+    void fromNullable_supportedValue_returnsClientType(String name, ClientType expected) {
+        assertThat(ClientType.fromNullable(name)).isEqualTo(expected);
     }
 
     @Test

@@ -6,7 +6,8 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 
 public enum ClientType {
     WEB,
-    MOBILE;
+    ANDROID,
+    IOS;
 
     private static final ClientType DEFAULT = WEB;
 

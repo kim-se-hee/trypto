@@ -21,8 +21,10 @@ class GoogleOAuthClientTest {
 
     private static final OAuthCredentials WEB_CREDENTIALS =
             new OAuthCredentials("google-web-id", "google-web-secret", "http://localhost:5173/auth/google/callback");
-    private static final OAuthCredentials MOBILE_CREDENTIALS =
-            new OAuthCredentials("google-mobile-id", "", "trypto://auth/google/callback");
+    private static final OAuthCredentials ANDROID_CREDENTIALS =
+            new OAuthCredentials("google-android-id", "", "trypto://auth/google/callback");
+    private static final OAuthCredentials IOS_CREDENTIALS =
+            new OAuthCredentials("google-ios-id", "", "trypto://auth/google/callback");
 
     private FakeOAuthServer server;
 
@@ -37,23 +39,23 @@ class GoogleOAuthClientTest {
     }
 
     @Test
-    @DisplayName("클라이언트 시크릿이 없는 모바일 자격증명은 토큰 교환 폼에서 client_secret 을 제외한다")
-    void getIdentity_mobileCredentialsWithoutClientSecret_omitsClientSecretFromForm() {
-        GoogleOAuthClient client = new GoogleOAuthClient(propertiesWith(WEB_CREDENTIALS, MOBILE_CREDENTIALS));
+    @DisplayName("클라이언트 시크릿이 없는 안드로이드 자격증명은 토큰 교환 폼에서 client_secret 을 제외한다")
+    void getIdentity_androidCredentialsWithoutClientSecret_omitsClientSecretFromForm() {
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
 
-        SocialIdentity identity = client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.MOBILE);
+        SocialIdentity identity = client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID);
 
         assertThat(identity).isEqualTo(SocialIdentity.of(Provider.GOOGLE, "google-sub-1"));
         assertThat(server.tokenRequestForm())
                 .doesNotContainKey("client_secret")
-                .containsEntry("client_id", MOBILE_CREDENTIALS.clientId())
-                .containsEntry("redirect_uri", MOBILE_CREDENTIALS.redirectUri());
+                .containsEntry("client_id", ANDROID_CREDENTIALS.clientId())
+                .containsEntry("redirect_uri", ANDROID_CREDENTIALS.redirectUri());
     }
 
     @Test
     @DisplayName("클라이언트 시크릿이 있는 웹 자격증명은 토큰 교환 폼에 client_secret 을 담는다")
     void getIdentity_webCredentialsWithClientSecret_sendsClientSecretInForm() {
-        GoogleOAuthClient client = new GoogleOAuthClient(propertiesWith(WEB_CREDENTIALS, MOBILE_CREDENTIALS));
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
 
         client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.WEB);
 
@@ -63,10 +65,15 @@ class GoogleOAuthClientTest {
                 .containsEntry("redirect_uri", WEB_CREDENTIALS.redirectUri());
     }
 
-    private GoogleOAuthProperties propertiesWith(OAuthCredentials web, OAuthCredentials mobile) {
+    private GoogleOAuthProperties configuredProperties() {
+        return propertiesWith(WEB_CREDENTIALS, ANDROID_CREDENTIALS, IOS_CREDENTIALS);
+    }
+
+    private GoogleOAuthProperties propertiesWith(OAuthCredentials web, OAuthCredentials android, OAuthCredentials ios) {
         Map<ClientType, OAuthCredentials> credentials = new EnumMap<>(ClientType.class);
         credentials.put(ClientType.WEB, web);
-        credentials.put(ClientType.MOBILE, mobile);
+        credentials.put(ClientType.ANDROID, android);
+        credentials.put(ClientType.IOS, ios);
 
         GoogleOAuthProperties properties = new GoogleOAuthProperties();
         properties.setCredentials(credentials);

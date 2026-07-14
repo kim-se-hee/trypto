@@ -82,10 +82,14 @@ app:
           client-id: ${KAKAO_CLIENT_ID:}
           client-secret: ${KAKAO_CLIENT_SECRET:}
           redirect-uri: ${KAKAO_REDIRECT_URI:}
-        mobile:
-          client-id: ${KAKAO_MOBILE_CLIENT_ID:}
-          client-secret: ${KAKAO_MOBILE_CLIENT_SECRET:}
-          redirect-uri: ${KAKAO_MOBILE_REDIRECT_URI:}
+        android:
+          client-id: ${KAKAO_ANDROID_CLIENT_ID:}
+          client-secret: ${KAKAO_ANDROID_CLIENT_SECRET:}
+          redirect-uri: ${KAKAO_ANDROID_REDIRECT_URI:}
+        ios:
+          client-id: ${KAKAO_IOS_CLIENT_ID:}
+          client-secret: ${KAKAO_IOS_CLIENT_SECRET:}
+          redirect-uri: ${KAKAO_IOS_REDIRECT_URI:}
       token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
       user-info-uri: ${KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
       connect-timeout: ${KAKAO_CONNECT_TIMEOUT:3s}
@@ -96,10 +100,14 @@ app:
           client-id: ${GOOGLE_CLIENT_ID:}
           client-secret: ${GOOGLE_CLIENT_SECRET:}
           redirect-uri: ${GOOGLE_REDIRECT_URI:}
-        mobile:
-          client-id: ${GOOGLE_MOBILE_CLIENT_ID:}
-          client-secret: ${GOOGLE_MOBILE_CLIENT_SECRET:}
-          redirect-uri: ${GOOGLE_MOBILE_REDIRECT_URI:}
+        android:
+          client-id: ${GOOGLE_ANDROID_CLIENT_ID:}
+          client-secret: ${GOOGLE_ANDROID_CLIENT_SECRET:}
+          redirect-uri: ${GOOGLE_ANDROID_REDIRECT_URI:}
+        ios:
+          client-id: ${GOOGLE_IOS_CLIENT_ID:}
+          client-secret: ${GOOGLE_IOS_CLIENT_SECRET:}
+          redirect-uri: ${GOOGLE_IOS_REDIRECT_URI:}
       token-uri: ${GOOGLE_TOKEN_URI:https://oauth2.googleapis.com/token}
       user-info-uri: ${GOOGLE_USER_INFO_URI:https://openidconnect.googleapis.com/v1/userinfo}
       connect-timeout: ${GOOGLE_CONNECT_TIMEOUT:3s}

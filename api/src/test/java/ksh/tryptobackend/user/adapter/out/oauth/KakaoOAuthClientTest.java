@@ -24,8 +24,10 @@ class KakaoOAuthClientTest {
 
     private static final OAuthCredentials WEB_CREDENTIALS =
             new OAuthCredentials("kakao-web-id", "kakao-web-secret", "http://localhost:5173/auth/kakao/callback");
-    private static final OAuthCredentials MOBILE_CREDENTIALS =
-            new OAuthCredentials("kakao-mobile-id", "kakao-mobile-secret", "trypto://auth/kakao/callback");
+    private static final OAuthCredentials ANDROID_CREDENTIALS =
+            new OAuthCredentials("kakao-android-id", "kakao-android-secret", "trypto://auth/kakao/callback");
+    private static final OAuthCredentials IOS_CREDENTIALS =
+            new OAuthCredentials("kakao-ios-id", "kakao-ios-secret", "trypto://auth/kakao/callback");
 
     private FakeOAuthServer server;
 
@@ -42,7 +44,7 @@ class KakaoOAuthClientTest {
     @Test
     @DisplayName("웹 클라이언트로 인증하면 웹 자격증명으로 토큰을 교환한다")
     void getIdentity_webClientType_exchangesTokenWithWebCredentials() {
-        KakaoOAuthClient client = new KakaoOAuthClient(propertiesWith(WEB_CREDENTIALS, MOBILE_CREDENTIALS));
+        KakaoOAuthClient client = new KakaoOAuthClient(configuredProperties());
 
         SocialIdentity identity = client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.WEB);
 
@@ -57,35 +59,40 @@ class KakaoOAuthClientTest {
     }
 
     @Test
-    @DisplayName("모바일 클라이언트로 인증하면 모바일 자격증명으로 토큰을 교환한다")
-    void getIdentity_mobileClientType_exchangesTokenWithMobileCredentials() {
-        KakaoOAuthClient client = new KakaoOAuthClient(propertiesWith(WEB_CREDENTIALS, MOBILE_CREDENTIALS));
+    @DisplayName("안드로이드 클라이언트로 인증하면 안드로이드 자격증명으로 토큰을 교환한다")
+    void getIdentity_androidClientType_exchangesTokenWithAndroidCredentials() {
+        KakaoOAuthClient client = new KakaoOAuthClient(configuredProperties());
 
-        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.MOBILE);
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID);
 
         assertThat(server.tokenRequestForm())
-                .containsEntry("client_id", MOBILE_CREDENTIALS.clientId())
-                .containsEntry("client_secret", MOBILE_CREDENTIALS.clientSecret())
-                .containsEntry("redirect_uri", MOBILE_CREDENTIALS.redirectUri());
+                .containsEntry("client_id", ANDROID_CREDENTIALS.clientId())
+                .containsEntry("client_secret", ANDROID_CREDENTIALS.clientSecret())
+                .containsEntry("redirect_uri", ANDROID_CREDENTIALS.redirectUri());
     }
 
     @Test
-    @DisplayName("모바일 자격증명이 설정되지 않으면 설정 누락 예외를 던진다")
-    void getIdentity_mobileCredentialsNotConfigured_throwsNotConfigured() {
+    @DisplayName("안드로이드 자격증명이 설정되지 않으면 설정 누락 예외를 던진다")
+    void getIdentity_androidCredentialsNotConfigured_throwsNotConfigured() {
         OAuthCredentials empty = new OAuthCredentials("", "", "");
-        KakaoOAuthClient client = new KakaoOAuthClient(propertiesWith(WEB_CREDENTIALS, empty));
+        KakaoOAuthClient client = new KakaoOAuthClient(propertiesWith(WEB_CREDENTIALS, empty, IOS_CREDENTIALS));
 
-        assertThatThrownBy(() -> client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.MOBILE))
+        assertThatThrownBy(() -> client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.SOCIAL_LOGIN_NOT_CONFIGURED);
         assertThat(server.tokenRequestForm()).isEmpty();
     }
 
-    private KakaoOAuthProperties propertiesWith(OAuthCredentials web, OAuthCredentials mobile) {
+    private KakaoOAuthProperties configuredProperties() {
+        return propertiesWith(WEB_CREDENTIALS, ANDROID_CREDENTIALS, IOS_CREDENTIALS);
+    }
+
+    private KakaoOAuthProperties propertiesWith(OAuthCredentials web, OAuthCredentials android, OAuthCredentials ios) {
         Map<ClientType, OAuthCredentials> credentials = new EnumMap<>(ClientType.class);
         credentials.put(ClientType.WEB, web);
-        credentials.put(ClientType.MOBILE, mobile);
+        credentials.put(ClientType.ANDROID, android);
+        credentials.put(ClientType.IOS, ios);
 
         KakaoOAuthProperties properties = new KakaoOAuthProperties();
         properties.setCredentials(credentials);
