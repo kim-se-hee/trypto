@@ -1,32 +1,27 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Activity, MessageCircle } from "lucide-react";
-import {
-  beginSocialLogin,
-  isSocialConfigured,
-  providerLabel,
-  type SocialProvider,
-} from "@/lib/auth/social";
+import { useSocialLogin } from "@/hooks/useSocialLogin";
+import { isSocialConfigured } from "@/lib/auth/social";
 
 const IS_DEV = import.meta.env.DEV;
 
 export function LoginPage() {
-  const [error, setError] = useState("");
-  const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null);
+  const { pendingProvider, error, start } = useSocialLogin();
 
   const kakaoReady = isSocialConfigured("kakao");
   const googleReady = isSocialConfigured("google");
 
-  async function handleSocialLogin(provider: SocialProvider) {
-    setError("");
-    setLoadingProvider(provider);
-    try {
-      await beginSocialLogin(provider);
-      // 성공 시 제공자로 리다이렉트되므로 이 아래는 실행되지 않는다.
-    } catch {
-      setError(`${providerLabel(provider)} 로그인 설정이 완료되지 않았습니다.`);
-      setLoadingProvider(null);
+  // 팝업이 차단되어 주 창이 제공자를 다녀오는 경우에만 해당한다. 그렇게 떠난 화면이 뒤로 가기로
+  // 되살아나면(bfcache) "로그인 중…"에 멈춘 버튼과 로그인 여부를 모르는 인증 상태를 그대로 들고
+  // 온다. 새로 부팅시켜 둘 다 다시 정하게 한다. 팝업으로 로그인하면 이 화면은 떠나지 않는다.
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) window.location.reload();
     }
-  }
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -49,17 +44,17 @@ export function LoginPage() {
           {/* 소셜 로그인 (주 로그인) */}
           <button
             type="button"
-            onClick={() => handleSocialLogin("kakao")}
-            disabled={!kakaoReady || loadingProvider !== null}
+            onClick={() => start("kakao")}
+            disabled={!kakaoReady || pendingProvider !== null}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-sm font-semibold text-[#191600] transition-all duration-150 hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <MessageCircle className="h-4 w-4 fill-current" />
-            {loadingProvider === "kakao" ? "카카오로 이동 중…" : "카카오로 로그인"}
+            {pendingProvider === "kakao" ? "카카오로 로그인 중…" : "카카오로 로그인"}
           </button>
           <button
             type="button"
-            onClick={() => handleSocialLogin("google")}
-            disabled={!googleReady || loadingProvider !== null}
+            onClick={() => start("google")}
+            disabled={!googleReady || pendingProvider !== null}
             className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-white text-sm font-semibold text-[#1f1f1f] transition-all duration-150 hover:bg-neutral-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -80,7 +75,7 @@ export function LoginPage() {
                 d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.61l4.01 3.11C6.22 6.88 8.87 4.77 12 4.77Z"
               />
             </svg>
-            {loadingProvider === "google" ? "구글로 이동 중…" : "구글로 로그인"}
+            {pendingProvider === "google" ? "구글로 로그인 중…" : "구글로 로그인"}
           </button>
           {IS_DEV && (!kakaoReady || !googleReady) && (
             <p className="mt-2 text-center text-xs text-muted-foreground">
