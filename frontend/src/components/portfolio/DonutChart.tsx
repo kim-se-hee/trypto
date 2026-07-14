@@ -78,7 +78,12 @@ export function DonutChart({ availableCash, holdings, baseCurrency }: DonutChart
   const cx = size / 2;
   const cy = size / 2;
 
-  let accumulated = 0;
+  // 조각이 시작하는 위치는 앞선 조각들의 비율 합이다. 그리면서 변수를 누적하면
+  // 렌더 도중 값을 바꾸는 셈이라, 그리기 전에 시작 위치를 미리 계산해 둔다. 조각은 많아야 7개다.
+  const arcs = segments.map((seg, i) => ({
+    ...seg,
+    start: segments.slice(0, i).reduce((sum, prev) => sum + prev.ratio, 0),
+  }));
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -97,10 +102,9 @@ export function DonutChart({ availableCash, holdings, baseCurrency }: DonutChart
               strokeWidth={strokeWidth}
             />
             {/* Segments */}
-            {segments.map((seg) => {
+            {arcs.map((seg) => {
               const dashLength = circumference * seg.ratio;
-              const dashOffset = circumference * (0.25 - accumulated);
-              accumulated += seg.ratio;
+              const dashOffset = circumference * (0.25 - seg.start);
               const isHovered = hoveredLabel === seg.label;
               const isOtherHovered = hoveredLabel !== null && hoveredLabel !== seg.label;
               return (
