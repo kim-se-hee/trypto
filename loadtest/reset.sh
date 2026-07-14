@@ -20,8 +20,7 @@ SCENARIO="${1:-}"
 COMPOSE_ARGS=("-f" "docker-compose.yml")
 case "$SCENARIO" in
   ticker_websocket.js)
-    # loadtest 오버라이드 + 호스트 메트릭(node-exporter/cadvisor) 둘 다 켬
-    COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml" "--profile" "metrics")
+    COMPOSE_ARGS+=("-f" "docker-compose.loadtest.yml")
     ;;
   place_order.js|match_pending*.js)
     # backend 를 loadtest 프로파일로 띄워서 market-meta-sync 를 끈다 → loadtest.sql 의 coin_id=1=KRW 가정이 유효

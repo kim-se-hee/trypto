@@ -1,6 +1,6 @@
 {
-  "title": "Trypto Trade Latency (End-to-End)",
-  "uid": "trade-latency",
+  "title": "Trypto Backend Overview",
+  "uid": "backend-overview",
   "timezone": "browser",
   "refresh": "5s",
   "time": { "from": "now-30m", "to": "now" },
@@ -17,7 +17,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "매칭 → 클라이언트(STOMP) 전송 직전 지연 (trade.match.to.stomp)",
+      "title": "체결 → 사용자 화면 도달 지연 (trade.match.to.stomp)",
       "description": "engine 매칭 결정 시점부터 api 가 STOMP convertAndSendToUser 직전까지. RabbitMQ 발행/소비 + api 처리 시간 + clock skew 포함된 진짜 e2e 지표.",
       "type": "timeseries",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
@@ -45,19 +45,19 @@
     },
     {
       "id": 2,
-      "title": "STOMP 전송 rate",
+      "title": "동시 접속자 수 (STOMP 세션)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(trade_match_to_stomp_seconds_count{job=\"api\"}[1m])",
-          "legendFormat": "sends/s"
+          "expr": "stomp_sessions_active{job=\"api\"}",
+          "legendFormat": "sessions"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "unit": "short",
           "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }
         }
       }

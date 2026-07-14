@@ -30,7 +30,6 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
     private final Counter reconnectCounter;
-    private final Counter parseFailureCounter;
 
     public BithumbWebSocketHandler(
             ObjectMapper objectMapper,
@@ -43,9 +42,6 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
-                .tag("exchange", Exchange.BITHUMB.name())
-                .register(registry);
-        this.parseFailureCounter = Counter.builder("ticker.parse.failure")
                 .tag("exchange", Exchange.BITHUMB.name())
                 .register(registry);
     }
@@ -96,7 +92,6 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
                     .find(Exchange.BITHUMB, ticker.code())
                     .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
         } catch (Exception e) {
-            parseFailureCounter.increment();
             log.debug("빗썸 메시지 처리 실패: {}", e.getMessage());
         }
     }

@@ -35,7 +35,6 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
     private final Counter reconnectCounter;
-    private final Counter parseFailureCounter;
 
     public UpbitWebSocketHandler(
             ObjectMapper objectMapper,
@@ -48,9 +47,6 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
-                .tag("exchange", Exchange.UPBIT.name())
-                .register(registry);
-        this.parseFailureCounter = Counter.builder("ticker.parse.failure")
                 .tag("exchange", Exchange.UPBIT.name())
                 .register(registry);
     }
@@ -102,7 +98,6 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
                     .find(Exchange.UPBIT, ticker.code())
                     .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
         } catch (Exception e) {
-            parseFailureCounter.increment();
             log.debug("업비트 메시지 처리 실패: {}", e.getMessage());
         }
     }

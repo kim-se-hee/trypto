@@ -56,18 +56,12 @@ management:
     web:
       exposure:
         include: health,metrics,prometheus
-  metrics:
-    distribution:
-      percentiles-histogram:
-        match.queue.wait: true
-        match.batch.e2e: true
-        pending.order.fill: true
 
 logging:
   level:
-    org.springframework.web.socket: DEBUG
-    org.springframework.messaging.simp.stomp: DEBUG
-    org.apache.tomcat.websocket: DEBUG
+    org.springframework.web.socket: ${LOG_LEVEL_WEBSOCKET:DEBUG}
+    org.springframework.messaging.simp.stomp: ${LOG_LEVEL_WEBSOCKET:DEBUG}
+    org.apache.tomcat.websocket: ${LOG_LEVEL_WEBSOCKET:DEBUG}
 
 app:
   websocket:

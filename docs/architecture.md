@@ -17,7 +17,7 @@
 | Redis | 시세 현재가·마켓 메타데이터 캐시. Redisson 분산 락 백엔드 |
 | RabbitMQ | 서비스 간 메시지 브로커. 시세 유입 이벤트, 주문 이벤트, 체결 이벤트 전달 |
 | InfluxDB | 시세 raw tick 적재. 서버사이드 Task가 캔들(1m/5m/1h…)로 집계 |
-| Prometheus + Grafana + cAdvisor + node-exporter | 메트릭 수집·대시보드·컨테이너/호스트 모니터링 |
+| Prometheus + Grafana | 메트릭 수집·대시보드 |
 
 ---
 

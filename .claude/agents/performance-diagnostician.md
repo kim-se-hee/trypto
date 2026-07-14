@@ -36,7 +36,7 @@ PROM=http://localhost:9091
 q() { curl -s --get "$PROM/api/v1/query" --data-urlencode "query=$1" | python -c "import sys,json;d=json.load(sys.stdin);print(json.dumps(d['data']['result'],ensure_ascii=False,indent=1))"; }
 
 # 어떤 메트릭이 있는지 먼저 훑는다
-curl -s "$PROM/api/v1/label/__name__/values" | python -c "import sys,json;print('\n'.join(json.load(sys.stdin)['data']))" | grep -Ei 'http_server|hikari|jvm_gc|engine_|stomp_|rabbitmq_|mysql_global|container_cpu'
+curl -s "$PROM/api/v1/label/__name__/values" | python -c "import sys,json;print('\n'.join(json.load(sys.stdin)['data']))" | grep -Ei 'http_server|hikari|jvm_gc|engine_|stomp_|rabbitmq_'
 ```
 
 Micrometer 는 이름의 점을 밑줄로 바꾸고 단위를 붙인다. `engine.wal.append` Timer → `engine_wal_append_seconds_bucket/_count/_sum`, `http.server.requests` → `http_server_requests_seconds_*`.
@@ -62,19 +62,12 @@ histogram_quantile(0.99, sum(rate(engine_wal_append_seconds_bucket[1m])) by (le)
 histogram_quantile(0.99, sum(rate(engine_db_write_seconds_bucket[1m])) by (le))
 rate(engine_match_count_total[1m])
 
-# DB (mysqld-exporter): 슬로우쿼리 / 풀스캔 신호 / 락 대기
-rate(mysql_global_status_slow_queries[1m])
-rate(mysql_global_status_handlers_total{handler="read_rnd_next"}[1m])
-mysql_global_status_threads_running
-
 # RabbitMQ: 큐 적체 (consumer 가 못 따라오면 쌓인다)
 rabbitmq_queue_messages
 rate(rabbitmq_queue_messages_published_total[1m])
-
-# 컨테이너 자원 (cadvisor): 어느 서비스가 CPU/메모리 포화인가
-rate(container_cpu_usage_seconds_total{name=~"trypto.*"}[1m])
-container_memory_working_set_bytes{name=~"trypto.*"}
 ```
+
+DB 내부(슬로우쿼리·락 대기)와 컨테이너 자원(CPU/메모리 포화)의 exporter 지표는 없다. DB 병목은 쿼리 코드와 `hikaricp_*`·`http_server_*` 로, 자원 포화는 `process_cpu_usage`·`jvm_*` 과 `docker stats` 로 추정한다. 그걸로 위치를 못 짚으면 INSTRUMENT 로 계측을 제안한다.
 
 ## 3. 핫패스 코드 확인
 
