@@ -53,7 +53,7 @@ public class CandleQueryAdapter implements CandleQueryPort {
                 .append(filter.interval().getMeasurement())
                 .append("\"");
         sb.append(" and r.exchange == \"").append(filter.exchange()).append("\"");
-        sb.append(" and r.coin == \"").append(filter.coin()).append("\"");
+        sb.append(" and r.symbol == \"").append(filter.symbol()).append("\"");
         sb.append(" and (r._field == \"open\" or r._field == \"high\" or r._field == \"low\" or"
                 + " r._field == \"close\"))");
         sb.append(" |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")");
