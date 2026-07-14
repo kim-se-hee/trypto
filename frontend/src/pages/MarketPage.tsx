@@ -213,6 +213,7 @@ export function MarketPage() {
               {selectedCoin && (
                 <CandleChartPanel
                   exchangeKey={exchange.key}
+                  exchangeId={exchange.id}
                   baseCurrency={exchange.baseCurrency}
                   coin={selectedCoin}
                 />

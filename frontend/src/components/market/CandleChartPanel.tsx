@@ -3,17 +3,24 @@ import { cn } from "@/lib/utils";
 import { formatChangeRate, formatPrice, getCurrencySymbol } from "@/lib/formatters";
 import {
   findCandles,
+  normalizeCandleTime,
   resolveCandleExchangeCode,
   type CandleInterval,
   type CandleItem,
 } from "@/lib/api/candle-api";
+import { connect, isConnected, subscribeTickers } from "@/lib/api/websocket";
 import type { CoinData } from "@/lib/types/coins";
 
 interface CandleChartPanelProps {
   exchangeKey: string;
+  exchangeId: number;
   baseCurrency: string;
   coin: CoinData;
 }
+
+// 아직 못 받아온 구간에서는 늘 같은 빈 배열을 돌려준다. 매번 새 배열을 만들면 이 값을 지켜보는
+// 합성 결과가 헛되이 다시 계산된다.
+const EMPTY_CANDLES: CandleItem[] = [];
 
 const INTERVAL_OPTIONS: { value: CandleInterval; label: string; candleCount: number }[] = [
   { value: "1m", label: "1분", candleCount: 120 },
@@ -34,6 +41,10 @@ const DEFAULT_VISIBLE_COUNT: Record<CandleInterval, number> = {
 };
 
 const MIN_VISIBLE_COUNT = 12;
+// 봉이 닫혀도 서버 캔들은 InfluxDB 집계 주기(1분 + 오프셋 10초)만큼 늦게 나온다. 그동안은 실시간
+// 시세로 만든 봉이 자리를 지켜야 하므로, 서버가 따라잡을 때까지 몇 개는 들고 있는다.
+const LIVE_CANDLE_LIMIT = 4;
+const RECONCILE_DELAY_MS = 15_000;
 const CHART_WIDTH = 960;
 const CHART_HEIGHT = 440;
 const PADDING = { top: 20, right: 124, bottom: 42, left: 20 };
@@ -95,21 +106,74 @@ function formatTickTime(time: string, interval: CandleInterval): string {
   }).format(date);
 }
 
-function getDefaultVisibleCount(interval: CandleInterval, totalCount: number): number {
-  return Math.min(DEFAULT_VISIBLE_COUNT[interval], totalCount);
+// 캔들은 가격만으로 이루어져 있어(거래량 필드가 없다) 실시간 체결가만으로 진행 중인 봉을 만들 수 있다.
+function foldTick(liveCandles: CandleItem[], time: string, price: number): CandleItem[] {
+  const opened = liveCandles[liveCandles.length - 1];
+
+  if (opened && opened.time === time) {
+    const updated: CandleItem = {
+      ...opened,
+      high: Math.max(opened.high, price),
+      low: Math.min(opened.low, price),
+      close: price,
+    };
+    return [...liveCandles.slice(0, -1), updated];
+  }
+
+  // 이미 넘어간 봉에 뒤늦게 도착한 체결은 버린다. 닫힌 봉을 다시 열면 서버 집계와 어긋난다.
+  if (opened && new Date(time).getTime() < new Date(opened.time).getTime()) {
+    return liveCandles;
+  }
+
+  const next: CandleItem = { time, open: price, high: price, low: price, close: price };
+  return [...liveCandles, next].slice(-LIVE_CANDLE_LIMIT);
+}
+
+// 같은 구간을 서버도 갖고 있으면 서버 값이 기준이다. 브라우저는 그 위에 이후 체결만 얹는다.
+function mergeLiveCandles(candles: CandleItem[], liveCandles: CandleItem[]): CandleItem[] {
+  if (liveCandles.length === 0) return candles;
+
+  const merged = [...candles];
+  const lastIndex = merged.length - 1;
+  const lastTime =
+    lastIndex < 0 ? Number.NEGATIVE_INFINITY : new Date(merged[lastIndex].time).getTime();
+
+  liveCandles.forEach((live) => {
+    const liveTime = new Date(live.time).getTime();
+    if (liveTime < lastTime) return;
+
+    if (liveTime === lastTime) {
+      const server = merged[lastIndex];
+      merged[lastIndex] = {
+        ...server,
+        high: Math.max(server.high, live.high),
+        low: Math.min(server.low, live.low),
+        close: live.close,
+      };
+      return;
+    }
+
+    merged.push(live);
+  });
+
+  return merged;
 }
 
 export function CandleChartPanel({
   exchangeKey,
+  exchangeId,
   baseCurrency,
   coin,
 }: CandleChartPanelProps) {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [interval, setInterval] = useState<CandleInterval>("1d");
-  const [candles, setCandles] = useState<CandleItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // 어느 요청의 결과인지 함께 담아 둔다. 그래야 코인·거래소·주기를 막 바꾼 직후의 '아직 못 받은 상태'를
+  // 이펙트에서 비우지 않고 렌더에서 그대로 판단할 수 있다.
+  const [loaded, setLoaded] = useState<{ key: string; candles: CandleItem[] } | null>(null);
+  const [live, setLive] = useState<{ key: string; candles: CandleItem[] } | null>(null);
   const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE_COUNT["1d"]);
-  const [endIndex, setEndIndex] = useState(0);
+  const [anchorEndIndex, setAnchorEndIndex] = useState(0);
+  const [followingLatest, setFollowingLatest] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
 
@@ -118,59 +182,112 @@ export function CandleChartPanel({
     startEndIndex: number;
   } | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    setCandles([]);
-    setLoading(true);
+  const requestKey = `${exchangeKey}:${coin.symbol}:${interval}`;
 
-    async function loadCandles() {
-      const exchangeCode = resolveCandleExchangeCode(exchangeKey);
-      if (!exchangeCode) {
-        setLoading(false);
-        return;
-      }
+  const fetchCandles = useCallback(async (): Promise<CandleItem[] | null> => {
+    const exchangeCode = resolveCandleExchangeCode(exchangeKey);
+    if (!exchangeCode) return null;
 
-      try {
-        const option = INTERVAL_OPTIONS.find((item) => item.value === interval);
-        const data = await findCandles({
-          exchange: exchangeCode,
-          coin: coin.symbol,
-          interval,
-          limit: option?.candleCount ?? 60,
-        });
+    const option = INTERVAL_OPTIONS.find((item) => item.value === interval);
 
-        if (!active) return;
-        setCandles(data);
-      } catch {
-        // 캔들 API 실패 시 빈 상태 유지
-      } finally {
-        if (active) setLoading(false);
-      }
+    try {
+      return await findCandles({
+        exchange: exchangeCode,
+        coin: coin.symbol,
+        interval,
+        limit: option?.candleCount ?? 60,
+      });
+    } catch {
+      // 캔들 API 실패 시 빈 상태 유지
+      return null;
     }
-
-    void loadCandles();
-
-    return () => {
-      active = false;
-    };
   }, [coin.symbol, exchangeKey, interval]);
 
   useEffect(() => {
-    const defaultCount = getDefaultVisibleCount(interval, candles.length);
-    setVisibleCount(defaultCount);
-    setEndIndex(candles.length);
-    setHoveredIndex(null);
-    setPointerPosition(null);
-  }, [candles, interval]);
+    let cancelled = false;
+
+    void fetchCandles().then((data) => {
+      if (cancelled) return;
+
+      const candles = data ?? EMPTY_CANDLES;
+      setLoaded({ key: requestKey, candles });
+      // 받아온 개수로 줄이지 않는다. 서버 캔들이 아직 없어도 실시간 봉이 쌓이면 그려야 한다.
+      setVisibleCount(DEFAULT_VISIBLE_COUNT[interval]);
+      setAnchorEndIndex(candles.length);
+      setFollowingLatest(true);
+      setHoveredIndex(null);
+      setPointerPosition(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCandles, interval, requestKey]);
+
+  // 실시간 체결가를 그 시각이 속한 봉에 접어 넣는다. 시세 목록과 달리 프레임 단위로 합치지 않고
+  // 들어오는 체결을 모두 본다. 한 프레임 안의 체결을 버리면 그 봉의 고가·저가가 얕아진다.
+  useEffect(() => {
+    if (!isConnected()) {
+      connect();
+    }
+
+    const unsubscribe = subscribeTickers(exchangeId, (tickers) => {
+      const ticker = tickers.find((item) => item.symbol === coin.symbol);
+      if (!ticker || !Number.isFinite(ticker.price) || ticker.price <= 0) return;
+
+      const time = normalizeCandleTime(new Date(ticker.timestamp).toISOString(), interval);
+      setLive((previous) => {
+        const opened = previous?.key === requestKey ? previous.candles : EMPTY_CANDLES;
+        return { key: requestKey, candles: foldTick(opened, time, ticker.price) };
+      });
+    });
+
+    return unsubscribe;
+  }, [coin.symbol, exchangeId, interval, requestKey]);
+
+  const candles = loaded?.key === requestKey ? loaded.candles : EMPTY_CANDLES;
+  const liveCandles = live?.key === requestKey ? live.candles : EMPTY_CANDLES;
+  const loading = loaded?.key !== requestKey;
+
+  const mergedCandles = useMemo(
+    () => mergeLiveCandles(candles, liveCandles),
+    [candles, liveCandles],
+  );
+
+  // 최신 봉을 따라가는 중이면 오른쪽 끝은 늘 마지막 봉이다. 과거를 보는 중이면 사용자가 멈춘 자리에 머문다.
+  const endIndex = followingLatest
+    ? mergedCandles.length
+    : Math.min(anchorEndIndex, mergedCandles.length);
+
+  // 봉이 새로 열렸다는 건 직전 봉이 닫혔다는 뜻이다. 서버 집계가 끝날 즈음 다시 조회해서
+  // 브라우저가 만들어 둔 봉을 서버 값으로 바꾼다. 보고 있는 구간은 건드리지 않는다.
+  const openedBucket = liveCandles.length > 0 ? liveCandles[liveCandles.length - 1].time : null;
+
+  useEffect(() => {
+    if (!openedBucket) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void fetchCandles().then((data) => {
+        if (cancelled || !data || data.length === 0) return;
+        setLoaded({ key: requestKey, candles: data });
+      });
+    }, RECONCILE_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [fetchCandles, openedBucket, requestKey]);
 
   const visibleStartIndex = useMemo(() => {
-    const safeVisibleCount = Math.min(visibleCount, candles.length);
+    const safeVisibleCount = Math.min(visibleCount, mergedCandles.length);
     return Math.max(0, endIndex - safeVisibleCount);
-  }, [candles.length, endIndex, visibleCount]);
+  }, [mergedCandles.length, endIndex, visibleCount]);
 
   const visibleCandles = useMemo(() => {
-    return candles.slice(visibleStartIndex, endIndex);
-  }, [candles, endIndex, visibleStartIndex]);
+    return mergedCandles.slice(visibleStartIndex, endIndex);
+  }, [mergedCandles, endIndex, visibleStartIndex]);
 
   const chartData = useMemo(() => {
     if (visibleCandles.length === 0) return null;
@@ -235,57 +352,52 @@ export function CandleChartPanel({
   const hoveredCandle =
     chartData && hoveredIndex !== null ? chartData.hoverPoints[hoveredIndex] : null;
 
-  const tooltipLeft = hoveredCandle && pointerPosition
-    ? clamp(
-        pointerPosition.x + TOOLTIP_OFFSET_X,
-        8,
-        (chartContainerRef.current?.clientWidth ?? CHART_WIDTH) - TOOLTIP_WIDTH - 8,
-      )
-    : 12;
-  const tooltipTop = hoveredCandle && pointerPosition
-    ? clamp(
-        pointerPosition.y + TOOLTIP_OFFSET_Y,
-        8,
-        (chartContainerRef.current?.clientHeight ?? CHART_HEIGHT) - TOOLTIP_HEIGHT - 8,
-      )
-    : 8;
+  // pointerPosition 은 포인터가 움직일 때 이미 커서 옆으로 밀고 컨테이너 안으로 가둔 좌표다.
+  const tooltipLeft = pointerPosition?.x ?? 12;
+  const tooltipTop = pointerPosition?.y ?? 8;
 
   // 휠 이벤트 리스너가 이 둘을 붙잡고 있다. 매 렌더마다 새로 만들면 리스너를 그때마다
   // 다시 등록해야 하므로, 실제로 쓰는 값이 바뀔 때만 새로 만든다.
+  // 오른쪽 끝까지 밀면 다시 최신 봉을 따라간다. 그 전까지는 사용자가 세운 자리를 지킨다.
   const moveViewport = useCallback(
     (nextEndIndex: number) => {
-      const safeVisibleCount = Math.min(visibleCount, candles.length);
-      const minEndIndex = safeVisibleCount;
-      const maxEndIndex = candles.length;
-      setEndIndex(clamp(nextEndIndex, minEndIndex, maxEndIndex));
+      const totalCount = mergedCandles.length;
+      const safeVisibleCount = Math.min(visibleCount, totalCount);
+      const bounded = clamp(nextEndIndex, safeVisibleCount, totalCount);
+
+      setAnchorEndIndex(bounded);
+      setFollowingLatest(bounded >= totalCount);
     },
-    [visibleCount, candles.length],
+    [visibleCount, mergedCandles.length],
   );
 
   const zoomTo = useCallback(
     (nextVisibleCount: number, anchorGlobalIndex?: number) => {
-      const boundedVisibleCount = clamp(nextVisibleCount, MIN_VISIBLE_COUNT, candles.length);
-      const previousVisibleCount = Math.min(visibleCount, candles.length);
+      const totalCount = mergedCandles.length;
+      const boundedVisibleCount = clamp(nextVisibleCount, MIN_VISIBLE_COUNT, totalCount);
+      const previousVisibleCount = Math.min(visibleCount, totalCount);
       const previousStartIndex = Math.max(0, endIndex - previousVisibleCount);
       const fallbackAnchor = previousStartIndex + Math.floor(previousVisibleCount / 2);
       const anchorIndex = clamp(
         anchorGlobalIndex ?? fallbackAnchor,
         0,
-        Math.max(candles.length - 1, 0),
+        Math.max(totalCount - 1, 0),
       );
       const ratio =
         previousVisibleCount <= 1 ? 1 : (anchorIndex - previousStartIndex) / previousVisibleCount;
       const nextStartIndex = clamp(
         Math.round(anchorIndex - boundedVisibleCount * ratio),
         0,
-        Math.max(candles.length - boundedVisibleCount, 0),
+        Math.max(totalCount - boundedVisibleCount, 0),
       );
+      const nextEndIndex = nextStartIndex + boundedVisibleCount;
 
       setVisibleCount(boundedVisibleCount);
-      setEndIndex(nextStartIndex + boundedVisibleCount);
+      setAnchorEndIndex(nextEndIndex);
+      setFollowingLatest(nextEndIndex >= totalCount);
       setHoveredIndex(null);
     },
-    [candles.length, visibleCount, endIndex],
+    [mergedCandles.length, visibleCount, endIndex],
   );
 
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
@@ -395,7 +507,7 @@ export function CandleChartPanel({
         const nextVisibleCount =
           event.deltaY < 0
             ? Math.max(MIN_VISIBLE_COUNT, visibleCount - 4)
-            : Math.min(candles.length, visibleCount + 4);
+            : Math.min(mergedCandles.length, visibleCount + 4);
         zoomTo(nextVisibleCount, anchorGlobalIndex);
         return;
       }
@@ -416,7 +528,7 @@ export function CandleChartPanel({
       });
     };
   }, [
-    candles.length,
+    mergedCandles.length,
     chartData,
     endIndex,
     moveViewport,
