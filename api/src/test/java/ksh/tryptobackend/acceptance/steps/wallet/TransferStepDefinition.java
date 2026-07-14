@@ -25,6 +25,8 @@ public class TransferStepDefinition {
     private static final Long EXCHANGE_ID_2 = 2L;
     private static final Long COIN_ID = 2L;
     private static final String COIN_SYMBOL = "BTC";
+    // ETH 는 출금 거래소(1)에만 상장되어 있고 입금 거래소(2)에는 상장되어 있지 않다.
+    private static final Long UNLISTED_COIN_ID = 3L;
 
     private final CommonApiClient apiClient;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
@@ -67,6 +69,20 @@ public class TransferStepDefinition {
         walletBalanceJpaRepository.save(
                 new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
                         FROM_WALLET_ID, COIN_ID, new BigDecimal(String.valueOf(amount)), BigDecimal.ZERO));
+    }
+
+    @Given("출금 지갑에 ETH 잔고가 {double}개 있다")
+    public void 출금_지갑에_ETH_잔고가_개_있다(double amount) {
+        walletBalanceJpaRepository.save(
+                new ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletBalanceJpaEntity(
+                        FROM_WALLET_ID, UNLISTED_COIN_ID, new BigDecimal(String.valueOf(amount)), BigDecimal.ZERO));
+    }
+
+    @When("출금 지갑에서 입금 지갑으로 ETH {double}개를 송금한다")
+    public void 출금_지갑에서_입금_지갑으로_ETH_개를_송금한다(double amount) {
+        Map<String, Object> body = createTransferBody(FROM_WALLET_ID, TO_WALLET_ID, amount);
+        body.put("coinId", UNLISTED_COIN_ID);
+        apiClient.post("/api/transfers", body);
     }
 
     @Given("다른 라운드의 지갑이 준비되어 있다")

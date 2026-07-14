@@ -12,6 +12,8 @@ INSERT IGNORE INTO exchange_market (exchange_id, name, market_type, base_currenc
     (2, 'BITHUMB', 'DOMESTIC', 1, 0.002500),
     (3, 'BINANCE', 'OVERSEAS', 1, 0.001000);
 
+-- 빗썸(2)은 BTC 만 상장한다. 거래소마다 상장 코인이 다른 상황을 시나리오에서 재현하기 위함이다.
 INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES
     (10, 1, 2, '비트코인'),
-    (11, 1, 3, '이더리움');
+    (11, 1, 3, '이더리움'),
+    (12, 2, 2, '비트코인');
