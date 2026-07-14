@@ -82,6 +82,7 @@ export function useTickers({ exchangeId, initialCoins }: UseTickersOptions): Coi
         currentPrice: live.price,
         changeRate: live.changeRate,
         volume: live.quoteTurnover,
+        tickedAt: live.timestamp,
       };
       cache.set(coin.symbol, { base: coin, ticker: live, merged });
       return merged;
