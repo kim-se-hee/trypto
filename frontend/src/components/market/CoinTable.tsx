@@ -1,24 +1,27 @@
-import { memo, useCallback, type CSSProperties, type ReactNode } from "react";
+import { memo, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatVolume, formatChangeRate, getCurrencySymbol } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
-import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
 import { useVirtualList, virtualRowStyle } from "@/hooks/useVirtualList";
 import { usePriceFlash } from "@/hooks/usePriceFlash";
 import { CoinIcon } from "./CoinIcon";
 import type { CoinData } from "@/lib/types/coins";
 
+export type CoinSortKey = "name" | "price" | "change" | "volume";
+
 interface CoinTableProps {
+  /** 이미 정렬을 마친 목록. 차트의 기본 코인도 같은 정렬을 따라야 하므로 정렬은 페이지가 쥔다. */
   coins: CoinData[];
   baseCurrency: string;
+  sortKey: CoinSortKey | null;
+  sortDir: SortDir;
+  onSort: (key: CoinSortKey) => void;
   selectedSymbol?: string | null;
   onSelect?: (symbol: string) => void;
   /** 목록 바로 위에 얹을 것 (검색창). 목록을 좁히는 도구는 목록과 같은 상자 안에 둔다. */
   toolbar?: ReactNode;
 }
-
-type SortKey = "name" | "price" | "change" | "volume";
 
 const GRID_COLS = "grid-cols-[2fr_minmax(100px,140px)_minmax(80px,100px)_minmax(160px,1fr)]";
 
@@ -115,34 +118,24 @@ const CoinRow = memo(function CoinRow({
   );
 });
 
-export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolbar }: CoinTableProps) {
-  const comparator = useCallback((key: SortKey, dir: SortDir) => {
-    return (a: CoinData, b: CoinData) => {
-      let cmp = 0;
-      switch (key) {
-        case "name": cmp = a.symbol.localeCompare(b.symbol); break;
-        case "price": cmp = a.currentPrice - b.currentPrice; break;
-        case "change": cmp = a.changeRate - b.changeRate; break;
-        case "volume": cmp = a.volume - b.volume; break;
-      }
-      return dir === "asc" ? cmp : -cmp;
-    };
-  }, []);
-
-  const { sorted: sortedCoins, sortKey, sortDir, handleSort } = useSort<CoinData, SortKey>({
-    items: coins,
-    defaultKey: "volume",
-    comparator,
-  });
-
+export function CoinTable({
+  coins,
+  baseCurrency,
+  sortKey,
+  sortDir,
+  onSort,
+  selectedSymbol,
+  onSelect,
+  toolbar,
+}: CoinTableProps) {
   const { scrollRef, virtualizer, scrollbarWidth } = useVirtualList({
-    count: sortedCoins.length,
+    count: coins.length,
     rowHeight: ROW_HEIGHT,
   });
 
   const currencySymbol = getCurrencySymbol(baseCurrency);
 
-  const columns: { key: SortKey; label: string; sortable: boolean }[] = [
+  const columns: { key: CoinSortKey; label: string; sortable: boolean }[] = [
     { key: "name", label: "코인명", sortable: true },
     { key: "price", label: "현재가", sortable: true },
     { key: "change", label: "전일대비", sortable: true },
@@ -163,7 +156,7 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolb
         {columns.map((col) => (
           <button
             key={col.key}
-            onClick={() => col.sortable && handleSort(col.key)}
+            onClick={() => col.sortable && onSort(col.key)}
             disabled={!col.sortable}
             className={cn(
               "flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors",
@@ -178,7 +171,7 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolb
         ))}
       </div>
 
-      {sortedCoins.length === 0 ? (
+      {coins.length === 0 ? (
         <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
           검색 결과가 없습니다.
         </div>
@@ -188,11 +181,11 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolb
         <div
           ref={scrollRef}
           className="overflow-y-auto [scrollbar-gutter:stable]"
-          style={{ height: Math.min(LIST_HEIGHT, sortedCoins.length * ROW_HEIGHT) }}
+          style={{ height: Math.min(LIST_HEIGHT, coins.length * ROW_HEIGHT) }}
         >
           <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
             {virtualizer.getVirtualItems().map((item) => {
-              const coin = sortedCoins[item.index];
+              const coin = coins[item.index];
               return (
                 <CoinRow
                   key={coin.symbol}
@@ -200,7 +193,7 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolb
                   baseCurrency={baseCurrency}
                   currencySymbol={currencySymbol}
                   isSelected={selectedSymbol === coin.symbol}
-                  isLast={item.index === sortedCoins.length - 1}
+                  isLast={item.index === coins.length - 1}
                   style={virtualRowStyle(item, ROW_HEIGHT)}
                   onSelect={onSelect}
                 />

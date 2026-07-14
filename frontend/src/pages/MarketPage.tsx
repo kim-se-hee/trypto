@@ -5,7 +5,7 @@ import { MarketOverviewCards } from "@/components/market/MarketOverviewCards";
 import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { CoinSearchInput } from "@/components/market/CoinSearchInput";
 import { FilterChips } from "@/components/market/FilterChips";
-import { CoinTable } from "@/components/market/CoinTable";
+import { CoinTable, type CoinSortKey } from "@/components/market/CoinTable";
 import { CandleChartPanel } from "@/components/market/CandleChartPanel";
 import { OrderPanel } from "@/components/market/OrderPanel";
 import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
@@ -17,7 +17,9 @@ import { resolveOrderTargetIds, type OrderTargetResult } from "@/lib/api/id-mapp
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
 import { useUserEvents } from "@/hooks/useUserEvents";
+import { useSort, type SortDir } from "@/hooks/useSort";
 import type { UserEvent } from "@/lib/api/websocket";
+import type { CoinData } from "@/lib/types/coins";
 import type { FilterType } from "@/components/market/FilterChips";
 
 export function MarketPage() {
@@ -95,12 +97,36 @@ export function MarketPage() {
     return filtered;
   }, [coins, searchIndex, searchQuery, filter]);
 
-  // 검색은 목록만 좁힌다. 차트가 걸러진 목록의 첫 코인을 따라가면 글자를 칠 때마다 차트가 바뀐다.
-  // 아무것도 고르지 않았을 때만 첫 코인을 보여주고, 그 뒤로는 행을 눌러 고른 코인만 따른다.
+  const comparator = useCallback((key: CoinSortKey, dir: SortDir) => {
+    return (a: CoinData, b: CoinData) => {
+      let cmp = 0;
+      switch (key) {
+        case "name": cmp = a.symbol.localeCompare(b.symbol); break;
+        case "price": cmp = a.currentPrice - b.currentPrice; break;
+        case "change": cmp = a.changeRate - b.changeRate; break;
+        case "volume": cmp = a.volume - b.volume; break;
+      }
+      return dir === "asc" ? cmp : -cmp;
+    };
+  }, []);
+
+  const { sorted: sortedCoins, sortKey, sortDir, handleSort } = useSort<CoinData, CoinSortKey>({
+    items: filteredCoins,
+    defaultKey: "volume",
+    comparator,
+  });
+
+  // 아무것도 고르지 않았으면 목록 맨 위 코인의 차트를 보여준다. 다만 검색으로 좁혀진 목록을 따라가면
+  // 글자를 칠 때마다 차트가 바뀌므로, 걸러내기 전 전체 목록을 같은 기준으로 세워 그 첫 코인을 쓴다.
+  const topCoin = useMemo(() => {
+    if (!sortKey) return coins[0];
+    return [...coins].sort(comparator(sortKey, sortDir))[0];
+  }, [coins, sortKey, sortDir, comparator]);
+
   const selectedCoin = useMemo(() => {
     const fromSelection = coins.find((coin) => coin.symbol === selectedSymbol);
-    return fromSelection ?? coins[0];
-  }, [coins, selectedSymbol]);
+    return fromSelection ?? topCoin;
+  }, [coins, selectedSymbol, topCoin]);
 
   // 해석 결과에 어느 코인의 것인지를 함께 담는다. 그래야 다른 코인으로 옮긴 직후
   // 아직 해석이 끝나지 않은 사이에 이전 코인의 주문 대상이 그대로 쓰이는 일이 없다.
@@ -187,8 +213,11 @@ export function MarketPage() {
 
               {/* Coin table */}
               <CoinTable
-                coins={filteredCoins}
+                coins={sortedCoins}
                 baseCurrency={exchange.baseCurrency}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={handleSort}
                 selectedSymbol={selectedCoin?.symbol ?? null}
                 onSelect={setSelectedSymbol}
                 toolbar={<CoinSearchInput value={searchQuery} onChange={setSearchQuery} />}
