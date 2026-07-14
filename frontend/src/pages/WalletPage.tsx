@@ -72,7 +72,7 @@ export function WalletPage() {
     setLoading(true);
     try {
       const [balancesData, exchangeCoins, transferData] = await Promise.all([
-        getWalletBalances(user.userId, walletEntry.walletId),
+        getWalletBalances(walletEntry.walletId),
         getExchangeCoins(exchange.id),
         getTransferHistory(walletEntry.walletId, user.userId, { size: 50 }),
       ]);
