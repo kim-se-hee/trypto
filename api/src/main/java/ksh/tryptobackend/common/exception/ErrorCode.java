@@ -62,8 +62,6 @@ public enum ErrorCode {
     SOCIAL_ACCOUNT_NOT_FOUND(404, "social.account.not.found"),
     SIGNUP_RESTRICTED(403, "signup.restricted"),
     SOCIAL_SERVER_ERROR(502, "social.server.error"),
-    REPORT_NOT_FOUND(404, "report.not.found"),
-    SNAPSHOT_NOT_FOUND(404, "snapshot.not.found"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 
