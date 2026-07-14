@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import ksh.tryptobackend.acceptance.mock.MockSocialAuthenticator;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.SocialAccountJpaEntity;
 import ksh.tryptobackend.user.adapter.out.persistence.entity.UserJpaEntity;
@@ -17,6 +18,7 @@ import ksh.tryptobackend.user.adapter.out.persistence.repository.SocialAccountJp
 import ksh.tryptobackend.user.adapter.out.persistence.repository.UserJpaRepository;
 import ksh.tryptobackend.user.domain.model.SocialAccount;
 import ksh.tryptobackend.user.domain.model.User;
+import ksh.tryptobackend.user.domain.vo.ClientType;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +31,7 @@ public class LoginStepDefinition {
     private final CommonApiClient apiClient;
     private final UserJpaRepository userJpaRepository;
     private final SocialAccountJpaRepository socialAccountJpaRepository;
+    private final MockSocialAuthenticator socialAuthenticator;
 
     private Long existingUserId;
     private Long withdrawnUserId;
@@ -37,10 +40,12 @@ public class LoginStepDefinition {
     public LoginStepDefinition(
             CommonApiClient apiClient,
             UserJpaRepository userJpaRepository,
-            SocialAccountJpaRepository socialAccountJpaRepository) {
+            SocialAccountJpaRepository socialAccountJpaRepository,
+            MockSocialAuthenticator socialAuthenticator) {
         this.apiClient = apiClient;
         this.userJpaRepository = userJpaRepository;
         this.socialAccountJpaRepository = socialAccountJpaRepository;
+        this.socialAuthenticator = socialAuthenticator;
     }
 
     @Given("{word} 신원 {string}에 연결된 회원이 존재한다")
@@ -101,6 +106,19 @@ public class LoginStepDefinition {
         userCountBeforeLogin = userJpaRepository.count();
         apiClient.post(
                 "/api/auth/" + provider + "/login", Map.of("code", BRAND_NEW_CODE, "codeVerifier", CODE_VERIFIER));
+    }
+
+    @When("클라이언트 유형 {string}로 카카오 로그인을 요청한다")
+    public void 클라이언트_유형으로_카카오_로그인을_요청한다(String clientType) {
+        userCountBeforeLogin = userJpaRepository.count();
+        apiClient.post(
+                "/api/auth/kakao/login",
+                Map.of("code", BRAND_NEW_CODE, "codeVerifier", CODE_VERIFIER, "clientType", clientType));
+    }
+
+    @Then("인증에 사용된 클라이언트 유형은 {word}이다")
+    public void 인증에_사용된_클라이언트_유형은_이다(String expected) {
+        assertThat(socialAuthenticator.getLastClientType()).isEqualTo(ClientType.valueOf(expected));
     }
 
     @When("발급받은 세션으로 내 프로필을 조회한다")

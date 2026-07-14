@@ -8,7 +8,6 @@ import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.mock.MockSocialAuthenticator;
 import ksh.tryptobackend.marketdata.application.port.out.BtcPriceHistoryQueryPort;
 import ksh.tryptobackend.marketdata.application.port.out.PriceChangeRateQueryPort;
-import ksh.tryptobackend.user.domain.service.SocialAuthenticator;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -48,7 +47,7 @@ public class MockAdapterConfiguration {
 
     @Bean
     @Primary
-    public SocialAuthenticator socialAuthenticator() {
+    public MockSocialAuthenticator socialAuthenticator() {
         return new MockSocialAuthenticator();
     }
 }
