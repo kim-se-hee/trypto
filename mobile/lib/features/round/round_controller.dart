@@ -56,6 +56,40 @@ class RoundController extends Notifier<RoundState> {
 
   Future<void> refresh() => _load(_generation);
 
+  /// 성공하면 `null`, 실패하면 사용자에게 보일 메시지를 돌려준다. 웹은 서버 오류를 삼키고
+  /// "입력값을 다시 확인해 주세요" 한 줄로 뭉갠다(사양서 §7.3.3) — 여기서는 그대로 노출한다.
+  ///
+  /// 생성 응답에는 `userId` 가 없어 [ActiveRound] 를 그대로 만들 수 없다(R4-3). 서버 진실을
+  /// 들이려고 재조회한다. 로딩 상태로 되돌리지 않으므로 가드가 스플래시를 스치지 않는다.
+  Future<String?> createRound(StartRoundRequest request) async {
+    try {
+      await ref.read(roundRepositoryProvider).startRound(request);
+    } on ApiException catch (error) {
+      return error.userMessage;
+    }
+    await _load(_generation);
+    if (state.hasActive) return null;
+    return state.errorMessage ?? '라운드를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
+  Future<String?> endRound() async {
+    final round = state.activeRound;
+    if (round == null) return null;
+    try {
+      await ref.read(roundRepositoryProvider).endRound(round.roundId);
+    } on ApiException catch (error) {
+      return error.userMessage;
+    }
+    clearRound();
+    return null;
+  }
+
+  /// 서버를 부르지 않고 로컬 활성 라운드만 비운다. `totalRoundCount` 는 유지된다 — 라운드를
+  /// 끝낸 사용자는 생성 화면으로 밀려나지 않고 '라운드 없이 둘러보기' 상태가 된다(§7.4.3).
+  void clearRound() {
+    state = RoundState(isLoading: false, totalRoundCount: state.totalRoundCount);
+  }
+
   /// 활성 라운드와 누적 라운드 수를 병렬로 읽는다. 활성 라운드가 없으면 repository 가
   /// `ROUND_NOT_ACTIVE` 를 `null` 로 바꿔 준다 — 예외가 아니다.
   Future<void> _load(int generation) async {

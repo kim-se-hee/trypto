@@ -48,6 +48,10 @@ String formatKRWCompact(double value) {
   return _grp.format(value);
 }
 
+/// 천단위 구분만 넣은 정수 표기(웹 `toLocaleString`). 축약하면 안 되는 자리 —
+/// 라운드 생성 금액 입력, 마이페이지 라운드 카드 — 에서 쓴다.
+String formatGrouped(num value) => _int0.format(value);
+
 /// 통화별 금액, 단위 포함. §8.5.3
 ///
 /// USDT 는 템플릿이 `$${값}` 이라 음수에서 기호 뒤에 마이너스가 온다(`$-12.35`). 웹 동작 그대로다.
