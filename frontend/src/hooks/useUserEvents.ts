@@ -12,8 +12,12 @@ interface UseUserEventsOptions {
 }
 
 export function useUserEvents({ userId, onOrderFilled }: UseUserEventsOptions): void {
+  // 콜백이 바뀔 때마다 구독을 다시 맺지 않으려고 ref 로 들고 있는다.
+  // 갱신은 렌더가 끝난 뒤에 한다. 렌더 도중 ref 를 건드리면 렌더가 순수하지 않게 된다.
   const onOrderFilledRef = useRef(onOrderFilled);
-  onOrderFilledRef.current = onOrderFilled;
+  useEffect(() => {
+    onOrderFilledRef.current = onOrderFilled;
+  }, [onOrderFilled]);
 
   useEffect(() => {
     if (!userId) return;
