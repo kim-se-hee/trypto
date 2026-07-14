@@ -3,9 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 
 export function RoundGuard() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const { hasActiveRound, isRoundLoading } = useRound();
 
+  if (isAuthLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (isRoundLoading) return null;
   if (hasActiveRound) return <Navigate to="/market" replace />;
