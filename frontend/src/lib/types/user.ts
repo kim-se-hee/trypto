@@ -1,7 +1,4 @@
-export interface MockUser {
+export interface AuthUser {
   userId: number;
-  email: string;
   nickname: string;
-  password: string;
-  createdAt: string;
 }

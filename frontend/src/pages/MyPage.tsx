@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
-import { changeNickname } from "@/lib/api/user-api";
+import { changeNickname, getUserProfile } from "@/lib/api/user-api";
 import { endRound } from "@/lib/api/round-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,20 @@ export function MyPage() {
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState(user?.nickname ?? "");
   const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getUserProfile()
+      .then((profile) => {
+        if (!cancelled) setJoinedAt(profile.createdAt);
+      })
+      .catch((error) => console.error("Failed to load user profile", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const handleNicknameSave = useCallback(async () => {
     const trimmed = nicknameInput.trim();
@@ -146,15 +160,8 @@ export function MyPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">이메일</span>
-                <span className="text-sm">{user?.email}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">가입일</span>
-                <span className="text-sm">
-                  {user?.createdAt ? formatDate(user.createdAt) : "-"}
-                </span>
+                <span className="text-sm">{joinedAt ? formatDate(joinedAt) : "-"}</span>
               </div>
             </CardContent>
           </Card>

@@ -1,8 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { Activity, ArrowRight, MessageCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Activity, MessageCircle } from "lucide-react";
 import {
   beginSocialLogin,
   isSocialConfigured,
@@ -10,14 +7,9 @@ import {
   type SocialProvider,
 } from "@/lib/auth/social";
 
-/** 목 이메일 로그인은 개발 환경 전용이다. 프로덕션 빌드에서는 이 블록 전체가 제거된다. */
 const IS_DEV = import.meta.env.DEV;
 
 export function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null);
 
@@ -33,23 +25,6 @@ export function LoginPage() {
     } catch {
       setError(`${providerLabel(provider)} 로그인 설정이 완료되지 않았습니다.`);
       setLoadingProvider(null);
-    }
-  }
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    if (!email.trim()) {
-      setError("이메일을 입력해주세요.");
-      return;
-    }
-
-    const success = login(email.trim());
-    if (success) {
-      navigate("/market", { replace: true });
-    } else {
-      setError("등록되지 않은 이메일입니다.");
     }
   }
 
@@ -119,68 +94,7 @@ export function LoginPage() {
               {error}
             </p>
           )}
-
-          {IS_DEV && (
-            <>
-              {/* 구분선 */}
-              <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">개발용 로그인</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              {/* 목 이메일 로그인 (개발용) */}
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
-                    이메일
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="test@trypto.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    className="h-11 rounded-lg bg-secondary/40 text-sm"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-                    비밀번호
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="아무 값이나 입력"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    className="h-11 rounded-lg bg-secondary/40 text-sm"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="mt-1 flex h-11 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-white transition-all duration-150 hover:bg-primary/90 active:scale-[0.98]"
-                >
-                  로그인
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </form>
-            </>
-          )}
         </div>
-
-        {/* Test account hint (개발용) */}
-        {IS_DEV && (
-          <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">
-              테스트 계정 · <span className="font-medium text-foreground">test@trypto.com</span>
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
