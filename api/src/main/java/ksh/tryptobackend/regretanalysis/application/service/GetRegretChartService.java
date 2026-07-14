@@ -31,9 +31,15 @@ public class GetRegretChartService implements GetRegretChartUseCase {
         AnalysisRound round = investmentRoundQueryPort.getRound(query.roundId());
         round.validateOwnedBy(query.userId());
 
-        RegretReport report = regretReportQueryPort.getByRoundIdAndExchangeId(query.roundId(), query.exchangeId());
         AnalysisExchange exchange = marketDataQueryPort.getExchange(query.exchangeId());
         AssetTimeline timeline = portfolioQueryPort.getAssetTimeline(query.roundId(), query.exchangeId());
+        if (timeline.isEmpty()) {
+            return RegretChartResult.empty(query.roundId(), exchange);
+        }
+
+        RegretReport report = regretReportQueryPort
+                .findByRoundIdAndExchangeId(query.roundId(), query.exchangeId())
+                .orElseGet(() -> RegretReport.empty(query.roundId(), query.exchangeId()));
         BtcDailyPrices btcDailyPrices = marketDataQueryPort.findBtcDailyPrices(
                 timeline.getStartDate(), timeline.getEndDate(), exchange.currency());
 
