@@ -12,7 +12,7 @@ import { useRound } from "@/contexts/RoundContext";
 import { EXCHANGES } from "@/lib/types/coins";
 import type { WalletCoinBalance, WalletData, TransferRecord } from "@/lib/types/wallet";
 import { getWalletBalances } from "@/lib/api/wallet-api";
-import { getExchangeCoins, type ExchangeCoinResponse } from "@/lib/api/exchange-api";
+import { getExchangeCoins } from "@/lib/api/exchange-api";
 import { getTransferHistory, type TransferHistoryItem } from "@/lib/api/transfer-api";
 
 function mapTransferItem(item: TransferHistoryItem, currentExchangeName: string): TransferRecord {

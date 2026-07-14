@@ -1,10 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { MockUser } from "@/lib/types/user";
-import { MOCK_USERS } from "@/mocks/auth";
+import type { AuthUser } from "@/lib/types/user";
 import { logout as logoutApi } from "@/lib/api/auth-api";
-
-/** true로 바꾸면 로그인 없이 바로 메인 진입 (로그인 화면을 보려면 false) */
-const DEV_SKIP_AUTH = false;
 
 interface SocialLoginUser {
   userId: number;
@@ -12,34 +8,20 @@ interface SocialLoginUser {
 }
 
 interface AuthContextValue {
-  user: MockUser | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (email: string) => boolean;
   loginWithSocial: (result: SocialLoginUser) => void;
   logout: () => Promise<void>;
-  updateUser: (updates: Partial<Pick<MockUser, "nickname" | "password">>) => void;
+  updateUser: (updates: Partial<Pick<AuthUser, "nickname">>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<MockUser | null>(DEV_SKIP_AUTH ? MOCK_USERS[0] : null);
-
-  const login = useCallback((email: string): boolean => {
-    const found = MOCK_USERS.find((u) => u.email === email);
-    if (!found) return false;
-    setUser(found);
-    return true;
-  }, []);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const loginWithSocial = useCallback((result: SocialLoginUser) => {
-    setUser({
-      userId: result.userId,
-      nickname: result.nickname,
-      email: "",
-      password: "",
-      createdAt: new Date().toISOString(),
-    });
+    setUser({ userId: result.userId, nickname: result.nickname });
   }, []);
 
   const logout = useCallback(async () => {
@@ -51,15 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateUser = useCallback(
-    (updates: Partial<Pick<MockUser, "nickname" | "password">>) => {
-      setUser((prev) => (prev ? { ...prev, ...updates } : prev));
-    },
-    [],
-  );
+  const updateUser = useCallback((updates: Partial<Pick<AuthUser, "nickname">>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev));
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, loginWithSocial, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated: user !== null, loginWithSocial, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
