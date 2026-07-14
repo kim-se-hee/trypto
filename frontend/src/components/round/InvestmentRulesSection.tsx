@@ -6,16 +6,22 @@ export interface RuleState {
   value: number;
 }
 
-export type RulesMap = Record<RuleType, RuleState>;
+/**
+ * 손절(STOP_LOSS)·익절(TAKE_PROFIT)은 백엔드에 위반 판정 로직이 없어 설정해도 아무 위반도 기록되지 않는다.
+ * 지키지 않아도 복기에 0건으로 나와 사용자를 오도하므로, 판정이 구현될 때까지 설정 대상에서 제외한다.
+ */
+export type SelectableRuleType = Exclude<RuleType, "STOP_LOSS" | "TAKE_PROFIT">;
+
+export type RulesMap = Record<SelectableRuleType, RuleState>;
 
 interface InvestmentRulesSectionProps {
   rules: RulesMap;
-  onRuleToggle: (type: RuleType, enabled: boolean) => void;
-  onRuleValueChange: (type: RuleType, value: number) => void;
+  onRuleToggle: (type: SelectableRuleType, enabled: boolean) => void;
+  onRuleValueChange: (type: SelectableRuleType, value: number) => void;
 }
 
 const RULE_CONFIGS: {
-  type: RuleType;
+  type: SelectableRuleType;
   label: string;
   description: string;
   min: number;
@@ -24,26 +30,6 @@ const RULE_CONFIGS: {
   inputType: "slider" | "number";
   defaultValue: number;
 }[] = [
-  {
-    type: "STOP_LOSS",
-    label: "손절",
-    description: "설정한 손실률 도달 시 매도",
-    min: 1,
-    max: 50,
-    unit: "%",
-    inputType: "slider",
-    defaultValue: 10,
-  },
-  {
-    type: "TAKE_PROFIT",
-    label: "익절",
-    description: "설정한 수익률 도달 시 매도",
-    min: 1,
-    max: 100,
-    unit: "%",
-    inputType: "slider",
-    defaultValue: 30,
-  },
   {
     type: "NO_CHASE_BUY",
     label: "추격 매수 금지",
@@ -57,7 +43,7 @@ const RULE_CONFIGS: {
   {
     type: "AVERAGING_LIMIT",
     label: "물타기 제한",
-    description: "같은 코인 반복 매수 제한",
+    description: "손실 중인 코인의 추가 매수 횟수 제한",
     min: 1,
     max: 10,
     unit: "회",

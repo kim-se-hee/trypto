@@ -9,8 +9,9 @@ import {
   InvestmentRulesSection,
   getDefaultRules,
   type RulesMap,
+  type RuleState,
+  type SelectableRuleType,
 } from "@/components/round/InvestmentRulesSection";
-import type { RuleType } from "@/lib/types/round";
 
 export function RoundCreatePage() {
   const { user } = useAuth();
@@ -23,15 +24,17 @@ export function RoundCreatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  function handleRuleToggle(type: RuleType, enabled: boolean) {
+  function handleRuleToggle(type: SelectableRuleType, enabled: boolean) {
     setRules((prev) => ({ ...prev, [type]: { ...prev[type], enabled } }));
   }
 
-  function handleRuleValueChange(type: RuleType, value: number) {
+  function handleRuleValueChange(type: SelectableRuleType, value: number) {
     setRules((prev) => ({ ...prev, [type]: { ...prev[type], value } }));
   }
 
-  const enabledRules = Object.entries(rules).filter(([, r]) => r.enabled);
+  const enabledRules = (Object.entries(rules) as [SelectableRuleType, RuleState][]).filter(
+    ([, r]) => r.enabled,
+  );
   const canSubmit = seed > 0 && emergencyLimit > 0 && enabledRules.length >= 1;
 
   async function handleSubmit() {
@@ -45,7 +48,7 @@ export function RoundCreatePage() {
       initialSeed: seed,
       emergencyFundingLimit: emergencyLimit,
       rules: enabledRules.map(([type, rule]) => ({
-        ruleType: type as RuleType,
+        ruleType: type,
         thresholdValue: rule.value,
       })),
     });
