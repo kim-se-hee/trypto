@@ -14,12 +14,14 @@ import {
   createIdempotencyKey,
   createRound as createRoundApi,
   fetchActiveRound,
+  fetchTotalRoundCount,
   type CreateRoundParams,
 } from "@/lib/api/round-api";
 
 interface RoundContextValue {
   activeRound: InvestmentRound | null;
   hasActiveRound: boolean;
+  hasEverStartedRound: boolean;
   isRoundLoading: boolean;
   createRound: (params: CreateRoundParams) => Promise<InvestmentRound | null>;
   clearRound: () => void;
@@ -33,21 +35,29 @@ const RoundContext = createContext<RoundContextValue | null>(null);
 export function RoundProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [activeRound, setActiveRound] = useState<InvestmentRound | null>(null);
-  const [isRoundLoading, setIsRoundLoading] = useState(false);
+  const [totalRoundCount, setTotalRoundCount] = useState(0);
+  const [isRoundLoading, setIsRoundLoading] = useState(true);
 
   const refreshActiveRound = useCallback(async () => {
     if (!user) {
       setActiveRound(null);
+      setTotalRoundCount(0);
+      setIsRoundLoading(false);
       return;
     }
 
     setIsRoundLoading(true);
     try {
-      const round = await fetchActiveRound(user.userId);
+      const [round, count] = await Promise.all([
+        fetchActiveRound(user.userId),
+        fetchTotalRoundCount(user.userId),
+      ]);
       setActiveRound(round);
+      setTotalRoundCount(count);
     } catch (error) {
-      console.error("Failed to load active round", error);
+      console.error("Failed to load round state", error);
       setActiveRound(null);
+      setTotalRoundCount(0);
     } finally {
       setIsRoundLoading(false);
     }
@@ -61,6 +71,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
     try {
       const round = await createRoundApi(params);
       setActiveRound(round);
+      setTotalRoundCount((prev) => Math.max(prev + 1, round.roundNumber));
       return round;
     } catch (error) {
       console.error("Failed to create round", error);
@@ -118,6 +129,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
     () => ({
       activeRound,
       hasActiveRound: activeRound !== null,
+      hasEverStartedRound: totalRoundCount > 0,
       isRoundLoading,
       createRound,
       clearRound,
@@ -125,7 +137,16 @@ export function RoundProvider({ children }: { children: ReactNode }) {
       chargeEmergencyFunding,
       getWalletId,
     }),
-    [activeRound, isRoundLoading, createRound, clearRound, refreshActiveRound, chargeEmergencyFunding, getWalletId],
+    [
+      activeRound,
+      totalRoundCount,
+      isRoundLoading,
+      createRound,
+      clearRound,
+      refreshActiveRound,
+      chargeEmergencyFunding,
+      getWalletId,
+    ],
   );
 
   return <RoundContext.Provider value={value}>{children}</RoundContext.Provider>;

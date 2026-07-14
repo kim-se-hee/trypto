@@ -28,7 +28,7 @@ function App() {
         <Route path="/round/new" element={<RoundCreatePage />} />
       </Route>
 
-      {/* Protected: 인증 + 활성 라운드 필요 */}
+      {/* Protected: 인증 필요. 라운드를 한 번도 시작한 적 없으면 라운드 생성부터 하게 한다 */}
       <Route element={<ProtectedRoute />}>
         <Route path="/market" element={<MarketPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />

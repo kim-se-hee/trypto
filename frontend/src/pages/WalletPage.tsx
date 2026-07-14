@@ -7,6 +7,7 @@ import { WalletAssetTable } from "@/components/wallet/WalletAssetTable";
 import { WalletAssetDetail } from "@/components/wallet/WalletAssetDetail";
 import { TransferModal, type TransferDestination } from "@/components/wallet/TransferModal";
 import { TransferHistoryPanel } from "@/components/wallet/TransferHistoryPanel";
+import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { EXCHANGES } from "@/lib/types/coins";
@@ -239,10 +240,10 @@ export function WalletPage() {
               * 모의투자 데이터입니다. 실제 자산이 아닙니다.
             </p>
           </>
+        ) : activeRound ? (
+          <p className="text-sm text-muted-foreground">지갑 데이터를 불러올 수 없습니다.</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {activeRound ? "지갑 데이터를 불러올 수 없습니다." : "진행 중인 라운드가 없습니다."}
-          </p>
+          <NoRoundNotice description="진행 중인 라운드가 없어 지갑이 없습니다." />
         )}
       </main>
 

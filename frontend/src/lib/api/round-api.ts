@@ -134,6 +134,11 @@ export async function fetchActiveRound(userId: number): Promise<InvestmentRound 
   }
 }
 
+export async function fetchTotalRoundCount(userId: number): Promise<number> {
+  const data = await apiGet<{ totalRoundCount: number }>("/api/rounds/summary", { userId });
+  return data.totalRoundCount;
+}
+
 export async function chargeEmergencyFunding(
   params: ChargeEmergencyFundingParams,
 ): Promise<ChargeEmergencyFundingResponse> {

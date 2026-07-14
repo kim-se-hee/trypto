@@ -5,6 +5,7 @@ import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { AssetSummaryCard } from "@/components/portfolio/AssetSummaryCard";
 import { DonutChart } from "@/components/portfolio/DonutChart";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
+import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { EXCHANGES } from "@/lib/types/coins";
@@ -134,10 +135,12 @@ export function PortfolioPage() {
               * 모의투자 데이터입니다.
             </p>
           </>
-        ) : (
+        ) : activeRound ? (
           <p className="text-sm text-muted-foreground">
-            {activeRound ? "포트폴리오 데이터를 불러올 수 없습니다." : "진행 중인 라운드가 없습니다."}
+            포트폴리오 데이터를 불러올 수 없습니다.
           </p>
+        ) : (
+          <NoRoundNotice description="진행 중인 라운드가 없어 포트폴리오가 비어 있습니다." />
         )}
       </main>
     </div>
