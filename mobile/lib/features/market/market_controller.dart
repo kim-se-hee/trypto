@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/format/hangul.dart';
+import '../../core/realtime/ticker_store.dart';
 import '../../models/exchange_coin.dart';
 import 'exchange_coin_repository.dart';
 
@@ -111,26 +112,49 @@ class MarketView {
       MarketView(sortKey: sortKey, descending: descending);
 }
 
+/// 실시간 시세 조회. `TickerStore.quote` 를 그대로 넘긴다. 목록 밖 심볼이면 null 이고 그때는
+/// REST 스냅샷 값을 쓴다.
+typedef QuoteLookup = CoinRowState? Function(String symbol);
+
 /// 검색 → 필터 → 정렬 순으로 적용한다(§4.2.4). 위젯 없이 테스트한다.
-List<CoinEntry> applyMarketView(List<CoinEntry> coins, MarketView view) {
+///
+/// 필터와 정렬은 **최신 시세**를 기준으로 판정해야 한다. 재정렬 캐던스(1초 스로틀 + 스크롤 중
+/// 동결)는 호출부가 정한다 — 이 함수는 프레임마다 불리지 않는다.
+List<CoinEntry> applyMarketView(
+  List<CoinEntry> coins,
+  MarketView view, {
+  QuoteLookup? quote,
+}) {
   final query = HangulQuery(view.query);
+  double changeOf(CoinEntry e) => quote?.call(e.symbol)?.changeRate ?? e.changeRate;
 
   final result = [
     for (final entry in coins)
       if (query.matches(entry.symbol, entry.index) &&
-          view.filter.accepts(entry.changeRate))
+          view.filter.accepts(changeOf(entry)))
         entry,
   ];
 
   final sign = view.descending ? -1 : 1;
-  result.sort((a, b) => sign * _compare(a, b, view.sortKey));
+  result.sort((a, b) => sign * _compare(a, b, view.sortKey, quote));
   return result;
 }
 
-int _compare(CoinEntry a, CoinEntry b, MarketSortKey key) => switch (key) {
-  // 코인명이 아니라 심볼 사전순이다(§4.2.2).
-  MarketSortKey.name => a.symbol.compareTo(b.symbol),
-  MarketSortKey.price => a.price.compareTo(b.price),
-  MarketSortKey.change => a.changeRate.compareTo(b.changeRate),
-  MarketSortKey.volume => a.volume.compareTo(b.volume),
-};
+int _compare(CoinEntry a, CoinEntry b, MarketSortKey key, QuoteLookup? quote) {
+  if (key == MarketSortKey.name) {
+    // 코인명이 아니라 심볼 사전순이다(§4.2.2).
+    return a.symbol.compareTo(b.symbol);
+  }
+  final qa = quote?.call(a.symbol);
+  final qb = quote?.call(b.symbol);
+  return switch (key) {
+    MarketSortKey.price => (qa?.price ?? a.price).compareTo(qb?.price ?? b.price),
+    MarketSortKey.change => (qa?.changeRate ?? a.changeRate).compareTo(
+      qb?.changeRate ?? b.changeRate,
+    ),
+    MarketSortKey.volume => (qa?.volume ?? a.volume).compareTo(
+      qb?.volume ?? b.volume,
+    ),
+    MarketSortKey.name => 0,
+  };
+}

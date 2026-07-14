@@ -7,13 +7,18 @@ import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:trypto/app.dart';
 import 'package:trypto/core/api/api_client.dart';
 import 'package:trypto/core/auth/session_store.dart';
+import 'package:trypto/core/realtime/stomp_service.dart';
 import 'package:trypto/features/market/coin_row.dart';
 import 'package:trypto/features/market/coin_search_field.dart';
 import 'package:trypto/features/market/market_controller.dart';
 import 'package:trypto/features/market/market_page.dart';
 
+import '../support/fake_stomp.dart';
+
 /// 8단위 완료 조건: WS 없이 REST 스냅샷만으로 600행 목록이 뜨고 검색·필터·정렬이 동작한다.
 /// 레이아웃 오버플로도 여기서 잡힌다(`takeException`).
+///
+/// 9단위: 토픽 구독이 거래소당 하나이고, 틱이 목록의 숫자와(1초 스로틀 뒤) 정렬을 바꾼다.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -21,6 +26,7 @@ void main() {
   late SessionExpiryNotifier expiry;
   late Dio dio;
   late DioAdapter adapter;
+  late FakeStompService stomp;
 
   Map<String, dynamic> envelope(Object? data) => {
     'status': 200,
@@ -67,6 +73,7 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
     store = SessionStore();
     expiry = SessionExpiryNotifier();
+    stomp = FakeStompService();
     dio = buildDio(store: store, expiry: expiry, baseUrl: 'http://test.local');
     adapter = DioAdapter(dio: dio);
 
@@ -121,6 +128,7 @@ void main() {
           sessionStoreProvider.overrideWithValue(store),
           sessionExpiryProvider.overrideWithValue(expiry),
           dioProvider.overrideWithValue(dio),
+          stompServiceProvider.overrideWithValue(stomp),
         ],
         child: const TryptoApp(),
       ),
@@ -221,4 +229,43 @@ void main() {
     expect(renderedSymbols(tester).first, 'XRP');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('티커 토픽은 거래소당 하나만 구독한다', (tester) async {
+    await pumpMarket(tester);
+
+    expect(stomp.destinations, ['/topic/tickers.1']);
+  });
+
+  testWidgets('틱은 숫자를 즉시 바꾸고 정렬은 1초 스로틀 뒤에 따라온다', (tester) async {
+    await pumpMarket(tester);
+    expect(renderedSymbols(tester).take(2).toList(), ['BTC', 'ETH']);
+
+    // ETH 의 거래대금이 BTC 를 앞지른다.
+    stomp.emit(
+      '/topic/tickers.1',
+      '[{"coinId":2,"symbol":"ETH","price":5555555,"changeRate":0.02,'
+          '"quoteTurnover":9.9e11,"timestamp":1735689600123}]',
+    );
+    await tester.pump();
+
+    // 숫자는 그 프레임에 바뀐다. 목록 행과 주요 코인 카드가 같은 notifier 를 구독한다.
+    expect(find.text('₩5,555,555'), findsNWidgets(2));
+    // 자리는 아직 바뀌지 않는다 — 초당 60번 자리를 바꾸는 목록은 읽을 수 없다.
+    expect(renderedSymbols(tester).take(2).toList(), ['BTC', 'ETH']);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(renderedSymbols(tester).take(2).toList(), ['ETH', 'BTC']);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('다른 탭으로 나가면 구독을 해제한다', (tester) async {
+    await pumpMarket(tester);
+    expect(stomp.destinations, isNotEmpty);
+
+    await tester.tap(find.text('랭킹'));
+    await tester.pumpAndSettle();
+
+    expect(stomp.destinations, isEmpty);
+  });
 }
+

@@ -6,9 +6,12 @@ import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:trypto/app.dart';
 import 'package:trypto/core/api/api_client.dart';
 import 'package:trypto/core/auth/session_store.dart';
+import 'package:trypto/core/realtime/stomp_service.dart';
 import 'package:trypto/features/auth/login_page.dart';
 import 'package:trypto/features/market/market_page.dart';
 import 'package:trypto/features/round/round_create_page.dart';
+
+import 'support/fake_stomp.dart';
 
 /// 콜드 스타트 3경로. 가드 단위 테스트가 판별식을 고정한다면, 여기서는 **부팅 첫 프레임에
 /// redirect loop 가 나지 않는다**는 것을 실제 GoRouter 로 확인한다(6단위 완료 조건).
@@ -92,6 +95,7 @@ void main() {
           sessionStoreProvider.overrideWithValue(store),
           sessionExpiryProvider.overrideWithValue(expiry),
           dioProvider.overrideWithValue(dio),
+          stompServiceProvider.overrideWithValue(FakeStompService()),
         ],
         child: const TryptoApp(),
       ),

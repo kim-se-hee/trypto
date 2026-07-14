@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/exchanges.dart';
+import '../../core/realtime/stomp_service.dart';
+import '../../core/realtime/ticker_store.dart';
 import '../../core/router/guard.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/async_view.dart';
@@ -16,10 +20,15 @@ import 'coin_search_field.dart';
 import 'market_controller.dart';
 import 'overview_cards.dart';
 
+/// 시세 변동에 따른 재정렬 캐던스. 사용자 조작(정렬키·필터·검색어·거래소)은 즉시 반영한다.
+/// 이 스로틀이 없으면 인덱스→심볼 매핑이 매 프레임 뒤집혀 심볼별 notifier 의 이득이 통째로
+/// 사라지고, 초당 60번 자리를 바꾸는 목록은 읽을 수도 없다(계획서 §4.2.5-5).
+const Duration _kResortInterval = Duration(seconds: 1);
+
 /// 선택 거래소는 라우트 쿼리(`/market?exchange=upbit`)에 둔다 — 딥링크와 복원이 공짜로 된다.
 ///
-/// 이 단위의 시세는 REST 스냅샷 하나뿐이다. STOMP 구독과 `TickerStore` 는 9단위에서
-/// [CoinNumbers] 만 갈아 끼우는 방식으로 얹힌다.
+/// 티커 토픽 구독은 **거래소당 하나**다. `TickerStore` 가 목록과 캔들 차트에 나눠 준다 —
+/// 웹은 목록과 차트가 같은 토픽을 각각 구독해 페이로드를 두 번 받는다(사양서 §4.3.9).
 class MarketPage extends ConsumerStatefulWidget {
   const MarketPage({super.key});
 
@@ -31,10 +40,80 @@ class _MarketPageState extends ConsumerState<MarketPage> {
   final TextEditingController _search = TextEditingController();
   MarketView _view = const MarketView();
 
+  late final AppLifecycleListener _lifecycle;
+  VoidCallback? _cancelTickers;
+  int? _exchangeId;
+  bool _visible = false;
+  bool _primed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _onResume);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final exchange = ExchangeIds.byKey(
+      GoRouterState.of(context).uri.queryParameters['exchange'],
+    );
+    // go_router 의 `indexedStack` 셸은 선택되지 않은 브랜치를 `TickerMode(enabled: false)` 로
+    // 감싼다. 숨은 탭에서 티커를 받으면 보이지도 않는 행을 계속 리빌드한다.
+    _sync(exchange.id, TickerMode.valuesOf(context).enabled);
+  }
+
   @override
   void dispose() {
+    _lifecycle.dispose();
+    _cancelTickers?.call();
     _search.dispose();
     super.dispose();
+  }
+
+  void _sync(int exchangeId, bool visible) {
+    if (_exchangeId == exchangeId && _visible == visible) return;
+    final store = ref.read(tickerStoreProvider);
+
+    _cancelTickers?.call();
+    _cancelTickers = null;
+
+    if (!visible) {
+      store.setActive(false);
+      _exchangeId = exchangeId;
+      _visible = false;
+      return;
+    }
+
+    store.setActive(true);
+    _cancelTickers = ref
+        .read(stompServiceProvider)
+        .subscribe(
+          '/topic/tickers.$exchangeId',
+          (body) => store.ingest(decodeTickers(body)),
+        );
+
+    // 탭 재활성·거래소 전환 시 REST 스냅샷을 한 번 다시 받는다. 구독이 끊긴 동안의 틱을
+    // 보정한다(계획서 §4.2.3). 첫 진입은 provider 가 알아서 조회하므로 건드리지 않는다.
+    if (_primed) _refetch(exchangeId);
+
+    _exchangeId = exchangeId;
+    _visible = visible;
+    _primed = true;
+  }
+
+  /// 포그라운드 복귀 — 누락 틱 보정(계획서 §4.2.2). 소켓 재연결은 `StompService` 가 한다.
+  void _onResume() {
+    final exchangeId = _exchangeId;
+    if (!_visible || exchangeId == null) return;
+    _refetch(exchangeId);
+  }
+
+  void _refetch(int exchangeId) {
+    // provider 무효화는 프레임 밖에서 한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(marketCoinsProvider(exchangeId));
+    });
   }
 
   void _switchExchange(Exchange exchange) {
@@ -118,7 +197,7 @@ class _MarketPageState extends ConsumerState<MarketPage> {
   }
 }
 
-class _CoinList extends StatelessWidget {
+class _CoinList extends ConsumerStatefulWidget {
   const _CoinList({
     required this.coins,
     required this.view,
@@ -136,17 +215,75 @@ class _CoinList extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context) {
-    final rows = applyMarketView(coins, view);
+  ConsumerState<_CoinList> createState() => _CoinListState();
+}
 
+class _CoinListState extends ConsumerState<_CoinList> {
+  final ScrollController _scroll = ScrollController();
+  late TickerStore _store;
+  late List<CoinEntry> _rows;
+  Timer? _resort;
+
+  @override
+  void initState() {
+    super.initState();
+    _store = ref.read(tickerStoreProvider);
+    _seed();
+    _resort = Timer.periodic(_kResortInterval, (_) => _reorder());
+  }
+
+  @override
+  void didUpdateWidget(_CoinList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.coins, oldWidget.coins)) {
+      _seed();
+    } else if (!identical(widget.view, oldWidget.view)) {
+      _rows = _apply();
+    }
+  }
+
+  @override
+  void dispose() {
+    _resort?.cancel();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// REST 스냅샷이 기준이다. 티커 맵을 비우고 이 목록으로 다시 채운다.
+  void _seed() {
+    _store.switchExchange([for (final entry in widget.coins) entry.coin]);
+    _rows = _apply();
+  }
+
+  List<CoinEntry> _apply() =>
+      applyMarketView(widget.coins, widget.view, quote: _store.quote);
+
+  void _reorder() {
+    if (!_store.orderDirty) return;
+    // 손가락 밑에서 행이 튀면 오탭이 난다. dirty 를 남겨 두고 스크롤이 멈춘 뒤에 반영한다.
+    if (_scroll.hasClients && _scroll.position.isScrollingNotifier.value) return;
+    _store.clearOrderDirty();
+    setState(() => _rows = _apply());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        OverviewCards(coins: coins, baseCurrency: exchange.baseCurrency),
-        _ListControls(view: view, onFilter: onFilter, onSort: onSort),
+        OverviewCards(
+          coins: widget.coins,
+          store: _store,
+          baseCurrency: widget.exchange.baseCurrency,
+        ),
+        _ListControls(
+          view: widget.view,
+          onFilter: widget.onFilter,
+          onSort: widget.onSort,
+        ),
         Expanded(
           child: RefreshIndicator(
-            onRefresh: onRefresh,
-            child: rows.isEmpty
+            onRefresh: widget.onRefresh,
+            child: _rows.isEmpty
                 ? ListView(
                     children: const [
                       SizedBox(height: 120),
@@ -157,18 +294,21 @@ class _CoinList extends StatelessWidget {
                     ],
                   )
                 : ListView.builder(
+                    controller: _scroll,
                     // 자식을 측정하지 않는다. 600행에서 스크롤 위치 계산이 O(1) 이 된다.
                     itemExtent: kCoinRowHeight,
-                    itemCount: rows.length,
+                    itemCount: _rows.length,
                     itemBuilder: (context, index) {
-                      final entry = rows[index];
+                      final entry = _rows[index];
                       return CoinRow(
                         symbol: entry.symbol,
                         name: entry.name,
-                        price: entry.price,
-                        changeRate: entry.changeRate,
-                        volume: entry.volume,
-                        baseCurrency: exchange.baseCurrency,
+                        row: _store.row(entry.symbol)!,
+                        flash: _store.flash(entry.symbol)!,
+                        baseCurrency: widget.exchange.baseCurrency,
+                        onTap: () => context.push(
+                          Routes.coinDetail(entry.symbol, widget.exchange.key),
+                        ),
                       );
                     },
                   ),

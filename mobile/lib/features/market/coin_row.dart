@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/format/formatters.dart';
+import '../../core/realtime/ticker_store.dart';
 import '../../core/theme/theme.dart';
 import '../../core/theme/trypto_colors.dart';
 import '../../core/widgets/numeric_text.dart';
@@ -14,75 +15,135 @@ const double kCoinRowHeight = 68;
 /// tight 제약을 받은 `RenderBox` 가 relayout boundary 가 된다(계획서 §4.2.5-4).
 const double _kNumericWidth = 160;
 
-/// 행 3분할(계획서 §4.2.5-3): ① 이름 ② 숫자 ③ 플래시 테두리.
+/// 행 3분할(계획서 §4.2.5-3).
 ///
-/// 이름 열은 앱 수명 동안 한 번만 빌드되고, 숫자만 티커를 구독한다. 9단위에서 [CoinNumbers]
-/// 를 `ValueListenableBuilder` 로 감싸면 되고, 이름 열은 그 바깥에 남는다.
+/// ① 이름·심볼은 [ValueListenableBuilder] **바깥**이다 — 목록 수명 동안 한 번만 빌드된다.
+/// ② 숫자 3개는 [RowNotifier] 를 구독한다.
+/// ③ 플래시 테두리는 [FlashNotifier] 를 구독한다. 테두리 깜빡임이 숫자의 레이아웃을 다시
+///    돌리지 않는다.
+///
+/// 행에 `key` 를 주지 않는다(호출부). sliver 자식은 index 슬롯으로 매칭되므로, 키가 있으면
+/// 재정렬 시 `canUpdate == false` 가 되어 Element·State·RenderObject 가 전부 재생성된다.
 class CoinRow extends StatelessWidget {
   const CoinRow({
     super.key,
     required this.symbol,
     required this.name,
-    required this.price,
-    required this.changeRate,
-    required this.volume,
+    required this.row,
+    required this.flash,
     required this.baseCurrency,
+    this.onTap,
   });
 
   final String symbol;
   final String name;
-  final double price;
-  final double changeRate;
-  final double volume;
+  final RowNotifier row;
+  final FlashNotifier flash;
   final String baseCurrency;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: kCoinRowHeight,
-      padding: const EdgeInsets.symmetric(horizontal: TryptoSpacing.screen),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: TryptoPalette.border)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  symbol,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TryptoText.symbol,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: kCoinRowHeight,
+        padding: const EdgeInsets.symmetric(horizontal: TryptoSpacing.screen),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: TryptoPalette.border)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    symbol,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TryptoText.symbol,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: TryptoSpacing.sm),
-          SizedBox(
-            width: _kNumericWidth,
-            child: CoinNumbers(
-              price: price,
-              changeRate: changeRate,
-              volume: volume,
-              baseCurrency: baseCurrency,
+            const SizedBox(width: TryptoSpacing.sm),
+            SizedBox(
+              width: _kNumericWidth,
+              child: Stack(
+                // 테두리가 숫자 바깥(오른쪽 8 · 위아래 10)으로 확장된다. 자르면 안 된다.
+                clipBehavior: Clip.none,
+                children: [
+                  RepaintBoundary(
+                    child: ValueListenableBuilder<CoinRowState>(
+                      valueListenable: row,
+                      builder: (context, state, child) => CoinNumbers(
+                        price: state.price,
+                        changeRate: state.changeRate,
+                        volume: state.volume,
+                        baseCurrency: baseCurrency,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: -8,
+                    top: -10,
+                    bottom: -10,
+                    child: RepaintBoundary(child: _FlashBorder(flash: flash)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// 숫자의 글자색·배경을 바꾸지 않고 **테두리만 잠깐 두른다**. 읽어야 할 숫자가 흔들리지 않게
+/// 하려는 의도적 선택이다(사양서 §3.3.3). 페이드하지 않으므로 `AnimatedContainer` 를 쓰지
+/// 않는다.
+class _FlashBorder extends StatelessWidget {
+  const _FlashBorder({required this.flash});
+
+  final FlashNotifier flash;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.tryptoColors;
+
+    return ValueListenableBuilder<FlashDir?>(
+      valueListenable: flash,
+      builder: (context, dir, child) {
+        if (dir == null) return const SizedBox.shrink();
+        final color = switch (dir) {
+          FlashDir.up => colors.positive,
+          FlashDir.down => colors.negative,
+          FlashDir.same => colors.flashNeutral,
+        };
+        return IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: color),
+              borderRadius: BorderRadius.circular(TryptoRadius.md),
+            ),
+          ),
+        );
+      },
     );
   }
 }
