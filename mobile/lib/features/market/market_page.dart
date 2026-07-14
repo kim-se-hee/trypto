@@ -6,14 +6,20 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/exchanges.dart';
+import '../../core/format/formatters.dart';
 import '../../core/realtime/stomp_service.dart';
 import '../../core/realtime/ticker_store.dart';
 import '../../core/router/guard.dart';
 import '../../core/theme/theme.dart';
+import '../../core/theme/trypto_colors.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/empty_view.dart';
 import '../../core/widgets/exchange_segment.dart';
 import '../../core/widgets/mypage_button.dart';
+import '../../models/enums.dart';
+import '../../models/round.dart';
+import '../round/emergency_funding_sheet.dart';
 import '../round/round_controller.dart';
 import 'coin_row.dart';
 import 'coin_search_field.dart';
@@ -129,15 +135,18 @@ class _MarketPageState extends ConsumerState<MarketPage> {
       GoRouterState.of(context).uri.queryParameters['exchange'],
     );
     final coins = ref.watch(marketCoinsProvider(exchange.id));
-    final hasRound = ref.watch(
-      roundControllerProvider.select((round) => round.hasActive),
+    final round = ref.watch(
+      roundControllerProvider.select((state) => state.activeRound),
     );
 
     return Scaffold(
       appBar: AppBar(title: const Text('코인 시세'), actions: const [MypageButton()]),
       body: Column(
         children: [
-          if (!hasRound) const _RoundStartBanner(),
+          if (round == null)
+            const _RoundStartBanner()
+          else if (round.emergencyFundingLimit > 0)
+            _EmergencyBanner(round: round, exchange: exchange),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               TryptoSpacing.screen,
@@ -387,6 +396,59 @@ class _ListControls extends StatelessWidget {
                 const SizedBox(width: TryptoSpacing.xs),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 사용 빈도(라운드당 최대 3회)에 비해 웹 카드는 자리를 너무 차지한다. 남은 횟수만 보여주는
+/// 접힌 배너로 줄이고 나머지는 바텀시트로 옮긴다(계획서 §4.6.1).
+class _EmergencyBanner extends StatelessWidget {
+  const _EmergencyBanner({required this.round, required this.exchange});
+
+  final ActiveRound round;
+  final Exchange exchange;
+
+  /// 웹 `canCharge` 와 같은 판별식이다(사양서 §4.5).
+  bool get _canCharge =>
+      round.status == RoundStatus.active && round.emergencyChargeCount > 0;
+
+  Future<void> _open(BuildContext context) async {
+    final charged = await showEmergencyFundingSheet(context, exchange: exchange);
+    if (charged == null || !context.mounted) return;
+    showAppSnackbar(context, '${formatKRW(charged.toDouble())}을 투입했습니다.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final warning = context.tryptoColors.warning;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: TryptoSpacing.screen,
+        vertical: TryptoSpacing.sm,
+      ),
+      color: warning.withValues(alpha: 0.08),
+      child: Row(
+        children: [
+          Icon(LucideIcons.shieldPlus, size: 16, color: warning),
+          const SizedBox(width: TryptoSpacing.sm),
+          Expanded(
+            child: Text(
+              _canCharge
+                  ? '긴급 자금 · 남은 횟수 ${round.emergencyChargeCount}회'
+                  : '긴급 자금 · 3회를 모두 사용했습니다',
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+          FilledButton(
+            style: TryptoButtons.secondary,
+            onPressed: _canCharge ? () => _open(context) : null,
+            child: const Text('투입'),
           ),
         ],
       ),

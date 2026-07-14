@@ -59,6 +59,34 @@ void main() {
     });
   });
 
+  group('긴급 자금 투입 금액 (0 < amount <= limit)', () {
+    test('상한을 넘으면 입력 단계에서 막는다', () {
+      expect(
+        EmergencyFundingPolicy.validateCharge(1000001, 1000000),
+        '상한을 초과했습니다. 1,000,000원 이하로 입력해주세요.',
+      );
+    });
+
+    test('상한값과 0 초과 경계는 통과한다', () {
+      expect(EmergencyFundingPolicy.validateCharge(1000000, 1000000), isNull);
+      expect(EmergencyFundingPolicy.validateCharge(1, 1000000), isNull);
+    });
+
+    test('0 이하는 막는다', () {
+      expect(EmergencyFundingPolicy.validateCharge(0, 1000000), isNotNull);
+      expect(EmergencyFundingPolicy.validateCharge(-1, 1000000), isNotNull);
+    });
+
+    test('상한이 0 인 라운드는 긴급 자금을 쓸 수 없다', () {
+      expect(EmergencyFundingPolicy.validateCharge(1000, 0), isNotNull);
+    });
+
+    test('프리셋은 상한의 25 / 50 / 100% 를 내림한 값이다', () {
+      expect(EmergencyFundingPolicy.presets(1000000), [250000, 500000, 1000000]);
+      expect(EmergencyFundingPolicy.presets(333333), [83333, 166666, 333333]);
+    });
+  });
+
   group('제출 조건 — seed > 0 && emergencyLimit > 0 && 활성 규칙 >= 1', () {
     test('셋을 모두 채우면 제출할 수 있다', () {
       expect(draft().canSubmit, isTrue);

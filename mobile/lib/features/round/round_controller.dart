@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../models/enums.dart';
 import '../../models/round.dart';
 import '../auth/auth_controller.dart';
 import 'round_repository.dart';
+import 'round_rules.dart';
 
 /// 라우트 가드의 입력(사양서 §2.7.1). `hasActive`(지금 활성 라운드가 있는가)와
 /// `hasEverStarted`(한 번이라도 시작한 적 있는가)는 **별개**다 — 신규 사용자는 라운드 생성을
@@ -70,6 +72,54 @@ class RoundController extends Notifier<RoundState> {
     await _load(_generation);
     if (state.hasActive) return null;
     return state.errorMessage ?? '라운드를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
+  /// 긴급 자금 투입. 성공하면 `null`, 실패하면 사용자에게 보일 메시지를 돌려준다.
+  ///
+  /// 로컬 선검사에 걸리면 **네트워크 호출을 하지 않는다**(사양서 §4.5). [idempotencyKey] 는
+  /// UUID v4 여야 하며(형식이 틀리면 서버가 500 을 낸다) 재시도 시 같은 값을 재사용한다 —
+  /// 호출부가 화면 상태에 보관한다.
+  Future<String?> chargeEmergencyFunding({
+    required int exchangeId,
+    required int amount,
+    required String idempotencyKey,
+  }) async {
+    final round = state.activeRound;
+    if (round == null) return '진행 중인 라운드가 없습니다.';
+    if (round.status != RoundStatus.active) {
+      return '진행 중인 라운드가 아닙니다.';
+    }
+    if (round.emergencyChargeCount <= 0) {
+      return '긴급 자금 투입 횟수를 모두 사용했습니다.';
+    }
+    final invalid = EmergencyFundingPolicy.validateCharge(
+      amount,
+      round.emergencyFundingLimit.toInt(),
+    );
+    if (invalid != null) return invalid;
+
+    try {
+      final response = await ref
+          .read(roundRepositoryProvider)
+          .chargeEmergencyFunding(
+            round.roundId,
+            ChargeEmergencyFundingRequest(
+              exchangeId: exchangeId,
+              amount: amount.toDouble(),
+              idempotencyKey: idempotencyKey,
+            ),
+          );
+      state = RoundState(
+        isLoading: false,
+        activeRound: round.withEmergencyChargeCount(
+          response.remainingChargeCount,
+        ),
+        totalRoundCount: state.totalRoundCount,
+      );
+    } on ApiException catch (error) {
+      return error.userMessage;
+    }
+    return null;
   }
 
   Future<String?> endRound() async {

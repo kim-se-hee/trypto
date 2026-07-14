@@ -1,4 +1,5 @@
 import '../../core/constants/exchanges.dart';
+import '../../core/format/formatters.dart';
 import '../../models/enums.dart';
 import '../../models/round.dart';
 
@@ -128,6 +129,22 @@ abstract final class EmergencyFundingPolicy {
     if (limit > maxLimit) return '긴급 자금 상한은 100만원입니다.';
     return null;
   }
+
+  /// 투입 금액 검증 — `0 < amount <= limit`(§4.5). **입력 단계에서** 막는다. 웹은 제출 시점에
+  /// `INVALID_EMERGENCY_FUNDING_AMOUNT` 를 받고도 화면에 아무 표시를 하지 않는다.
+  static String? validateCharge(int amount, int limit) {
+    if (limit <= 0) return '이 라운드는 긴급 자금을 쓸 수 없습니다.';
+    if (amount <= 0) return '투입 금액을 입력해 주세요.';
+    if (amount > limit) {
+      return '상한을 초과했습니다. ${formatGrouped(limit)}원 이하로 입력해주세요.';
+    }
+    return null;
+  }
+
+  /// 프리셋은 상한의 25% / 50% / 100% 이며 각각 내림한다(§4.5).
+  static List<int> presets(int limit) => [
+    for (final ratio in [25, 50, 100]) limit * ratio ~/ 100,
+  ];
 }
 
 /// 라운드 생성 화면의 입력값. [rules] 가 `Map` 이므로 같은 `ruleType` 이 두 번 실릴 수
