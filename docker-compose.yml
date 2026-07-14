@@ -25,17 +25,6 @@ services:
       timeout: 3s
       retries: 20
 
-  mysqld-exporter:
-    image: prom/mysqld-exporter:v0.14.0
-    networks:
-      - trypto-net
-    environment:
-      DATA_SOURCE_NAME: "root:1234@(mysql:3306)/"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    restart: unless-stopped
-
   redis:
     image: redis:7-alpine
     networks:
@@ -263,34 +252,6 @@ services:
       - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
-    profiles: ["metrics"]
-    networks:
-      - trypto-net
-    privileged: true
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-      - /dev/disk:/dev/disk:ro
-    devices:
-      - /dev/kmsg
-    restart: unless-stopped
-
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    profiles: ["metrics"]
-    networks:
-      - trypto-net
-    pid: host
-    volumes:
-      - /:/host:ro,rslave
-    command:
-      - --path.rootfs=/host
-    restart: unless-stopped
 
 volumes:
   mysql-data:
