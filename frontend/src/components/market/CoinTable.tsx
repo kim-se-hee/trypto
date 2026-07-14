@@ -1,4 +1,4 @@
-import { memo, useCallback, type CSSProperties } from "react";
+import { memo, useCallback, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatVolume, formatChangeRate, getCurrencySymbol } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
@@ -14,6 +14,8 @@ interface CoinTableProps {
   baseCurrency: string;
   selectedSymbol?: string | null;
   onSelect?: (symbol: string) => void;
+  /** 목록 바로 위에 얹을 것 (검색창). 목록을 좁히는 도구는 목록과 같은 상자 안에 둔다. */
+  toolbar?: ReactNode;
 }
 
 type SortKey = "name" | "price" | "change" | "volume";
@@ -113,7 +115,7 @@ const CoinRow = memo(function CoinRow({
   );
 });
 
-export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: CoinTableProps) {
+export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect, toolbar }: CoinTableProps) {
   const comparator = useCallback((key: SortKey, dir: SortDir) => {
     return (a: CoinData, b: CoinData) => {
       let cmp = 0;
@@ -148,6 +150,8 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
+      {toolbar && <div className="border-b border-border/40 px-5 py-3">{toolbar}</div>}
+
       <div
         className={cn("grid items-center bg-secondary/30 py-3.5", GRID_COLS)}
         style={{
