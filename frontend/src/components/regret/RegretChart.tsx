@@ -163,7 +163,30 @@ export function RegretChart({
         </div>
       </div>
 
-      {/* 차트 */}
+      {/* 차트 — 자산 추이가 아직 없으면 빈 축만 그린다 */}
+      {!chartData && (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+          {Array.from({ length: 5 }, (_, i) => {
+            const y = PAD.top + ((H - PAD.top - PAD.bottom) / 4) * i;
+            return (
+              <line
+                key={i}
+                x1={PAD.left} y1={y}
+                x2={W - PAD.right} y2={y}
+                stroke="var(--border)" strokeWidth={0.5} strokeDasharray="4 3"
+              />
+            );
+          })}
+          <text
+            x={W / 2} y={H / 2}
+            textAnchor="middle" dominantBaseline="middle"
+            fill="var(--muted-foreground)" fontSize={12} fontFamily="inherit"
+          >
+            아직 집계된 자산 추이가 없습니다
+          </text>
+        </svg>
+      )}
+
       {chartData && (
         <div className="relative">
           <svg

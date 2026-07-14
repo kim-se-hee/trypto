@@ -12,6 +12,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
 
+/** 복기 리포트는 야간 배치로 생성된다. 배치 전에는 서버가 0으로 채운 빈 리포트를 준다. */
+const EMPTY_SUMMARY: RegretSummary = {
+  missedProfit: 0,
+  actualProfitRate: 0,
+  ruleFollowedProfitRate: 0,
+  totalViolations: 0,
+};
+
 export function RegretPage() {
   const { user } = useAuth();
   const { activeRound } = useRound();
@@ -21,9 +29,10 @@ export function RegretPage() {
   );
   const [btcHoldEnabled, setBtcHoldEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // API 데이터 상태
-  const [summary, setSummary] = useState<RegretSummary | null>(null);
+  const [summary, setSummary] = useState<RegretSummary>(EMPTY_SUMMARY);
   const [snapshots, setSnapshots] = useState<AssetSnapshot[]>([]);
   const [markers, setMarkers] = useState<ViolationMarker[]>([]);
   const [btcHoldValues, setBtcHoldValues] = useState<number[]>([]);
@@ -42,6 +51,7 @@ export function RegretPage() {
     if (!firstWallet) return;
 
     setLoading(true);
+    setLoadFailed(false);
     try {
       const [reportData, chartData] = await Promise.all([
         getRegretReport(activeRound.roundId, firstWallet.exchangeId, user.userId),
@@ -58,6 +68,7 @@ export function RegretPage() {
       setTotalDays(chartData.totalDays);
     } catch (error) {
       console.error("Failed to load regret data", error);
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -101,7 +112,11 @@ export function RegretPage() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         {loading ? (
           <p className="text-sm text-muted-foreground">로딩 중...</p>
-        ) : summary ? (
+        ) : !activeRound ? (
+          <NoRoundNotice description="진행 중인 라운드가 없어 복기할 내역이 없습니다." />
+        ) : loadFailed ? (
+          <p className="text-sm text-muted-foreground">복기 데이터를 불러올 수 없습니다.</p>
+        ) : (
           <div className="space-y-6">
             <RegretChart
               summary={summary}
@@ -125,10 +140,6 @@ export function RegretPage() {
               <ViolationTradeList trades={violationTrades} />
             </div>
           </div>
-        ) : activeRound ? (
-          <p className="text-sm text-muted-foreground">복기 데이터를 불러올 수 없습니다.</p>
-        ) : (
-          <NoRoundNotice description="진행 중인 라운드가 없어 복기할 내역이 없습니다." />
         )}
 
         <p className="mt-3 text-[11px] text-muted-foreground/60">

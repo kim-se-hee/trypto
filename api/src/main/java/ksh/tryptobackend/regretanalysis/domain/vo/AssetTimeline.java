@@ -6,8 +6,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 
 public final class AssetTimeline {
@@ -19,10 +17,11 @@ public final class AssetTimeline {
     }
 
     public static AssetTimeline of(List<AssetSnapshot> snapshots) {
-        if (snapshots.isEmpty()) {
-            throw new CustomException(ErrorCode.SNAPSHOT_NOT_FOUND);
-        }
         return new AssetTimeline(snapshots);
+    }
+
+    public boolean isEmpty() {
+        return snapshots.isEmpty();
     }
 
     public List<LocalDate> getDates() {
@@ -49,6 +48,9 @@ public final class AssetTimeline {
     }
 
     public int calculateTotalDays() {
+        if (isEmpty()) {
+            return 0;
+        }
         return (int) ChronoUnit.DAYS.between(getStartDate(), getEndDate()) + 1;
     }
 

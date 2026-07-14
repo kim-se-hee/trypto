@@ -59,6 +59,19 @@ public class RegretReport {
                 .build();
     }
 
+    public static RegretReport empty(Long roundId, Long exchangeId) {
+        return RegretReport.builder()
+                .roundId(roundId)
+                .exchangeId(exchangeId)
+                .totalViolations(0)
+                .missedProfit(BigDecimal.ZERO)
+                .actualProfitRate(BigDecimal.ZERO)
+                .ruleFollowedProfitRate(BigDecimal.ZERO)
+                .ruleImpacts(List.of())
+                .violationDetails(new ViolationDetails(List.of()))
+                .build();
+    }
+
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
         BigDecimal sum =
                 violationDetails.stream().map(ViolationDetail::getLossAmount).reduce(BigDecimal.ZERO, BigDecimal::add);

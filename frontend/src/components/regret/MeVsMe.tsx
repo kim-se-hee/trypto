@@ -52,6 +52,11 @@ export function MeVsMe({
 
       {/* 규칙 토글 */}
       <div className="space-y-2">
+        {ruleToggles.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            설정한 투자 원칙이 없습니다.
+          </p>
+        )}
         {ruleToggles.map((rule) => {
           const isEnabled = enabledRules.has(rule.ruleType);
           const Icon = RULE_ICON_MAP[rule.ruleType];

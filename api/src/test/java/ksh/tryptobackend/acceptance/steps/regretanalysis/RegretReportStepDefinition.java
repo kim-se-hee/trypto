@@ -125,6 +125,15 @@ public class RegretReportStepDefinition {
                 .isEqualTo(count);
     }
 
+    @Then("규칙별 영향도의 위반 횟수는 모두 0이다")
+    public void 규칙별_영향도의_위반_횟수는_모두_0이다() {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.ruleImpacts[?(@.violationCount != 0)]")
+                .isEmpty();
+    }
+
     @Then("위반 상세는 {int}개이다")
     public void 위반_상세는_개이다(int count) {
         apiClient

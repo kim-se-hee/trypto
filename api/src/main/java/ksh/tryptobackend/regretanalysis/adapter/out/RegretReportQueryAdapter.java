@@ -1,8 +1,6 @@
 package ksh.tryptobackend.regretanalysis.adapter.out;
 
 import java.util.Optional;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.regretanalysis.adapter.out.persistence.entity.RegretReportJpaEntity;
 import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
 import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPort;
@@ -21,14 +19,5 @@ public class RegretReportQueryAdapter implements RegretReportQueryPort {
     @Transactional(readOnly = true)
     public Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return repository.findByRoundIdAndExchangeId(roundId, exchangeId).map(RegretReportJpaEntity::toDomain);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public RegretReport getByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
-        return repository
-                .findByRoundIdAndExchangeId(roundId, exchangeId)
-                .map(RegretReportJpaEntity::toDomain)
-                .orElseThrow(() -> new CustomException(ErrorCode.REPORT_NOT_FOUND));
     }
 }

@@ -20,6 +20,11 @@ public record RegretChartResult(
         List<DailyComparison> assetHistory,
         List<ViolationMarkerPoint> violationMarkers) {
 
+    public static RegretChartResult empty(Long roundId, AnalysisExchange exchange) {
+        return new RegretChartResult(
+                roundId, exchange.exchangeId(), exchange.name(), exchange.currency(), 0, List.of(), List.of());
+    }
+
     public static RegretChartResult from(
             Long roundId,
             AnalysisExchange exchange,

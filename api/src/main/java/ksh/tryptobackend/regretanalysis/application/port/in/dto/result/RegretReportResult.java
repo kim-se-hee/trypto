@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
@@ -53,15 +55,31 @@ public record RegretReportResult(
 
     private static List<RuleImpactResult> toRuleImpactResults(
             List<RuleImpact> ruleImpacts, Map<Long, AnalysisRule> ruleMap) {
-        return ruleImpacts.stream()
-                .map(ri -> toRuleImpactResult(ri, ruleMap.get(ri.getRuleId())))
+        Map<Long, RuleImpact> impactByRuleId =
+                ruleImpacts.stream().collect(Collectors.toMap(RuleImpact::getRuleId, impact -> impact));
+
+        return ruleMap.values().stream()
+                .sorted(Comparator.comparing(AnalysisRule::ruleId))
+                .map(rule -> toRuleImpactResult(rule, impactByRuleId.get(rule.ruleId())))
                 .toList();
     }
 
-    private static RuleImpactResult toRuleImpactResult(RuleImpact ruleImpact, AnalysisRule rule) {
+    private static RuleImpactResult toRuleImpactResult(AnalysisRule rule, RuleImpact ruleImpact) {
+        if (ruleImpact == null) {
+            return new RuleImpactResult(
+                    null,
+                    rule.ruleId(),
+                    rule.ruleType(),
+                    rule.thresholdValue(),
+                    ThresholdUnit.from(rule.ruleType()).symbol(),
+                    0,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO);
+        }
+
         return new RuleImpactResult(
                 ruleImpact.getRuleImpactId(),
-                ruleImpact.getRuleId(),
+                rule.ruleId(),
                 rule.ruleType(),
                 rule.thresholdValue(),
                 ThresholdUnit.from(rule.ruleType()).symbol(),
