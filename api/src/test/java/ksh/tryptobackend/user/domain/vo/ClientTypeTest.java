@@ -23,7 +23,7 @@ class ClientTypeTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"WEB,WEB", "web,WEB", "ANDROID,ANDROID", "android,ANDROID"})
+    @CsvSource({"WEB,WEB", "web,WEB", "ANDROID,ANDROID", "android,ANDROID", "IOS,IOS", "ios,IOS"})
     @DisplayName("대소문자와 무관하게 클라이언트 유형을 해석한다")
     void fromNullable_supportedValue_returnsClientType(String name, ClientType expected) {
         assertThat(ClientType.fromNullable(name)).isEqualTo(expected);

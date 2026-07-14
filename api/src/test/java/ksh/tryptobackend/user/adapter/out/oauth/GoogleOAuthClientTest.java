@@ -65,6 +65,22 @@ class GoogleOAuthClientTest {
                 .containsEntry("redirect_uri", WEB_CREDENTIALS.redirectUri());
     }
 
+    @Test
+    @DisplayName("안드로이드와 아이폰은 서로 다른 자격증명으로 토큰을 교환한다")
+    void getIdentity_androidAndIos_exchangeTokenWithOwnCredentials() {
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
+
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID);
+        Map<String, String> androidForm = server.tokenRequestForm();
+
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.IOS);
+        Map<String, String> iosForm = server.tokenRequestForm();
+
+        assertThat(androidForm).containsEntry("client_id", ANDROID_CREDENTIALS.clientId());
+        assertThat(iosForm).containsEntry("client_id", IOS_CREDENTIALS.clientId());
+        assertThat(androidForm.get("client_id")).isNotEqualTo(iosForm.get("client_id"));
+    }
+
     private GoogleOAuthProperties configuredProperties() {
         return propertiesWith(WEB_CREDENTIALS, ANDROID_CREDENTIALS, IOS_CREDENTIALS);
     }

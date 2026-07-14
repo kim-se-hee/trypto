@@ -84,6 +84,41 @@ class KakaoOAuthClientTest {
         assertThat(server.tokenRequestForm()).isEmpty();
     }
 
+    @Test
+    @DisplayName("안드로이드와 아이폰은 서로 다른 자격증명으로 토큰을 교환한다")
+    void getIdentity_androidAndIos_exchangeTokenWithOwnCredentials() {
+        KakaoOAuthClient client = new KakaoOAuthClient(configuredProperties());
+
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID);
+        Map<String, String> androidForm = server.tokenRequestForm();
+
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.IOS);
+        Map<String, String> iosForm = server.tokenRequestForm();
+
+        assertThat(androidForm)
+                .containsEntry("client_id", ANDROID_CREDENTIALS.clientId())
+                .containsEntry("client_secret", ANDROID_CREDENTIALS.clientSecret());
+        assertThat(iosForm)
+                .containsEntry("client_id", IOS_CREDENTIALS.clientId())
+                .containsEntry("client_secret", IOS_CREDENTIALS.clientSecret());
+        assertThat(androidForm.get("client_id")).isNotEqualTo(iosForm.get("client_id"));
+    }
+
+    @Test
+    @DisplayName("아이폰 자격증명이 설정되지 않아도 안드로이드 로그인은 그대로 동작한다")
+    void getIdentity_iosCredentialsNotConfigured_androidStillExchangesToken() {
+        OAuthCredentials empty = new OAuthCredentials("", "", "");
+        KakaoOAuthClient client = new KakaoOAuthClient(propertiesWith(WEB_CREDENTIALS, ANDROID_CREDENTIALS, empty));
+
+        client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.ANDROID);
+
+        assertThat(server.tokenRequestForm()).containsEntry("client_id", ANDROID_CREDENTIALS.clientId());
+        assertThatThrownBy(() -> client.getIdentity(AUTHORIZATION_CODE, CODE_VERIFIER, ClientType.IOS))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.SOCIAL_LOGIN_NOT_CONFIGURED);
+    }
+
     private KakaoOAuthProperties configuredProperties() {
         return propertiesWith(WEB_CREDENTIALS, ANDROID_CREDENTIALS, IOS_CREDENTIALS);
     }
