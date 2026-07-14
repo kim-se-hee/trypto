@@ -9,6 +9,7 @@ import {
   fetchTotalRoundCount,
   type CreateRoundParams,
 } from "@/lib/api/round-api";
+import { fetchExchangeCoinsWithCache } from "@/lib/api/id-mapping";
 import { RoundContext } from "./RoundContext";
 
 export function RoundProvider({ children }: { children: ReactNode }) {
@@ -16,6 +17,8 @@ export function RoundProvider({ children }: { children: ReactNode }) {
   const [activeRound, setActiveRound] = useState<InvestmentRound | null>(null);
   const [totalRoundCount, setTotalRoundCount] = useState(0);
   const [isRoundLoading, setIsRoundLoading] = useState(true);
+  // 거래소 ID -> 그 거래소에 상장된 코인 ID 집합. 상장 목록은 세션 중 바뀌지 않아 라운드마다 한 번만 받는다.
+  const [listedCoinIds, setListedCoinIds] = useState<Map<number, Set<number>>>(new Map());
 
   const refreshActiveRound = useCallback(async () => {
     // 세션 복구가 끝나기 전에는 로그인 여부를 알 수 없으니 판단을 미룬다.
@@ -51,6 +54,36 @@ export function RoundProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshActiveRound();
   }, [refreshActiveRound]);
+
+  useEffect(() => {
+    if (!activeRound) {
+      setListedCoinIds(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    const exchangeIds = activeRound.wallets.map((w) => w.exchangeId);
+
+    void Promise.all(exchangeIds.map((id) => fetchExchangeCoinsWithCache(id)))
+      .then((lists) => {
+        if (cancelled) return;
+        setListedCoinIds(
+          new Map(lists.map((coins, i) => [exchangeIds[i], new Set(coins.map((c) => c.coinId))])),
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to load exchange coin listings", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRound]);
+
+  const isCoinListed = useCallback(
+    (exchangeId: number, coinId: number): boolean => listedCoinIds.get(exchangeId)?.has(coinId) ?? false,
+    [listedCoinIds],
+  );
 
   const createRound = useCallback(async (params: CreateRoundParams): Promise<InvestmentRound | null> => {
     try {
@@ -121,6 +154,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
       refreshActiveRound,
       chargeEmergencyFunding,
       getWalletId,
+      isCoinListed,
     }),
     [
       activeRound,
@@ -131,6 +165,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
       refreshActiveRound,
       chargeEmergencyFunding,
       getWalletId,
+      isCoinListed,
     ],
   );
 
