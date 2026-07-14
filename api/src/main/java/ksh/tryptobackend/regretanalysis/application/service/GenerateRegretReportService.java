@@ -29,18 +29,19 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
 
     @Override
     public Optional<RegretReport> generateReport(GenerateRegretReportCommand command) {
+        return portfolioQueryPort
+                .findLatestSnapshot(command.roundId(), command.exchangeId())
+                .map(snapshot -> generateReport(command, snapshot));
+    }
+
+    private RegretReport generateReport(GenerateRegretReportCommand command, AssetSnapshot snapshot) {
         ViolatedOrders violations =
                 tradingQueryPort.findViolatedOrders(command.roundId(), command.exchangeId(), command.walletId());
-        if (violations.isEmpty()) {
-            return Optional.empty();
-        }
-
         CurrentPrices currentPrices = marketDataQueryPort.findCurrentPrices(violations.exchangeCoinIds());
         List<ViolationDetail> details = violations.calculateDetails(currentPrices);
-        AssetSnapshot snapshot = portfolioQueryPort.getLatestSnapshot(command.roundId(), command.exchangeId());
         List<RuleImpact> impacts = new ViolationDetails(details).toRuleImpacts(snapshot.getTotalInvestment());
 
-        return Optional.of(RegretReport.generate(
+        return RegretReport.generate(
                 command.userId(),
                 command.roundId(),
                 command.exchangeId(),
@@ -48,6 +49,6 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
                 impacts,
                 details,
                 command.startedAt().toLocalDate(),
-                clock));
+                clock);
     }
 }
