@@ -33,7 +33,7 @@ export function MarketPage() {
   const handleOrderFilled = useCallback((event: UserEvent) => {
     setOrderFilledEvent(event);
   }, []);
-  useUserEvents({ userId: user.userId, onOrderFilled: handleOrderFilled });
+  useUserEvents({ userId: user?.userId ?? null, onOrderFilled: handleOrderFilled });
 
   const marketType = (searchParams.get("type") === "dex" ? "dex" : "cex") as MarketType;
   const isCex = marketType === "cex";
