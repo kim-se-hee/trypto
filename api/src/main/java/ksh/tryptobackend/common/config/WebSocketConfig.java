@@ -1,6 +1,5 @@
 package ksh.tryptobackend.common.config;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -28,12 +27,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${app.websocket.heartbeat-receive}")
     private long heartbeatReceive;
 
-    private final MeterRegistry meterRegistry;
-
-    public WebSocketConfig(MeterRegistry meterRegistry) {
-        this.meterRegistry = meterRegistry;
-    }
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
@@ -57,7 +50,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientOutboundChannel(ChannelRegistration registration) {
         registration.executor(stompOutboundExecutor());
-        registration.interceptors(new OutboundLatencyInterceptor(meterRegistry));
     }
 
     @Override

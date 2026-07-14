@@ -56,12 +56,6 @@ management:
     web:
       exposure:
         include: health,metrics,prometheus
-  metrics:
-    distribution:
-      percentiles-histogram:
-        match.queue.wait: true
-        match.batch.e2e: true
-        pending.order.fill: true
 
 logging:
   level:
