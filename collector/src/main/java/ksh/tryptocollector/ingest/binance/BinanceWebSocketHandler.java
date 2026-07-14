@@ -28,7 +28,6 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
     private final Counter reconnectCounter;
-    private final Counter parseFailureCounter;
 
     public BinanceWebSocketHandler(
             ObjectMapper objectMapper,
@@ -41,9 +40,6 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
-                .tag("exchange", Exchange.BINANCE.name())
-                .register(registry);
-        this.parseFailureCounter = Counter.builder("ticker.parse.failure")
                 .tag("exchange", Exchange.BINANCE.name())
                 .register(registry);
     }
@@ -87,7 +83,6 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
                         .ifPresent(meta -> tickerSinkProcessor.process(ticker.toNormalized(meta.displayName())));
             }
         } catch (Exception e) {
-            parseFailureCounter.increment();
             log.debug("바이낸스 메시지 처리 실패: {}", e.getMessage());
         }
     }

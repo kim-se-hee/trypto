@@ -52,10 +52,6 @@ management:
     web:
       exposure:
         include: health,metrics,prometheus
-  metrics:
-    distribution:
-      percentiles-histogram:
-        redis.write.time: true
 
 logging:
   level:

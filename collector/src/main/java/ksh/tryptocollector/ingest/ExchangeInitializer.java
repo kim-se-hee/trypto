@@ -1,7 +1,5 @@
 package ksh.tryptocollector.ingest;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import jakarta.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,12 +42,10 @@ public class ExchangeInitializer {
     private final UpbitWebSocketHandler upbitWebSocketHandler;
     private final BithumbWebSocketHandler bithumbWebSocketHandler;
     private final BinanceWebSocketHandler binanceWebSocketHandler;
-    private final MeterRegistry meterRegistry;
 
     private static final long MAX_BACKOFF_SECONDS = 60;
     private static final int CHANGE_RATE_SCALE = 8;
     private static final int THREAD_POOL_SIZE = 3;
-    private static final String EXECUTOR_METRIC_NAME = "exchange.initializer";
 
     @Value("${loadtest.skip-websocket-subscription:false}")
     private boolean skipWebSocketSubscription;
@@ -60,8 +56,7 @@ public class ExchangeInitializer {
         if (exchangeThreadPool != null) {
             return;
         }
-        exchangeThreadPool = ExecutorServiceMetrics.monitor(
-                meterRegistry, Executors.newFixedThreadPool(THREAD_POOL_SIZE), EXECUTOR_METRIC_NAME);
+        exchangeThreadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         exchangeThreadPool.submit(() -> initWithRetry("업비트", this::initUpbit));
         exchangeThreadPool.submit(() -> initWithRetry("빗썸", this::initBithumb));
         exchangeThreadPool.submit(() -> initWithRetry("바이낸스", this::initBinance));

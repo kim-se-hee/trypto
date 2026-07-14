@@ -1,6 +1,5 @@
 package ksh.tryptocollector.distribute.redis;
 
-import io.micrometer.core.annotation.Timed;
 import ksh.tryptocollector.model.NormalizedTicker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,6 @@ public class TickerRedisRepository {
         this.keyPrefix = keyPrefix;
     }
 
-    @Timed(value = "redis.write.time")
     public void save(NormalizedTicker ticker) {
         String key = buildKey(ticker);
         String json;
