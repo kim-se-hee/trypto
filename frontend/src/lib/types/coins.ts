@@ -4,6 +4,8 @@ export interface CoinData {
   currentPrice: number;
   changeRate: number;
   volume: number;
+  /** 이 시세를 만든 체결의 거래소 시각(ms). 실시간 시세로 갱신된 코인에만 있다. */
+  tickedAt?: number;
 }
 
 const COIN_COLORS: Record<string, string> = {
