@@ -1,9 +1,10 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatVolume, formatChangeRate, getCurrencySymbol } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
+import { useVirtualList, virtualRowStyle } from "@/hooks/useVirtualList";
 import { CoinIcon } from "./CoinIcon";
 import type { CoinData } from "@/lib/types/coins";
 
@@ -18,12 +19,19 @@ type SortKey = "name" | "price" | "change" | "volume";
 
 const GRID_COLS = "grid-cols-[2fr_minmax(100px,140px)_minmax(80px,100px)_minmax(160px,1fr)]";
 
+// 가상화는 행 높이를 미리 알아야 스크롤 높이를 계산할 수 있다. 행은 높이를 고정한다.
+const ROW_HEIGHT = 68;
+const VISIBLE_ROWS = 8;
+const LIST_HEIGHT = ROW_HEIGHT * VISIBLE_ROWS;
+const LIST_PADDING_X = 20; // px-5
+
 interface CoinRowProps {
   coin: CoinData;
   baseCurrency: string;
   currencySymbol: string;
   isSelected: boolean;
   isLast: boolean;
+  style: CSSProperties;
   onSelect?: (symbol: string) => void;
 }
 
@@ -33,6 +41,7 @@ const CoinRow = memo(function CoinRow({
   currencySymbol,
   isSelected,
   isLast,
+  style,
   onSelect,
 }: CoinRowProps) {
   const handleClick = () => onSelect?.(coin.symbol);
@@ -40,8 +49,9 @@ const CoinRow = memo(function CoinRow({
   return (
     <div
       onClick={handleClick}
+      style={style}
       className={cn(
-        "group grid cursor-pointer items-center px-5 py-[18px] transition-colors hover:bg-primary/[0.03]",
+        "group grid cursor-pointer items-center px-5 transition-colors hover:bg-primary/[0.03]",
         GRID_COLS,
         !isLast && "border-b border-border/30",
         isSelected && "bg-primary/[0.04]",
@@ -108,6 +118,11 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
     comparator,
   });
 
+  const { scrollRef, virtualizer, scrollbarWidth } = useVirtualList({
+    count: sortedCoins.length,
+    rowHeight: ROW_HEIGHT,
+  });
+
   const currencySymbol = getCurrencySymbol(baseCurrency);
 
   const columns: { key: SortKey; label: string; sortable: boolean }[] = [
@@ -119,7 +134,13 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className={cn("grid items-center bg-secondary/30 px-5 py-3.5", GRID_COLS)}>
+      <div
+        className={cn("grid items-center bg-secondary/30 py-3.5", GRID_COLS)}
+        style={{
+          paddingLeft: LIST_PADDING_X,
+          paddingRight: LIST_PADDING_X + scrollbarWidth,
+        }}
+      >
         {columns.map((col) => (
           <button
             key={col.key}
@@ -138,25 +159,37 @@ export function CoinTable({ coins, baseCurrency, selectedSymbol, onSelect }: Coi
         ))}
       </div>
 
-      <div>
-        {sortedCoins.length === 0 ? (
-          <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-            검색 결과가 없습니다.
+      {sortedCoins.length === 0 ? (
+        <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+          검색 결과가 없습니다.
+        </div>
+      ) : (
+        // 페이지가 아니라 이 상자 안에서 스크롤한다. 스크롤바 자리는 항상 비워 두어야
+        // 목록 길이가 바뀌어도 헤더와 본문의 열이 어긋나지 않는다.
+        <div
+          ref={scrollRef}
+          className="overflow-y-auto [scrollbar-gutter:stable]"
+          style={{ height: Math.min(LIST_HEIGHT, sortedCoins.length * ROW_HEIGHT) }}
+        >
+          <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+            {virtualizer.getVirtualItems().map((item) => {
+              const coin = sortedCoins[item.index];
+              return (
+                <CoinRow
+                  key={coin.symbol}
+                  coin={coin}
+                  baseCurrency={baseCurrency}
+                  currencySymbol={currencySymbol}
+                  isSelected={selectedSymbol === coin.symbol}
+                  isLast={item.index === sortedCoins.length - 1}
+                  style={virtualRowStyle(item, ROW_HEIGHT)}
+                  onSelect={onSelect}
+                />
+              );
+            })}
           </div>
-        ) : (
-          sortedCoins.map((coin, i) => (
-            <CoinRow
-              key={coin.symbol}
-              coin={coin}
-              baseCurrency={baseCurrency}
-              currencySymbol={currencySymbol}
-              isSelected={selectedSymbol === coin.symbol}
-              isLast={i === sortedCoins.length - 1}
-              onSelect={onSelect}
-            />
-          ))
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

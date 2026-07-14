@@ -6,6 +6,7 @@ import { formatQuantity, formatCurrencyCompact, SMALL_AMOUNT_THRESHOLD } from "@
 import { SortIcon } from "@/components/ui/SortIcon";
 import { useSort } from "@/hooks/useSort";
 import type { SortDir } from "@/hooks/useSort";
+import { useVirtualList, virtualRowStyle } from "@/hooks/useVirtualList";
 import type { WalletCoinBalance } from "@/lib/types/wallet";
 
 interface WalletAssetTableProps {
@@ -34,6 +35,13 @@ function formatDisplayQuantity(quantity: number, symbol: string, baseCurrency: s
 }
 
 const GRID_COLS = "grid-cols-[1.6fr_minmax(120px,1.2fr)_minmax(100px,1fr)_minmax(90px,0.8fr)]";
+
+// 가상화는 행 높이를 미리 알아야 스크롤 높이를 계산할 수 있다. 행은 높이를 고정한다.
+// 보유수량 칸은 수량과 환산액 두 줄이 들어가므로 시세 목록보다 한 행이 높다.
+const ROW_HEIGHT = 72;
+const VISIBLE_ROWS = 8;
+const LIST_HEIGHT = ROW_HEIGHT * VISIBLE_ROWS;
+const LIST_PADDING_X = 20; // px-5
 
 export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selectedCoin }: WalletAssetTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,6 +88,11 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
     comparator,
   });
 
+  const { scrollRef, virtualizer, scrollbarWidth } = useVirtualList({
+    count: sorted.length,
+    rowHeight: ROW_HEIGHT,
+  });
+
   const columns: { key: SortKey; label: string }[] = [
     { key: "name", label: "코인" },
     { key: "total", label: "보유수량" },
@@ -118,7 +131,11 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
 
       <div className="overflow-x-auto">
         {/* Header */}
-        <div className={cn("grid min-w-[640px] items-center bg-secondary/30 px-5 py-3.5", GRID_COLS)} role="row">
+        <div
+          className={cn("grid min-w-[640px] items-center bg-secondary/30 py-3.5", GRID_COLS)}
+          style={{ paddingLeft: LIST_PADDING_X, paddingRight: LIST_PADDING_X + scrollbarWidth }}
+          role="row"
+        >
           {columns.map((col) => (
             <button
               key={col.key}
@@ -136,73 +153,80 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
           ))}
         </div>
 
-        {/* Body */}
-        <div>
-          {sorted.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-              보유 중인 자산이 없습니다.
-            </div>
-          ) : (
-            sorted.map((b, i) => {
-              const isSelected = selectedCoin === b.coinSymbol;
-              const isBase = b.coinSymbol === baseCurrency;
-              const hasBalance = isBase || b.total > 0;
-              return (
-                <div
-                  key={b.coinSymbol}
-                  onClick={() => onSelectCoin?.(isSelected ? null : b)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter") onSelectCoin?.(isSelected ? null : b); }}
-                  className={cn(
-                    "grid min-w-[640px] cursor-pointer items-center px-5 py-[18px] transition-colors",
-                    GRID_COLS,
-                    isSelected ? "bg-primary/[0.06]" : "hover:bg-primary/[0.03]",
-                    i !== sorted.length - 1 && "border-b border-border/30",
-                  )}
-                >
-                  {/* Coin info */}
-                  <div className="flex items-center gap-3">
-                    <CoinIcon symbol={b.coinSymbol} size={36} />
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-[13px] font-semibold tracking-wide">{b.coinSymbol}</span>
-                      <span className="text-[11px] text-muted-foreground">{b.coinName}</span>
-                    </div>
-                  </div>
-
-                  {/* Total amount */}
-                  <div className="text-right">
-                    <div className={cn("font-mono text-sm tabular-nums", hasBalance ? "font-semibold" : "text-muted-foreground/40")}>
-                      {hasBalance ? formatDisplayQuantity(b.total, b.coinSymbol, baseCurrency) : "—"}
-                    </div>
-                    {!isBase && hasBalance && (
-                      <div className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
-                        ≈ {formatCurrencyCompact(b.totalValue, baseCurrency)}
-                      </div>
+        {/* Body: 페이지가 아니라 이 상자 안에서 스크롤하고, 보이는 구간의 행만 그린다. */}
+        {sorted.length === 0 ? (
+          <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+            보유 중인 자산이 없습니다.
+          </div>
+        ) : (
+          <div
+            ref={scrollRef}
+            className="min-w-[640px] overflow-y-auto [scrollbar-gutter:stable]"
+            style={{ height: Math.min(LIST_HEIGHT, sorted.length * ROW_HEIGHT) }}
+          >
+            <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+              {virtualizer.getVirtualItems().map((item) => {
+                const b = sorted[item.index];
+                const isSelected = selectedCoin === b.coinSymbol;
+                const isBase = b.coinSymbol === baseCurrency;
+                const hasBalance = isBase || b.total > 0;
+                return (
+                  <div
+                    key={b.coinSymbol}
+                    onClick={() => onSelectCoin?.(isSelected ? null : b)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter") onSelectCoin?.(isSelected ? null : b); }}
+                    style={virtualRowStyle(item, ROW_HEIGHT)}
+                    className={cn(
+                      "grid cursor-pointer items-center px-5 transition-colors",
+                      GRID_COLS,
+                      isSelected ? "bg-primary/[0.06]" : "hover:bg-primary/[0.03]",
+                      item.index !== sorted.length - 1 && "border-b border-border/30",
                     )}
-                  </div>
+                  >
+                    {/* Coin info */}
+                    <div className="flex items-center gap-3">
+                      <CoinIcon symbol={b.coinSymbol} size={36} />
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[13px] font-semibold tracking-wide">{b.coinSymbol}</span>
+                        <span className="text-[11px] text-muted-foreground">{b.coinName}</span>
+                      </div>
+                    </div>
 
-                  {/* Available */}
-                  <div className={cn("text-right font-mono text-sm tabular-nums", !hasBalance && "text-muted-foreground/40")}>
-                    {hasBalance ? formatDisplayQuantity(b.available, b.coinSymbol, baseCurrency) : "—"}
-                  </div>
+                    {/* Total amount */}
+                    <div className="text-right">
+                      <div className={cn("font-mono text-sm tabular-nums", hasBalance ? "font-semibold" : "text-muted-foreground/40")}>
+                        {hasBalance ? formatDisplayQuantity(b.total, b.coinSymbol, baseCurrency) : "—"}
+                      </div>
+                      {!isBase && hasBalance && (
+                        <div className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                          ≈ {formatCurrencyCompact(b.totalValue, baseCurrency)}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Locked */}
-                  <div className={cn(
-                    "flex items-center justify-end gap-1 text-right font-mono text-sm tabular-nums",
-                    b.locked > 0 ? "text-chart-4" : "text-muted-foreground/40",
-                  )}>
-                    {b.locked > 0 && <Lock className="h-3 w-3 shrink-0" />}
-                    {b.locked > 0
-                      ? formatDisplayQuantity(b.locked, b.coinSymbol, baseCurrency)
-                      : "—"}
-                  </div>
+                    {/* Available */}
+                    <div className={cn("text-right font-mono text-sm tabular-nums", !hasBalance && "text-muted-foreground/40")}>
+                      {hasBalance ? formatDisplayQuantity(b.available, b.coinSymbol, baseCurrency) : "—"}
+                    </div>
 
-                </div>
-              );
-            })
-          )}
-        </div>
+                    {/* Locked */}
+                    <div className={cn(
+                      "flex items-center justify-end gap-1 text-right font-mono text-sm tabular-nums",
+                      b.locked > 0 ? "text-chart-4" : "text-muted-foreground/40",
+                    )}>
+                      {b.locked > 0 && <Lock className="h-3 w-3 shrink-0" />}
+                      {b.locked > 0
+                        ? formatDisplayQuantity(b.locked, b.coinSymbol, baseCurrency)
+                        : "—"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
