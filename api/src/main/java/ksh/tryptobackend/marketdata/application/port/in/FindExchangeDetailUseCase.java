@@ -6,4 +6,6 @@ import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetai
 public interface FindExchangeDetailUseCase {
 
     Optional<ExchangeDetailResult> findExchangeDetail(Long exchangeId);
+
+    Optional<Long> findExchangeIdByName(String name);
 }
