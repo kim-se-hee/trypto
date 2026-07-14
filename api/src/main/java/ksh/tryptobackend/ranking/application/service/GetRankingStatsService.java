@@ -1,13 +1,9 @@
 package ksh.tryptobackend.ranking.application.service;
 
-import java.time.LocalDate;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingStatsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingStatsQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingStatsResult;
 import ksh.tryptobackend.ranking.application.port.out.RankingQueryPort;
-import ksh.tryptobackend.ranking.domain.vo.RankingStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,10 +17,12 @@ public class GetRankingStatsService implements GetRankingStatsUseCase {
     @Override
     @Transactional(readOnly = true)
     public RankingStatsResult getRankingStats(GetRankingStatsQuery query) {
-        LocalDate referenceDate = rankingQueryPort
+        // 집계된 랭킹이 하나도 없으면 기준 날짜를 정할 수 없다. 배치가 아직 돌지 않은 정상 상태이므로 빈 통계로 응답한다.
+        return rankingQueryPort
                 .findLatestReferenceDate(query.period())
-                .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
-        RankingStats stats = rankingQueryPort.getRankingStats(query.period(), referenceDate);
-        return new RankingStatsResult(stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate());
+                .map(referenceDate -> rankingQueryPort.getRankingStats(query.period(), referenceDate))
+                .map(stats ->
+                        new RankingStatsResult(stats.totalParticipants(), stats.maxProfitRate(), stats.avgProfitRate()))
+                .orElseGet(RankingStatsResult::empty);
     }
 }

@@ -2,8 +2,7 @@ package ksh.tryptobackend.ranking.application.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import ksh.tryptobackend.common.exception.CustomException;
-import ksh.tryptobackend.common.exception.ErrorCode;
+import java.util.Optional;
 import ksh.tryptobackend.ranking.application.port.in.GetRankingsUseCase;
 import ksh.tryptobackend.ranking.application.port.in.dto.query.GetRankingsQuery;
 import ksh.tryptobackend.ranking.application.port.in.dto.result.RankingCursorResult;
@@ -26,7 +25,20 @@ public class GetRankingsService implements GetRankingsUseCase {
     @Override
     @Transactional(readOnly = true)
     public RankingCursorResult getRankings(GetRankingsQuery query) {
-        LocalDate referenceDate = resolveReferenceDate(query);
+        return resolveReferenceDate(query)
+                .map(referenceDate -> findRankings(query, referenceDate))
+                .orElseGet(RankingCursorResult::empty);
+    }
+
+    // 집계된 랭킹이 하나도 없으면 기준 날짜를 정할 수 없다. 배치가 아직 돌지 않은 정상 상태이므로 빈 결과로 응답한다.
+    private Optional<LocalDate> resolveReferenceDate(GetRankingsQuery query) {
+        if (query.referenceDate() != null) {
+            return Optional.of(query.referenceDate());
+        }
+        return rankingQueryPort.findLatestReferenceDate(query.period());
+    }
+
+    private RankingCursorResult findRankings(GetRankingsQuery query, LocalDate referenceDate) {
         RankingSummaries page = RankingSummaries.fromOverflow(
                 rankingQueryPort.findRankings(query.period(), referenceDate, query.cursorRank(), query.size() + 1),
                 query.size());
@@ -35,14 +47,5 @@ public class GetRankingsService implements GetRankingsUseCase {
                 .map(summary -> RankingItemResult.of(summary, userProfiles))
                 .toList();
         return new RankingCursorResult(content, page.nextCursorRank(), page.hasNext());
-    }
-
-    private LocalDate resolveReferenceDate(GetRankingsQuery query) {
-        if (query.referenceDate() != null) {
-            return query.referenceDate();
-        }
-        return rankingQueryPort
-                .findLatestReferenceDate(query.period())
-                .orElseThrow(() -> new CustomException(ErrorCode.RANKING_NOT_FOUND));
     }
 }
