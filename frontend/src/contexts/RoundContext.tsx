@@ -33,12 +33,18 @@ interface RoundContextValue {
 const RoundContext = createContext<RoundContextValue | null>(null);
 
 export function RoundProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const [activeRound, setActiveRound] = useState<InvestmentRound | null>(null);
   const [totalRoundCount, setTotalRoundCount] = useState(0);
   const [isRoundLoading, setIsRoundLoading] = useState(true);
 
   const refreshActiveRound = useCallback(async () => {
+    // 세션 복구가 끝나기 전에는 로그인 여부를 알 수 없으니 판단을 미룬다.
+    if (isAuthLoading) {
+      setIsRoundLoading(true);
+      return;
+    }
+
     if (!user) {
       setActiveRound(null);
       setTotalRoundCount(0);
@@ -61,7 +67,7 @@ export function RoundProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsRoundLoading(false);
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   useEffect(() => {
     void refreshActiveRound();
