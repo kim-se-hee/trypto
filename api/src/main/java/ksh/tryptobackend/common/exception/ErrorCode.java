@@ -66,6 +66,7 @@ public enum ErrorCode {
     SIGNUP_RESTRICTED(403, "signup.restricted"),
     SOCIAL_SERVER_ERROR(502, "social.server.error"),
     SOCIAL_LOGIN_NOT_CONFIGURED(503, "social.login.not.configured"),
+    ACCESS_TOKEN_LOGIN_NOT_SUPPORTED(400, "access.token.login.not.supported"),
 
     PRICE_NOT_AVAILABLE(500, "price.not.available"),
 

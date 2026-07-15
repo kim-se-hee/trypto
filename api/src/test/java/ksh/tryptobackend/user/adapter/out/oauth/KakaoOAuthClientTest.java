@@ -59,6 +59,17 @@ class KakaoOAuthClientTest {
     }
 
     @Test
+    @DisplayName("액세스 토큰으로 회원을 조회하면 토큰 교환 없이 신원을 확정한다")
+    void getIdentityByAccessToken_skipsTokenExchange_resolvesIdentity() {
+        KakaoOAuthClient client = new KakaoOAuthClient(configuredProperties());
+
+        SocialIdentity identity = client.getIdentityByAccessToken("app-access-token");
+
+        assertThat(identity).isEqualTo(SocialIdentity.of(Provider.KAKAO, "1234"));
+        assertThat(server.tokenRequestForm()).isEmpty();
+    }
+
+    @Test
     @DisplayName("안드로이드 클라이언트로 인증하면 안드로이드 자격증명으로 토큰을 교환한다")
     void getIdentity_androidClientType_exchangesTokenWithAndroidCredentials() {
         KakaoOAuthClient client = new KakaoOAuthClient(configuredProperties());

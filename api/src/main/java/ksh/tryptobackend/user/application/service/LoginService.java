@@ -37,8 +37,10 @@ public class LoginService implements LoginUseCase {
     @Override
     @Transactional
     public LoginResult login(LoginCommand command) {
-        SocialIdentity identity = socialAuthenticator.authenticate(
-                command.provider(), command.code(), command.codeVerifier(), command.clientType());
+        SocialIdentity identity = command.hasAccessToken()
+                ? socialAuthenticator.authenticateWithAccessToken(command.provider(), command.accessToken())
+                : socialAuthenticator.authenticate(
+                        command.provider(), command.code(), command.codeVerifier(), command.clientType());
         LocalDateTime now = LocalDateTime.now(clock);
 
         SocialAccount account = socialAccountQueryPort

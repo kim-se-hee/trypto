@@ -8,4 +8,6 @@ public interface SocialAuthenticator {
 
     SocialIdentity authenticate(
             Provider provider, String authorizationCode, String codeVerifier, ClientType clientType);
+
+    SocialIdentity authenticateWithAccessToken(Provider provider, String accessToken);
 }

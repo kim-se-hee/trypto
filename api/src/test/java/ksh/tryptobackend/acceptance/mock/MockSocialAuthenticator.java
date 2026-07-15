@@ -17,6 +17,11 @@ public class MockSocialAuthenticator implements SocialAuthenticator {
         return SocialIdentity.of(provider, authorizationCode);
     }
 
+    @Override
+    public SocialIdentity authenticateWithAccessToken(Provider provider, String accessToken) {
+        return SocialIdentity.of(provider, accessToken);
+    }
+
     public ClientType getLastClientType() {
         return lastClientType;
     }
