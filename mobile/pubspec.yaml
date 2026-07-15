@@ -30,6 +30,9 @@ dependencies:
   flutter_web_auth_2: ^4.1.0
   flutter_secure_storage: ^9.2.2
   crypto: ^3.0.6
+  # 카카오는 브라우저 리다이렉트가 불가(커스텀 스킴을 REST 리다이렉트로 등록 불가)해 공식 SDK 로
+  # 앱에서 액세스 토큰을 받고, 백엔드가 그 토큰으로 신원을 확인한다. 구글은 flutter_web_auth_2 유지.
+  kakao_flutter_sdk_user: ^1.9.0
 
   # 값·포맷
   decimal: ^3.2.1

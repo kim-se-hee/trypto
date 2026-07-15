@@ -34,55 +34,46 @@ void main() {
   });
 
   group('AuthConfig', () {
-    test('redirect URI 는 서버 설정값과 같은 문자열을 만든다', () {
-      expect(
-        AuthConfig.redirectUri(SocialProvider.kakao),
-        'trypto://auth/kakao/callback',
-      );
+    // 카카오는 SDK 로 전환해 브라우저 인가 코드 흐름을 쓰지 않는다. redirectUri·authorizeUrl 은
+    // 구글 전용이다.
+    test('구글 redirect URI 는 서버 설정값과 같은 문자열을 만든다', () {
       expect(
         AuthConfig.redirectUri(SocialProvider.google),
         'trypto://auth/google/callback',
       );
     });
 
-    test('인가 URL 은 PKCE 규격대로 조립된다', () {
+    test('구글 인가 URL 은 PKCE 규격대로 조립된다', () {
       final url = AuthConfig.authorizeUrl(
-        SocialProvider.kakao,
+        SocialProvider.google,
         challenge: 'challenge-value',
         state: 'state-value',
       );
 
-      expect(url.origin, 'https://kauth.kakao.com');
-      expect(url.path, '/oauth/authorize');
+      expect(url.origin, 'https://accounts.google.com');
+      expect(url.path, '/o/oauth2/v2/auth');
       expect(url.queryParameters['response_type'], 'code');
       expect(url.queryParameters['code_challenge'], 'challenge-value');
       expect(url.queryParameters['code_challenge_method'], 'S256');
       expect(url.queryParameters['state'], 'state-value');
       expect(
         url.queryParameters['redirect_uri'],
-        'trypto://auth/kakao/callback',
+        'trypto://auth/google/callback',
       );
-      expect(url.queryParameters.containsKey('scope'), isFalse);
-    });
-
-    test('구글만 openid scope 를 붙인다', () {
-      final url = AuthConfig.authorizeUrl(
-        SocialProvider.google,
-        challenge: 'c',
-        state: 's',
-      );
-
-      expect(url.origin, 'https://accounts.google.com');
+      // 구글만 openid scope 를 붙인다.
       expect(url.queryParameters['scope'], 'openid');
     });
 
-    test('clientId 가 비면 버튼을 살리지 않는다', () {
-      // --dart-define 이 없는 테스트 환경에서는 두 제공자 모두 미설정이다.
-      expect(AuthConfig.isConfigured(SocialProvider.kakao), isFalse);
-      expect(
-        AuthConfig.missingDefines(SocialProvider.kakao),
-        contains('KAKAO_CLIENT_ID'),
-      );
+    test('카카오는 네이티브 앱 키 기본값만으로 버튼이 살아 있다', () {
+      // --dart-define 이 없어도 카카오는 SDK 로 동작하므로 네이티브 앱 키 기본값으로 설정 완료다.
+      expect(AuthConfig.isConfigured(SocialProvider.kakao), isTrue);
+      expect(AuthConfig.missingDefines(SocialProvider.kakao), isEmpty);
+    });
+
+    test('구글은 clientId 가 비면 버튼을 살리지 않는다', () {
+      // --dart-define 이 없는 테스트 환경에서 구글은 미설정이다.
+      expect(AuthConfig.isConfigured(SocialProvider.google), isFalse);
+      expect(AuthConfig.missingDefines(SocialProvider.google), isNotEmpty);
     });
   });
 }

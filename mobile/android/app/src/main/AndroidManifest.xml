@@ -33,8 +33,9 @@
             </intent-filter>
         </activity>
 
-        <!-- 커스텀 스킴은 flutter_web_auth_2 의 CallbackActivity 에만 선언한다.
-             스킴 값의 출처는 build.gradle.kts 의 authCallbackScheme placeholder 다. -->
+        <!-- 구글의 커스텀 스킴(trypto) 콜백은 flutter_web_auth_2 의 CallbackActivity 가 받는다.
+             스킴 값의 출처는 build.gradle.kts 의 authCallbackScheme placeholder 다.
+             카카오는 SDK 로 전환해 이 콜백을 쓰지 않는다(아래 AuthCodeHandlerActivity 가 받는다). -->
         <activity
             android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
             android:exported="true">
@@ -43,6 +44,22 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="${authCallbackScheme}"/>
+            </intent-filter>
+        </activity>
+
+        <!-- 카카오 로그인 SDK 가 카카오 인가 결과를 되받는 리다이렉트 처리기.
+             Flutter SDK(kakao_flutter_sdk)는 네이티브 SDK 의 AuthCodeHandlerActivity 가 아니라
+             AuthCodeCustomTabsActivity 를 제공한다. 스킴은 `kakao{네이티브앱키}`, host 는 `oauth`. -->
+        <activity
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:host="oauth"
+                    android:scheme="kakaodf7305f4a85506b955eafc916218ca7b"/>
             </intent-filter>
         </activity>
 

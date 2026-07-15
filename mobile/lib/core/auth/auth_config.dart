@@ -30,6 +30,8 @@ abstract final class AuthConfig {
     SocialProvider.google => Env.googleCallbackScheme,
   };
 
+  /// 브라우저 인가 코드 흐름(구글)의 콜백 URI. 서버 설정값(`GOOGLE_{ANDROID|IOS}_REDIRECT_URI`)과
+  /// 문자 단위로 같아야 토큰 교환이 성립한다. 카카오는 SDK 로 전환해 이 경로를 쓰지 않는다.
   static String redirectUri(SocialProvider provider) =>
       '${callbackScheme(provider)}://auth/${provider.wire}/callback';
 
@@ -40,15 +42,25 @@ abstract final class AuthConfig {
         : Env.googleIosClientId,
   };
 
-  /// 웹과 같은 규칙(사양서 §2.4): `clientId` 와 콜백 스킴이 모두 채워졌을 때만 버튼을 살린다.
-  static bool isConfigured(SocialProvider provider) =>
-      clientId(provider).isNotEmpty && callbackScheme(provider).isNotEmpty;
+  /// 버튼을 살리는 조건은 제공자별로 다르다(사양서 §2.4). 카카오는 SDK 로 동작하므로 네이티브 앱
+  /// 키만 있으면 되고(기본값이 있어 항상 채워진다), 구글은 `clientId` 와 콜백 스킴이 모두 있어야 한다.
+  static bool isConfigured(SocialProvider provider) => switch (provider) {
+    SocialProvider.kakao => Env.kakaoNativeAppKey.isNotEmpty,
+    SocialProvider.google =>
+      clientId(provider).isNotEmpty && callbackScheme(provider).isNotEmpty,
+  };
 
   /// 비어 있는 `--dart-define` 키 목록. 디버그 빌드에서만 노출한다.
-  static List<String> missingDefines(SocialProvider provider) => [
-    if (clientId(provider).isEmpty) _clientIdKey(provider),
-    if (callbackScheme(provider).isEmpty) _callbackSchemeKey(provider),
-  ];
+  static List<String> missingDefines(SocialProvider provider) =>
+      switch (provider) {
+        SocialProvider.kakao => [
+          if (Env.kakaoNativeAppKey.isEmpty) 'KAKAO_NATIVE_APP_KEY',
+        ],
+        SocialProvider.google => [
+          if (clientId(provider).isEmpty) _clientIdKey(provider),
+          if (callbackScheme(provider).isEmpty) _callbackSchemeKey(provider),
+        ],
+      };
 
   static Uri authorizeUrl(
     SocialProvider provider, {
