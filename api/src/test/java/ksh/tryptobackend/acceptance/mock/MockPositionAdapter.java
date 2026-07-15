@@ -21,14 +21,16 @@ public class MockPositionAdapter implements PositionCommandPort, PositionQueryPo
 
     @Override
     public Optional<Position> findByWalletIdAndCoinId(Long walletId, Long coinId) {
-        String k = key(walletId, coinId);
-        locks.computeIfAbsent(k, ignore -> new ReentrantLock()).lock();
-        return Optional.ofNullable(positions.get(k));
+        return Optional.ofNullable(positions.get(key(walletId, coinId)));
     }
 
+    // 잠금은 getOrCreate → save 읽기-수정-쓰기 구간만 보호한다. save 를 호출하지 않는
+    // 조회 전용 경로(위반 판정 등)가 잠그면 해제할 곳이 없어 다음 주문이 영원히 대기한다.
     @Override
     public Position getOrCreate(Long walletId, Long coinId) {
-        return findByWalletIdAndCoinId(walletId, coinId).orElseGet(() -> Position.empty(walletId, coinId));
+        String k = key(walletId, coinId);
+        locks.computeIfAbsent(k, ignore -> new ReentrantLock()).lock();
+        return Optional.ofNullable(positions.get(k)).orElseGet(() -> Position.empty(walletId, coinId));
     }
 
     @Override

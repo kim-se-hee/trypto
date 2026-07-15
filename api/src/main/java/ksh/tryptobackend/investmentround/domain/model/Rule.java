@@ -138,10 +138,10 @@ public sealed interface Rule {
             }
             int maxCount = thresholdValue.intValue();
             int newCount = context.averagingDownCount() + 1;
-            if (newCount < maxCount) {
+            if (newCount <= maxCount) {
                 return Optional.empty();
             }
-            String reason = String.format("물타기 %d회 ≥ %d회", newCount, maxCount);
+            String reason = String.format("물타기 %d회 > %d회", newCount, maxCount);
             return Optional.of(new DetectedViolation(id, reason, context.now()));
         }
     }
@@ -161,11 +161,11 @@ public sealed interface Rule {
         @Override
         public Optional<DetectedViolation> check(RuleEvaluationInput context) {
             long maxOrderCount = thresholdValue.longValue();
-            long newCount = context.todayOrderCount() + 1;
-            if (newCount < maxOrderCount) {
+            long todayOrderCount = context.todayOrderCount();
+            if (todayOrderCount <= maxOrderCount) {
                 return Optional.empty();
             }
-            String reason = String.format("오늘 주문 %d건 ≥ %d건", newCount, maxOrderCount);
+            String reason = String.format("오늘 주문 %d건 > %d건", todayOrderCount, maxOrderCount);
             return Optional.of(new DetectedViolation(id, reason, context.now()));
         }
     }
