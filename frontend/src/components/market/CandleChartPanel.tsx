@@ -41,6 +41,9 @@ const DEFAULT_VISIBLE_COUNT: Record<CandleInterval, number> = {
 };
 
 const MIN_VISIBLE_COUNT = 12;
+// 보이는 구간의 왼쪽 끝이 이 개수만큼 남았을 때 미리 과거 캔들을 당겨 온다. 벽에 닿기 전에
+// 채워 두어야 스와이프가 끊기지 않는다.
+const PREFETCH_THRESHOLD = 8;
 // 봉이 닫혀도 서버 캔들은 InfluxDB 집계 주기(1분 + 오프셋 10초)만큼 늦게 나온다. 그동안은 실시간
 // 시세로 만든 봉이 자리를 지켜야 하므로, 서버가 따라잡을 때까지 몇 개는 들고 있는다.
 const LIVE_CANDLE_LIMIT = 4;
@@ -159,6 +162,16 @@ function mergeLiveCandles(candles: CandleItem[], liveCandles: CandleItem[]): Can
   return merged;
 }
 
+// 재조회로 받은 최신 창(fresh)을 기존 배열에 덮되, 그보다 오래된 과거 구간은 그대로 남긴다.
+// 과거를 페이징해 앞에 쌓아 둔 봉이 봉 마감 재조회 때 사라지지 않게 한다.
+function mergeReconciled(existing: CandleItem[], fresh: CandleItem[]): CandleItem[] {
+  if (fresh.length === 0) return existing;
+
+  const freshStart = new Date(fresh[0].time).getTime();
+  const older = existing.filter((candle) => new Date(candle.time).getTime() < freshStart);
+  return [...older, ...fresh];
+}
+
 export function CandleChartPanel({
   exchangeKey,
   exchangeId,
@@ -182,7 +195,18 @@ export function CandleChartPanel({
     startEndIndex: number;
   } | null>(null);
 
+  // 과거 페이징은 렌더 밖(이벤트 핸들러·비동기 콜백)에서 판단하므로 최신 값을 ref 로 들고 있는다.
+  const loadedRef = useRef<{ key: string; candles: CandleItem[] } | null>(null);
+  // 더 당겨 올 과거 캔들이 남았는지. 조회 결과가 비면 끝에 다다른 것으로 보고 더는 조회하지 않는다.
+  const hasMorePastRef = useRef(true);
+  // 같은 구간을 두 번 당겨 오지 않도록 조회가 도는 동안 잠근다.
+  const loadingPastRef = useRef(false);
+
   const requestKey = `${exchangeKey}:${coin.symbol}:${interval}`;
+
+  useEffect(() => {
+    loadedRef.current = loaded;
+  }, [loaded]);
 
   const fetchCandles = useCallback(async (): Promise<CandleItem[] | null> => {
     const exchangeCode = resolveCandleExchangeCode(exchangeKey);
@@ -217,6 +241,9 @@ export function CandleChartPanel({
       setFollowingLatest(true);
       setHoveredIndex(null);
       setPointerPosition(null);
+      // 코인·거래소·주기가 바뀌면 과거 페이징 상태를 처음으로 되돌린다.
+      hasMorePastRef.current = true;
+      loadingPastRef.current = false;
     });
 
     return () => {
@@ -270,7 +297,11 @@ export function CandleChartPanel({
     const timer = window.setTimeout(() => {
       void fetchCandles().then((data) => {
         if (cancelled || !data || data.length === 0) return;
-        setLoaded({ key: requestKey, candles: data });
+        // 통째로 갈아끼우면 앞에 쌓아 둔 과거 구간이 사라진다. 최신 창만 서버 값으로 덮는다.
+        setLoaded((previous) => {
+          if (!previous || previous.key !== requestKey) return { key: requestKey, candles: data };
+          return { key: requestKey, candles: mergeReconciled(previous.candles, data) };
+        });
       });
     }, RECONCILE_DELAY_MS);
 
@@ -356,6 +387,58 @@ export function CandleChartPanel({
   const tooltipLeft = pointerPosition?.x ?? 12;
   const tooltipTop = pointerPosition?.y ?? 8;
 
+  // 왼쪽 끝에 다가가면 가장 오래된 봉을 커서로 삼아 그 이전 구간을 서버에서 당겨 와 앞에 이어 붙인다.
+  // 앞에 끼워 넣은 만큼 기존 인덱스가 전부 밀리므로, 보이던 구간이 그대로 유지되도록 기준 인덱스도 함께 민다.
+  const loadPast = useCallback(async () => {
+    if (loadingPastRef.current || !hasMorePastRef.current) return;
+
+    const current = loadedRef.current;
+    if (!current || current.key !== requestKey || current.candles.length === 0) return;
+
+    const exchangeCode = resolveCandleExchangeCode(exchangeKey);
+    if (!exchangeCode) return;
+
+    loadingPastRef.current = true;
+    const oldest = current.candles[0];
+    const option = INTERVAL_OPTIONS.find((item) => item.value === interval);
+
+    try {
+      const older = await findCandles({
+        exchange: exchangeCode,
+        coin: coin.symbol,
+        interval,
+        limit: option?.candleCount ?? 60,
+        cursor: oldest.time,
+      });
+
+      // 조회가 도는 사이 코인·거래소·주기가 바뀌었으면 그 결과는 버린다.
+      if (loadedRef.current?.key !== requestKey) return;
+
+      const oldestTime = new Date(oldest.time).getTime();
+      const fresh = older.filter((candle) => new Date(candle.time).getTime() < oldestTime);
+
+      if (fresh.length === 0) {
+        // 더 오래된 봉이 없다. 끝에 다다랐으니 더는 조회하지 않는다.
+        hasMorePastRef.current = false;
+        return;
+      }
+
+      setLoaded((previous) => {
+        if (!previous || previous.key !== requestKey) return previous;
+        return { key: requestKey, candles: [...fresh, ...previous.candles] };
+      });
+      setAnchorEndIndex((previous) => previous + fresh.length);
+      // 드래그 도중에 끼어들면 드래그 기준점도 같은 만큼 밀어야 손끝과 화면이 어긋나지 않는다.
+      if (dragStateRef.current) {
+        dragStateRef.current.startEndIndex += fresh.length;
+      }
+    } catch {
+      // 과거 캔들 조회 실패 시 다음 스와이프에서 다시 시도한다.
+    } finally {
+      loadingPastRef.current = false;
+    }
+  }, [coin.symbol, exchangeKey, interval, requestKey]);
+
   // 휠 이벤트 리스너가 이 둘을 붙잡고 있다. 매 렌더마다 새로 만들면 리스너를 그때마다
   // 다시 등록해야 하므로, 실제로 쓰는 값이 바뀔 때만 새로 만든다.
   // 오른쪽 끝까지 밀면 다시 최신 봉을 따라간다. 그 전까지는 사용자가 세운 자리를 지킨다.
@@ -367,8 +450,13 @@ export function CandleChartPanel({
 
       setAnchorEndIndex(bounded);
       setFollowingLatest(bounded >= totalCount);
+
+      // 보이는 구간의 왼쪽 끝이 문턱 안으로 들어오면 미리 과거 캔들을 당겨 온다.
+      if (bounded - safeVisibleCount <= PREFETCH_THRESHOLD) {
+        void loadPast();
+      }
     },
-    [visibleCount, mergedCandles.length],
+    [visibleCount, mergedCandles.length, loadPast],
   );
 
   const zoomTo = useCallback(
