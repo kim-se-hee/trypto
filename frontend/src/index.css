@@ -149,6 +149,53 @@
   transform: translateY(-1px);
 }
 
+/* ── Landing: 시세 마퀴 ── */
+/* 동일한 목록을 두 번 이어 붙이고 절반만큼 이동시켜 이음새 없이 순환한다 */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-scroll 36s linear infinite;
+}
+
+.marquee-mask:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* ── Landing: 둥둥 뜨는 요소 ── */
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--float-rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--float-rotate, 0deg));
+  }
+}
+
+.animate-float {
+  animation: float-y 5.5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-y 6.5s ease-in-out 1.2s infinite;
+}
+
+/* ── Landing: 가로 스와이프 카드 (스크롤바 숨김) ── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
