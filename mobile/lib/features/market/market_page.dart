@@ -356,6 +356,14 @@ class _ListControls extends StatelessWidget {
             ChoiceChip(
               label: Text(filter.label),
               selected: view.filter == filter,
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight:
+                    view.filter == filter ? FontWeight.w700 : FontWeight.w600,
+                color: view.filter == filter
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+              ),
               onSelected: (_) => onFilter(filter),
             ),
             const SizedBox(width: TryptoSpacing.xs),

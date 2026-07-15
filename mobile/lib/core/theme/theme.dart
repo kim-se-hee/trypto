@@ -492,7 +492,7 @@ ThemeData buildTryptoTheme() {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: TryptoPalette.secondary,
-      selectedColor: TryptoPalette.primary.withValues(alpha: 0.12),
+      selectedColor: TryptoPalette.primary.withValues(alpha: 0.18),
       side: const BorderSide(color: TryptoPalette.border),
       labelStyle: _sans(12, 1.3333, FontWeight.w500),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

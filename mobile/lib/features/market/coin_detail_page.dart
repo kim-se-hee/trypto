@@ -398,6 +398,14 @@ class IntervalChips extends StatelessWidget {
             ChoiceChip(
               label: Text(entry.value.label),
               selected: entry.key == interval,
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight:
+                    entry.key == interval ? FontWeight.w700 : FontWeight.w600,
+                color: entry.key == interval
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
               onSelected: (_) => onChanged(entry.key),
             ),
             const SizedBox(width: TryptoSpacing.xs),
