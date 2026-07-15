@@ -109,7 +109,7 @@ export function LandingPage() {
               <ul className="mt-8 space-y-4">
                 {REGRET_STEPS.map((item) => (
                   <li key={item.step} className="flex items-start gap-3.5">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[13px] font-extrabold text-primary">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[13px] font-extrabold text-brand">
                       {item.step}
                     </span>
                     <span className="pt-0.5 text-sm font-medium">{item.text}</span>
@@ -127,12 +127,12 @@ export function LandingPage() {
         {/* ── 마지막 CTA ── */}
         <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
           <Reveal>
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-[#9A6AFF] px-6 py-16 text-center sm:px-12 sm:py-20">
+            <div className="relative overflow-hidden rounded-[2rem] bg-primary px-6 py-16 text-center sm:px-12 sm:py-20">
               <h2 className="font-display text-3xl tracking-tight text-white sm:text-4xl">
                 다음 불장은 연습이 아닙니다.
               </h2>
               <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/80">
-                그래서 연습장을 하나 만들었습니다. 종이로요.
+                그래서 연습장을 하나 만들었습니다.
               </p>
               <Link
                 to={ctaTo}

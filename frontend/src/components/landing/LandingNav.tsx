@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,9 +30,7 @@ export function LandingNav() {
         )}
       >
         <a href="#top" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary">
-            <Activity className="h-4 w-4 text-white" />
-          </div>
+          <img src="/favicon.png" alt="trypto" className="h-8 w-8 rounded-xl" />
           <span className="text-xl font-extrabold tracking-tight">trypto</span>
         </a>
 

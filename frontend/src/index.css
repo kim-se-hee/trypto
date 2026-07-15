@@ -44,6 +44,8 @@
     --color-positive: var(--positive);
     --color-negative: var(--negative);
     --color-warning: var(--warning);
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
     --font-sans: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
     --font-display: 'Noto Sans KR', 'Pretendard Variable', system-ui, sans-serif;
     --shadow-card: 0 0 0 1px var(--border);
@@ -53,13 +55,13 @@
 
 :root {
     --radius: 0.625rem;
-    --background: #F8F7F4;
+    --background: #F8F5EE;
     --foreground: #1A1A2E;
     --card: #FFFFFF;
     --card-foreground: #1A1A2E;
     --popover: #FFFFFF;
     --popover-foreground: #1A1A2E;
-    --primary: #6C5CE7;
+    --primary: #0DA6AC;
     --primary-foreground: #FFFFFF;
     --secondary: #F0EEEB;
     --secondary-foreground: #1A1A2E;
@@ -70,23 +72,25 @@
     --destructive: #E85D75;
     --border: #E8E6E1;
     --input: #F0EEEB;
-    --ring: #6C5CE7;
+    --ring: #0DA6AC;
     --chart-1: #6C5CE7;
     --chart-2: #0ABFBC;
     --chart-3: #E85D75;
     --chart-4: #F0A030;
     --chart-5: #2ECC87;
     --warning: #F0A030;
-    --sidebar: #F8F7F4;
+    --sidebar: #F8F5EE;
     --sidebar-foreground: #1A1A2E;
-    --sidebar-primary: #6C5CE7;
+    --sidebar-primary: #0DA6AC;
     --sidebar-primary-foreground: #FFFFFF;
     --sidebar-accent: #F0EEEB;
     --sidebar-accent-foreground: #1A1A2E;
     --sidebar-border: #E8E6E1;
-    --sidebar-ring: #6C5CE7;
+    --sidebar-ring: #0DA6AC;
     --positive: #2ECC87;
     --negative: #E85D75;
+    --brand: #7B6EF6;
+    --brand-foreground: #FFFFFF;
 }
 
 @layer base {

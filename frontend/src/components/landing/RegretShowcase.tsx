@@ -4,18 +4,13 @@ export function RegretShowcase() {
     <div className="relative">
       <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
         {/* 놓친 수익 헤더 */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground">UPBIT · KRW</p>
-            <p className="mt-2 text-[13px] font-medium text-muted-foreground">놓친 수익</p>
-            <p className="font-mono text-4xl font-extrabold tabular-nums text-negative">33만원</p>
-            <p className="mt-1.5 text-[13px] text-muted-foreground">
-              규칙을 지켰다면 이만큼 더 벌었습니다.
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-            예시 화면
-          </span>
+        <div>
+          <p className="text-[11px] font-medium text-muted-foreground">UPBIT · KRW</p>
+          <p className="mt-2 text-[13px] font-medium text-muted-foreground">놓친 수익</p>
+          <p className="font-mono text-4xl font-extrabold tabular-nums text-negative">33만원</p>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">
+            규칙을 지켰다면 이만큼 더 벌었습니다.
+          </p>
         </div>
 
         {/* 실제 / 규칙 준수 / 위반 */}
