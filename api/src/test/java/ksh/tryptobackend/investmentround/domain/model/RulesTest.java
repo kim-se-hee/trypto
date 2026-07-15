@@ -60,10 +60,10 @@ class RulesTest {
     class AveragingDownLimitTest {
 
         @Test
-        @DisplayName("매수 + 손실 중 + 물타기 횟수 ≥ 설정값 → 위반")
+        @DisplayName("매수 + 손실 중 + 이번 물타기가 설정값 초과 → 위반")
         void buyAtLossExceedingLimit_violation() {
             Rule rule = Rule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"), NOW);
-            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, true, 2, 0, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, true, 3, 0, NOW);
 
             List<DetectedViolation> violations = new Rules(List.of(rule)).check(context);
 
@@ -72,10 +72,10 @@ class RulesTest {
         }
 
         @Test
-        @DisplayName("매수 + 손실 중 + 물타기 횟수 < 설정값 → 위반 없음")
+        @DisplayName("매수 + 손실 중 + 이번 물타기가 설정값 이내 → 위반 없음")
         void buyAtLossBelowLimit_noViolation() {
             Rule rule = Rule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"), NOW);
-            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, true, 1, 0, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, true, 2, 0, NOW);
 
             List<DetectedViolation> violations = new Rules(List.of(rule)).check(context);
 
@@ -110,10 +110,10 @@ class RulesTest {
     class OvertradingLimitTest {
 
         @Test
-        @DisplayName("오늘 주문 건수 + 1 ≥ 설정값 → 위반")
+        @DisplayName("오늘 주문 건수(현재 주문 포함) > 설정값 → 위반")
         void orderCountExceedingLimit_violation() {
             Rule rule = Rule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"), NOW);
-            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, false, 0, 9, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, false, 0, 11, NOW);
 
             List<DetectedViolation> violations = new Rules(List.of(rule)).check(context);
 
@@ -122,10 +122,10 @@ class RulesTest {
         }
 
         @Test
-        @DisplayName("오늘 주문 건수 + 1 < 설정값 → 위반 없음")
+        @DisplayName("오늘 주문 건수(현재 주문 포함) = 설정값 → 위반 없음")
         void orderCountBelowLimit_noViolation() {
             Rule rule = Rule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"), NOW);
-            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, false, 0, 8, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(true, BigDecimal.ZERO, false, 0, 10, NOW);
 
             List<DetectedViolation> violations = new Rules(List.of(rule)).check(context);
 
@@ -136,7 +136,7 @@ class RulesTest {
         @DisplayName("매도 주문도 과매매 체크 대상")
         void sellOrder_alsoChecked() {
             Rule rule = Rule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("5"), NOW);
-            RuleEvaluationInput context = new RuleEvaluationInput(false, BigDecimal.ZERO, false, 0, 4, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(false, BigDecimal.ZERO, false, 0, 6, NOW);
 
             List<DetectedViolation> violations = new Rules(List.of(rule)).check(context);
 
@@ -155,7 +155,7 @@ class RulesTest {
                     Rule.of(1L, RuleType.CHASE_BUY_BAN, new BigDecimal("5"), NOW),
                     Rule.of(2L, RuleType.AVERAGING_DOWN_LIMIT, new BigDecimal("3"), NOW),
                     Rule.of(3L, RuleType.OVERTRADING_LIMIT, new BigDecimal("10"), NOW));
-            RuleEvaluationInput context = new RuleEvaluationInput(true, new BigDecimal("10"), true, 2, 9, NOW);
+            RuleEvaluationInput context = new RuleEvaluationInput(true, new BigDecimal("10"), true, 3, 11, NOW);
 
             List<DetectedViolation> violations = new Rules(rules).check(context);
 
