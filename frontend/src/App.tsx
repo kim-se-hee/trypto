@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { PublicRoute } from "@/components/auth/PublicRoute";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RoundGuard } from "@/components/auth/RoundGuard";
+import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { SocialCallbackPage } from "@/pages/SocialCallbackPage";
 import { RoundCreatePage } from "@/pages/RoundCreatePage";
@@ -15,6 +16,9 @@ import { MyPage } from "@/pages/MyPage";
 function App() {
   return (
     <Routes>
+      {/* 랜딩: 인증 여부와 무관하게 누구나 접근 */}
+      <Route path="/" element={<LandingPage />} />
+
       {/* Public: 미인증 사용자만 접근 */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<LoginPage />} />
@@ -38,7 +42,7 @@ function App() {
         <Route path="/mypage" element={<MyPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

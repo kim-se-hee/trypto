@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Activity, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useSocialLogin } from "@/hooks/useSocialLogin";
 import { isSocialConfigured } from "@/lib/auth/social";
 
@@ -29,10 +29,8 @@ export function LoginPage() {
         {/* Logo */}
         <div className="mb-10 text-center">
           <div className="inline-flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <Activity className="h-4.5 w-4.5 text-white" />
-            </div>
-            <span className="text-2xl font-extrabold tracking-tight">Trypto</span>
+            <img src="/favicon.png" alt="trypto" className="h-9 w-9 rounded-xl" />
+            <span className="text-2xl font-extrabold tracking-tight">trypto</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             큰 돈 잃을 걱정 없이 해보는 실전 리허설
