@@ -106,6 +106,11 @@ class RuleChips extends StatelessWidget {
                   ? 'BTC만 홀드한 나'
                   : 'BTC만 홀드한 나 ${formatProfitPercent(btcProfitRate!)}',
             ),
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: btcEnabled ? FontWeight.w700 : FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             side: BorderSide(
               color: btcEnabled ? btcHoldColor : TryptoPalette.border,
             ),

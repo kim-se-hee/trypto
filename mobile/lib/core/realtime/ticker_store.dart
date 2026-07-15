@@ -81,6 +81,7 @@ class TickerStore {
   bool _scheduled = false;
   int _frameId = 0;
   bool _active = true;
+  int _holdCount = 0;
   bool _orderDirty = false;
   bool _disposed = false;
 
@@ -103,10 +104,21 @@ class TickerStore {
     if (identical(_observer, observer)) _observer = null;
   }
 
+  /// 상세·전체화면 차트가 마켓을 덮는 동안 잡아 둔다. 마켓 페이지는 자기가 가려지면
+  /// `setActive(false)` 를 부르지만, 그 화면들도 같은 스토어에서 티커를 받으므로 멈추면 안 된다.
+  void hold() => _holdCount++;
+
+  void release() {
+    if (_holdCount > 0) _holdCount--;
+  }
+
   /// 마켓 탭이 비활성이면 flush 를 멈춘다. `indexedStack` 은 숨은 탭의 build 비용을 그대로
   /// 청구하므로 구독 해제만으로는 부족하다(계획서 §4.2.3).
+  /// 단, 잡고 있는 화면(상세·전체화면 차트)이 있으면 마켓이 가려져도 멈추지 않는다.
   void setActive(bool active) {
-    if (_active == active || _disposed) return;
+    if (_disposed) return;
+    if (!active && _holdCount > 0) return;
+    if (_active == active) return;
     _active = active;
     if (active) return;
     _pending.clear();
