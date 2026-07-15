@@ -1,10 +1,13 @@
 package ksh.tryptobackend.user.adapter.out.oauth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.domain.vo.ClientType;
 import ksh.tryptobackend.user.domain.vo.Provider;
 import ksh.tryptobackend.user.domain.vo.SocialIdentity;
@@ -79,6 +82,17 @@ class GoogleOAuthClientTest {
         assertThat(androidForm).containsEntry("client_id", ANDROID_CREDENTIALS.clientId());
         assertThat(iosForm).containsEntry("client_id", IOS_CREDENTIALS.clientId());
         assertThat(androidForm.get("client_id")).isNotEqualTo(iosForm.get("client_id"));
+    }
+
+    @Test
+    @DisplayName("액세스 토큰 로그인은 지원하지 않아 미지원 예외를 던진다")
+    void getIdentityByAccessToken_notSupported_throwsAccessTokenLoginNotSupported() {
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
+
+        assertThatThrownBy(() -> client.getIdentityByAccessToken("app-access-token"))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.ACCESS_TOKEN_LOGIN_NOT_SUPPORTED);
     }
 
     private GoogleOAuthProperties configuredProperties() {
