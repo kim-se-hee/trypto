@@ -233,6 +233,10 @@ class _CoinListState extends ConsumerState<_CoinList> {
   late List<CoinEntry> _rows;
   Timer? _resort;
 
+  /// 따닥 연타 방지. `isCurrent` 는 같은 프레임 안의 두 번째 탭에서는 아직 바뀌지 않아
+  /// 둘 다 통과한다. 첫 탭에서 동기적으로 세워 두고 상세가 닫힐 때(push 의 Future 완료) 푼다.
+  bool _opening = false;
+
   @override
   void initState() {
     super.initState();
@@ -315,9 +319,17 @@ class _CoinListState extends ConsumerState<_CoinList> {
                         row: _store.row(entry.symbol)!,
                         flash: _store.flash(entry.symbol)!,
                         baseCurrency: widget.exchange.baseCurrency,
-                        onTap: () => context.push(
-                          Routes.coinDetail(entry.symbol, widget.exchange.key),
-                        ),
+                        onTap: () async {
+                          if (_opening) return;
+                          _opening = true;
+                          await context.push(
+                            Routes.coinDetail(
+                              entry.symbol,
+                              widget.exchange.key,
+                            ),
+                          );
+                          if (mounted) _opening = false;
+                        },
                       );
                     },
                   ),
