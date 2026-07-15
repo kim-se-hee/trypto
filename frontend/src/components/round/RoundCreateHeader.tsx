@@ -10,7 +10,7 @@ export function RoundCreateHeader() {
       <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary" />
-          <span className="text-lg font-bold tracking-tight">Trypto</span>
+          <span className="text-lg font-bold tracking-tight">trypto</span>
         </Link>
 
         <div className="flex items-center gap-3">
