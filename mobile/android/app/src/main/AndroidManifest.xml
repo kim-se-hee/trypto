@@ -47,10 +47,11 @@
             </intent-filter>
         </activity>
 
-        <!-- 카카오 로그인 SDK 가 카카오톡 앱 로그인의 결과를 되받는 리다이렉트 처리기.
-             스킴은 `kakao{네이티브앱키}`, host 는 `oauth` 로 SDK 가 고정한다(공식 문서). -->
+        <!-- 카카오 로그인 SDK 가 카카오 인가 결과를 되받는 리다이렉트 처리기.
+             Flutter SDK(kakao_flutter_sdk)는 네이티브 SDK 의 AuthCodeHandlerActivity 가 아니라
+             AuthCodeCustomTabsActivity 를 제공한다. 스킴은 `kakao{네이티브앱키}`, host 는 `oauth`. -->
         <activity
-            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
