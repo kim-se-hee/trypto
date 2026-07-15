@@ -7,20 +7,29 @@ part 'user.g.dart';
 
 /// `POST /api/auth/{provider}/login`
 ///
-/// [clientType] 은 백엔드가 받기로 한 필드다(계획서 §9-2 — 구글의 Android·iOS 클라이언트 ID 가
-/// 별개라 서버가 플랫폼을 알아야 토큰 교환의 client_id 를 맞출 수 있다).
-/// **현행 서버 `LoginRequest` 에는 아직 이 필드가 없으므로** null 이면 바디에서 통째로 뺀다.
-/// 값을 채우는 플랫폼 판별은 인증 단위에서 붙인다.
+/// 제공자별로 바디가 갈린다(확정 와이어 계약). 카카오는 앱이 공식 SDK 로 받은 액세스 토큰을
+/// 보내고(`{accessToken, clientType}`), 구글/웹은 기존 인가 코드 흐름을 그대로 쓴다
+/// (`{code, codeVerifier, clientType}`). 두 흐름은 상호배타이므로 named 생성자로 나눈다.
+///
+/// [clientType] 은 서버가 플랫폼별 제공자 자격증명을 고르는 값이다(구글의 Android·iOS 클라이언트
+/// ID 가 별개다). `includeIfNull: false` 라 해당 흐름에 없는 필드는 바디에서 통째로 빠진다.
 @JsonSerializable(createFactory: false, includeIfNull: false)
 class LoginRequest {
-  const LoginRequest({
+  /// 구글/웹: 인가 코드 + PKCE 검증값.
+  const LoginRequest.google({
     required this.code,
     required this.codeVerifier,
     this.clientType,
-  });
+  }) : accessToken = null;
 
-  final String code;
-  final String codeVerifier;
+  /// 카카오: 공식 SDK 가 앱에서 받은 액세스 토큰.
+  const LoginRequest.kakao({required this.accessToken, this.clientType})
+    : code = null,
+      codeVerifier = null;
+
+  final String? code;
+  final String? codeVerifier;
+  final String? accessToken;
   final ClientType? clientType;
 
   Map<String, dynamic> toJson() => _$LoginRequestToJson(this);

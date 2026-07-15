@@ -22,20 +22,29 @@ class Env {
     'GOOGLE_IOS_CLIENT_ID',
   );
 
-  /// OAuth 콜백 스킴의 Dart 단일 출처. 제공자 콘솔이 커스텀 스킴을 거부하면
-  /// 제공자별로 값이 갈릴 수 있으므로 키를 둘로 나눠 둔다.
-  ///
-  /// 값을 바꾸면 네이티브 등록처 두 곳도 같이 바꾼다.
+  /// 구글 브라우저 인가 코드 흐름의 콜백 스킴(Dart 단일 출처). 값을 바꾸면 네이티브 등록처도 같이 바꾼다.
   /// - android/app/build.gradle.kts : manifestPlaceholders["authCallbackScheme"]
   /// - ios/Runner/Info.plist        : CFBundleURLSchemes
-  static const kakaoCallbackScheme = String.fromEnvironment(
-    'KAKAO_CALLBACK_SCHEME',
-    defaultValue: _defaultCallbackScheme,
-  );
   static const googleCallbackScheme = String.fromEnvironment(
     'GOOGLE_CALLBACK_SCHEME',
     defaultValue: _defaultCallbackScheme,
   );
 
+  /// 카카오는 SDK 로 전환해 브라우저 콜백 스킴을 쓰지 않는다. 이 값은 SDK 의 카카오톡 로그인
+  /// 리다이렉트 처리기(`AuthCodeHandlerActivity`)가 쓰는 `kakao{네이티브앱키}://oauth` 스킴을
+  /// 문서화할 뿐이며, 실제 등록은 AndroidManifest 에 직접 박아 둔다.
+  static const kakaoCallbackScheme = String.fromEnvironment(
+    'KAKAO_CALLBACK_SCHEME',
+    defaultValue: 'kakao$_kakaoNativeAppKey',
+  );
+
+  /// 카카오 공식 SDK 초기화용 네이티브 앱 키. 카카오는 브라우저 리다이렉트가 불가해 SDK 로
+  /// 앱에서 액세스 토큰을 받는다(커스텀 스킴 콜백을 쓰지 않는다).
+  static const kakaoNativeAppKey = String.fromEnvironment(
+    'KAKAO_NATIVE_APP_KEY',
+    defaultValue: _kakaoNativeAppKey,
+  );
+
+  static const _kakaoNativeAppKey = 'df7305f4a85506b955eafc916218ca7b';
   static const _defaultCallbackScheme = 'trypto';
 }

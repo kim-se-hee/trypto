@@ -2,10 +2,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
 import '../../core/auth/auth_config.dart';
 import '../../core/auth/pkce.dart';
 import '../../models/enums.dart';
+import '../../models/user.dart';
 
 /// 인가 단계의 실패. [message] 는 그대로 사용자에게 보여준다(사양서 §2.2.4 의 6종 문구).
 class SocialLoginException implements Exception {
@@ -15,14 +17,6 @@ class SocialLoginException implements Exception {
 
   @override
   String toString() => 'SocialLoginException($message)';
-}
-
-/// 인가 화면을 통과해 받아 온 값. 곧바로 서버 교환에 쓰고 버린다.
-class SocialAuthorization {
-  const SocialAuthorization({required this.code, required this.codeVerifier});
-
-  final String code;
-  final String codeVerifier;
 }
 
 /// 콜백 URL 검증(사양서 §2.2.4). 인가 코드를 돌려주고, 실패는 사용자 문구를 담아 던진다.
@@ -99,7 +93,7 @@ class OAuthSecrets {
   }
 }
 
-/// 인가 화면 호출부. 테스트에서 플러그인을 대체할 수 있도록 함수로 받는다.
+/// 구글 인가 화면 호출부. 테스트에서 플러그인을 대체할 수 있도록 함수로 받는다.
 typedef WebAuthenticator =
     Future<String> Function({
       required String url,
@@ -114,20 +108,62 @@ Future<String> _authenticateWithWebAuth({
   callbackUrlScheme: callbackUrlScheme,
 );
 
-/// 소셜 인가(계획서 §4.3.2). Android 는 Chrome Custom Tabs, iOS 는 `ASWebAuthenticationSession`.
-///
-/// 콜백 URL 은 `authenticate()` 의 반환값으로 온다. 딥링크 라우팅·팝업 중계가 통째로 불필요하다.
+/// 카카오 SDK 토큰 획득부. 테스트에서 SDK 를 대체할 수 있도록 함수로 받는다.
+typedef KakaoTokenProvider = Future<String> Function();
+
+/// 카카오톡이 깔려 있으면 앱 대 앱으로, 없으면 카카오 계정 웹 로그인으로 토큰을 받는다
+/// (에뮬레이터엔 카카오톡이 없어 실제로는 account 경로가 쓰인다).
+Future<String> _authenticateWithKakao() async {
+  final installed = await isKakaoTalkInstalled();
+  final token = installed
+      ? await UserApi.instance.loginWithKakaoTalk()
+      : await UserApi.instance.loginWithKakaoAccount();
+  return token.accessToken;
+}
+
+/// 소셜 인가. 제공자로 분기한다 — 카카오는 공식 SDK 로 액세스 토큰을, 구글은 기존
+/// flutter_web_auth_2 인가 코드 흐름(Android 는 Chrome Custom Tabs, iOS 는
+/// `ASWebAuthenticationSession`)을 쓴다. 반환값은 곧바로 서버 교환에 넣는 [LoginRequest] 다.
 class SocialLoginService {
   SocialLoginService({
     required OAuthSecrets secrets,
     WebAuthenticator authenticator = _authenticateWithWebAuth,
+    KakaoTokenProvider kakaoTokenProvider = _authenticateWithKakao,
   }) : _secrets = secrets,
-       _authenticate = authenticator;
+       _authenticate = authenticator,
+       _kakaoToken = kakaoTokenProvider;
 
   final OAuthSecrets _secrets;
   final WebAuthenticator _authenticate;
+  final KakaoTokenProvider _kakaoToken;
 
-  Future<SocialAuthorization> authorize(SocialProvider provider) async {
+  Future<LoginRequest> authorize(SocialProvider provider) => switch (provider) {
+    SocialProvider.kakao => _authorizeKakao(),
+    SocialProvider.google => _authorizeGoogle(),
+  };
+
+  /// 카카오: SDK 가 앱에서 직접 액세스 토큰을 돌려준다. 취소·실패는 SDK 예외로 오므로
+  /// 크래시 대신 다시 시도할 수 있는 사용자 문구로 감싼다.
+  Future<LoginRequest> _authorizeKakao() async {
+    const provider = SocialProvider.kakao;
+    try {
+      final accessToken = await _kakaoToken();
+      return LoginRequest.kakao(
+        accessToken: accessToken,
+        clientType: AuthConfig.clientType,
+      );
+    } on SocialLoginException {
+      rethrow;
+    } catch (_) {
+      throw SocialLoginException(
+        '${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.',
+      );
+    }
+  }
+
+  /// 구글: 브라우저 인가 코드 흐름. 콜백 URL 은 `authenticate()` 의 반환값으로 온다.
+  Future<LoginRequest> _authorizeGoogle() async {
+    const provider = SocialProvider.google;
     if (!AuthConfig.isConfigured(provider)) {
       throw SocialLoginException(
         '${AuthConfig.label(provider)} 로그인 설정이 완료되지 않았습니다.',
@@ -153,7 +189,11 @@ class SocialLoginService {
         expectedState: state,
         codeVerifier: verifier,
       );
-      return SocialAuthorization(code: code, codeVerifier: verifier);
+      return LoginRequest.google(
+        code: code,
+        codeVerifier: verifier,
+        clientType: AuthConfig.clientType,
+      );
     } on PlatformException {
       // 사용자가 인가 화면을 닫으면 CANCELED 가 온다. 콜백 스킴이 OS 에 등록되지 않은 경우도
       // 여기로 떨어지므로, 크래시 대신 다시 시도할 수 있는 문구를 남긴다.

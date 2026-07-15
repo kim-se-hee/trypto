@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_exception.dart';
-import '../../core/auth/auth_config.dart';
 import '../../core/auth/session_store.dart';
 import '../../models/enums.dart';
-import '../../models/user.dart';
 import '../mypage/user_repository.dart';
 import 'auth_repository.dart';
 import 'social_login.dart';
@@ -96,21 +94,14 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(status: AuthStatus.authorizing, provider: provider);
 
     try {
-      final authorization = await ref
-          .read(socialLoginProvider)
-          .authorize(provider);
+      // 인가 흐름은 제공자별로 다르다(카카오 SDK 토큰 / 구글 인가 코드). 서버 교환에 넣을
+      // LoginRequest 를 통째로 돌려받으므로 여기서는 제공자를 구분하지 않는다.
+      final request = await ref.read(socialLoginProvider).authorize(provider);
 
       state = AuthState(status: AuthStatus.exchanging, provider: provider);
       final response = await ref
           .read(authRepositoryProvider)
-          .login(
-            provider,
-            LoginRequest(
-              code: authorization.code,
-              codeVerifier: authorization.codeVerifier,
-              clientType: AuthConfig.clientType,
-            ),
-          );
+          .login(provider, request);
 
       // 세션은 SessionInterceptor 가 Set-Cookie 에서 회수해 저장했다. 화면 이동은 하지 않는다 —
       // 인증 상태가 바뀌면 라우터의 redirect 가 /market 으로 보낸다.
