@@ -1,6 +1,9 @@
 package ksh.tryptocollector.backfill;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ public class CandleBackfillService {
     private static final long HIGH_OFFSET_MS = 1;
     private static final long LOW_OFFSET_MS = 2;
     private static final long CLOSE_OFFSET_MS = 3;
+    private static final DateTimeFormatter TO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final UpbitRestClient upbitRestClient;
     private final BithumbRestClient bithumbRestClient;
@@ -151,7 +155,8 @@ public class CandleBackfillService {
             if (oldest <= lastMs) {
                 return all;
             }
-            toIso = Instant.ofEpochMilli(oldest).toString();
+            toIso = LocalDateTime.ofInstant(Instant.ofEpochMilli(oldest), ZoneOffset.UTC)
+                    .format(TO_FORMATTER);
         }
         log.warn("{} {} {} 백필 최대 페이지({}) 초과 - 다운타임이 너무 깁니다", exchange, interval, base, maxPages);
         return all;
