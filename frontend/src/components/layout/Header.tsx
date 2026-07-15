@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +24,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link to="/market" className="flex items-center gap-2">
-          <Activity className="h-4.5 w-4.5 text-primary" />
+          <img src="/favicon.png" alt="trypto" className="h-6 w-6 rounded-md" />
           <span className="text-lg font-extrabold tracking-tight">trypto</span>
         </Link>
 

@@ -1,4 +1,4 @@
-import { Activity, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -9,7 +9,7 @@ export function RoundCreateHeader() {
     <header className="sticky top-0 z-50 bg-white/90 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
+          <img src="/favicon.png" alt="trypto" className="h-6 w-6 rounded-md" />
           <span className="text-lg font-bold tracking-tight">trypto</span>
         </Link>
 

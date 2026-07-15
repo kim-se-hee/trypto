@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Activity, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { socialLogin } from "@/lib/api/auth-api";
 import {
@@ -132,9 +132,7 @@ function CallbackShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="w-full max-w-[380px] text-center">
         <div className="mb-8 inline-flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <Activity className="h-4.5 w-4.5 text-white" />
-          </div>
+          <img src="/favicon.png" alt="trypto" className="h-9 w-9 rounded-xl" />
           <span className="text-2xl font-extrabold tracking-tight">trypto</span>
         </div>
         {children}
