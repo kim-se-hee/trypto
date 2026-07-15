@@ -1,1 +1,2 @@
 - [store-and-publish.md](store-and-publish.md) — 시세를 어디에 저장하고 어디로 발행하는지 정리
+- [candle-backfill.md](candle-backfill.md) — 서버 재시작 시 캔들 공백 백필과 진행 중 봉 복구(가짜 틱 시딩)
