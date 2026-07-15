@@ -94,7 +94,7 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(status: AuthStatus.authorizing, provider: provider);
 
     try {
-      // 인가 흐름은 제공자별로 다르다(카카오 SDK 토큰 / 구글 인가 코드). 서버 교환에 넣을
+      // 인가 흐름은 제공자별 공식 SDK 로 다르다(카카오 액세스 토큰 / 구글 ID 토큰). 서버 교환에 넣을
       // LoginRequest 를 통째로 돌려받으므로 여기서는 제공자를 구분하지 않는다.
       final request = await ref.read(socialLoginProvider).authorize(provider);
 

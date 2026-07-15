@@ -22,6 +22,17 @@ class Env {
     'GOOGLE_IOS_CLIENT_ID',
   );
 
+  /// 구글은 안드로이드에서 커스텀 스킴 리다이렉트가 폐지돼(앱 사칭 위험) 공식 SDK(google_sign_in)로
+  /// 네이티브 로그인한다. SDK 에 넘기는 serverClientId(= 웹 클라이언트 ID)가 ID 토큰의 대상(aud)이
+  /// 되고, 백엔드가 같은 값으로 검증한다. 클라이언트 ID 는 비밀이 아니므로 기본값을 둔다.
+  static const googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue: _googleServerClientId,
+  );
+
+  static const _googleServerClientId =
+      '218669927577-c4kei34t4og2ddh9jq8a3i46fsr61rrp.apps.googleusercontent.com';
+
   /// 구글 브라우저 인가 코드 흐름의 콜백 스킴(Dart 단일 출처). 값을 바꾸면 네이티브 등록처도 같이 바꾼다.
   /// - android/app/build.gradle.kts : manifestPlaceholders["authCallbackScheme"]
   /// - ios/Runner/Info.plist        : CFBundleURLSchemes

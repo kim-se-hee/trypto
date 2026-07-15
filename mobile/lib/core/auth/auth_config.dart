@@ -42,12 +42,11 @@ abstract final class AuthConfig {
         : Env.googleIosClientId,
   };
 
-  /// 버튼을 살리는 조건은 제공자별로 다르다(사양서 §2.4). 카카오는 SDK 로 동작하므로 네이티브 앱
-  /// 키만 있으면 되고(기본값이 있어 항상 채워진다), 구글은 `clientId` 와 콜백 스킴이 모두 있어야 한다.
+  /// 버튼을 살리는 조건은 제공자별로 다르다(사양서 §2.4). 둘 다 SDK 로 동작한다 — 카카오는 네이티브
+  /// 앱 키, 구글은 serverClientId(웹 클라이언트 ID)만 있으면 된다. 둘 다 기본값이 있어 항상 채워진다.
   static bool isConfigured(SocialProvider provider) => switch (provider) {
     SocialProvider.kakao => Env.kakaoNativeAppKey.isNotEmpty,
-    SocialProvider.google =>
-      clientId(provider).isNotEmpty && callbackScheme(provider).isNotEmpty,
+    SocialProvider.google => Env.googleServerClientId.isNotEmpty,
   };
 
   /// 비어 있는 `--dart-define` 키 목록. 디버그 빌드에서만 노출한다.
@@ -57,8 +56,7 @@ abstract final class AuthConfig {
           if (Env.kakaoNativeAppKey.isEmpty) 'KAKAO_NATIVE_APP_KEY',
         ],
         SocialProvider.google => [
-          if (clientId(provider).isEmpty) _clientIdKey(provider),
-          if (callbackScheme(provider).isEmpty) _callbackSchemeKey(provider),
+          if (Env.googleServerClientId.isEmpty) 'GOOGLE_SERVER_CLIENT_ID',
         ],
       };
 
@@ -83,17 +81,4 @@ abstract final class AuthConfig {
       },
     );
   }
-
-  static String _clientIdKey(SocialProvider provider) => switch (provider) {
-    SocialProvider.kakao => 'KAKAO_CLIENT_ID',
-    SocialProvider.google => clientType == ClientType.android
-        ? 'GOOGLE_ANDROID_CLIENT_ID'
-        : 'GOOGLE_IOS_CLIENT_ID',
-  };
-
-  static String _callbackSchemeKey(SocialProvider provider) =>
-      switch (provider) {
-        SocialProvider.kakao => 'KAKAO_CALLBACK_SCHEME',
-        SocialProvider.google => 'GOOGLE_CALLBACK_SCHEME',
-      };
 }
