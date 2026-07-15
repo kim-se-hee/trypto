@@ -24,4 +24,13 @@ public class TickRawWriter {
                 .time(ticker.tsMs(), WritePrecision.MS);
         writeApiBlocking.writePoint(point);
     }
+
+    public void writeRawTick(String exchange, String symbol, double price, long tsMs) {
+        Point point = Point.measurement(MEASUREMENT)
+                .addTag("exchange", exchange)
+                .addTag("symbol", symbol)
+                .addField("price", price)
+                .time(tsMs, WritePrecision.MS);
+        writeApiBlocking.writePoint(point);
+    }
 }
