@@ -26,10 +26,19 @@ public class SocialAuthenticatorImpl implements SocialAuthenticator {
     @Override
     public SocialIdentity authenticate(
             Provider provider, String authorizationCode, String codeVerifier, ClientType clientType) {
+        return clientFor(provider).getIdentity(authorizationCode, codeVerifier, clientType);
+    }
+
+    @Override
+    public SocialIdentity authenticateWithAccessToken(Provider provider, String accessToken) {
+        return clientFor(provider).getIdentityByAccessToken(accessToken);
+    }
+
+    private OAuthClient clientFor(Provider provider) {
         OAuthClient client = clients.get(provider);
         if (client == null) {
             throw new CustomException(ErrorCode.INVALID_PROVIDER);
         }
-        return client.getIdentity(authorizationCode, codeVerifier, clientType);
+        return client;
     }
 }

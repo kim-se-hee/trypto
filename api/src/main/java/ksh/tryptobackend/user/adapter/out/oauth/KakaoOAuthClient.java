@@ -31,6 +31,11 @@ public class KakaoOAuthClient implements OAuthClient {
     @Override
     public SocialIdentity getIdentity(String authorizationCode, String codeVerifier, ClientType clientType) {
         String accessToken = exchangeAccessToken(authorizationCode, codeVerifier, clientType);
+        return getIdentityByAccessToken(accessToken);
+    }
+
+    @Override
+    public SocialIdentity getIdentityByAccessToken(String accessToken) {
         Long memberId = fetchMemberId(accessToken);
         return SocialIdentity.of(Provider.KAKAO, String.valueOf(memberId));
     }
