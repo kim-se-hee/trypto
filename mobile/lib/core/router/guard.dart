@@ -9,6 +9,14 @@ abstract final class Routes {
   static const String wallet = '/wallet';
   static const String ranking = '/ranking';
   static const String regret = '/regret';
+
+  /// 코인 상세는 마켓 브랜치 위로 push 된다(rootNavigator). 마켓 탭은 계속 선택 상태이므로
+  /// 티커 구독이 유지되고, 차트는 별도로 토픽을 구독하지 않는다.
+  static String coinDetail(String symbol, String exchangeKey) =>
+      '$market/coin/$symbol?exchange=$exchangeKey';
+
+  static String coinChart(String symbol, String exchangeKey, String interval) =>
+      '$market/coin/$symbol/chart?exchange=$exchangeKey&interval=$interval';
 }
 
 /// 웹의 가드 3종(사양서 §2.7.2)을 하나로 합친 순수 함수. 위젯 없이 표로 테스트한다.

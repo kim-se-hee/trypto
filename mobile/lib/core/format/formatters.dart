@@ -48,6 +48,10 @@ String formatKRWCompact(double value) {
   return _grp.format(value);
 }
 
+/// 천단위 구분만 넣은 정수 표기(웹 `toLocaleString`). 축약하면 안 되는 자리 —
+/// 라운드 생성 금액 입력, 마이페이지 라운드 카드 — 에서 쓴다.
+String formatGrouped(num value) => _int0.format(value);
+
 /// 통화별 금액, 단위 포함. §8.5.3
 ///
 /// USDT 는 템플릿이 `$${값}` 이라 음수에서 기호 뒤에 마이너스가 온다(`$-12.35`). 웹 동작 그대로다.
@@ -99,6 +103,13 @@ String formatVolume(double volume, String baseCurrency) {
 /// 변동률. 입력은 비율이다(0.0234 = 2.34%). 0 에는 `+` 가 붙지 않고, 천단위 구분자도 없다. §8.5.9
 String formatChangeRate(double rate) {
   final percent = rate * 100;
+  final sign = percent > 0 ? '+' : '';
+  return '$sign${percent.toStringAsFixed(2)}%';
+}
+
+/// 수익률. **입력은 퍼센트 값 그 자체다**(12.34 → `+12.34%`). 티커 [formatChangeRate] 의 입력이
+/// 비율(0.0234)인 것과 단위가 다르다(사양서 §1.8-5). 랭킹·복기가 이 함수를 쓴다.
+String formatProfitPercent(double percent) {
   final sign = percent > 0 ? '+' : '';
   return '$sign${percent.toStringAsFixed(2)}%';
 }

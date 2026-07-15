@@ -25,6 +25,9 @@ class ServerTime {
 
   static String formatDateTime(DateTime at) => _dateTime.format(at);
 
+  /// 가입일·라운드 시작일. 웹의 `toLocaleDateString('ko-KR')` 대응(`2026년 7월 15일`).
+  static String formatKoreanDate(DateTime at) => _koreanDate.format(at);
+
   /// 거래내역·송금내역의 상대 시각. 24시간을 넘으면 절대 시각으로 떨어진다.
   static String relative(DateTime at, {DateTime? now}) {
     final minutes = (now ?? DateTime.now()).difference(at).inMinutes;
@@ -42,3 +45,6 @@ const String _locale = 'en_US';
 
 final DateFormat _dateTime = DateFormat('yyyy.MM.dd HH:mm', _locale);
 final DateFormat _date = DateFormat('yyyy-MM-dd', _locale);
+
+/// 한글 문자는 ICU 패턴 예약 문자가 아니므로 그대로 출력된다.
+final DateFormat _koreanDate = DateFormat('yyyy년 M월 d일', _locale);

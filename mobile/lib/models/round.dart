@@ -165,6 +165,22 @@ class ActiveRound {
     }
     return null;
   }
+
+  /// 긴급 자금 충전 응답의 `remainingChargeCount` 를 들인다. 서버가 중복 요청(같은 멱등키)을
+  /// 감지하면 재차감 없이 현재 잔여 횟수를 돌려주므로 그 값을 그대로 덮어쓴다.
+  ActiveRound withEmergencyChargeCount(int count) => ActiveRound(
+    roundId: roundId,
+    userId: userId,
+    roundNumber: roundNumber,
+    status: status,
+    initialSeed: initialSeed,
+    emergencyFundingLimit: emergencyFundingLimit,
+    emergencyChargeCount: count,
+    startedAt: startedAt,
+    endedAt: endedAt,
+    rules: rules,
+    wallets: wallets,
+  );
 }
 
 /// `POST /api/rounds/{roundId}/end` — 요청 바디가 없다(서버가 읽지 않는다, R4-4).

@@ -46,7 +46,9 @@ class TryptoBadge extends StatelessWidget {
             Icon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
           ],
-          text,
+          // Row 는 비-flex 자식에게 무한 폭을 준다. 감싸지 않으면 긴 라벨(+300.00%)이 배지를
+          // 가둔 고정 폭 셀 밖으로 그대로 밀고 나간다.
+          Flexible(child: text),
         ],
       ),
     );

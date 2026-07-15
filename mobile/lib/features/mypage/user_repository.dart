@@ -38,3 +38,9 @@ class UserRepository {
 final userRepositoryProvider = Provider<UserRepository>(
   (ref) => UserRepository(ref.watch(dioProvider)),
 );
+
+/// 마이페이지의 가입일. 부팅 시 세션 복구가 읽는 것과 같은 엔드포인트지만, 그쪽은 인증 여부만
+/// 확인하고 프로필을 보관하지 않는다.
+final userProfileProvider = FutureProvider<UserProfile>(
+  (ref) => ref.watch(userRepositoryProvider).getMe(),
+);

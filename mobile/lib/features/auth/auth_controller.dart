@@ -138,6 +138,32 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState.signedOut();
   }
 
+  /// 닉네임 변경 성공 후 로컬 신원을 갱신한다. 앱바·마이페이지가 이 값을 읽는다.
+  void updateNickname(String nickname) {
+    final user = state.user;
+    if (user == null) return;
+    state = AuthState(
+      status: state.status,
+      user: AuthUser(userId: user.userId, nickname: nickname),
+    );
+  }
+
+  /// 회원 탈퇴(사양서 R11). 성공하면 `null`, 실패하면 사용자에게 보일 메시지를 돌려준다.
+  ///
+  /// 서버가 전 기기 세션을 지우고 만료 쿠키를 내리므로 [SessionInterceptor] 가 로컬 세션도 함께
+  /// 폐기하지만, 쿠키가 오지 않는 경우를 대비해 여기서 한 번 더 지운다. 화면 이동은 하지 않는다 —
+  /// 인증 상태가 비면 redirect 가 `/login` 으로 보낸다.
+  Future<String?> deleteAccount() async {
+    try {
+      await ref.read(userRepositoryProvider).deleteAccount();
+    } on ApiException catch (error) {
+      return error.userMessage;
+    }
+    await ref.read(sessionStoreProvider).clear();
+    state = const AuthState.signedOut();
+    return null;
+  }
+
   /// 오류 배너를 닫는다.
   void dismissError() {
     if (state.status == AuthStatus.failed) state = const AuthState.signedOut();
