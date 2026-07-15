@@ -37,7 +37,7 @@ exchange:
     ws-url: wss://stream.binance.com:9443/ws/!miniTicker@arr
 
 backfill:
-  request-interval-ms: 100
+  request-interval-ms: 150
   max-pages: 10
 
 ticker:
