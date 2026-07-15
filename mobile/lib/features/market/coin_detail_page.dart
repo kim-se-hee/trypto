@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/exchanges.dart';
 import '../../core/format/formatters.dart';
+import '../../core/realtime/stomp_service.dart';
 import '../../core/realtime/ticker_store.dart';
 import '../../core/router/guard.dart';
 import '../../core/theme/theme.dart';
@@ -39,6 +40,37 @@ class _CoinDetailPageState extends ConsumerState<CoinDetailPage> {
   /// 주문이 나갈 때마다 올린다. 거래내역 탭이 이 값을 보고 다시 읽는다 — 체결 이벤트 큐는
   /// 서버에서 동작하지 않으므로(사양서 R3) 반영은 전부 REST 재조회다.
   int _revision = 0;
+
+  /// 이 화면은 마켓을 루트 네비게이터 위로 덮는다. 가려진 마켓 페이지는 자기 티커 구독을
+  /// 끊고 스토어를 멈추려 하므로, 상세가 직접 스토어를 잡고(hold) 같은 토픽을 구독해 현재가·
+  /// 캔들 실시간 갱신을 잇는다. 거래소는 진입 시점에 고정된다(쿼리 파라미터).
+  void Function()? _cancelTickers;
+  bool _bound = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_bound) return;
+    _bound = true;
+    final store = ref.read(tickerStoreProvider);
+    store.hold();
+    final exchange = ExchangeIds.byKey(
+      GoRouterState.of(context).uri.queryParameters['exchange'],
+    );
+    _cancelTickers = ref
+        .read(stompServiceProvider)
+        .subscribe(
+          '/topic/tickers.${exchange.id}',
+          (body) => store.ingest(decodeTickers(body)),
+        );
+  }
+
+  @override
+  void dispose() {
+    _cancelTickers?.call();
+    ref.read(tickerStoreProvider).release();
+    super.dispose();
+  }
 
   void _refresh() => setState(() => _revision++);
 
