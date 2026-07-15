@@ -141,6 +141,9 @@ public class CandleBackfillService {
 
     private List<Candle> fetchUpbitStyleCandles(Exchange exchange, CandleInterval interval, String base, long lastMs) {
         List<Candle> all = new ArrayList<>();
+        // to 커서의 시간대 해석이 거래소마다 다르다(접미사 없는 문자열 기준): 업비트=UTC, 빗썸=KST(UTC+9).
+        // 빗썸에 UTC 벽시계를 넘기면 9시간씩 어긋나 장기 페이지네이션이 깨진다.
+        ZoneOffset cursorZone = exchange == Exchange.UPBIT ? ZoneOffset.UTC : ZoneOffset.ofHours(9);
         String toIso = null;
         for (int page = 0; page < maxPages; page++) {
             List<Candle> pageCandles = exchange == Exchange.UPBIT
@@ -155,7 +158,7 @@ public class CandleBackfillService {
             if (oldest <= lastMs) {
                 return all;
             }
-            toIso = LocalDateTime.ofInstant(Instant.ofEpochMilli(oldest), ZoneOffset.UTC)
+            toIso = LocalDateTime.ofInstant(Instant.ofEpochMilli(oldest), cursorZone)
                     .format(TO_FORMATTER);
         }
         log.warn("{} {} {} 백필 최대 페이지({}) 초과 - 다운타임이 너무 깁니다", exchange, interval, base, maxPages);
