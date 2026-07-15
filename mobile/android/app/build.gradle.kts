@@ -21,9 +21,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // OAuth 콜백 스킴의 안드로이드 단일 출처. lib/core/env.dart 의 기본값과 같아야 한다.
-        // 제공자 콘솔이 커스텀 스킴을 거부하면 이 값을 바꾸고, 제공자별로 갈리면
-        // AndroidManifest 의 CallbackActivity 에 <data> 한 줄을 더한다.
+        // 구글 브라우저 인가 코드 흐름의 콜백 스킴(단일 출처). lib/core/env.dart 의 기본값과 같아야 한다.
+        // 아직 콘솔 미설정이라 자리만 잡아 둔 값이다(역방향 클라이언트 ID 스킴으로 바뀔 수 있다).
+        // 카카오는 SDK 로 전환해 커스텀 스킴 placeholder 가 필요 없다(AndroidManifest 의 AuthCodeHandlerActivity 참조).
         manifestPlaceholders["authCallbackScheme"] = "trypto"
     }
 
