@@ -1,5 +1,6 @@
 package ksh.tryptobackend.user.adapter.out.oauth;
 
+import java.net.URI;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.user.domain.vo.ClientType;
@@ -33,6 +34,37 @@ public class GoogleOAuthClient implements OAuthClient {
         String accessToken = exchangeAccessToken(authorizationCode, codeVerifier, clientType);
         String memberId = fetchMemberId(accessToken);
         return SocialIdentity.of(Provider.GOOGLE, memberId);
+    }
+
+    /**
+     * 앱(google_sign_in)이 네이티브로 받은 ID 토큰으로 신원을 확인한다. 안드로이드·iOS 는 커스텀 스킴
+     * 리다이렉트가 막혀 인가 코드 흐름을 쓸 수 없으므로 SDK 가 준 ID 토큰을 tokeninfo 로 검증한다.
+     * 발급자(iss)와 발급 대상(aud)을 대조해 다른 앱의 토큰을 걸러 낸 뒤 sub 를 식별자로 쓴다.
+     */
+    @Override
+    public SocialIdentity getIdentityByAccessToken(String idToken) {
+        GoogleTokenInfoResponse info = requestTokenInfo(idToken);
+        if (info == null || info.sub() == null) {
+            throw new CustomException(ErrorCode.SOCIAL_SERVER_ERROR);
+        }
+        if (!properties.isTrustedIssuer(info.iss()) || !properties.isOwnAudience(info.aud())) {
+            throw new CustomException(ErrorCode.SOCIAL_LOGIN_FAILED);
+        }
+        return SocialIdentity.of(Provider.GOOGLE, info.sub());
+    }
+
+    private GoogleTokenInfoResponse requestTokenInfo(String idToken) {
+        try {
+            return restClient
+                    .get()
+                    .uri(URI.create(properties.getTokenInfoUri() + "?id_token=" + idToken))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, OAuthHttp::failAuthentication)
+                    .onStatus(HttpStatusCode::is5xxServerError, OAuthHttp::failProviderServer)
+                    .body(GoogleTokenInfoResponse.class);
+        } catch (RestClientException e) {
+            throw new CustomException(ErrorCode.SOCIAL_SERVER_ERROR);
+        }
     }
 
     private String exchangeAccessToken(String authorizationCode, String codeVerifier, ClientType clientType) {

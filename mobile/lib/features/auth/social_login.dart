@@ -1,11 +1,10 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
 import '../../core/auth/auth_config.dart';
-import '../../core/auth/pkce.dart';
+import '../../core/env.dart';
 import '../../models/enums.dart';
 import '../../models/user.dart';
 
@@ -93,20 +92,23 @@ class OAuthSecrets {
   }
 }
 
-/// 구글 인가 화면 호출부. 테스트에서 플러그인을 대체할 수 있도록 함수로 받는다.
-typedef WebAuthenticator =
-    Future<String> Function({
-      required String url,
-      required String callbackUrlScheme,
-    });
+/// 구글 SDK 토큰 획득부. 테스트에서 SDK 를 대체할 수 있도록 함수로 받는다. null 을 돌려주면 SDK 가
+/// 토큰 없이 반환한 것으로, 취소·실패와 같게 다룬다.
+typedef GoogleTokenProvider = Future<String?> Function();
 
-Future<String> _authenticateWithWebAuth({
-  required String url,
-  required String callbackUrlScheme,
-}) => FlutterWebAuth2.authenticate(
-  url: url,
-  callbackUrlScheme: callbackUrlScheme,
-);
+/// `initialize` 는 앱 수명 동안 한 번이면 된다. 첫 구글 로그인에서 만들어 두고 재사용한다.
+Future<void>? _googleInitialized;
+
+/// 구글 공식 SDK 로 네이티브 로그인해 ID 토큰을 받는다. `serverClientId`(웹 클라이언트 ID)가 ID
+/// 토큰의 대상(aud)이 되며, 백엔드가 같은 값으로 검증한다.
+Future<String?> _authenticateWithGoogle() async {
+  _googleInitialized ??= GoogleSignIn.instance.initialize(
+    serverClientId: Env.googleServerClientId,
+  );
+  await _googleInitialized;
+  final account = await GoogleSignIn.instance.authenticate();
+  return account.authentication.idToken;
+}
 
 /// 카카오 SDK 토큰 획득부. 테스트에서 SDK 를 대체할 수 있도록 함수로 받는다.
 typedef KakaoTokenProvider = Future<String> Function();
@@ -121,21 +123,19 @@ Future<String> _authenticateWithKakao() async {
   return token.accessToken;
 }
 
-/// 소셜 인가. 제공자로 분기한다 — 카카오는 공식 SDK 로 액세스 토큰을, 구글은 기존
-/// flutter_web_auth_2 인가 코드 흐름(Android 는 Chrome Custom Tabs, iOS 는
-/// `ASWebAuthenticationSession`)을 쓴다. 반환값은 곧바로 서버 교환에 넣는 [LoginRequest] 다.
+/// 소셜 인가. 제공자로 분기한다 — 둘 다 공식 SDK 로 앱에서 직접 토큰을 받는다. 카카오는 액세스
+/// 토큰을, 구글은 ID 토큰을 돌려준다. 구글도 SDK 인 이유는 안드로이드에서 커스텀 스킴 리다이렉트가
+/// 폐지돼(앱 사칭 위험) 브라우저 인가 코드 흐름을 못 쓰기 때문이다. 반환값은 곧바로 서버 교환에
+/// 넣는 [LoginRequest] 다.
 class SocialLoginService {
   SocialLoginService({
-    required OAuthSecrets secrets,
-    WebAuthenticator authenticator = _authenticateWithWebAuth,
     KakaoTokenProvider kakaoTokenProvider = _authenticateWithKakao,
-  }) : _secrets = secrets,
-       _authenticate = authenticator,
-       _kakaoToken = kakaoTokenProvider;
+    GoogleTokenProvider googleTokenProvider = _authenticateWithGoogle,
+  }) : _kakaoToken = kakaoTokenProvider,
+       _googleToken = googleTokenProvider;
 
-  final OAuthSecrets _secrets;
-  final WebAuthenticator _authenticate;
   final KakaoTokenProvider _kakaoToken;
+  final GoogleTokenProvider _googleToken;
 
   Future<LoginRequest> authorize(SocialProvider provider) => switch (provider) {
     SocialProvider.kakao => _authorizeKakao(),
@@ -161,7 +161,8 @@ class SocialLoginService {
     }
   }
 
-  /// 구글: 브라우저 인가 코드 흐름. 콜백 URL 은 `authenticate()` 의 반환값으로 온다.
+  /// 구글: 공식 SDK 가 앱에서 직접 ID 토큰을 돌려준다. 취소·중단·실패는 SDK 예외
+  /// (`GoogleSignInException`)로 오므로 크래시 대신 다시 시도할 수 있는 사용자 문구로 감싼다.
   Future<LoginRequest> _authorizeGoogle() async {
     const provider = SocialProvider.google;
     if (!AuthConfig.isConfigured(provider)) {
@@ -169,39 +170,23 @@ class SocialLoginService {
         '${AuthConfig.label(provider)} 로그인 설정이 완료되지 않았습니다.',
       );
     }
-
-    final verifier = Pkce.verifier();
-    final state = Pkce.state();
-    await _secrets.put(provider: provider, verifier: verifier, state: state);
-
     try {
-      final callback = await _authenticate(
-        url: AuthConfig.authorizeUrl(
-          provider,
-          challenge: Pkce.challenge(verifier),
-          state: state,
-        ).toString(),
-        callbackUrlScheme: AuthConfig.callbackScheme(provider),
-      );
-      final code = verifySocialCallback(
-        Uri.parse(callback),
-        provider: provider,
-        expectedState: state,
-        codeVerifier: verifier,
-      );
-      return LoginRequest.google(
-        code: code,
-        codeVerifier: verifier,
+      final idToken = await _googleToken();
+      if (idToken == null || idToken.isEmpty) {
+        throw SocialLoginException(
+          '${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.',
+        );
+      }
+      return LoginRequest.googleToken(
+        idToken: idToken,
         clientType: AuthConfig.clientType,
       );
-    } on PlatformException {
-      // 사용자가 인가 화면을 닫으면 CANCELED 가 온다. 콜백 스킴이 OS 에 등록되지 않은 경우도
-      // 여기로 떨어지므로, 크래시 대신 다시 시도할 수 있는 문구를 남긴다.
+    } on SocialLoginException {
+      rethrow;
+    } catch (_) {
       throw SocialLoginException(
         '${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.',
       );
-    } finally {
-      await _secrets.clear();
     }
   }
 }
@@ -209,5 +194,5 @@ class SocialLoginService {
 final oauthSecretsProvider = Provider<OAuthSecrets>((ref) => OAuthSecrets());
 
 final socialLoginProvider = Provider<SocialLoginService>(
-  (ref) => SocialLoginService(secrets: ref.watch(oauthSecretsProvider)),
+  (ref) => SocialLoginService(),
 );

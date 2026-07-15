@@ -15,7 +15,7 @@ part 'user.g.dart';
 /// ID 가 별개다). `includeIfNull: false` 라 해당 흐름에 없는 필드는 바디에서 통째로 빠진다.
 @JsonSerializable(createFactory: false, includeIfNull: false)
 class LoginRequest {
-  /// 구글/웹: 인가 코드 + PKCE 검증값.
+  /// 웹: 인가 코드 + PKCE 검증값. 앱은 안드로이드에서 커스텀 스킴이 막혀 이 흐름을 쓰지 않는다.
   const LoginRequest.google({
     required this.code,
     required this.codeVerifier,
@@ -25,6 +25,13 @@ class LoginRequest {
   /// 카카오: 공식 SDK 가 앱에서 받은 액세스 토큰.
   const LoginRequest.kakao({required this.accessToken, this.clientType})
     : code = null,
+      codeVerifier = null;
+
+  /// 구글(앱): 공식 SDK(google_sign_in)가 받은 ID 토큰. 카카오와 같은 토큰 채널(`accessToken`)로
+  /// 보낸다 — 서버는 이 값을 tokeninfo 로 검증해 신원을 확인한다.
+  const LoginRequest.googleToken({required String idToken, this.clientType})
+    : accessToken = idToken,
+      code = null,
       codeVerifier = null;
 
   final String? code;
