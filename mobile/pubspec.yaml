@@ -57,27 +57,26 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # 폰트 파일은 아직 저장소에 없다(라이선스·용량). assets/fonts/README.md 의 목록대로 파일을
-  # 넣은 뒤 아래 선언의 주석을 해제한다. 선언만 남기고 파일이 없으면 빌드가 실패하므로
-  # 지금은 주석으로 둔다. 그동안 theme.dart 의 패밀리는 시스템 폰트로 폴백된다.
-  # fonts:
-  #   - family: Pretendard
-  #     fonts:
-  #       - asset: assets/fonts/Pretendard-Regular.otf
-  #         weight: 400
-  #       - asset: assets/fonts/Pretendard-Medium.otf
-  #         weight: 500
-  #       - asset: assets/fonts/Pretendard-SemiBold.otf
-  #         weight: 600
-  #       - asset: assets/fonts/Pretendard-Bold.otf
-  #         weight: 700
-  #   - family: NotoSansKR
-  #     fonts:
-  #       - asset: assets/fonts/NotoSansKR-ExtraBold.otf
-  #         weight: 800
-  #   - family: RobotoMono
-  #     fonts:
-  #       - asset: assets/fonts/RobotoMono-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/RobotoMono-Bold.ttf
-  #         weight: 700
+  # 폰트 파일은 assets/fonts/README.md 의 출처에서 받아 번들한다(OFL/Apache 라이선스).
+  # Pretendard 는 본문·UI, NotoSansKR ExtraBold 는 큰 강조 숫자, RobotoMono 는 시세 숫자에 쓴다.
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+    - family: NotoSansKR
+      fonts:
+        - asset: assets/fonts/NotoSansKR-ExtraBold.otf
+          weight: 800
+    - family: RobotoMono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/RobotoMono-Bold.ttf
+          weight: 700
