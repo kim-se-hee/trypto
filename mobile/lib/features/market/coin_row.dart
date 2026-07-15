@@ -82,29 +82,17 @@ class CoinRow extends StatelessWidget {
             const SizedBox(width: TryptoSpacing.sm),
             SizedBox(
               width: _kNumericWidth,
-              child: Stack(
-                // 테두리가 숫자 바깥(오른쪽 8 · 위아래 10)으로 확장된다. 자르면 안 된다.
-                clipBehavior: Clip.none,
-                children: [
-                  RepaintBoundary(
-                    child: ValueListenableBuilder<CoinRowState>(
-                      valueListenable: row,
-                      builder: (context, state, child) => CoinNumbers(
-                        price: state.price,
-                        changeRate: state.changeRate,
-                        volume: state.volume,
-                        baseCurrency: baseCurrency,
-                      ),
-                    ),
+              child: RepaintBoundary(
+                child: ValueListenableBuilder<CoinRowState>(
+                  valueListenable: row,
+                  builder: (context, state, child) => CoinNumbers(
+                    price: state.price,
+                    changeRate: state.changeRate,
+                    volume: state.volume,
+                    baseCurrency: baseCurrency,
+                    flash: flash,
                   ),
-                  Positioned(
-                    left: 0,
-                    right: -8,
-                    top: -10,
-                    bottom: -10,
-                    child: RepaintBoundary(child: _FlashBorder(flash: flash)),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -114,13 +102,14 @@ class CoinRow extends StatelessWidget {
   }
 }
 
-/// 숫자의 글자색·배경을 바꾸지 않고 **테두리만 잠깐 두른다**. 읽어야 할 숫자가 흔들리지 않게
-/// 하려는 의도적 선택이다(사양서 §3.3.3). 페이드하지 않으므로 `AnimatedContainer` 를 쓰지
-/// 않는다.
-class _FlashBorder extends StatelessWidget {
-  const _FlashBorder({required this.flash});
+/// 시세가 바뀐 **현재가 숫자에만** 잠깐 얇은 테두리를 두른다(업비트 방식). 테두리 두께·여백은
+/// 플래시 유무와 무관하게 항상 차지하므로(색만 바뀐다) 깜빡여도 레이아웃이 흔들리지 않는다.
+/// 페이드하지 않으므로 `AnimatedContainer` 를 쓰지 않는다(사양서 §3.3.3).
+class _PriceFlash extends StatelessWidget {
+  const _PriceFlash({required this.flash, required this.child});
 
   final FlashNotifier flash;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -129,21 +118,22 @@ class _FlashBorder extends StatelessWidget {
     return ValueListenableBuilder<FlashDir?>(
       valueListenable: flash,
       builder: (context, dir, child) {
-        if (dir == null) return const SizedBox.shrink();
         final color = switch (dir) {
+          null => Colors.transparent,
           FlashDir.up => colors.positive,
           FlashDir.down => colors.negative,
           FlashDir.same => colors.flashNeutral,
         };
-        return IgnorePointer(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: color),
-              borderRadius: BorderRadius.circular(TryptoRadius.md),
-            ),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          decoration: BoxDecoration(
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(TryptoRadius.sm),
           ),
+          child: child,
         );
       },
+      child: child,
     );
   }
 }
@@ -156,12 +146,14 @@ class CoinNumbers extends StatelessWidget {
     required this.changeRate,
     required this.volume,
     required this.baseCurrency,
+    required this.flash,
   });
 
   final double price;
   final double changeRate;
   final double volume;
   final String baseCurrency;
+  final FlashNotifier flash;
 
   @override
   Widget build(BuildContext context) {
@@ -174,14 +166,17 @@ class CoinNumbers extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        NumericText(
-          unpriced
-              ? '-'
-              : '${getCurrencySymbol(baseCurrency)}'
-                    '${formatPrice(price, baseCurrency)}',
-          color: unpriced
-              ? theme.colorScheme.onSurfaceVariant
-              : context.profitColor(changeRate),
+        _PriceFlash(
+          flash: flash,
+          child: NumericText(
+            unpriced
+                ? '-'
+                : '${getCurrencySymbol(baseCurrency)}'
+                      '${formatPrice(price, baseCurrency)}',
+            color: unpriced
+                ? theme.colorScheme.onSurfaceVariant
+                : context.profitColor(changeRate),
+          ),
         ),
         const SizedBox(height: 4),
         Row(
