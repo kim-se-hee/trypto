@@ -1,9 +1,17 @@
 import { LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function RoundCreateHeader() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // 로그아웃 후에는 랜딩으로 보낸다. 먼저 공개 라우트(/)로 옮긴 뒤 세션을 비운다 — 순서를 바꾸면
+  // user 가 비는 순간 보호 라우트가 /login 으로 리다이렉트해 이 이동을 덮어쓴다.
+  const handleLogout = async () => {
+    navigate("/", { replace: true });
+    await logout();
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 shadow-sm backdrop-blur-xl">
@@ -18,7 +26,7 @@ export function RoundCreateHeader() {
             <span className="text-sm font-medium text-muted-foreground">{user.nickname}</span>
           )}
           <button
-            onClick={logout}
+            onClick={() => void handleLogout()}
             className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />
