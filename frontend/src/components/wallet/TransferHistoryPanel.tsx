@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -151,8 +150,6 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
         <div className="divide-y divide-border/30">
           {filtered.map((item) => {
             const directionLabel = item.type === "DEPOSIT" ? "입금" : "출금";
-            const directionIcon = item.type === "DEPOSIT" ? ArrowDownLeft : ArrowUpRight;
-            const Icon = directionIcon;
             const coinName = coinNameMap.get(item.asset) ?? item.asset;
 
             return (
@@ -172,8 +169,7 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
                       <span className="text-muted-foreground">{coinName}</span>
                     </span>
                   </span>
-                  <span className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                    <Icon className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold text-muted-foreground">
                     {directionLabel}
                   </span>
                   <span className="font-mono text-sm font-semibold tabular-nums">

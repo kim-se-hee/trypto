@@ -1,6 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -549,8 +548,7 @@ export function OrderPanel({
             <>
               <div className="mt-5 flex items-center justify-between text-xs font-semibold text-muted-foreground">
                 <span>주문 유형</span>
-                <span className="flex items-center gap-1 text-[11px]">
-                  <Info className="h-3 w-3" />
+                <span className="text-[11px]">
                   주문 가능 조회
                 </span>
               </div>

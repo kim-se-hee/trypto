@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { MessageCircle } from "lucide-react";
 import { useSocialLogin } from "@/hooks/useSocialLogin";
 import { isSocialConfigured } from "@/lib/auth/social";
 
@@ -46,7 +45,9 @@ export function LoginPage() {
             disabled={!kakaoReady || pendingProvider !== null}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-sm font-semibold text-[#191600] transition-all duration-150 hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <MessageCircle className="h-4 w-4 fill-current" />
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#191600" aria-hidden="true">
+              <path d="M12 3C6.477 3 2 6.463 2 10.735c0 2.724 1.822 5.116 4.575 6.485-.202.735-.732 2.664-.838 3.077-.13.513.188.506.396.368.163-.108 2.596-1.762 3.65-2.48.717.106 1.46.162 2.217.162 5.523 0 10-3.463 10-7.735C22 6.463 17.523 3 12 3Z" />
+            </svg>
             {pendingProvider === "kakao" ? "카카오로 로그인 중…" : "카카오로 로그인"}
           </button>
           <button

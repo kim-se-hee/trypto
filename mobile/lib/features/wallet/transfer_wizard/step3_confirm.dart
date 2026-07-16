@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/format/formatters.dart';
@@ -107,11 +106,6 @@ class _TransferConfirmPageState extends ConsumerState<TransferConfirmPage> {
                                   label: '출발',
                                   name: draft.fromExchange.name,
                                 ),
-                              ),
-                              Icon(
-                                LucideIcons.arrowRight,
-                                size: 16,
-                                color: theme.colorScheme.primary,
                               ),
                               Expanded(
                                 child: _Endpoint(

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/router/guard.dart';
 import '../../core/theme/theme.dart';
-import '../../core/theme/trypto_colors.dart';
 import '../../core/widgets/app_snackbar.dart';
 import 'round_controller.dart';
 
@@ -51,7 +49,6 @@ class _EndRoundSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.tryptoColors;
 
     return SafeArea(
       child: Padding(
@@ -65,13 +62,7 @@ class _EndRoundSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(LucideIcons.triangleAlert, size: 18, color: colors.negative),
-                const SizedBox(width: TryptoSpacing.sm),
-                Text('라운드를 종료할까요?', style: theme.textTheme.titleLarge),
-              ],
-            ),
+            Text('라운드를 종료할까요?', style: theme.textTheme.titleLarge),
             const SizedBox(height: TryptoSpacing.md),
             Text(
               '종료하면 보유 코인과 잔고가 정산되고 더 이상 거래할 수 없습니다.\n'

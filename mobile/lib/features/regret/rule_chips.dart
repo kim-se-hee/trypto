@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/format/formatters.dart';
 import '../../core/theme/theme.dart';
@@ -10,7 +9,7 @@ import '../../models/regret.dart';
 import '../round/round_rules.dart';
 import 'regret_chart.dart';
 
-/// 규칙별 색과 아이콘(사양서 §6.3.3). 라벨·단위는 [ruleLabels]·[ruleUnits] 가 단일 출처다.
+/// 규칙별 색(사양서 §6.3.3). 라벨·단위는 [ruleLabels]·[ruleUnits] 가 단일 출처다.
 const Map<RuleType, Color> ruleColors = {
   RuleType.lossCut: Color(0xFFED4B9E),
   RuleType.profitTake: Color(0xFF31D0AA),
@@ -19,18 +18,8 @@ const Map<RuleType, Color> ruleColors = {
   RuleType.overtradingLimit: Color(0xFF1FC7D4),
 };
 
-const Map<RuleType, IconData> ruleIcons = {
-  RuleType.lossCut: LucideIcons.trendingDown,
-  RuleType.profitTake: LucideIcons.trendingUp,
-  RuleType.chaseBuyBan: LucideIcons.ban,
-  RuleType.averagingDownLimit: LucideIcons.layers,
-  RuleType.overtradingLimit: LucideIcons.timer,
-};
-
 Color ruleColor(BuildContext context, RuleType? rule) =>
     ruleColors[rule] ?? Theme.of(context).colorScheme.onSurfaceVariant;
-
-IconData ruleIcon(RuleType? rule) => ruleIcons[rule] ?? LucideIcons.circleDot;
 
 /// 임계값 표기 — `+10%`, `3회`. 서버 `thresholdUnit` 을 쓰지 않고 프론트 상수 표로 정한다(§6.3.3).
 String ruleThresholdLabel(RuleType? rule, double? value) {
@@ -100,7 +89,6 @@ class RuleChips extends StatelessWidget {
           FilterChip(
             selected: btcEnabled,
             onSelected: (_) => onToggleBtc(),
-            avatar: Icon(LucideIcons.bitcoin, size: 14, color: btcHoldColor),
             label: Text(
               btcProfitRate == null
                   ? 'BTC만 홀드한 나'
@@ -147,7 +135,6 @@ class _RuleChip extends StatelessWidget {
       child: FilterChip(
         selected: selected,
         onSelected: onTap == null ? null : (_) => onTap!(),
-        avatar: Icon(ruleIcon(rule), size: 14, color: color),
         side: BorderSide(color: selected ? color : TryptoPalette.border),
         selectedColor: color.withValues(alpha: 0.12),
         label: Row(
@@ -206,17 +193,6 @@ Future<void> _showRuleDetail(BuildContext context, RuleImpact impact) {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(TryptoRadius.md),
-                    ),
-                    child: Icon(ruleIcon(rule), size: 16, color: color),
-                  ),
-                  const SizedBox(width: TryptoSpacing.md),
                   Expanded(
                     child: Text(
                       ruleLabels[rule] ?? '알 수 없는 원칙',

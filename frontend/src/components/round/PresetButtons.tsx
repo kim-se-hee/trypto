@@ -19,7 +19,7 @@ export function PresetButtons({ presets, onSelect, activeValue }: PresetButtonsP
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-150",
               isActive
-                ? "bg-gradient-to-r from-primary to-[#9A6AFF] text-white shadow-sm"
+                ? "bg-primary text-white shadow-sm"
                 : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground",
             )}
           >

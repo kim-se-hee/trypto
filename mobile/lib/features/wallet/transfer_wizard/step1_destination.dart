@@ -91,23 +91,11 @@ class TransferDestinationPage extends StatelessWidget {
             const SizedBox(height: TryptoSpacing.sm),
           ],
           const SizedBox(height: TryptoSpacing.sm),
-          Row(
-            children: [
-              Icon(
-                LucideIcons.info,
-                size: 14,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: TryptoSpacing.xs),
-              Expanded(
-                child: Text(
-                  '같은 라운드의 다른 거래소 지갑으로만 보낼 수 있습니다.',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            '같은 라운드의 다른 거래소 지갑으로만 보낼 수 있습니다.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

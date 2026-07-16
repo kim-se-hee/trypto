@@ -4,10 +4,10 @@ import 'trypto_colors.dart';
 
 /// 웹 색 토큰(`frontend/src/index.css:54-90`)의 단일 출처 (§8.1.3).
 abstract final class TryptoPalette {
-  static const background = Color(0xFFF8F7F4);
+  static const background = Color(0xFFF8F5EE);
   static const foreground = Color(0xFF1A1A2E);
   static const card = Color(0xFFFFFFFF);
-  static const primary = Color(0xFF6C5CE7);
+  static const primary = Color(0xFF0DA6AC);
   static const primaryForeground = Color(0xFFFFFFFF);
 
   /// `--secondary` · `--muted` · `--accent` · `--input` 네 토큰의 값이 같다.

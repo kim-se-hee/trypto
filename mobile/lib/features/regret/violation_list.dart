@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/format/formatters.dart';
 import '../../core/format/server_time.dart';
@@ -125,16 +124,9 @@ class RuleTag extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(TryptoRadius.sm),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(ruleIcon(rule), size: 11, color: color),
-          const SizedBox(width: 3),
-          Text(
-            ruleLabels[rule] ?? '알 수 없는 원칙',
-            style: theme.textTheme.labelSmall?.copyWith(color: color),
-          ),
-        ],
+      child: Text(
+        ruleLabels[rule] ?? '알 수 없는 원칙',
+        style: theme.textTheme.labelSmall?.copyWith(color: color),
       ),
     );
   }
@@ -165,19 +157,9 @@ Future<void> _showViolationDetail(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    LucideIcons.triangleAlert,
-                    size: 16,
-                    color: context.tryptoColors.warning,
-                  ),
-                  const SizedBox(width: TryptoSpacing.sm),
-                  Text(
-                    '${violation.coinSymbol} 위반 거래',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ],
+              Text(
+                '${violation.coinSymbol} 위반 거래',
+                style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: TryptoSpacing.lg),
               _DetailRow(

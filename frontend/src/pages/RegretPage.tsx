@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
-import { BarChart3 } from "lucide-react";
 import { RegretChart } from "@/components/regret/RegretChart";
 import { MeVsMe } from "@/components/regret/MeVsMe";
 import { ViolationTradeList } from "@/components/regret/ViolationTradeList";
@@ -99,10 +98,7 @@ export function RegretPage() {
       {/* Page header */}
       <section className="animate-enter border-b border-border/40 pb-6 pt-8">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="flex items-center gap-2.5">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <h1 className="font-display text-3xl tracking-tight">투자 복기</h1>
-          </div>
+          <h1 className="font-display text-3xl tracking-tight">투자 복기</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             규칙만 지켰으면 얼마를 벌었을까?
           </p>

@@ -773,17 +773,7 @@ class _RankerTile extends StatelessWidget {
                   ],
                 ),
               ),
-              // 색만으로 방향을 알리지 않는다 — 부호와 아이콘을 함께 쓴다(§6.6.1-9).
-              Icon(
-                item.profitRate > 0
-                    ? LucideIcons.trendingUp
-                    : item.profitRate < 0
-                    ? LucideIcons.trendingDown
-                    : LucideIcons.minus,
-                size: 14,
-                color: context.profitColor(item.profitRate),
-              ),
-              const SizedBox(width: TryptoSpacing.xs),
+              // 방향은 수익률 부호(+/-)와 색으로 구분한다(§6.6.1-9).
               NumericText(
                 formatProfitPercent(item.profitRate),
                 color: context.profitColor(item.profitRate),

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AlertCircle, BarChart3, Trophy, Users } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +41,6 @@ function RankBadge({ rank }: { rank: number }) {
 function RankingErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-4 py-16 text-center shadow-card">
-      <AlertCircle className="h-10 w-10 text-destructive/60" />
       <div>
         <p className="text-base font-bold">랭킹을 불러오지 못했습니다</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -80,7 +78,6 @@ function RankingEmptyState() {
       </div>
 
       <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-4 py-12 text-center shadow-card">
-        <Trophy className="h-10 w-10 text-primary/40" />
         <div>
           <p className="text-base font-bold">아직 집계된 랭킹이 없습니다</p>
           <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
@@ -101,7 +98,6 @@ function StatsPlaceholder() {
   return (
     <div className="space-y-3 opacity-60">
       <div className="flex items-center gap-2">
-        <Users className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">참여자 0명</span>
       </div>
       <div className="flex items-center justify-between text-sm">
@@ -252,10 +248,7 @@ export function RankingPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="mb-1 flex items-center gap-2.5">
-                <Trophy className="h-6 w-6 text-primary" />
-                <h1 className="font-display text-3xl tracking-tight">랭킹</h1>
-              </div>
+              <h1 className="mb-1 font-display text-3xl tracking-tight">랭킹</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {periodLabel} 수익률 기준 순위
               </p>
@@ -330,7 +323,6 @@ export function RankingPage() {
                 ) : stats ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
                       <span className="text-sm">
                         참여자 {stats.totalParticipants.toLocaleString("ko-KR")}명
                       </span>
@@ -353,7 +345,6 @@ export function RankingPage() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BarChart3 className="h-4 w-4" />
                     통계를 불러오지 못했습니다.
                   </div>
                 )}

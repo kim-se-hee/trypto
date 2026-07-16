@@ -455,8 +455,6 @@ class _EmergencyBanner extends StatelessWidget {
       color: warning.withValues(alpha: 0.08),
       child: Row(
         children: [
-          Icon(LucideIcons.shieldPlus, size: 16, color: warning),
-          const SizedBox(width: TryptoSpacing.sm),
           Expanded(
             child: Text(
               _canCharge
@@ -494,8 +492,6 @@ class _RoundStartBanner extends StatelessWidget {
       color: theme.colorScheme.primary.withValues(alpha: 0.08),
       child: Row(
         children: [
-          Icon(LucideIcons.flag, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: TryptoSpacing.sm),
           Expanded(
             child: Text(
               '진행 중인 라운드가 없습니다.',
