@@ -10,7 +10,7 @@ class SegmentItem<T> {
 }
 
 /// 웹 Tabs(`default` 변형, §8.6.4) 를 세그먼트로 옮긴 것.
-/// 트랙 `#F0EEEB`/반경 10/내부 패딩 3/높이 36, 활성 탭은 `#F8F7F4` 배경 + `shadow-sm`.
+/// 트랙 `#F0EEEB`/반경 10/내부 패딩 3/높이 36, 활성 탭은 `#F8F5EE` 배경 + `shadow-sm`.
 ///
 /// 거래소 전환(마켓·복기)과 기간 전환(랭킹)이 같은 모양을 쓴다.
 class ExchangeSegment<T> extends StatelessWidget {
