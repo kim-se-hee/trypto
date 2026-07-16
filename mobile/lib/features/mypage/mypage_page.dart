@@ -356,8 +356,12 @@ class _AccountActions extends ConsumerWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            // 서버 호출이 실패해도 로컬 상태를 비운다. 인증이 비면 redirect 가 /login 으로 보낸다.
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            // 서버 호출이 실패해도 로컬 상태를 비운다. 로그아웃 뒤에는 /login 으로 스택을 리셋한다 —
+            // redirect 에만 맡기면 뒤로가기가 이전 보호 화면으로 돌아가려다 다시 /login 으로 튕긴다.
+            onPressed: () async {
+              await ref.read(authControllerProvider.notifier).logout();
+              if (context.mounted) context.go(Routes.login);
+            },
             icon: const Icon(LucideIcons.logOut, size: 16),
             label: const Text('로그아웃'),
           ),
