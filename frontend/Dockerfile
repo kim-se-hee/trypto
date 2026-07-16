@@ -1,5 +1,6 @@
 # 1단계: 프로덕션 번들 빌드
-FROM node:20-alpine AS build
+# 빌드 스테이지는 빌드 머신 아키텍처로 돈다 (번들은 아키텍처 무관). arm64 크로스 빌드 시 에뮬레이션을 피한다.
+FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 
 WORKDIR /app
 
