@@ -1,24 +1,7 @@
-import {
-  TrendingDown,
-  TrendingUp,
-  Ban,
-  Layers,
-  Timer,
-  Crosshair,
-  Check,
-  type LucideIcon,
-} from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RuleToggleItem, BenchmarkItem } from "@/lib/types/regret";
 import type { RuleType } from "@/lib/types/round";
-
-const RULE_ICON_MAP: Record<RuleType, LucideIcon> = {
-  STOP_LOSS: TrendingDown,
-  TAKE_PROFIT: TrendingUp,
-  NO_CHASE_BUY: Ban,
-  AVERAGING_LIMIT: Layers,
-  OVERTRADE_LIMIT: Timer,
-};
 
 interface MeVsMeProps {
   enabledRules: Set<RuleType>;
@@ -41,10 +24,7 @@ export function MeVsMe({
     <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 헤더 */}
       <div className="mb-5">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Crosshair className="h-5 w-5 text-primary" />
-          나 vs 나
-        </h2>
+        <h2 className="text-lg font-bold">나 vs 나</h2>
         <p className="mt-1 text-xs font-medium text-muted-foreground">
           규칙을 켜고 끄면서 "어떤 규칙이 가장 돈이 됐는지" 확인
         </p>
@@ -59,7 +39,6 @@ export function MeVsMe({
         )}
         {ruleToggles.map((rule) => {
           const isEnabled = enabledRules.has(rule.ruleType);
-          const Icon = RULE_ICON_MAP[rule.ruleType];
           return (
             <button
               key={rule.ruleType}
@@ -78,13 +57,6 @@ export function MeVsMe({
                 )}
               >
                 {isEnabled && <Check className="h-3 w-3" strokeWidth={3} />}
-              </div>
-
-              <div
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${rule.color}18` }}
-              >
-                <Icon className="h-3.5 w-3.5" style={{ color: rule.color }} />
               </div>
 
               <span className="flex-1 text-sm font-semibold">{rule.label}</span>

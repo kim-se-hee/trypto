@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Lock } from "lucide-react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatQuantity, formatCurrencyCompact, SMALL_AMOUNT_THRESHOLD } from "@/lib/formatters";
 import { SortIcon } from "@/components/ui/SortIcon";
@@ -211,10 +211,9 @@ export function WalletAssetTable({ balances, baseCurrency, onSelectCoin, selecte
 
                     {/* Locked */}
                     <div className={cn(
-                      "flex items-center justify-end gap-1 text-right font-mono text-sm tabular-nums",
+                      "text-right font-mono text-sm tabular-nums",
                       b.locked > 0 ? "text-chart-4" : "text-muted-foreground/40",
                     )}>
-                      {b.locked > 0 && <Lock className="h-3 w-3 shrink-0" />}
                       {b.locked > 0
                         ? formatDisplayQuantity(b.locked, b.coinSymbol, baseCurrency)
                         : "—"}

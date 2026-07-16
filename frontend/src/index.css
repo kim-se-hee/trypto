@@ -153,25 +153,6 @@
   transform: translateY(-1px);
 }
 
-/* ── Landing: 시세 마퀴 ── */
-/* 동일한 목록을 두 번 이어 붙이고 절반만큼 이동시켜 이음새 없이 순환한다 */
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee-scroll 36s linear infinite;
-}
-
-.marquee-mask:hover .animate-marquee {
-  animation-play-state: paused;
-}
-
 /* ── Landing: 둥둥 뜨는 요소 ── */
 @keyframes float-y {
   0%,

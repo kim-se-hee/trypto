@@ -1,6 +1,5 @@
 ﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { RoundCreateHeader } from "@/components/round/RoundCreateHeader";
@@ -100,7 +99,6 @@ export function RoundCreatePage() {
               onClick={handleSubmit}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white transition-all duration-150 hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
             >
-              <Rocket className="h-4 w-4" />
               {isSubmitting ? "생성 중..." : "라운드 시작하기"}
             </button>
 

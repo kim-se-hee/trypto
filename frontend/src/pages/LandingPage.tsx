@@ -1,17 +1,11 @@
 import { type ReactNode } from "react";
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useInView } from "@/hooks/useInView";
-import { useTickers } from "@/hooks/useTickers";
 import { LandingNav } from "@/components/landing/LandingNav";
-import { TickerMarquee } from "@/components/landing/TickerMarquee";
 import { FeatureCarousel } from "@/components/landing/FeatureCarousel";
 import { RegretShowcase } from "@/components/landing/RegretShowcase";
-
-const UPBIT_EXCHANGE_ID = 1;
 
 const ENTER_CLASS = [
   "animate-enter",
@@ -48,10 +42,6 @@ const REGRET_STEPS = [
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
 
-  // 시세 띠: 업비트로 고정해 항상 흐르게 둔다
-  const { coins: marqueeInitial } = useExchangeCoins(UPBIT_EXCHANGE_ID);
-  const marqueeCoins = useTickers({ exchangeId: UPBIT_EXCHANGE_ID, initialCoins: marqueeInitial });
-
   const ctaTo = isAuthenticated ? "/market" : "/login";
   const ctaLabel = isAuthenticated ? "이어서 투자하기" : "지금 날려보기";
 
@@ -75,17 +65,13 @@ export function LandingPage() {
             <div className="animate-enter-delay-3 mt-9 flex justify-center">
               <Link
                 to={ctaTo}
-                className="group flex h-14 items-center gap-2 rounded-full bg-primary px-8 text-base font-extrabold text-primary-foreground shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:scale-[0.98]"
+                className="flex h-14 items-center rounded-full bg-primary px-8 text-base font-extrabold text-primary-foreground shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:scale-[0.98]"
               >
                 {ctaLabel}
-                <ArrowRight className="h-5 w-5 transition-transform duration-150 group-hover:translate-x-0.5" />
               </Link>
             </div>
           </div>
         </section>
-
-        {/* ── 실시간 시세 띠 ── */}
-        <TickerMarquee coins={marqueeCoins} />
 
         {/* ── 핵심 기능 (가로 스와이프) ── */}
         <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-6">
@@ -136,10 +122,9 @@ export function LandingPage() {
               </p>
               <Link
                 to={ctaTo}
-                className="group mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-8 text-[15px] font-extrabold text-primary shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-xl active:scale-[0.98]"
+                className="mt-8 inline-flex h-13 items-center rounded-full bg-white px-8 text-[15px] font-extrabold text-primary shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-xl active:scale-[0.98]"
               >
                 미리 대비하기
-                <ArrowRight className="h-4.5 w-4.5 transition-transform duration-150 group-hover:translate-x-0.5" />
               </Link>
             </div>
           </Reveal>

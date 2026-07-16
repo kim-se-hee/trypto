@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,9 +58,6 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
     <div className="rounded-xl border border-border/40 bg-secondary/20 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-chart-4/10">
-            <AlertTriangle className="h-4 w-4 text-chart-4" />
-          </div>
           <div>
             <p className="text-sm font-semibold">긴급 자금 투입</p>
             <p className="text-xs text-muted-foreground">
@@ -88,7 +84,6 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button className="mt-4 w-full" disabled={!canCharge}>
-            <PlusCircle className="mr-2 h-4 w-4" />
             긴급 자금 투입하기
           </Button>
         </DialogTrigger>

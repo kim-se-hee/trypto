@@ -1,4 +1,3 @@
-import { Wallet, ShieldPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PresetButtons } from "./PresetButtons";
 import { formatKRW } from "@/lib/formatters";
@@ -33,21 +32,11 @@ export function SeedMoneyCard({
   return (
     <div className="flex flex-col gap-5">
       {/* 시드머니 */}
-      <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5">
-        <div className={cn(
-          "pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent",
-          "opacity-0 transition-opacity duration-200 group-hover:opacity-100",
-        )} />
-
-        <div className="relative">
-          <div className="mb-4 flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Wallet className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">시작 자금</p>
-              <p className="text-[11px] text-muted-foreground">모의투자에 사용할 초기 자본금</p>
-            </div>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div>
+          <div className="mb-4">
+            <p className="text-sm font-bold">시작 자금</p>
+            <p className="text-[11px] text-muted-foreground">모의투자에 사용할 초기 자본금</p>
           </div>
 
           {/* 금액 표시 */}
@@ -81,21 +70,11 @@ export function SeedMoneyCard({
       </div>
 
       {/* 긴급 자금 */}
-      <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5">
-        <div className={cn(
-          "pointer-events-none absolute inset-0 bg-gradient-to-br from-chart-4/5 to-transparent",
-          "opacity-0 transition-opacity duration-200 group-hover:opacity-100",
-        )} />
-
-        <div className="relative">
-          <div className="mb-4 flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-chart-4/10">
-              <ShieldPlus className="h-4 w-4 text-chart-4" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">긴급 자금 투입 상한</p>
-              <p className="text-[11px] text-muted-foreground">1회당 최대 투입 금액</p>
-            </div>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div>
+          <div className="mb-4">
+            <p className="text-sm font-bold">긴급 자금 투입 상한</p>
+            <p className="text-[11px] text-muted-foreground">1회당 최대 투입 금액</p>
           </div>
 
           <div className="mb-3 rounded-xl bg-secondary/40 px-4 py-3">
