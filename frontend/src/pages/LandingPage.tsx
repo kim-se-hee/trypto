@@ -80,7 +80,7 @@ export function LandingPage() {
         </section>
 
         {/* ── 투자 복기 딥다이브 ── */}
-        <section id="regret" className="scroll-mt-20 border-y border-border/60 bg-card/50">
+        <section id="regret" className="scroll-mt-20">
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:gap-16">
             <Reveal>
               <h2 className="font-display text-3xl leading-[1.25] tracking-tight sm:text-4xl">
