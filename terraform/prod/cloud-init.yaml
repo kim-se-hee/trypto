@@ -1,0 +1,31 @@
+#cloud-config
+# 첫 부팅에서 서버를 배포 가능한 상태로 만든다.
+# 앱 배포 자체(compose, nginx 사이트 설정, 인증서)는 deploy 단계에서 SSH 로 한다.
+
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - nginx
+  - certbot
+  - python3-certbot-dns-cloudflare
+  - mysql-client-core-8.0
+
+runcmd:
+  # 오라클 우분투 이미지는 iptables 가 22 외 전부 거부한다.
+  # 보안 목록(클라우드 방화벽)을 열어도 여기가 막혀 있으면 접속이 안 되므로 반드시 연다.
+  - iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+  - iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+  - netfilter-persistent save
+  # 도커
+  - systemctl enable --now docker
+  - usermod -aG docker ubuntu
+  # 스왑 4GB (램 12GB 라 필수는 아니지만 OOM 보험)
+  - fallocate -l 4G /swapfile
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  - swapon /swapfile
+  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  # 배포 디렉토리
+  - mkdir -p /opt/trypto
+  - chown ubuntu:ubuntu /opt/trypto

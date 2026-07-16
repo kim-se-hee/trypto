@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.7
-FROM eclipse-temurin:21-jdk AS build
+# 빌드 스테이지는 빌드 머신 아키텍처로 돈다 (jar 는 아키텍처 무관). arm64 크로스 빌드 시 에뮬레이션을 피한다.
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 COPY gradle/ gradle/
 COPY gradlew build.gradle settings.gradle ./

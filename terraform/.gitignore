@@ -3,6 +3,7 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+apply-retry.log
 crash.log
 crash.*.log
 override.tf

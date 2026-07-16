@@ -1,0 +1,19 @@
+# 복사해서 terraform.tfvars 로 만들고 값을 채운다. (tfvars 는 gitignore 에 걸려 있다)
+# 아래 인증 4종은 오라클 콘솔 → 프로필 → 내 프로파일 → API 키 → "키 추가" 하면
+# "구성 파일 미리보기"에 전부 나온다.
+
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaa________________________"
+user_ocid        = "ocid1.user.oc1..aaaaaaaa________________________"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "C:/Users/saree98/.oci/oci_api_key.pem"
+
+region = "ap-osaka-1"
+
+# ssh-keygen -t ed25519 -f C:/Users/saree98/.ssh/trypto_oracle 로 생성
+ssh_public_key_path = "C:/Users/saree98/.ssh/trypto_oracle.pub"
+
+# 내 공인 IP (https://ifconfig.me 에서 확인) + /32
+admin_cidr = "0.0.0.0/32"
+
+# .env.prod 의 MYSQL_PASSWORD 와 같은 값을 쓴다
+mysql_admin_password = "CHANGEME"
