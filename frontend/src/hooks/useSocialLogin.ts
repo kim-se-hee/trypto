@@ -41,6 +41,10 @@ export function useSocialLogin(): SocialLogin {
 
   const finish = useCallback(
     async (message: SocialCallbackMessage) => {
+      // 콜백은 한 번만 처리한다. 팝업이 StrictMode 로 결과를 두 번 발행하거나 다른 탭이
+      // 같은 메시지를 중복 전달하면, 두 번째부터는 이미 state·verifier 를 지운 뒤라
+      // 검증이 실패해 "보안 검증 실패" 가 순간 뜬다. 먼저 온 것만 받고 나머지는 버린다.
+      if (answeredRef.current) return;
       answeredRef.current = true;
       popupRef.current?.close();
       popupRef.current = null;
