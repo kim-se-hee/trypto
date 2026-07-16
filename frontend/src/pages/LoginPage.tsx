@@ -32,7 +32,7 @@ export function LoginPage() {
             <span className="text-2xl font-extrabold tracking-tight">trypto</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            큰 돈 잃을 걱정 없이 해보는 실전 리허설
+            기록으로 배우는 코인 모의투자
           </p>
         </div>
 
