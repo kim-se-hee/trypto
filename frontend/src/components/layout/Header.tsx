@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
@@ -15,10 +15,18 @@ const navItems = [
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { hasActiveRound, isRoundLoading } = useRound();
   const [mobileOpen, setMobileOpen] = useState(false);
   const showRoundStart = !isRoundLoading && !hasActiveRound;
+
+  // 로그아웃 후에는 랜딩으로 보낸다. 순서가 중요하다 — 먼저 공개 라우트(/)로 옮긴 뒤 세션을 비운다.
+  // 반대로 하면 user 가 비는 순간 보호 라우트가 /login 으로 리다이렉트해 이 이동을 덮어쓴다.
+  const handleLogout = async () => {
+    navigate("/", { replace: true });
+    await logout();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md">
@@ -68,7 +76,7 @@ export function Header() {
             </Link>
           )}
           <button
-            onClick={logout}
+            onClick={() => void handleLogout()}
             className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -131,7 +139,7 @@ export function Header() {
             <button
               onClick={() => {
                 setMobileOpen(false);
-                logout();
+                void handleLogout();
               }}
               className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
             >
