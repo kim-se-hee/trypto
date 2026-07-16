@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInView } from "@/hooks/useInView";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FeatureCarousel } from "@/components/landing/FeatureCarousel";
-import { RegretShowcase } from "@/components/landing/RegretShowcase";
 
 const ENTER_CLASS = [
   "animate-enter",
@@ -105,7 +104,13 @@ export function LandingPage() {
             </Reveal>
 
             <Reveal delay={2}>
-              <RegretShowcase />
+              <div className="overflow-hidden rounded-2xl border border-border shadow-xl">
+                <img
+                  src="/regret-showcase.png"
+                  alt="투자 복기 화면 예시 — 규칙을 지켰다면 얼마를 더 벌었을지 보여주는 자산 추이 그래프"
+                  className="block w-full"
+                />
+              </div>
             </Reveal>
           </div>
         </section>
