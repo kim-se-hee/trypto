@@ -109,7 +109,6 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
             ),
             _Cta(
               label: _step == 0 ? '다음' : '라운드 시작하기',
-              icon: _step == 0 ? null : LucideIcons.rocket,
               hint: _step == 0
                   ? (_fundingReady ? null : '시드머니와 긴급 자금 상한을 설정해 주세요.')
                   : _draft.rulesError,
@@ -139,7 +138,6 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
               ),
               const SizedBox(height: TryptoSpacing.lg),
               _AmountCard(
-                icon: LucideIcons.wallet,
                 title: '시작 자금',
                 description: '모의투자에 사용할 초기 자본금',
                 amount: _seed,
@@ -154,7 +152,6 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
               ),
               const SizedBox(height: TryptoSpacing.md),
               _AmountCard(
-                icon: LucideIcons.shieldPlus,
                 title: '긴급 자금 투입 상한',
                 description: '1회당 최대 투입 금액',
                 amount: _emergencyLimit,
@@ -279,7 +276,6 @@ class _StepBar extends StatelessWidget {
 
 class _AmountCard extends StatelessWidget {
   const _AmountCard({
-    required this.icon,
     required this.title,
     required this.description,
     required this.amount,
@@ -291,7 +287,6 @@ class _AmountCard extends StatelessWidget {
     this.note,
   });
 
-  final IconData icon;
   final String title;
   final String description;
   final int amount;
@@ -323,13 +318,7 @@ class _AmountCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: theme.colorScheme.primary),
-                const SizedBox(width: TryptoSpacing.sm),
-                Text(title, style: theme.textTheme.titleMedium),
-              ],
-            ),
+            Text(title, style: theme.textTheme.titleMedium),
             const SizedBox(height: TryptoSpacing.xs),
             Text(
               description,
@@ -671,14 +660,12 @@ class _Cta extends StatelessWidget {
     required this.label,
     required this.busy,
     required this.onPressed,
-    this.icon,
     this.hint,
   });
 
   final String label;
   final bool busy;
   final VoidCallback? onPressed;
-  final IconData? icon;
   final String? hint;
 
   @override
@@ -715,16 +702,7 @@ class _Cta extends StatelessWidget {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (icon != null) ...[
-                          Icon(icon, size: 16),
-                          const SizedBox(width: TryptoSpacing.sm),
-                        ],
-                        Text(label),
-                      ],
-                    ),
+                  : Text(label),
             ),
           ),
         ],

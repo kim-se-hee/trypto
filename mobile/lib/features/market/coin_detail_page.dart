@@ -401,7 +401,6 @@ class _Quote extends StatelessWidget {
         ProfitBadge(
           value: changeRate,
           text: formatChangeRate(changeRate),
-          showTrendIcon: true,
         ),
       ],
     );

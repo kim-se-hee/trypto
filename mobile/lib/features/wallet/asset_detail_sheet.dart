@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/exchanges.dart';
 import '../../core/format/formatters.dart';
@@ -150,12 +149,11 @@ class AssetDetailSheet extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 44,
-              child: FilledButton.icon(
+              child: FilledButton(
                 onPressed: asset.available > 0
                     ? () => _withdraw(context)
                     : null,
-                icon: const Icon(LucideIcons.arrowUpRight, size: 16),
-                label: const Text('출금'),
+                child: const Text('출금'),
               ),
             ),
           const SizedBox(height: TryptoSpacing.xl),
@@ -234,7 +232,7 @@ class _BalanceRow extends StatelessWidget {
             ),
           ),
           if (locked) ...[
-            const WarningBadge(label: '주문 대기', icon: LucideIcons.lock),
+            const WarningBadge(label: '주문 대기'),
             const SizedBox(width: TryptoSpacing.sm),
           ],
           NumericText(

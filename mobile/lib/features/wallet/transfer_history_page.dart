@@ -214,27 +214,12 @@ class TransferTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.tryptoColors;
     final deposit = item.type == TransferType.deposit;
-    final color = deposit ? colors.positive : colors.negative;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: TryptoSpacing.screen,
         vertical: TryptoSpacing.xs,
-      ),
-      leading: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          deposit ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight,
-          size: 16,
-          color: color,
-        ),
       ),
       title: NumericText(
         '${formatQuantity(item.amount)} ${item.coinSymbol}',

@@ -62,20 +62,6 @@ class _ProfileCard extends ConsumerWidget {
               horizontal: TryptoSpacing.lg,
               vertical: TryptoSpacing.sm,
             ),
-            leading: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                LucideIcons.user,
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
-            ),
             title: Text(
               user?.nickname ?? '-',
               style: theme.textTheme.titleMedium,
@@ -435,7 +421,6 @@ class _DeleteAccountSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.tryptoColors;
 
     return SafeArea(
       child: Padding(
@@ -449,17 +434,7 @@ class _DeleteAccountSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.triangleAlert,
-                  size: 18,
-                  color: colors.negative,
-                ),
-                const SizedBox(width: TryptoSpacing.sm),
-                Text('회원 탈퇴', style: theme.textTheme.titleLarge),
-              ],
-            ),
+            Text('회원 탈퇴', style: theme.textTheme.titleLarge),
             const SizedBox(height: TryptoSpacing.md),
             for (final line in const [
               '진행 중인 라운드가 종료되고 모든 거래·자산·랭킹 기록이 삭제됩니다.',
@@ -468,23 +443,11 @@ class _DeleteAccountSheet extends StatelessWidget {
             ])
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: TryptoSpacing.xs),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      LucideIcons.dot,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    Expanded(
-                      child: Text(
-                        line,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  line,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             const SizedBox(height: TryptoSpacing.xl),

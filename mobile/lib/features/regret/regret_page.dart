@@ -272,17 +272,7 @@ class _Content extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.triangleAlert,
-                        size: 16,
-                        color: context.tryptoColors.warning,
-                      ),
-                      const SizedBox(width: TryptoSpacing.sm),
-                      Text('규칙 위반 거래', style: theme.textTheme.titleMedium),
-                    ],
-                  ),
+                  Text('규칙 위반 거래', style: theme.textTheme.titleMedium),
                   const SizedBox(height: TryptoSpacing.sm),
                   ViolationFilterBar(
                     violations: report.violationDetails,
