@@ -55,7 +55,7 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
   }
 
   return (
-    <div className="rounded-xl border border-border/40 bg-secondary/20 p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <div>
@@ -71,11 +71,11 @@ export function EmergencyFundingCard({ round, onCharge }: EmergencyFundingCardPr
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-background/60 px-3 py-2">
+        <div className="rounded-xl bg-secondary/40 px-3 py-2">
           <p className="text-[11px] text-muted-foreground">1회 상한</p>
           <p className="mt-1 text-sm font-bold">{formatKRW(round.emergencyFundingLimit)}</p>
         </div>
-        <div className="rounded-xl bg-background/60 px-3 py-2">
+        <div className="rounded-xl bg-secondary/40 px-3 py-2">
           <p className="text-[11px] text-muted-foreground">남은 횟수</p>
           <p className="mt-1 text-sm font-bold">{round.emergencyChargeCount}회</p>
         </div>
