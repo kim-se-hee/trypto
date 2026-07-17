@@ -11,6 +11,17 @@ packages:
   - python3-certbot-dns-cloudflare
   - mysql-client-core-8.0
 
+write_files:
+  # systemd-networkd 를 재시작하면 NAT conntrack 이 초기화되어, 컨테이너가
+  # 거래소와 맺은 웹소켓이 반열림으로 죽는 사고가 재발한다(2026-07 시세 6시간 동결).
+  # 자동 보안 업데이트(needrestart)가 networkd 만은 재시작하지 않도록 제외한다.
+  # (override_rc 에 '추가'하는 형태라 needrestart 기본 제외 목록을 덮어쓰지 않는다.)
+  - path: /etc/needrestart/conf.d/no-restart-networkd.conf
+    permissions: '0644'
+    owner: root:root
+    content: |
+      $nrconf{override_rc}->{qr(^systemd-networkd)} = 0;
+
 runcmd:
   # 오라클 우분투 이미지는 iptables 가 22 외 전부 거부한다.
   # 보안 목록(클라우드 방화벽)을 열어도 여기가 막혀 있으면 접속이 안 되므로 반드시 연다.
