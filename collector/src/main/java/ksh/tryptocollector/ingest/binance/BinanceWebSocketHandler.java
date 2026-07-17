@@ -5,11 +5,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.ingest.ConnectionLiveness;
 import ksh.tryptocollector.ingest.ExchangeTickerStream;
 import ksh.tryptocollector.ingest.RestPollingFallback;
+import ksh.tryptocollector.ingest.WebSocketLivenessGuard;
 import ksh.tryptocollector.metadata.MarketInfoCache;
 import ksh.tryptocollector.model.Exchange;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
     private final MarketInfoCache marketInfoCache;
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
+    private final WebSocketLivenessGuard livenessGuard;
     private final Counter reconnectCounter;
 
     public BinanceWebSocketHandler(
@@ -34,11 +38,13 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
             MarketInfoCache marketInfoCache,
             TickerSinkProcessor tickerSinkProcessor,
             RestPollingFallback restPollingFallback,
+            WebSocketLivenessGuard livenessGuard,
             MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
+        this.livenessGuard = livenessGuard;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
                 .tag("exchange", Exchange.BINANCE.name())
                 .register(registry);
@@ -53,14 +59,15 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
+                ConnectionLiveness liveness = new ConnectionLiveness();
                 WebSocket ws = httpClient
                         .newWebSocketBuilder()
-                        .buildAsync(URI.create(wsUrl), new BinanceListener(closeLatch))
+                        .buildAsync(URI.create(wsUrl), new BinanceListener(closeLatch, liveness))
                         .join();
                 log.info("바이낸스 WebSocket 연결 시작");
                 restPollingFallback.stop(Exchange.BINANCE);
                 retryCount = 0;
-                closeLatch.await();
+                livenessGuard.watch(Exchange.BINANCE, ws, liveness, closeLatch);
             } catch (Exception e) {
                 if (Thread.currentThread().isInterrupted() || e instanceof InterruptedException) {
                     log.info("바이낸스 WebSocket 스레드 종료");
@@ -98,20 +105,37 @@ public class BinanceWebSocketHandler implements ExchangeTickerStream {
 
     private class BinanceListener implements WebSocket.Listener {
         private final CountDownLatch closeLatch;
+        private final ConnectionLiveness liveness;
         private final StringBuilder textBuffer = new StringBuilder();
 
-        BinanceListener(CountDownLatch closeLatch) {
+        BinanceListener(CountDownLatch closeLatch, ConnectionLiveness liveness) {
             this.closeLatch = closeLatch;
+            this.liveness = liveness;
         }
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+            liveness.recordReceive();
             textBuffer.append(data);
             if (last) {
                 String message = textBuffer.toString();
                 textBuffer.setLength(0);
                 handleMessage(message);
             }
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPing(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
             webSocket.request(1);
             return null;
         }

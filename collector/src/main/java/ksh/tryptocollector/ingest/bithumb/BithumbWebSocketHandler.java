@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.ingest.ConnectionLiveness;
 import ksh.tryptocollector.ingest.ExchangeTickerStream;
 import ksh.tryptocollector.ingest.RestPollingFallback;
+import ksh.tryptocollector.ingest.WebSocketLivenessGuard;
 import ksh.tryptocollector.metadata.MarketInfoCache;
 import ksh.tryptocollector.model.Exchange;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
     private final MarketInfoCache marketInfoCache;
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
+    private final WebSocketLivenessGuard livenessGuard;
     private final Counter reconnectCounter;
 
     public BithumbWebSocketHandler(
@@ -36,11 +39,13 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
             MarketInfoCache marketInfoCache,
             TickerSinkProcessor tickerSinkProcessor,
             RestPollingFallback restPollingFallback,
+            WebSocketLivenessGuard livenessGuard,
             MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
+        this.livenessGuard = livenessGuard;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
                 .tag("exchange", Exchange.BITHUMB.name())
                 .register(registry);
@@ -55,16 +60,17 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
+                ConnectionLiveness liveness = new ConnectionLiveness();
                 WebSocket ws = httpClient
                         .newWebSocketBuilder()
-                        .buildAsync(URI.create(wsUrl), new BithumbListener(closeLatch))
+                        .buildAsync(URI.create(wsUrl), new BithumbListener(closeLatch, liveness))
                         .join();
                 String subscribeMessage = buildSubscribeMessage();
                 ws.sendText(subscribeMessage, true);
                 log.info("빗썸 WebSocket 연결 시작");
                 restPollingFallback.stop(Exchange.BITHUMB);
                 retryCount = 0;
-                closeLatch.await();
+                livenessGuard.watch(Exchange.BITHUMB, ws, liveness, closeLatch);
             } catch (Exception e) {
                 if (Thread.currentThread().isInterrupted() || e instanceof InterruptedException) {
                     log.info("빗썸 WebSocket 스레드 종료");
@@ -107,15 +113,18 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
 
     private class BithumbListener implements WebSocket.Listener {
         private final CountDownLatch closeLatch;
+        private final ConnectionLiveness liveness;
         private final StringBuilder textBuffer = new StringBuilder();
         private final java.io.ByteArrayOutputStream binaryBuffer = new java.io.ByteArrayOutputStream();
 
-        BithumbListener(CountDownLatch closeLatch) {
+        BithumbListener(CountDownLatch closeLatch, ConnectionLiveness liveness) {
             this.closeLatch = closeLatch;
+            this.liveness = liveness;
         }
 
         @Override
         public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
+            liveness.recordReceive();
             byte[] bytes = new byte[data.remaining()];
             data.get(bytes);
             binaryBuffer.write(bytes, 0, bytes.length);
@@ -129,12 +138,27 @@ public class BithumbWebSocketHandler implements ExchangeTickerStream {
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+            liveness.recordReceive();
             textBuffer.append(data);
             if (last) {
                 String message = textBuffer.toString();
                 textBuffer.setLength(0);
                 handleMessage(message);
             }
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPing(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
             webSocket.request(1);
             return null;
         }
