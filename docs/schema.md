@@ -64,7 +64,7 @@ erDiagram
 
     EXCHANGE_MARKET {
         id exchange_id PK "주 식별자"
-        string name "거래소명"
+        string name UK "거래소명"
         string market_type "DOMESTIC OVERSEAS"
         id base_currency_coin_id FK "기축통화 코인 ID"
         number fee_rate "기본 수수료율"
@@ -78,7 +78,7 @@ erDiagram
 
     EXCHANGE_COIN {
         id exchange_coin_id PK "주 식별자"
-        id exchange_id FK "거래소 ID"
+        id exchange_id FK "거래소 ID (exchange_id + coin_id 복합 유니크)"
         id coin_id FK "코인 ID"
         string display_name "거래소별 표시명"
     }

@@ -23,7 +23,7 @@ public class ExchangeJpaEntity {
     @Column(name = "exchange_id")
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name", nullable = false, length = 50, unique = true)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -40,6 +40,12 @@ public class ExchangeJpaEntity {
             Long id, String name, ExchangeMarketType marketType, Long baseCurrencyCoinId, BigDecimal feeRate) {
         this.id = id;
         this.name = name;
+        this.marketType = marketType;
+        this.baseCurrencyCoinId = baseCurrencyCoinId;
+        this.feeRate = feeRate;
+    }
+
+    public void update(ExchangeMarketType marketType, Long baseCurrencyCoinId, BigDecimal feeRate) {
         this.marketType = marketType;
         this.baseCurrencyCoinId = baseCurrencyCoinId;
         this.feeRate = feeRate;

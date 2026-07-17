@@ -22,7 +22,7 @@ public class CoinJpaEntity {
     @Column(name = "coin_id")
     private Long id;
 
-    @Column(name = "symbol", nullable = false)
+    @Column(name = "symbol", nullable = false, unique = true)
     private String symbol;
 
     @Column(name = "name", nullable = false)
@@ -30,6 +30,10 @@ public class CoinJpaEntity {
 
     public CoinJpaEntity(String symbol, String name) {
         this.symbol = symbol;
+        this.name = name;
+    }
+
+    public void updateName(String name) {
         this.name = name;
     }
 

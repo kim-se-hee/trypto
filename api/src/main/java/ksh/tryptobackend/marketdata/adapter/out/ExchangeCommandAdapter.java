@@ -17,8 +17,14 @@ public class ExchangeCommandAdapter implements ExchangeCommandPort {
 
     @Override
     public Exchange save(String name, ExchangeMarketType marketType, Long baseCurrencyCoinId, BigDecimal feeRate) {
-        Long nextId = repository.count() + 1;
-        ExchangeJpaEntity entity = new ExchangeJpaEntity(nextId, name, marketType, baseCurrencyCoinId, feeRate);
+        ExchangeJpaEntity entity = repository
+                .findByName(name)
+                .map(existing -> {
+                    existing.update(marketType, baseCurrencyCoinId, feeRate);
+                    return existing;
+                })
+                .orElseGet(() ->
+                        new ExchangeJpaEntity(repository.count() + 1, name, marketType, baseCurrencyCoinId, feeRate));
         return repository.save(entity).toDomain();
     }
 }

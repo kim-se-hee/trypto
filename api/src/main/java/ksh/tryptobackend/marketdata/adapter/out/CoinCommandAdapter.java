@@ -15,8 +15,13 @@ public class CoinCommandAdapter implements CoinCommandPort {
 
     @Override
     public Coin save(String symbol, String name) {
-        CoinJpaEntity entity = new CoinJpaEntity(symbol, name);
-        CoinJpaEntity saved = repository.save(entity);
-        return saved.toDomain();
+        CoinJpaEntity entity = repository
+                .findBySymbol(symbol)
+                .map(existing -> {
+                    existing.updateName(name);
+                    return existing;
+                })
+                .orElseGet(() -> new CoinJpaEntity(symbol, name));
+        return repository.save(entity).toDomain();
     }
 }

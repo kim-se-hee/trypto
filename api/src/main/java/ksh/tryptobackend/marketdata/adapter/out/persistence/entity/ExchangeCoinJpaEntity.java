@@ -6,13 +6,19 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "exchange_coin")
+@Table(
+        name = "exchange_coin",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uk_exchange_coin",
+                        columnNames = {"exchange_id", "coin_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ExchangeCoinJpaEntity {
@@ -34,6 +40,10 @@ public class ExchangeCoinJpaEntity {
     public ExchangeCoinJpaEntity(Long exchangeId, Long coinId, String displayName) {
         this.exchangeId = exchangeId;
         this.coinId = coinId;
+        this.displayName = displayName;
+    }
+
+    public void updateDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
