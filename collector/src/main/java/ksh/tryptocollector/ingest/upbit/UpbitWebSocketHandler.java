@@ -14,8 +14,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
 import ksh.tryptocollector.distribute.TickerSinkProcessor;
+import ksh.tryptocollector.ingest.ConnectionLiveness;
 import ksh.tryptocollector.ingest.ExchangeTickerStream;
 import ksh.tryptocollector.ingest.RestPollingFallback;
+import ksh.tryptocollector.ingest.WebSocketLivenessGuard;
 import ksh.tryptocollector.metadata.MarketInfoCache;
 import ksh.tryptocollector.model.Exchange;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
     private final MarketInfoCache marketInfoCache;
     private final TickerSinkProcessor tickerSinkProcessor;
     private final RestPollingFallback restPollingFallback;
+    private final WebSocketLivenessGuard livenessGuard;
     private final Counter reconnectCounter;
 
     public UpbitWebSocketHandler(
@@ -41,11 +44,13 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
             MarketInfoCache marketInfoCache,
             TickerSinkProcessor tickerSinkProcessor,
             RestPollingFallback restPollingFallback,
+            WebSocketLivenessGuard livenessGuard,
             MeterRegistry registry) {
         this.objectMapper = objectMapper;
         this.marketInfoCache = marketInfoCache;
         this.tickerSinkProcessor = tickerSinkProcessor;
         this.restPollingFallback = restPollingFallback;
+        this.livenessGuard = livenessGuard;
         this.reconnectCounter = Counter.builder("websocket.reconnect")
                 .tag("exchange", Exchange.UPBIT.name())
                 .register(registry);
@@ -60,16 +65,17 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 CountDownLatch closeLatch = new CountDownLatch(1);
+                ConnectionLiveness liveness = new ConnectionLiveness();
                 WebSocket ws = httpClient
                         .newWebSocketBuilder()
-                        .buildAsync(URI.create(wsUrl), new UpbitListener(closeLatch))
+                        .buildAsync(URI.create(wsUrl), new UpbitListener(closeLatch, liveness))
                         .join();
                 String subscribeMessage = buildSubscribeMessage();
                 ws.sendText(subscribeMessage, true);
                 log.info("업비트 WebSocket 연결 시작");
                 restPollingFallback.stop(Exchange.UPBIT);
                 retryCount = 0;
-                closeLatch.await();
+                livenessGuard.watch(Exchange.UPBIT, ws, liveness, closeLatch);
             } catch (Exception e) {
                 if (Thread.currentThread().isInterrupted() || e instanceof InterruptedException) {
                     log.info("업비트 WebSocket 스레드 종료");
@@ -132,14 +138,17 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
 
     private class UpbitListener implements WebSocket.Listener {
         private final CountDownLatch closeLatch;
+        private final ConnectionLiveness liveness;
         private final ByteArrayOutputStream binaryBuffer = new ByteArrayOutputStream();
 
-        UpbitListener(CountDownLatch closeLatch) {
+        UpbitListener(CountDownLatch closeLatch, ConnectionLiveness liveness) {
             this.closeLatch = closeLatch;
+            this.liveness = liveness;
         }
 
         @Override
         public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
+            liveness.recordReceive();
             byte[] bytes = new byte[data.remaining()];
             data.get(bytes);
             binaryBuffer.write(bytes, 0, bytes.length);
@@ -154,7 +163,22 @@ public class UpbitWebSocketHandler implements ExchangeTickerStream {
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+            liveness.recordReceive();
             handleMessage(data.toString().getBytes());
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPing(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
+            webSocket.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
+            liveness.recordReceive();
             webSocket.request(1);
             return null;
         }

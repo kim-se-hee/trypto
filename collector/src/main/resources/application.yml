@@ -36,6 +36,10 @@ exchange:
     candle-url: https://api.binance.com/api/v3/klines
     ws-url: wss://stream.binance.com:9443/ws/!miniTicker@arr
 
+websocket:
+  ping-interval-seconds: 30
+  stale-threshold-seconds: 60
+
 backfill:
   request-interval-ms: 150
   max-pages: 10
