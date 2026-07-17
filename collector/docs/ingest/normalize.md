@@ -59,6 +59,23 @@ WebSocketHandler → TickerMessage(파싱) → toNormalized(displayName) → Nor
 
 모든 거래소 WebSocket 핸들러가 구현하는 인터페이스. `void connect()` 메서드 하나만 정의한다. 패키지: `exchange`
 
+## 연결 생존 감시 (Ping-Pong)
+
+수신 전용 WebSocket은 반열림(half-open) 연결 — 상대와 중간 경로(NAT 등)는 죽었는데 우리 소켓만 ESTABLISHED로 남는 상태 — 을 영원히 감지하지 못한다. 2026-07 프로덕션에서 호스트 자동 보안 업데이트가 NAT 연결 추적 기록을 초기화하며 세 거래소 시세가 6시간 동결된 사고의 재발 방지책이다.
+
+`WebSocketLivenessGuard`(공용 컴포넌트)가 각 핸들러의 connect 스레드에서 감시 루프를 돈다.
+
+```
+connect() → 연결 성립 → livenessGuard.watch()가 closeLatch를 주기 대기
+  ├─ 주기(기본 30초)마다: PING 프레임 발신 — 죽은 경로면 RST가 돌아와 onError 발동
+  ├─ 무수신(기본 60초) 초과 시: webSocket.abort() 후 반환 → connect() 루프가 재연결
+  └─ closeLatch 해제(onClose/onError) 시: 반환 → connect() 루프가 재연결
+```
+
+- `ConnectionLiveness` — 연결당 수신 시계. 리스너의 모든 수신 콜백(onText/onBinary/onPing/onPong)이 갱신한다. 시세가 뜸해도 서버 측 신호(업비트·빗썸 상태 메시지, 바이낸스 서버 ping)가 계속 갱신하므로 무수신 임계값 초과는 항상 비정상이다.
+- 주기적 PING 발신은 업비트·빗썸 공식 문서의 클라이언트 PING 전송 요구(120초 Idle Timeout 방지)도 충족한다. 바이낸스는 서버가 20초마다 ping을 보내고 JDK가 pong을 자동 응답하며, 연결 수명이 최대 24시간이라 재연결이 일상 동작이다.
+- 설정: `websocket.ping-interval-seconds`(기본 30), `websocket.stale-threshold-seconds`(기본 60)
+
 ## REST 폴링 폴백
 
 WebSocket이 계속 끊겨서 재연결도 실패하면, 그 거래소만 REST 폴링으로 갈아타 시세 수집을 이어간다. WebSocket이 다시 붙으면 폴백은 멈춘다.
