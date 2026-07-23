@@ -138,7 +138,6 @@ export function OrderPanel({
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [amount, setAmount] = useState("");
-  const [lastEdited, setLastEdited] = useState<"quantity" | "amount" | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -253,20 +252,13 @@ export function OrderPanel({
     setPrice(formatPrice(currentPrice));
   }, [currentPrice, price]);
 
+  // 화면 불변식: 수량 × 가격 = 총액. 가격·수량을 고치면 총액을, 총액을 고치면 수량을 다시 계산한다.
   const syncByPrice = (nextPrice: number) => {
     if (orderType !== "limit" || nextPrice <= 0) return;
 
-    if (lastEdited === "amount") {
-      const nextAmount = parseNumber(amount);
-      if (nextAmount <= 0) return;
-      setQuantity(formatFloored(nextAmount / nextPrice, 6));
-    }
-
-    if (lastEdited === "quantity") {
-      const nextQty = parseNumber(quantity);
-      if (nextQty <= 0) return;
-      setAmount(formatNumber(nextQty * nextPrice));
-    }
+    const nextQty = parseNumber(quantity);
+    if (nextQty <= 0) return;
+    setAmount(formatNumber(nextQty * nextPrice));
   };
 
   const handlePriceChange = (value: string) => {
@@ -285,7 +277,6 @@ export function OrderPanel({
 
   const handleQuantityChange = (value: string) => {
     setQuantity(value);
-    setLastEdited("quantity");
 
     if (orderType !== "limit") return;
 
@@ -297,7 +288,6 @@ export function OrderPanel({
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
-    setLastEdited("amount");
 
     if (orderType !== "limit") return;
 
@@ -314,7 +304,6 @@ export function OrderPanel({
       // 매수는 서버가 총액 + 수수료(총액 × 요율)를 잠그므로, 수수료 몫을 미리 빼고 총액을 잡는다.
       const nextAmount = floorTo((availableBuy * ratio) / 100 / (1 + feeRate), 0);
       setAmount(formatNumber(nextAmount));
-      setLastEdited("amount");
       if (orderType === "limit") {
         setQuantity(formatFloored(nextAmount / displayPrice, 6));
       }
@@ -324,7 +313,6 @@ export function OrderPanel({
     // 전량 매도가 실잔고와 정확히 일치하도록 표시 자릿수(6)가 아닌 잔고 자릿수(8)로 내림해 제출한다.
     const nextQty = floorTo((availableSell * ratio) / 100, QUANTITY_SCALE);
     setQuantity(formatFloored(nextQty, QUANTITY_SCALE));
-    setLastEdited("quantity");
     if (orderType === "limit") {
       setAmount(formatNumber(nextQty * displayPrice));
     }
