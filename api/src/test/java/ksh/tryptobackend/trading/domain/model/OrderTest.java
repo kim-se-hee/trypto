@@ -12,6 +12,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderComma
 import ksh.tryptobackend.trading.domain.event.OrderCanceledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderFilledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
+import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.ExchangeInfo;
 import ksh.tryptobackend.trading.domain.vo.Fill;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
@@ -278,6 +279,53 @@ class OrderTest {
                     Price.of(new BigDecimal("1000000")), Quantity.of(BigDecimal.ONE), BigDecimal.ZERO, 8, NOW);
 
             assertThat(fill.fee().value()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+    }
+
+    @Nested
+    @DisplayName("잠금 금액 계산")
+    class ReservationTest {
+
+        @Test
+        @DisplayName("지정가 매수 잠금 — KRW는 수수료를 정수 절삭해 잔고 15000에 14993 주문이 딱 맞는다")
+        void planReservation_limitBuyKrw_feeFlooredToInteger() {
+            // 14993 + floor(14993 × 0.0005) = 14993 + 7 = 15000
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, BigDecimal.ONE, new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(PAIR);
+
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("15000"));
+        }
+
+        @Test
+        @DisplayName("지정가 매수 잠금 — 기축통화 자릿수 8(USDT)은 수수료를 절삭 없이 더한다")
+        void planReservation_limitBuyOverseas_feeKept8Decimals() {
+            TradingPair overseasPair = new TradingPair(100L, 1L, 8);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, BigDecimal.ONE, new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(overseasPair);
+
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("15000.4965"));
+        }
+
+        @Test
+        @DisplayName("지정가 매도 잠금 — 수수료 없이 수량만 잠근다")
+        void planReservation_limitSell_locksQuantityOnly() {
+            Order order = Order.create(
+                    cmd(Side.SELL, OrderType.LIMIT, new BigDecimal("0.5"), new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(PAIR);
+
+            assertThat(lock.coinId()).isEqualTo(PAIR.tradedCoinId());
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("0.5"));
         }
     }
 
