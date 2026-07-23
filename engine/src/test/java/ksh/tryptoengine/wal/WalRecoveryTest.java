@@ -53,7 +53,7 @@ class WalRecoveryTest {
         fakeMarketRef = new MarketRefResolver(null) {
             @Override
             public MarketRef resolve(Long exchangeCoinId) {
-                return new MarketRef(2L, 1L, new BigDecimal("0.0005"));
+                return new MarketRef(2L, 1L, new BigDecimal("0.0005"), 0);
             }
         };
         dbWriter = new CapturingDbWriter();

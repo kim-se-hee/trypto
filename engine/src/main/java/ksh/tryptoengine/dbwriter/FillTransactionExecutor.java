@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import ksh.tryptoengine.matching.MarketRefResolver;
 import ksh.tryptoengine.matching.OrderDetail;
 import ksh.tryptoengine.matching.Side;
 import ksh.tryptoengine.metrics.EngineMetrics;
@@ -38,18 +39,21 @@ public class FillTransactionExecutor {
     private final ObjectMapper objectMapper;
     private final EngineMetrics metrics;
     private final OutboxPublisher outboxPublisher;
+    private final MarketRefResolver marketRefResolver;
 
     public FillTransactionExecutor(
             JdbcTemplate jdbc,
             HoldingIncrementalUpdater holdingUpdater,
             @Qualifier("engineObjectMapper") ObjectMapper objectMapper,
             EngineMetrics metrics,
-            OutboxPublisher outboxPublisher) {
+            OutboxPublisher outboxPublisher,
+            MarketRefResolver marketRefResolver) {
         this.jdbc = jdbc;
         this.holdingUpdater = holdingUpdater;
         this.objectMapper = objectMapper;
         this.metrics = metrics;
         this.outboxPublisher = outboxPublisher;
+        this.marketRefResolver = marketRefResolver;
     }
 
     @Transactional
@@ -207,7 +211,19 @@ public class FillTransactionExecutor {
             log.warn("feeRate missing orderId={}, fee=0 처리", cmd.order().orderId());
             feeRate = BigDecimal.ZERO;
         }
-        return fillAmount(cmd).multiply(feeRate).setScale(MONEY_SCALE, RoundingMode.FLOOR);
+        return fillAmount(cmd).multiply(feeRate).setScale(feeScale(cmd), RoundingMode.FLOOR);
+    }
+
+    // 수수료는 기축통화 자릿수로 내림 절삭한다 (DOMESTIC=KRW 정수, OVERSEAS=USDT 8자리)
+    private int feeScale(FillCommand cmd) {
+        MarketRefResolver.MarketRef ref =
+                marketRefResolver.resolve(cmd.order().pair().exchangeCoinId());
+        if (ref == null) {
+            log.warn(
+                    "market ref missing orderId={}, feeScale={} 처리", cmd.order().orderId(), MONEY_SCALE);
+            return MONEY_SCALE;
+        }
+        return ref.feeScale();
     }
 
     private record Settlement(OrderDetail order, BigDecimal refund, Long creditCoinId, BigDecimal creditAmount) {}

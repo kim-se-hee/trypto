@@ -41,7 +41,7 @@ sequenceDiagram
    - 체결 레코드 INSERT
    - `HoldingIncrementalUpdater`로 평단·수량 증분 업데이트
    - 잔고 정산: 잠긴 코인에서 `locked -= lockedAmount` 하고, 매수는 예약액과 실제 체결액(체결가 × 수량 + 수수료)의 차액을 `available`로 환불한다. 이어서 반대 자산을 지급한다 — 매수는 코인 수량을, 매도는 대금(체결금액 − 수수료)을 `available`에 더한다(UPSERT)
-   - 수수료 확정: `MarketRefResolver`가 참조 테이블에서 해석한 `feeRate`로 `fee = floor(floor(체결가 × 수량, 8) × feeRate, 8)`을 계산해 체결 UPDATE에 함께 기록한다
+   - 수수료 확정: `MarketRefResolver`가 참조 테이블에서 해석한 `feeRate`와 절삭 자릿수(`market_type` 이 DOMESTIC이면 0, OVERSEAS면 8)로 `fee = floor(floor(체결가 × 수량, 8) × feeRate, 자릿수)`를 계산해 체결 UPDATE에 함께 기록한다
    - `outbox` 테이블에 `OrderFilledEvent` INSERT
 
 ---

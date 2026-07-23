@@ -71,13 +71,13 @@ public enum OrderMode {
                 Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
             return new BalanceChange.Lock(
                     pair.quoteCoinId(),
-                    reservedDebit(quantity, limitPrice, feeRate).value());
+                    reservedDebit(quantity, limitPrice, feeRate, pair).value());
         }
 
         @Override
         public List<BalanceChange> planSettlementChanges(
                 Quantity quantity, Price limitPrice, BigDecimal feeRate, Fill fill, TradingPair pair) {
-            Money reserved = reservedDebit(quantity, limitPrice, feeRate);
+            Money reserved = reservedDebit(quantity, limitPrice, feeRate, pair);
             Money settled = settlementDebit(quantity, fill);
             return List.of(
                     new BalanceChange.ConsumeLocked(pair.quoteCoinId(), settled.value()),
@@ -156,9 +156,10 @@ public enum OrderMode {
         return InterpretedOrderInput.limit(volume, limitPrice);
     }
 
-    private static Money reservedDebit(Quantity quantity, Price limitPrice, BigDecimal feeRate) {
+    private static Money reservedDebit(Quantity quantity, Price limitPrice, BigDecimal feeRate, TradingPair pair) {
         Money notional = limitPrice.times(quantity);
-        return notional.plus(notional.times(feeRate));
+        Money fee = notional.times(feeRate).floorTo(pair.quoteScale());
+        return notional.plus(fee);
     }
 
     private static Money settlementDebit(Quantity quantity, Fill fill) {

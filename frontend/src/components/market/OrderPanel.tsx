@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,11 @@ function formatNumber(value: number, digits = 0) {
   });
 }
 
+// 가격은 1 미만 코인도 있으므로 자릿수를 자르지 않고 소수 8자리까지 그대로 보여준다.
+function formatPrice(value: number) {
+  return value.toLocaleString("ko-KR", { maximumFractionDigits: 8 });
+}
+
 // 잔고는 서버에서 소수 8자리 내림으로 관리된다. 수량을 반올림으로 만들면
 // 실잔고보다 큰 값이 제출되어 INSUFFICIENT_BALANCE 가 나므로 수량은 항상 내림한다.
 const QUANTITY_SCALE = 8;
@@ -76,6 +81,18 @@ function formatFloored(value: number, digits: number) {
 function parseNumber(value: string) {
   const parsed = Number(value.replaceAll(",", ""));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// 매수 100%의 최대 주문 금액. 서버가 주문 금액 + 수수료를 잠그므로 수수료 몫을 미리 비워둔다.
+// KRW는 서버가 수수료를 정수 원으로 내림 절삭하므로 X + floor(X × 요율) ≤ 잔고인 최대 정수 X를 찾고,
+// USDT는 8자리 수수료 그대로라 잔고 / (1 + 요율) 내림으로 충분하다.
+function maxBuyAmount(available: number, feeRate: number, integerFee: boolean) {
+  let max = Math.floor(available / (1 + feeRate));
+  if (!integerFee) return max;
+  while (max + 1 + Math.floor((max + 1) * feeRate) <= available) {
+    max += 1;
+  }
+  return max;
 }
 
 function toClientOrderId() {
@@ -133,7 +150,6 @@ export function OrderPanel({
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [amount, setAmount] = useState("");
-  const [lastEdited, setLastEdited] = useState<"quantity" | "amount" | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -229,44 +245,50 @@ export function OrderPanel({
     void loadHistory(true);
   }, [activeTab, historyFilter, orderTargetIds, loadHistory]);
 
+  // 지정가 입력 편의를 위해 가격 칸을 현재가로 미리 채운다. 사용자가 만진 값은 시세 갱신으로 덮어쓰지 않는다.
+  const priceTouched = useRef(false);
+  const currentPriceRef = useRef(currentPrice);
+  currentPriceRef.current = currentPrice;
+
   useEffect(() => {
-    setPrice("");
+    priceTouched.current = false;
+    setPrice(currentPriceRef.current > 0 ? formatPrice(currentPriceRef.current) : "");
     setQuantity("");
     setAmount("");
     setSubmitError("");
   }, [coinSymbol, orderTargetIds, activeTab]);
 
+  // 코인 전환 시점에 시세가 아직 없었다면 첫 시세 도착 때 한 번 채운다.
+  useEffect(() => {
+    if (priceTouched.current || currentPrice <= 0 || price !== "") return;
+    setPrice(formatPrice(currentPrice));
+  }, [currentPrice, price]);
+
+  // 화면 불변식: 수량 × 가격 = 총액. 가격·수량을 고치면 총액을, 총액을 고치면 수량을 다시 계산한다.
   const syncByPrice = (nextPrice: number) => {
     if (orderType !== "limit" || nextPrice <= 0) return;
 
-    if (lastEdited === "amount") {
-      const nextAmount = parseNumber(amount);
-      if (nextAmount <= 0) return;
-      setQuantity(formatFloored(nextAmount / nextPrice, 6));
-    }
-
-    if (lastEdited === "quantity") {
-      const nextQty = parseNumber(quantity);
-      if (nextQty <= 0) return;
-      setAmount(formatNumber(nextQty * nextPrice));
-    }
+    const nextQty = parseNumber(quantity);
+    if (nextQty <= 0) return;
+    setAmount(formatNumber(nextQty * nextPrice));
   };
 
   const handlePriceChange = (value: string) => {
+    priceTouched.current = true;
     setPrice(value);
     syncByPrice(parseNumber(value));
   };
 
   const handleStepPrice = (delta: number) => {
+    priceTouched.current = true;
     const base = parseNumber(price) || currentPrice;
     const next = Math.max(0, base + delta);
-    setPrice(formatNumber(next));
+    setPrice(formatPrice(next));
     syncByPrice(next);
   };
 
   const handleQuantityChange = (value: string) => {
     setQuantity(value);
-    setLastEdited("quantity");
 
     if (orderType !== "limit") return;
 
@@ -278,7 +300,6 @@ export function OrderPanel({
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
-    setLastEdited("amount");
 
     if (orderType !== "limit") return;
 
@@ -292,10 +313,12 @@ export function OrderPanel({
     if (!isTradeTab) return;
 
     if (isBuy) {
-      // 매수는 서버가 총액 + 수수료(총액 × 요율)를 잠그므로, 수수료 몫을 미리 빼고 총액을 잡는다.
-      const nextAmount = floorTo((availableBuy * ratio) / 100 / (1 + feeRate), 0);
+      // 100%만 수수료 몫을 비워 최대 금액을 잡는다. 그 미만 비율은 수수료 이상의 여유가 남아 그대로 둔다.
+      const nextAmount =
+        ratio === 100
+          ? maxBuyAmount(availableBuy, feeRate, baseCurrency === "KRW")
+          : floorTo((availableBuy * ratio) / 100, 0);
       setAmount(formatNumber(nextAmount));
-      setLastEdited("amount");
       if (orderType === "limit") {
         setQuantity(formatFloored(nextAmount / displayPrice, 6));
       }
@@ -305,7 +328,6 @@ export function OrderPanel({
     // 전량 매도가 실잔고와 정확히 일치하도록 표시 자릿수(6)가 아닌 잔고 자릿수(8)로 내림해 제출한다.
     const nextQty = floorTo((availableSell * ratio) / 100, QUANTITY_SCALE);
     setQuantity(formatFloored(nextQty, QUANTITY_SCALE));
-    setLastEdited("quantity");
     if (orderType === "limit") {
       setAmount(formatNumber(nextQty * displayPrice));
     }

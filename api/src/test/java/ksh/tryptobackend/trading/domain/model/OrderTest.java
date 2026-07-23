@@ -12,6 +12,7 @@ import ksh.tryptobackend.trading.application.port.in.dto.command.PlaceOrderComma
 import ksh.tryptobackend.trading.domain.event.OrderCanceledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderFilledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
+import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.ExchangeInfo;
 import ksh.tryptobackend.trading.domain.vo.Fill;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
@@ -29,7 +30,7 @@ class OrderTest {
 
     private static final ExchangeInfo DOMESTIC_EXCHANGE_INFO =
             new ExchangeInfo(new BigDecimal("0.0005"), new BigDecimal("5000"), new BigDecimal("1000000000"));
-    private static final TradingPair PAIR = new TradingPair(100L, 1L);
+    private static final TradingPair PAIR = new TradingPair(100L, 1L, 0);
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
 
     private static PlaceOrderCommand cmd(Side side, OrderType orderType, BigDecimal volume, BigDecimal price) {
@@ -215,12 +216,12 @@ class OrderTest {
             assertThat(order.getFilledAmount()).isNull();
             assertThat(order.getFeeAmount()).isNull();
 
-            order.fill(Price.of(executionPrice), NOW);
+            order.fill(Price.of(executionPrice), PAIR.quoteScale(), NOW);
 
+            // 체결 금액 495000 × 0.0005 = 247.5 → KRW(자릿수 0) 내림 절삭 247
             BigDecimal expectedAmount = order.getQuantity().value().multiply(executionPrice);
             assertThat(order.getFilledAmount().value()).isEqualByComparingTo(expectedAmount);
-            assertThat(order.getFeeAmount().value())
-                    .isEqualByComparingTo(expectedAmount.multiply(new BigDecimal("0.0005")));
+            assertThat(order.getFeeAmount().value()).isEqualByComparingTo(new BigDecimal("247"));
         }
 
         @Test
@@ -234,7 +235,7 @@ class OrderTest {
 
             assertThat(order.getFilledAmount()).isNull();
 
-            order.fill(Price.of(executionPrice), NOW);
+            order.fill(Price.of(executionPrice), PAIR.quoteScale(), NOW);
 
             BigDecimal expectedAmount = sellQuantity.multiply(executionPrice);
             assertThat(order.getFilledAmount().value()).isEqualByComparingTo(expectedAmount);
@@ -246,21 +247,85 @@ class OrderTest {
     class FeeCalculationTest {
 
         @Test
-        @DisplayName("정상 수수료 계산 — 체결 금액(가격 × 수량) × 수수료율")
+        @DisplayName("정상 수수료 계산 — 체결 금액(가격 × 수량) × 수수료율, 기축통화 자릿수 8이면 그대로")
         void settle_normal_correctFee() {
             Fill fill = Fill.settle(
-                    Price.of(new BigDecimal("99726.44")), Quantity.of(BigDecimal.ONE), new BigDecimal("0.0005"), NOW);
+                    Price.of(new BigDecimal("99726.44")),
+                    Quantity.of(BigDecimal.ONE),
+                    new BigDecimal("0.0005"),
+                    8,
+                    NOW);
 
             assertThat(fill.fee().value()).isEqualByComparingTo(new BigDecimal("49.86322000"));
         }
 
         @Test
+        @DisplayName("기축통화 자릿수 0(KRW) — 수수료를 정수로 내림 절삭")
+        void settle_zeroScale_feeFlooredToInteger() {
+            Fill fill = Fill.settle(
+                    Price.of(new BigDecimal("99726.44")),
+                    Quantity.of(BigDecimal.ONE),
+                    new BigDecimal("0.0005"),
+                    0,
+                    NOW);
+
+            assertThat(fill.fee().value()).isEqualByComparingTo(new BigDecimal("49"));
+        }
+
+        @Test
         @DisplayName("수수료율 0% — 수수료 0")
         void settle_zeroRate_zeroFee() {
-            Fill fill =
-                    Fill.settle(Price.of(new BigDecimal("1000000")), Quantity.of(BigDecimal.ONE), BigDecimal.ZERO, NOW);
+            Fill fill = Fill.settle(
+                    Price.of(new BigDecimal("1000000")), Quantity.of(BigDecimal.ONE), BigDecimal.ZERO, 8, NOW);
 
             assertThat(fill.fee().value()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+    }
+
+    @Nested
+    @DisplayName("잠금 금액 계산")
+    class ReservationTest {
+
+        @Test
+        @DisplayName("지정가 매수 잠금 — KRW는 수수료를 정수 절삭해 잔고 15000에 14993 주문이 딱 맞는다")
+        void planReservation_limitBuyKrw_feeFlooredToInteger() {
+            // 14993 + floor(14993 × 0.0005) = 14993 + 7 = 15000
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, BigDecimal.ONE, new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(PAIR);
+
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("15000"));
+        }
+
+        @Test
+        @DisplayName("지정가 매수 잠금 — 기축통화 자릿수 8(USDT)은 수수료를 절삭 없이 더한다")
+        void planReservation_limitBuyOverseas_feeKept8Decimals() {
+            TradingPair overseasPair = new TradingPair(100L, 1L, 8);
+            Order order = Order.create(
+                    cmd(Side.BUY, OrderType.LIMIT, BigDecimal.ONE, new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(overseasPair);
+
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("15000.4965"));
+        }
+
+        @Test
+        @DisplayName("지정가 매도 잠금 — 수수료 없이 수량만 잠근다")
+        void planReservation_limitSell_locksQuantityOnly() {
+            Order order = Order.create(
+                    cmd(Side.SELL, OrderType.LIMIT, new BigDecimal("0.5"), new BigDecimal("14993")),
+                    ctx(new BigDecimal("14993")),
+                    NOW);
+
+            BalanceChange.Lock lock = order.planReservation(PAIR);
+
+            assertThat(lock.coinId()).isEqualTo(PAIR.tradedCoinId());
+            assertThat(lock.amount()).isEqualByComparingTo(new BigDecimal("0.5"));
         }
     }
 
@@ -277,7 +342,7 @@ class OrderTest {
                     NOW);
             LocalDateTime fillTime = LocalDateTime.of(2026, 3, 17, 12, 0, 0);
 
-            order.fill(Price.of(new BigDecimal("100000000")), fillTime);
+            order.fill(Price.of(new BigDecimal("100000000")), PAIR.quoteScale(), fillTime);
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.FILLED);
             assertThat(order.getFilledAt()).isEqualTo(fillTime);
@@ -291,7 +356,8 @@ class OrderTest {
                     ctx(new BigDecimal("100274000")),
                     NOW);
 
-            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("100274000")), LocalDateTime.now()))
+            assertThatThrownBy(() ->
+                            order.fill(Price.of(new BigDecimal("100274000")), PAIR.quoteScale(), LocalDateTime.now()))
                     .isInstanceOf(CustomException.class);
         }
 
@@ -303,7 +369,7 @@ class OrderTest {
                     ctx(new BigDecimal("100000000")),
                     NOW);
 
-            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("100000001")), NOW))
+            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("100000001")), PAIR.quoteScale(), NOW))
                     .isInstanceOf(CustomException.class);
         }
 
@@ -315,7 +381,7 @@ class OrderTest {
                     ctx(new BigDecimal("110000000")),
                     NOW);
 
-            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("109999999")), NOW))
+            assertThatThrownBy(() -> order.fill(Price.of(new BigDecimal("109999999")), PAIR.quoteScale(), NOW))
                     .isInstanceOf(CustomException.class);
         }
     }
@@ -426,7 +492,7 @@ class OrderTest {
                     cmd(Side.BUY, OrderType.LIMIT, new BigDecimal("0.005"), new BigDecimal("100000000")),
                     ctx(new BigDecimal("100000000")),
                     NOW);
-            order.fill(Price.of(new BigDecimal("100000000")), LocalDateTime.now());
+            order.fill(Price.of(new BigDecimal("100000000")), PAIR.quoteScale(), LocalDateTime.now());
 
             assertThat(order.isPending()).isFalse();
         }

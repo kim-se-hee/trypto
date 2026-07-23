@@ -33,17 +33,14 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());
         BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(exchangeCoinId);
 
-        return new MarketInfo(
-                new TradingPair(mapping.coinId(), detail.baseCurrencyCoinId()),
-                toExchangeInfo(detail),
-                Price.of(currentPrice));
+        return new MarketInfo(toTradingPair(mapping, detail), toExchangeInfo(detail), Price.of(currentPrice));
     }
 
     @Override
     public TradingPair getTradingPair(Long exchangeCoinId) {
         ExchangeCoinMappingResult mapping = getMapping(exchangeCoinId);
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());
-        return new TradingPair(mapping.coinId(), detail.baseCurrencyCoinId());
+        return toTradingPair(mapping, detail);
     }
 
     @Override
@@ -68,8 +65,17 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 
+    private TradingPair toTradingPair(ExchangeCoinMappingResult mapping, ExchangeDetailResult detail) {
+        return new TradingPair(
+                mapping.coinId(), detail.baseCurrencyCoinId(), policyOf(detail).getQuoteScale());
+    }
+
     private ExchangeInfo toExchangeInfo(ExchangeDetailResult detail) {
-        OrderAmountPolicy policy = detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
+        OrderAmountPolicy policy = policyOf(detail);
         return new ExchangeInfo(detail.feeRate(), policy.getMinAmount(), policy.getMaxAmount());
+    }
+
+    private OrderAmountPolicy policyOf(ExchangeDetailResult detail) {
+        return detail.domestic() ? OrderAmountPolicy.DOMESTIC : OrderAmountPolicy.OVERSEAS;
     }
 }
