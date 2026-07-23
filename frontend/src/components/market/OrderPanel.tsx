@@ -292,7 +292,8 @@ export function OrderPanel({
     if (!isTradeTab) return;
 
     if (isBuy) {
-      const nextAmount = floorTo((availableBuy * ratio) / 100, 0);
+      // 매수는 서버가 총액 + 수수료(총액 × 요율)를 잠그므로, 수수료 몫을 미리 빼고 총액을 잡는다.
+      const nextAmount = floorTo((availableBuy * ratio) / 100 / (1 + feeRate), 0);
       setAmount(formatNumber(nextAmount));
       setLastEdited("amount");
       if (orderType === "limit") {
