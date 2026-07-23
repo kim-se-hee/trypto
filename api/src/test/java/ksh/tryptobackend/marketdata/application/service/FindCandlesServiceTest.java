@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -300,6 +301,89 @@ class FindCandlesServiceTest {
 
             // Then
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("진행 중 캔들 덧붙이기")
+    class InProgressCandle {
+
+        private static final Candle CLOSED_YESTERDAY = candleAt("2026-07-22T00:00:00Z");
+        private static final Candle IN_PROGRESS_TODAY = candleAt("2026-07-23T00:00:00Z");
+
+        @Test
+        @DisplayName("커서가 없으면 진행 중 캔들을 맨 끝에 덧붙인다")
+        void findCandles_noCursor_appendsInProgress() {
+            // Given
+            FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of(CLOSED_YESTERDAY));
+            when(candleQueryPort.findInProgressCandle(any())).thenReturn(Optional.of(IN_PROGRESS_TODAY));
+
+            // When
+            List<Candle> result = findCandlesService.findCandles(query);
+
+            // Then
+            assertThat(result).containsExactly(CLOSED_YESTERDAY, IN_PROGRESS_TODAY);
+        }
+
+        @Test
+        @DisplayName("커서가 있으면 진행 중 캔들을 조회하지 않고 닫힌 봉만 반환한다")
+        void findCandles_withCursor_doesNotAppendInProgress() {
+            // Given
+            FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, "2026-07-22T00:00:00Z");
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of(CLOSED_YESTERDAY));
+
+            // When
+            List<Candle> result = findCandlesService.findCandles(query);
+
+            // Then
+            assertThat(result).containsExactly(CLOSED_YESTERDAY);
+            verify(candleQueryPort, never()).findInProgressCandle(any());
+        }
+
+        @Test
+        @DisplayName("진행 중 캔들이 없으면 닫힌 봉만 반환한다")
+        void findCandles_noInProgress_returnsClosedOnly() {
+            // Given
+            FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of(CLOSED_YESTERDAY));
+            when(candleQueryPort.findInProgressCandle(any())).thenReturn(Optional.empty());
+
+            // When
+            List<Candle> result = findCandlesService.findCandles(query);
+
+            // Then
+            assertThat(result).containsExactly(CLOSED_YESTERDAY);
+        }
+
+        @Test
+        @DisplayName("마지막 닫힌 봉과 진행 중 캔들의 시각이 같으면 중복하지 않고 새 값으로 교체한다")
+        void findCandles_sameTime_replacesInsteadOfDuplicating() {
+            // Given — 구간 마감 직후 집계 Task 가 이미 오늘 봉(옛 값)을 써 둔 상황
+            Candle staleToday = new Candle(
+                    Instant.parse("2026-07-23T00:00:00Z"),
+                    new BigDecimal("100"),
+                    new BigDecimal("100"),
+                    new BigDecimal("100"),
+                    new BigDecimal("100"));
+            FindCandlesQuery query = new FindCandlesQuery("UPBIT", "BTC", "1d", 60, null);
+            when(candleQueryPort.findByFilter(any())).thenReturn(List.of(CLOSED_YESTERDAY, staleToday));
+            when(candleQueryPort.findInProgressCandle(any())).thenReturn(Optional.of(IN_PROGRESS_TODAY));
+
+            // When
+            List<Candle> result = findCandlesService.findCandles(query);
+
+            // Then — 같은 시각이면 옛 봉을 진행봉으로 대체해 개수가 늘지 않는다
+            assertThat(result).containsExactly(CLOSED_YESTERDAY, IN_PROGRESS_TODAY);
+        }
+
+        private static Candle candleAt(String time) {
+            return new Candle(
+                    Instant.parse(time),
+                    new BigDecimal("100"),
+                    new BigDecimal("110"),
+                    new BigDecimal("90"),
+                    new BigDecimal("105"));
         }
     }
 }

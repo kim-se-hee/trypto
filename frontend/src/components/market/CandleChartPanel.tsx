@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { formatChangeRate, formatPrice, getCurrencySymbol } from "@/lib/formatters";
 import {
+  candleTzOffsetMinutes,
   findCandles,
   normalizeCandleTime,
   resolveCandleExchangeCode,
@@ -258,11 +259,17 @@ export function CandleChartPanel({
       connect();
     }
 
+    const offsetMinutes = candleTzOffsetMinutes(resolveCandleExchangeCode(exchangeKey) ?? "");
+
     const unsubscribe = subscribeTickers(exchangeId, (tickers) => {
       const ticker = tickers.find((item) => item.symbol === coin.symbol);
       if (!ticker || !Number.isFinite(ticker.price) || ticker.price <= 0) return;
 
-      const time = normalizeCandleTime(new Date(ticker.timestamp).toISOString(), interval);
+      const time = normalizeCandleTime(
+        new Date(ticker.timestamp).toISOString(),
+        interval,
+        offsetMinutes,
+      );
       setLive((previous) => {
         const opened = previous?.key === requestKey ? previous.candles : EMPTY_CANDLES;
         return { key: requestKey, candles: foldTick(opened, time, ticker.price) };
@@ -270,7 +277,7 @@ export function CandleChartPanel({
     });
 
     return unsubscribe;
-  }, [coin.symbol, exchangeId, interval, requestKey]);
+  }, [coin.symbol, exchangeId, exchangeKey, interval, requestKey]);
 
   const candles = loaded?.key === requestKey ? loaded.candles : EMPTY_CANDLES;
   const liveCandles = live?.key === requestKey ? live.candles : EMPTY_CANDLES;
