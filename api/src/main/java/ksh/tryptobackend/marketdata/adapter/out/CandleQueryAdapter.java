@@ -7,6 +7,7 @@ import com.influxdb.query.FluxTable;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,10 @@ public class CandleQueryAdapter implements CandleQueryPort {
     private static final String AGG_COLUMN = "agg";
     private static final int OHLC_FIELD_COUNT = 4;
 
+    // 거래소별 캔들 일 경계 타임존. 빗썸만 00:00 KST(Asia/Seoul), 업비트·바이낸스는 00:00 UTC.
+    private static final String BITHUMB = "BITHUMB";
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     private final InfluxDBClient influxDBClient;
     private final Clock clock;
 
@@ -57,8 +62,7 @@ public class CandleQueryAdapter implements CandleQueryPort {
     @Override
     public Optional<Candle> findInProgressCandle(CandleFilter filter) {
         Instant now = Instant.now(clock);
-        // Phase 1: 전 거래소 일 경계를 00:00 UTC 로 둔다(업비트·바이낸스 실제 경계). 빗썸(00:00 KST)은 Phase 2에서 분기한다.
-        CandleWindow window = CandleWindow.of(filter.interval(), now, ZoneOffset.UTC);
+        CandleWindow window = CandleWindow.of(filter.interval(), now, candleZone(filter.exchange()));
 
         List<Ohlc> parts = new ArrayList<>();
         for (Segment segment : buildSegments(window, now)) {
@@ -68,6 +72,10 @@ public class CandleQueryAdapter implements CandleQueryPort {
             return Optional.empty();
         }
         return Optional.of(combine(window.periodStart(), parts));
+    }
+
+    private ZoneId candleZone(String exchange) {
+        return BITHUMB.equals(exchange) ? KST : ZoneOffset.UTC;
     }
 
     // 현재 구간을 코스별로 쪼갠다: 완성된 날은 일봉, 완성된 시간은 1시간봉, 완성된 분은 1분봉, 진행 중인 분은 원본 틱.
