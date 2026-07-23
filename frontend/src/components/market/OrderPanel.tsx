@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,11 @@ function formatNumber(value: number, digits = 0) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
+}
+
+// 가격은 1 미만 코인도 있으므로 자릿수를 자르지 않고 소수 8자리까지 그대로 보여준다.
+function formatPrice(value: number) {
+  return value.toLocaleString("ko-KR", { maximumFractionDigits: 8 });
 }
 
 // 잔고는 서버에서 소수 8자리 내림으로 관리된다. 수량을 반올림으로 만들면
@@ -229,12 +234,24 @@ export function OrderPanel({
     void loadHistory(true);
   }, [activeTab, historyFilter, orderTargetIds, loadHistory]);
 
+  // 지정가 입력 편의를 위해 가격 칸을 현재가로 미리 채운다. 사용자가 만진 값은 시세 갱신으로 덮어쓰지 않는다.
+  const priceTouched = useRef(false);
+  const currentPriceRef = useRef(currentPrice);
+  currentPriceRef.current = currentPrice;
+
   useEffect(() => {
-    setPrice("");
+    priceTouched.current = false;
+    setPrice(currentPriceRef.current > 0 ? formatPrice(currentPriceRef.current) : "");
     setQuantity("");
     setAmount("");
     setSubmitError("");
   }, [coinSymbol, orderTargetIds, activeTab]);
+
+  // 코인 전환 시점에 시세가 아직 없었다면 첫 시세 도착 때 한 번 채운다.
+  useEffect(() => {
+    if (priceTouched.current || currentPrice <= 0 || price !== "") return;
+    setPrice(formatPrice(currentPrice));
+  }, [currentPrice, price]);
 
   const syncByPrice = (nextPrice: number) => {
     if (orderType !== "limit" || nextPrice <= 0) return;
@@ -253,14 +270,16 @@ export function OrderPanel({
   };
 
   const handlePriceChange = (value: string) => {
+    priceTouched.current = true;
     setPrice(value);
     syncByPrice(parseNumber(value));
   };
 
   const handleStepPrice = (delta: number) => {
+    priceTouched.current = true;
     const base = parseNumber(price) || currentPrice;
     const next = Math.max(0, base + delta);
-    setPrice(formatNumber(next));
+    setPrice(formatPrice(next));
     syncByPrice(next);
   };
 
