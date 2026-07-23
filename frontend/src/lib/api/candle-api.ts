@@ -27,45 +27,51 @@ interface FindCandlesParams {
   cursor?: string;
 }
 
-// 4시간·일·주·월 경계는 서버·거래소와 같은 00:00 UTC 기준으로 자른다(업비트·바이낸스 일 경계 = 09시 KST = 00:00 UTC).
+// 봉 경계는 서버·거래소와 같은 시간대로 자른다. 거래소 기준 시간대의 자정에 맞추기 위해 offsetMinutes 만큼
+// 시프트한 뒤 UTC 로 내림하고 되돌린다. 업비트·바이낸스는 오프셋 0(UTC), 빗썸은 +9시간(KST).
 // 보는 사람 로컬시간으로 자르면 서버가 준 진행봉과 실시간 봉이 다른 자리에 떨어져 봉이 둘로 갈라진다.
-// 1분·1시간은 KST 가 UTC 와 정시가 겹쳐 로컬로 잘라도 같은 순간이므로 그대로 둔다.
-function normalizeCandleDate(date: Date, interval: CandleInterval): Date {
-  const normalized = new Date(date);
-  normalized.setMilliseconds(0);
+function normalizeCandleDate(date: Date, interval: CandleInterval, offsetMinutes: number): Date {
+  const offsetMs = offsetMinutes * 60_000;
+  const shifted = new Date(date.getTime() + offsetMs);
 
   switch (interval) {
     case "1m":
-      normalized.setSeconds(0);
-      return normalized;
+      shifted.setUTCSeconds(0, 0);
+      break;
     case "1h":
-      normalized.setMinutes(0, 0, 0);
-      return normalized;
+      shifted.setUTCMinutes(0, 0, 0);
+      break;
     case "4h":
-      normalized.setUTCMinutes(0, 0, 0);
-      normalized.setUTCHours(Math.floor(normalized.getUTCHours() / 4) * 4);
-      return normalized;
+      shifted.setUTCMinutes(0, 0, 0);
+      shifted.setUTCHours(Math.floor(shifted.getUTCHours() / 4) * 4);
+      break;
     case "1d":
-      normalized.setUTCHours(0, 0, 0, 0);
-      return normalized;
+      shifted.setUTCHours(0, 0, 0, 0);
+      break;
     case "1w": {
-      normalized.setUTCHours(0, 0, 0, 0);
-      const day = normalized.getUTCDay();
+      shifted.setUTCHours(0, 0, 0, 0);
+      const day = shifted.getUTCDay();
       const diff = day === 0 ? 6 : day - 1;
-      normalized.setUTCDate(normalized.getUTCDate() - diff);
-      return normalized;
+      shifted.setUTCDate(shifted.getUTCDate() - diff);
+      break;
     }
     case "1M":
-      normalized.setUTCHours(0, 0, 0, 0);
-      normalized.setUTCDate(1);
-      return normalized;
+      shifted.setUTCHours(0, 0, 0, 0);
+      shifted.setUTCDate(1);
+      break;
   }
+
+  return new Date(shifted.getTime() - offsetMs);
 }
 
-export function normalizeCandleTime(time: string, interval: CandleInterval): string {
+export function normalizeCandleTime(
+  time: string,
+  interval: CandleInterval,
+  offsetMinutes: number,
+): string {
   const date = new Date(time);
   if (Number.isNaN(date.getTime())) return time;
-  return normalizeCandleDate(date, interval).toISOString();
+  return normalizeCandleDate(date, interval, offsetMinutes).toISOString();
 }
 
 const DEFAULT_CANDLE_API_PATH =
@@ -79,6 +85,17 @@ const EXCHANGE_CODE_MAP: Record<string, string> = {
 
 export function resolveCandleExchangeCode(exchangeKey: string): string | null {
   return EXCHANGE_CODE_MAP[exchangeKey] ?? null;
+}
+
+// 거래소별 캔들 일 경계 타임존 오프셋(분). 빗썸만 KST(00:00 KST), 업비트·바이낸스는 UTC(00:00 UTC).
+const EXCHANGE_CANDLE_TZ_OFFSET_MINUTES: Record<string, number> = {
+  UPBIT: 0,
+  BINANCE: 0,
+  BITHUMB: 9 * 60,
+};
+
+export function candleTzOffsetMinutes(exchange: string): number {
+  return EXCHANGE_CANDLE_TZ_OFFSET_MINUTES[exchange] ?? 0;
 }
 
 export async function findCandles({
@@ -96,9 +113,11 @@ export async function findCandles({
     cursor,
   });
 
+  const offsetMinutes = candleTzOffsetMinutes(exchange);
+
   return data
     .map((item) => ({
-      time: normalizeCandleTime(item.time ?? item.timestamp ?? "", interval),
+      time: normalizeCandleTime(item.time ?? item.timestamp ?? "", interval, offsetMinutes),
       open: Number(item.open),
       high: Number(item.high),
       low: Number(item.low),
