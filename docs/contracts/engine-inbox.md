@@ -73,7 +73,7 @@ api가 주문 검증·잔고 차감을 DB에 커밋한 직후 발행한다.
 | `lockedCoinId` | BUY=quote(기축통화) 코인 ID, SELL=base 코인 ID |
 | `placedAt` | ISO-8601 LocalDateTime. **api JVM 로컬 타임존** |
 
-코인 ID·기축통화 ID·수수료율은 메시지에 싣지 않는다. 엔진이 `exchange_coin`/`exchange_market` 참조 테이블을 메모리에 적재해 `exchangeCoinId`로 직접 해석하고, 체결 시 `fee = floor(floor(체결가 × 수량, 8) × feeRate, 8)` 로 확정한다.
+코인 ID·기축통화 ID·수수료율은 메시지에 싣지 않는다. 엔진이 `exchange_coin`/`exchange_market` 참조 테이블을 메모리에 적재해 `exchangeCoinId`로 직접 해석하고, 체결 시 `fee = floor(floor(체결가 × 수량, 8) × feeRate, s)` 로 확정한다. `s`는 기축통화 소수 자릿수로, `exchange_market.market_type` 이 `DOMESTIC`(KRW)이면 0, `OVERSEAS`(USDT)이면 8이다. api가 주문 접수 시 점유 금액에 적용하는 절삭 자릿수와 동일하다.
 
 # 페이로드 — OrderCanceled
 
