@@ -59,7 +59,7 @@ public class Order extends AggregateRoot {
 
         order.registerEvent(OrderPlacedEvent.of(order, marketInfo));
         if (order.isMarketOrder()) {
-            order.fill(marketInfo.currentPrice(), now);
+            order.fill(marketInfo.currentPrice(), marketInfo.tradingPair().quoteScale(), now);
             order.registerEvent(OrderFilledEvent.of(order, marketInfo));
         }
         return order;
@@ -102,14 +102,14 @@ public class Order extends AggregateRoot {
         this.id = id;
     }
 
-    public void fill(Price executionPrice, LocalDateTime now) {
+    public void fill(Price executionPrice, int quoteScale, LocalDateTime now) {
         if (!isPending()) {
             throw new CustomException(ErrorCode.ORDER_NOT_FILLABLE);
         }
         if (!mode.canFillAt(limitPrice, executionPrice)) {
             throw new CustomException(ErrorCode.INVALID_FILL_PRICE);
         }
-        this.fill = Fill.settle(executionPrice, quantity, feeRate, now);
+        this.fill = Fill.settle(executionPrice, quantity, feeRate, quoteScale, now);
         this.status = OrderStatus.FILLED;
     }
 

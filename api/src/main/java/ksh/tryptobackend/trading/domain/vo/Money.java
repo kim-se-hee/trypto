@@ -32,6 +32,10 @@ public record Money(BigDecimal value) {
         return new Money(value.multiply(ratio));
     }
 
+    public Money floorTo(int scale) {
+        return new Money(value.setScale(scale, RoundingMode.FLOOR));
+    }
+
     public Price dividedBy(Quantity quantity) {
         return Price.of(value.divide(quantity.value(), SCALE, RoundingMode.FLOOR));
     }
