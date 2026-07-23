@@ -83,6 +83,18 @@ function parseNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+// 매수 100%의 최대 주문 금액. 서버가 주문 금액 + 수수료를 잠그므로 수수료 몫을 미리 비워둔다.
+// KRW는 서버가 수수료를 정수 원으로 내림 절삭하므로 X + floor(X × 요율) ≤ 잔고인 최대 정수 X를 찾고,
+// USDT는 8자리 수수료 그대로라 잔고 / (1 + 요율) 내림으로 충분하다.
+function maxBuyAmount(available: number, feeRate: number, integerFee: boolean) {
+  let max = Math.floor(available / (1 + feeRate));
+  if (!integerFee) return max;
+  while (max + 1 + Math.floor((max + 1) * feeRate) <= available) {
+    max += 1;
+  }
+  return max;
+}
+
 function toClientOrderId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -301,8 +313,11 @@ export function OrderPanel({
     if (!isTradeTab) return;
 
     if (isBuy) {
-      // 매수는 서버가 총액 + 수수료(총액 × 요율)를 잠그므로, 수수료 몫을 미리 빼고 총액을 잡는다.
-      const nextAmount = floorTo((availableBuy * ratio) / 100 / (1 + feeRate), 0);
+      // 100%만 수수료 몫을 비워 최대 금액을 잡는다. 그 미만 비율은 수수료 이상의 여유가 남아 그대로 둔다.
+      const nextAmount =
+        ratio === 100
+          ? maxBuyAmount(availableBuy, feeRate, baseCurrency === "KRW")
+          : floorTo((availableBuy * ratio) / 100, 0);
       setAmount(formatNumber(nextAmount));
       if (orderType === "limit") {
         setQuantity(formatFloored(nextAmount / displayPrice, 6));
