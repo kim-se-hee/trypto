@@ -57,6 +57,22 @@ function formatNumber(value: number, digits = 0) {
   });
 }
 
+// 잔고는 서버에서 소수 8자리 내림으로 관리된다. 수량을 반올림으로 만들면
+// 실잔고보다 큰 값이 제출되어 INSUFFICIENT_BALANCE 가 나므로 수량은 항상 내림한다.
+const QUANTITY_SCALE = 8;
+
+function floorTo(value: number, digits: number) {
+  const factor = 10 ** digits;
+  return Math.floor(value * factor) / factor;
+}
+
+function formatFloored(value: number, digits: number) {
+  return floorTo(value, digits).toLocaleString("ko-KR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+  });
+}
+
 function parseNumber(value: string) {
   const parsed = Number(value.replaceAll(",", ""));
   return Number.isFinite(parsed) ? parsed : 0;
@@ -226,7 +242,7 @@ export function OrderPanel({
     if (lastEdited === "amount") {
       const nextAmount = parseNumber(amount);
       if (nextAmount <= 0) return;
-      setQuantity(formatNumber(nextAmount / nextPrice, 6));
+      setQuantity(formatFloored(nextAmount / nextPrice, 6));
     }
 
     if (lastEdited === "quantity") {
@@ -269,24 +285,25 @@ export function OrderPanel({
     const nextAmount = parseNumber(value);
     if (nextAmount <= 0) return;
 
-    setQuantity(formatNumber(nextAmount / displayPrice, 6));
+    setQuantity(formatFloored(nextAmount / displayPrice, 6));
   };
 
   const handleRatioClick = (ratio: number) => {
     if (!isTradeTab) return;
 
     if (isBuy) {
-      const nextAmount = (availableBuy * ratio) / 100;
+      const nextAmount = floorTo((availableBuy * ratio) / 100, 0);
       setAmount(formatNumber(nextAmount));
       setLastEdited("amount");
       if (orderType === "limit") {
-        setQuantity(formatNumber(nextAmount / displayPrice, 6));
+        setQuantity(formatFloored(nextAmount / displayPrice, 6));
       }
       return;
     }
 
-    const nextQty = (availableSell * ratio) / 100;
-    setQuantity(formatNumber(nextQty, 6));
+    // 전량 매도가 실잔고와 정확히 일치하도록 표시 자릿수(6)가 아닌 잔고 자릿수(8)로 내림해 제출한다.
+    const nextQty = floorTo((availableSell * ratio) / 100, QUANTITY_SCALE);
+    setQuantity(formatFloored(nextQty, QUANTITY_SCALE));
     setLastEdited("quantity");
     if (orderType === "limit") {
       setAmount(formatNumber(nextQty * displayPrice));
@@ -573,7 +590,7 @@ export function OrderPanel({
               <div className="mt-5 flex items-center justify-between text-xs font-semibold text-muted-foreground">
                 <span>주문 가능</span>
                 <span className="font-mono text-sm text-foreground">
-                  {formatNumber(tradeBase, isBuy ? 0 : 6)} {unitLabel}
+                  {formatFloored(tradeBase, isBuy ? 0 : 6)} {unitLabel}
                 </span>
               </div>
 
