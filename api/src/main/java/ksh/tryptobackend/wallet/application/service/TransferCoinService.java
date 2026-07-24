@@ -2,6 +2,8 @@ package ksh.tryptobackend.wallet.application.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import ksh.tryptobackend.common.exception.CustomException;
+import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.common.idempotency.IdempotencyKeyCommandPort;
 import ksh.tryptobackend.common.idempotency.IdempotencyResourceType;
 import ksh.tryptobackend.wallet.application.port.in.TransferCoinUseCase;
@@ -49,6 +51,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         Wallet destination = walletQueryPort.getById(command.toWalletId());
         source.verifySameRoundAs(destination);
         source.verifyOwnedBy(command.requesterId(), investmentRoundQueryPort.getOwnerId(source.getRoundId()));
+        rejectWhenSuspended(source, destination, command.coinId());
 
         Transfer transfer = Transfer.create(command, now);
         destination.verifyHandles(
@@ -64,5 +67,12 @@ public class TransferCoinService implements TransferCoinUseCase {
         Transfer saved = transferCommandPort.save(transfer);
         idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.getTransferId());
         return saved;
+    }
+
+    private void rejectWhenSuspended(Wallet source, Wallet destination, Long coinId) {
+        if (marketDataQueryPort.isCoinSuspended(source.getExchangeId(), coinId)
+                || marketDataQueryPort.isCoinSuspended(destination.getExchangeId(), coinId)) {
+            throw new CustomException(ErrorCode.MARKET_SUSPENDED);
+        }
     }
 }
