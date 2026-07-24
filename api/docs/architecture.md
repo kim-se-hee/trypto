@@ -20,12 +20,14 @@ api 모듈은 헥사고날 아키텍처와 DDD를 따른다. 모듈은 여러 �
 
 | From | Depends on |
 |------|------------|
-| Wallet | MarketData, InvestmentRound |
+| Wallet | MarketData, InvestmentRound, Trading |
 | InvestmentRound | MarketData, Wallet |
 | Trading | Wallet, MarketData, InvestmentRound |
 | Portfolio | InvestmentRound, Wallet, MarketData, Trading |
 | Ranking | InvestmentRound, Portfolio, MarketData, Wallet, Trading |
 | RegretAnalysis | InvestmentRound, Trading, MarketData, Wallet, Portfolio |
+
+**설계 결정 — Trading↔Wallet 상호 의존.** Trading↔Wallet 은 컨텍스트 단위로는 상호 의존이지만, 유스케이스 경로 단위로는 비순환이다. 잔고 변경은 Trading→Wallet(`ApplyBalanceChangesUseCase`), 송금 시 보유 이동은 Wallet→Trading(`MoveHoldingUseCase`)으로 두 경로는 겹치지 않는다. 각 방향 모두 연동형 도메인 서비스와 ACL 을 통해서만 상대 컨텍스트의 인바운드 포트에 접근한다.
 
 컨텍스트별 의존관계 상세는 `{domain}/dependency.md` 참고.
 
