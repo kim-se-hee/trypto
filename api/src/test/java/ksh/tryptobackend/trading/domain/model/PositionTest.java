@@ -147,6 +147,27 @@ class PositionTest {
         }
 
         @Test
+        @DisplayName("보유량 초과 내보내기 — 보유량까지만 내보내고 빈 상태가 된다")
+        void releaseCappedAtHoldingQuantity() {
+            Position position = holdingOf("1000", "10");
+
+            Quantity released = position.release(Quantity.of(new BigDecimal("15")));
+
+            assertThat(released.value()).isEqualByComparingTo(new BigDecimal("10"));
+            assertThat(position.isHolding()).isFalse();
+        }
+
+        @Test
+        @DisplayName("빈 포지션 내보내기 — 아무것도 내보내지 않는다")
+        void releaseFromEmpty() {
+            Position position = Position.empty(1L, 1L);
+
+            Quantity released = position.release(Quantity.of(new BigDecimal("5")));
+
+            assertThat(released.isPositive()).isFalse();
+        }
+
+        @Test
         @DisplayName("빈 포지션에 받기 — 취득가가 평균 매수가가 된다")
         void receiveIntoEmpty() {
             Position position = Position.empty(1L, 1L);
