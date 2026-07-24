@@ -231,13 +231,17 @@ export function OrderPanel({
 
   useEffect(() => {
     if (!orderFilledEvent) return;
-    const { side, quantity: filledQty, price: filledPrice, fee } = orderFilledEvent;
+    const { orderId, side, quantity: filledQty, price: filledPrice, fee } = orderFilledEvent;
 
     if (side === "BUY") {
       setAvailableSell((prev) => prev + filledQty);
     } else {
       setAvailableBuy((prev) => prev + filledPrice * filledQty - fee);
     }
+
+    // 체결된 주문은 미체결 목록에서 빠져야 한다. 서버는 재조회 시 status 필터로 제외하지만
+    // 미체결 탭을 열어둔 채 체결되면 재조회가 없으므로 이벤트의 orderId 로 직접 제거한다.
+    setHistoryItems((prev) => prev.filter((item) => item.orderId !== orderId));
   }, [orderFilledEvent]);
 
   useEffect(() => {
@@ -495,6 +499,7 @@ export function OrderPanel({
               {historyItems.map((item) => {
                 const status = STATUS_STYLES[item.status] ?? STATUS_STYLES.PENDING;
                 const isBuySide = item.side === "BUY";
+                const isPending = item.status === "PENDING";
                 const priceValue = item.filledPrice ?? item.price ?? 0;
 
                 return (
@@ -531,11 +536,17 @@ export function OrderPanel({
                         <span className="text-[11px] text-muted-foreground">{formatRelativeTime(item.createdAt)}</span>
                       </div>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">
+                    <div
+                      className={cn(
+                        "mt-2 grid gap-2 text-[11px] text-muted-foreground",
+                        // 부분 체결이 없어 미체결 주문은 체결 금액이 아직 없다. 금액 칸을 빼고 주문 가격·수량만 보여준다.
+                        isPending ? "grid-cols-2" : "grid-cols-3",
+                      )}
+                    >
                       <div>
                         <p>가격</p>
                         <p className="font-mono text-xs font-semibold text-foreground">
-                          {formatNumber(priceValue)} {baseCurrency}
+                          {formatPrice(priceValue)} {baseCurrency}
                         </p>
                       </div>
                       <div>
@@ -544,12 +555,14 @@ export function OrderPanel({
                           {formatNumber(item.quantity, 6)} {coinSymbol}
                         </p>
                       </div>
-                      <div>
-                        <p>금액</p>
-                        <p className="font-mono text-xs font-semibold text-foreground">
-                          {formatNumber(item.orderAmount)} {baseCurrency}
-                        </p>
-                      </div>
+                      {!isPending && (
+                        <div>
+                          <p>금액</p>
+                          <p className="font-mono text-xs font-semibold text-foreground">
+                            {formatNumber(item.orderAmount)} {baseCurrency}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
