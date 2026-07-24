@@ -18,9 +18,16 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMqConfig {
 
     public static final String TICKER_MARKETDATA_LISTENER_ID = "tickerMarketdataListener";
+    public static final String MARKET_STATUS_LISTENER_ID = "marketStatusListener";
 
     @Value("${app.rabbitmq.ticker-exchange:ticker.exchange}")
     private String tickerExchangeName;
+
+    @Value("${app.rabbitmq.market-status-exchange:market.status}")
+    private String marketStatusExchangeName;
+
+    @Value("${app.rabbitmq.market-status-queue:market.status.api}")
+    private String marketStatusQueueName;
 
     @Value("${engine.inbox.queue:engine.inbox}")
     private String engineInboxQueue;
@@ -42,6 +49,21 @@ public class RabbitMqConfig {
     @Bean
     public Binding tickerMarketdataBinding(Queue tickerMarketdataQueue, FanoutExchange tickerFanoutExchange) {
         return BindingBuilder.bind(tickerMarketdataQueue).to(tickerFanoutExchange);
+    }
+
+    @Bean
+    public FanoutExchange marketStatusFanoutExchange() {
+        return new FanoutExchange(marketStatusExchangeName, true, false);
+    }
+
+    @Bean
+    public Queue marketStatusQueue() {
+        return new Queue(marketStatusQueueName, true, false, false);
+    }
+
+    @Bean
+    public Binding marketStatusBinding(Queue marketStatusQueue, FanoutExchange marketStatusFanoutExchange) {
+        return BindingBuilder.bind(marketStatusQueue).to(marketStatusFanoutExchange);
     }
 
     @Bean

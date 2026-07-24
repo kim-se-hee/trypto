@@ -42,6 +42,7 @@ public class MarketdataWarmupInitializer {
         }
         warmupExchangeCoinMappingUseCase.warmup();
         startTickerListener();
+        startMarketStatusListener();
 
         log.info("marketdata 초기화 완료");
     }
@@ -71,5 +72,12 @@ public class MarketdataWarmupInitializer {
                 .getListenerContainer(RabbitMqConfig.TICKER_MARKETDATA_LISTENER_ID)
                 .start();
         log.info("marketdata RabbitMQ 시세 리스너 활성화");
+    }
+
+    private void startMarketStatusListener() {
+        rabbitListenerEndpointRegistry
+                .getListenerContainer(RabbitMqConfig.MARKET_STATUS_LISTENER_ID)
+                .start();
+        log.info("marketdata 상장 상태 리스너 활성화");
     }
 }
