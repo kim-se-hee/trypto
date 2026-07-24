@@ -1,5 +1,6 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
+import java.util.Optional;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeCoinJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeCoinJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinCommandPort;
@@ -23,5 +24,26 @@ public class ExchangeCoinCommandAdapter implements ExchangeCoinCommandPort {
                 })
                 .orElseGet(() -> new ExchangeCoinJpaEntity(exchangeId, coinId, displayName));
         return repository.save(entity).toDomain();
+    }
+
+    @Override
+    public ExchangeCoin register(Long exchangeId, Long coinId, String displayName) {
+        ExchangeCoinJpaEntity entity = repository
+                .findByExchangeIdAndCoinId(exchangeId, coinId)
+                .map(existing -> {
+                    existing.updateDisplayName(displayName);
+                    existing.markTrading();
+                    return existing;
+                })
+                .orElseGet(() -> new ExchangeCoinJpaEntity(exchangeId, coinId, displayName));
+        return repository.save(entity).toDomain();
+    }
+
+    @Override
+    public Optional<ExchangeCoin> suspend(Long exchangeId, Long coinId) {
+        return repository.findByExchangeIdAndCoinId(exchangeId, coinId).map(existing -> {
+            existing.markSuspended();
+            return repository.save(existing).toDomain();
+        });
     }
 }
