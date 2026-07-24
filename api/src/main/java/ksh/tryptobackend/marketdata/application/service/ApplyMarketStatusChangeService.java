@@ -1,5 +1,7 @@
 package ksh.tryptobackend.marketdata.application.service;
 
+import ksh.tryptobackend.common.event.DomainEventPublisher;
+import ksh.tryptobackend.common.event.MarketSuspendedEvent;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.ApplyMarketStatusChangeUseCase;
@@ -28,6 +30,7 @@ public class ApplyMarketStatusChangeService implements ApplyMarketStatusChangeUs
     private final CoinCommandPort coinCommandPort;
     private final ExchangeCoinCommandPort exchangeCoinCommandPort;
     private final MarketStatusNotificationPort marketStatusNotificationPort;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Override
     @Transactional
@@ -57,6 +60,7 @@ public class ApplyMarketStatusChangeService implements ApplyMarketStatusChangeUs
                         .suspend(exchangeId, coin.coinId())
                         .ifPresent(suspended -> {
                             marketStatusNotificationPort.broadcast(notificationOf(suspended, coin.symbol()));
+                            domainEventPublisher.publish(new MarketSuspendedEvent(suspended.exchangeCoinId()));
                             log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
                         }));
     }
