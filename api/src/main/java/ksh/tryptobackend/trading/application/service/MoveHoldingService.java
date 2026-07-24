@@ -1,15 +1,11 @@
 package ksh.tryptobackend.trading.application.service;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import ksh.tryptobackend.trading.application.port.in.MoveHoldingUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.MoveHoldingCommand;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.PositionCommandPort;
-import ksh.tryptobackend.trading.domain.model.Position;
+import ksh.tryptobackend.trading.domain.model.TransferPositions;
 import ksh.tryptobackend.trading.domain.service.HoldingTransferrer;
 import ksh.tryptobackend.trading.domain.vo.CoinExchangeMapping;
 import ksh.tryptobackend.trading.domain.vo.Price;
@@ -35,14 +31,12 @@ public class MoveHoldingService implements MoveHoldingUseCase {
         }
 
         Price acquisitionPrice = acquisitionPriceOf(command);
-        Map<Long, Position> positions =
-                getPositionsInWalletIdOrder(command.fromWalletId(), command.toWalletId(), command.coinId());
-        Position source = positions.get(command.fromWalletId());
-        Position destination = positions.get(command.toWalletId());
-        holdingTransferrer.transfer(source, destination, Quantity.of(command.amount()), acquisitionPrice);
+        TransferPositions positions = positionCommandPort.getTransferPositionsWithLock(
+                command.coinId(), command.fromWalletId(), command.toWalletId());
+        holdingTransferrer.transfer(
+                positions.source(), positions.destination(), Quantity.of(command.amount()), acquisitionPrice);
 
-        positionCommandPort.save(source);
-        positionCommandPort.save(destination);
+        positionCommandPort.saveAll(positions.toList());
     }
 
     private boolean hasNoHolding(Long walletId, Long coinId) {
@@ -56,15 +50,5 @@ public class MoveHoldingService implements MoveHoldingUseCase {
         CoinExchangeMapping mapping =
                 marketQueryPort.findCoinExchangeMapping(command.toExchangeId(), List.of(command.coinId()));
         return marketQueryPort.getCurrentPrice(mapping.getExchangeCoinId(command.coinId()));
-    }
-
-    private Map<Long, Position> getPositionsInWalletIdOrder(Long fromWalletId, Long toWalletId, Long coinId) {
-        return Stream.of(fromWalletId, toWalletId)
-                .sorted()
-                .collect(Collectors.toMap(
-                        walletId -> walletId,
-                        walletId -> positionCommandPort.getOrCreate(walletId, coinId),
-                        (first, second) -> first,
-                        LinkedHashMap::new));
     }
 }
