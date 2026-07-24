@@ -46,19 +46,27 @@ public class ApplyMarketStatusChangeService implements ApplyMarketStatusChangeUs
     private void startTrading(Long exchangeId, ApplyMarketStatusChangeCommand command) {
         Coin coin = coinCommandPort.save(command.baseSymbol(), command.displayName());
         ExchangeCoin registered = exchangeCoinCommandPort.register(exchangeId, coin.coinId(), command.displayName());
-        marketStatusNotificationPort.broadcast(MarketStatusNotification.of(registered, coin.symbol()));
+        marketStatusNotificationPort.broadcast(notificationOf(registered, coin.symbol()));
         log.info("거래중 반영: exchangeId={}, coin={}", exchangeId, command.baseSymbol());
     }
 
     private void suspendMarket(Long exchangeId, String baseSymbol) {
         coinQueryPort
                 .findBySymbol(baseSymbol)
-                .flatMap(coin -> exchangeCoinCommandPort
+                .ifPresent(coin -> exchangeCoinCommandPort
                         .suspend(exchangeId, coin.coinId())
-                        .map(suspended -> MarketStatusNotification.of(suspended, coin.symbol())))
-                .ifPresent(notification -> {
-                    marketStatusNotificationPort.broadcast(notification);
-                    log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
-                });
+                        .ifPresent(suspended -> {
+                            marketStatusNotificationPort.broadcast(notificationOf(suspended, coin.symbol()));
+                            log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
+                        }));
+    }
+
+    private MarketStatusNotification notificationOf(ExchangeCoin exchangeCoin, String symbol) {
+        return new MarketStatusNotification(
+                exchangeCoin.exchangeId(),
+                exchangeCoin.exchangeCoinId(),
+                symbol,
+                exchangeCoin.displayName(),
+                exchangeCoin.status());
     }
 }

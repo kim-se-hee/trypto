@@ -10,7 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
-import ksh.tryptobackend.marketdata.domain.model.MarketStatus;
+import ksh.tryptobackend.marketdata.domain.vo.MarketStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

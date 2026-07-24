@@ -1,4 +1,4 @@
-package ksh.tryptobackend.marketdata.domain.model;
+package ksh.tryptobackend.marketdata.domain.vo;
 
 public enum MarketStatus {
     TRADING,
