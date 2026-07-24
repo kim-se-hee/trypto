@@ -41,6 +41,11 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
     }
 
     @Override
+    public boolean isSuspended(Long exchangeCoinId) {
+        return getMarketStatusUseCase.isSuspended(exchangeCoinId);
+    }
+
+    @Override
     public TradingPair getTradingPair(Long exchangeCoinId) {
         ExchangeCoinMappingResult mapping = getMapping(exchangeCoinId);
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());

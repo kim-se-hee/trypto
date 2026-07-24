@@ -10,6 +10,8 @@ public interface MarketQueryPort {
 
     MarketInfo findByExchangeCoinId(Long exchangeCoinId);
 
+    boolean isSuspended(Long exchangeCoinId);
+
     TradingPair getTradingPair(Long exchangeCoinId);
 
     Price getCurrentPrice(Long exchangeCoinId);
