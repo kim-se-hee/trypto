@@ -5,6 +5,7 @@ import ksh.tryptobackend.trading.application.port.in.MoveHoldingUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.MoveHoldingCommand;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
 import ksh.tryptobackend.trading.application.port.out.PositionCommandPort;
+import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.trading.domain.model.TransferPositions;
 import ksh.tryptobackend.trading.domain.service.HoldingTransferrer;
 import ksh.tryptobackend.trading.domain.vo.CoinExchangeMapping;
@@ -26,29 +27,23 @@ public class MoveHoldingService implements MoveHoldingUseCase {
     @Override
     @Transactional
     public void moveHolding(MoveHoldingCommand command) {
-        if (hasNoHolding(command.fromWalletId(), command.coinId())) {
+        boolean hasHolding = positionCommandPort
+                .findByWalletIdAndCoinId(command.fromWalletId(), command.coinId())
+                .map(Position::isHolding)
+                .orElse(false);
+        if (!hasHolding) {
             return;
         }
 
-        Price acquisitionPrice = acquisitionPriceOf(command);
+        CoinExchangeMapping mapping =
+                marketQueryPort.findCoinExchangeMapping(command.toExchangeId(), List.of(command.coinId()));
+        Price acquisitionPrice = marketQueryPort.getCurrentPrice(mapping.getExchangeCoinId(command.coinId()));
+
         TransferPositions positions = positionCommandPort.getTransferPositionsWithLock(
                 command.coinId(), command.fromWalletId(), command.toWalletId());
         holdingTransferrer.transfer(
                 positions.source(), positions.destination(), Quantity.of(command.amount()), acquisitionPrice);
 
         positionCommandPort.saveAll(positions.toList());
-    }
-
-    private boolean hasNoHolding(Long walletId, Long coinId) {
-        return positionCommandPort
-                .findByWalletIdAndCoinId(walletId, coinId)
-                .map(position -> !position.isHolding())
-                .orElse(true);
-    }
-
-    private Price acquisitionPriceOf(MoveHoldingCommand command) {
-        CoinExchangeMapping mapping =
-                marketQueryPort.findCoinExchangeMapping(command.toExchangeId(), List.of(command.coinId()));
-        return marketQueryPort.getCurrentPrice(mapping.getExchangeCoinId(command.coinId()));
     }
 }
