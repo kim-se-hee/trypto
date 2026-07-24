@@ -14,7 +14,6 @@ import ksh.tryptobackend.marketdata.application.port.out.MarketStatusNotificatio
 import ksh.tryptobackend.marketdata.domain.model.Coin;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeSummary;
-import ksh.tryptobackend.marketdata.domain.vo.MarketStatusNotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,36 +39,21 @@ public class ApplyMarketStatusChangeService implements ApplyMarketStatusChangeUs
                 .map(ExchangeSummary::exchangeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         if (command.status().isSuspended()) {
-            suspendMarket(exchangeId, command.baseSymbol());
+            Coin coin = coinQueryPort
+                    .findBySymbol(command.baseSymbol())
+                    .orElseThrow(() -> new CustomException(ErrorCode.COIN_NOT_FOUND));
+            ExchangeCoin suspended = exchangeCoinCommandPort
+                    .suspend(exchangeId, coin.coinId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+            marketStatusNotificationPort.broadcast(suspended.toNotification(coin.symbol()));
+            domainEventPublisher.publish(new MarketSuspendedEvent(suspended.exchangeCoinId()));
+            log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, command.baseSymbol());
         } else {
-            startTrading(exchangeId, command);
+            Coin coin = coinCommandPort.save(command.baseSymbol(), command.displayName());
+            ExchangeCoin registered =
+                    exchangeCoinCommandPort.register(exchangeId, coin.coinId(), command.displayName());
+            marketStatusNotificationPort.broadcast(registered.toNotification(coin.symbol()));
+            log.info("거래중 반영: exchangeId={}, coin={}", exchangeId, command.baseSymbol());
         }
-    }
-
-    private void startTrading(Long exchangeId, ApplyMarketStatusChangeCommand command) {
-        Coin coin = coinCommandPort.save(command.baseSymbol(), command.displayName());
-        ExchangeCoin registered = exchangeCoinCommandPort.register(exchangeId, coin.coinId(), command.displayName());
-        marketStatusNotificationPort.broadcast(notificationOf(registered, coin.symbol()));
-        log.info("거래중 반영: exchangeId={}, coin={}", exchangeId, command.baseSymbol());
-    }
-
-    private void suspendMarket(Long exchangeId, String baseSymbol) {
-        Coin coin =
-                coinQueryPort.findBySymbol(baseSymbol).orElseThrow(() -> new CustomException(ErrorCode.COIN_NOT_FOUND));
-        ExchangeCoin suspended = exchangeCoinCommandPort
-                .suspend(exchangeId, coin.coinId())
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
-        marketStatusNotificationPort.broadcast(notificationOf(suspended, coin.symbol()));
-        domainEventPublisher.publish(new MarketSuspendedEvent(suspended.exchangeCoinId()));
-        log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
-    }
-
-    private MarketStatusNotification notificationOf(ExchangeCoin exchangeCoin, String symbol) {
-        return new MarketStatusNotification(
-                exchangeCoin.exchangeId(),
-                exchangeCoin.exchangeCoinId(),
-                symbol,
-                exchangeCoin.displayName(),
-                exchangeCoin.status());
     }
 }
