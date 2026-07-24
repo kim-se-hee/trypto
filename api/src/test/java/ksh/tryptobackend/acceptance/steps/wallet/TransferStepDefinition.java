@@ -10,7 +10,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
+import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
+import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -27,10 +30,14 @@ public class TransferStepDefinition {
     private static final String COIN_SYMBOL = "BTC";
     // ETH 는 출금 거래소(1)에만 상장되어 있고 입금 거래소(2)에는 상장되어 있지 않다.
     private static final Long UNLISTED_COIN_ID = 3L;
+    // seed-data.sql 의 입금 거래소(2) BTC exchange_coin_id
+    private static final Long TO_EXCHANGE_BTC_ID = 12L;
 
     private final CommonApiClient apiClient;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final MockPositionAdapter holdingAdapter;
+    private final MockLivePriceAdapter livePriceAdapter;
 
     private Long lastTransferId;
     private Long firstTransferId;
@@ -38,10 +45,14 @@ public class TransferStepDefinition {
     public TransferStepDefinition(
             CommonApiClient apiClient,
             WalletBalanceJpaRepository walletBalanceJpaRepository,
-            JdbcTemplate jdbcTemplate) {
+            JdbcTemplate jdbcTemplate,
+            MockPositionAdapter holdingAdapter,
+            MockLivePriceAdapter livePriceAdapter) {
         this.apiClient = apiClient;
         this.walletBalanceJpaRepository = walletBalanceJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.holdingAdapter = holdingAdapter;
+        this.livePriceAdapter = livePriceAdapter;
     }
 
     @Given("송금용 동일 라운드의 두 지갑이 준비되어 있다")
@@ -134,14 +145,58 @@ public class TransferStepDefinition {
         }
     }
 
+    @Given("출금 지갑에 평단 {double}원 수량 {double}개의 BTC 보유 내역이 있다")
+    public void 출금_지갑에_평단_수량의_BTC_보유_내역이_있다(double avgBuyPrice, double quantity) {
+        holdingAdapter.setHolding(
+                FROM_WALLET_ID,
+                COIN_ID,
+                new BigDecimal(String.valueOf(avgBuyPrice)),
+                new BigDecimal(String.valueOf(quantity)),
+                0);
+    }
+
+    @Given("입금 거래소의 BTC 현재가는 {double}원이다")
+    public void 입금_거래소의_BTC_현재가는_원이다(double price) {
+        livePriceAdapter.setPrice(TO_EXCHANGE_BTC_ID, new BigDecimal(String.valueOf(price)));
+    }
+
     @Then("송금 상태는 {string}이다")
     public void 송금_상태는_이다(String status) {
         apiClient.getLastResponse().expectBody().jsonPath("$.data.status").isEqualTo(status);
     }
 
+    @Then("출금 지갑의 BTC 보유 내역은 평단 {double}원 수량 {double}개이다")
+    public void 출금_지갑의_BTC_보유_내역은_평단_수량_개이다(double avgBuyPrice, double quantity) {
+        assertHolding(FROM_WALLET_ID, avgBuyPrice, quantity);
+    }
+
+    @Then("입금 지갑의 BTC 보유 내역은 평단 {double}원 수량 {double}개이다")
+    public void 입금_지갑의_BTC_보유_내역은_평단_수량_개이다(double avgBuyPrice, double quantity) {
+        assertHolding(TO_WALLET_ID, avgBuyPrice, quantity);
+    }
+
+    @Then("입금 지갑의 BTC 보유 내역은 없다")
+    public void 입금_지갑의_BTC_보유_내역은_없다() {
+        boolean holding = holdingAdapter
+                .findByWalletIdAndCoinId(TO_WALLET_ID, COIN_ID)
+                .map(Position::isHolding)
+                .orElse(false);
+        assertThat(holding).isFalse();
+    }
+
     @Then("두 응답의 transferId가 동일하다")
     public void 두_응답의_transferId가_동일하다() {
         assertThat(firstTransferId).isEqualTo(lastTransferId);
+    }
+
+    private void assertHolding(Long walletId, double avgBuyPrice, double quantity) {
+        Position position = holdingAdapter
+                .findByWalletIdAndCoinId(walletId, COIN_ID)
+                .orElseThrow(() -> new AssertionError("보유 내역이 없다: walletId=" + walletId));
+        assertThat(position.getHolding().avgBuyPrice().value())
+                .isEqualByComparingTo(new BigDecimal(String.valueOf(avgBuyPrice)));
+        assertThat(position.getHolding().totalQuantity().value())
+                .isEqualByComparingTo(new BigDecimal(String.valueOf(quantity)));
     }
 
     private Map<String, Object> createTransferBody(Long fromWalletId, Long toWalletId, double amount) {
