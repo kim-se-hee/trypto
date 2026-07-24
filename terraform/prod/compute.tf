@@ -31,8 +31,11 @@ resource "oci_core_instance" "app" {
   }
 
   lifecycle {
-    # 이미지가 새 버전으로 갱신될 때마다 인스턴스를 갈아치우려 드는 것을 막는다.
-    ignore_changes = [source_details]
+    # 아래 항목이 바뀌어도 인스턴스를 갈아치우지 않는다. 실행 중인 프로덕션 서버를 재생성하면
+    # 부트볼륨(InfluxDB 시드·인증서·nginx·/opt/trypto)이 전부 날아가기 때문이다.
+    # - source_details: 오라클이 최신 우분투 이미지를 새로 내면 data 소스가 갱신돼 재생성을 유발
+    # - metadata: cloud-init(user_data)은 최초 부팅 때만 실행되므로 파일이 바뀌어도 running 인스턴스엔 무의미
+    ignore_changes = [source_details, metadata]
   }
 }
 
