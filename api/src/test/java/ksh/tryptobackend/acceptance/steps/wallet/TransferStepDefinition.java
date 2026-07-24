@@ -30,8 +30,7 @@ public class TransferStepDefinition {
     private static final String COIN_SYMBOL = "BTC";
     // ETH 는 출금 거래소(1)에만 상장되어 있고 입금 거래소(2)에는 상장되어 있지 않다.
     private static final Long UNLISTED_COIN_ID = 3L;
-    // seed-data.sql 의 입금 거래소(2) BTC exchange_coin_id
-    private static final Long TO_EXCHANGE_BTC_ID = 12L;
+    private static final Long SEED_TO_EXCHANGE_BTC_EXCHANGE_COIN_ID = 12L;
 
     private final CommonApiClient apiClient;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
@@ -157,7 +156,7 @@ public class TransferStepDefinition {
 
     @Given("입금 거래소의 BTC 현재가는 {double}원이다")
     public void 입금_거래소의_BTC_현재가는_원이다(double price) {
-        livePriceAdapter.setPrice(TO_EXCHANGE_BTC_ID, new BigDecimal(String.valueOf(price)));
+        livePriceAdapter.setPrice(SEED_TO_EXCHANGE_BTC_EXCHANGE_COIN_ID, new BigDecimal(String.valueOf(price)));
     }
 
     @Then("송금 상태는 {string}이다")
