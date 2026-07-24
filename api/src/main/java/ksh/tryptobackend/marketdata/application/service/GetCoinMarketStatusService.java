@@ -1,6 +1,6 @@
 package ksh.tryptobackend.marketdata.application.service;
 
-import ksh.tryptobackend.marketdata.application.port.in.GetMarketStatusUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetCoinMarketStatusUseCase;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
 import lombok.RequiredArgsConstructor;
@@ -9,16 +9,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class GetMarketStatusService implements GetMarketStatusUseCase {
+public class GetCoinMarketStatusService implements GetCoinMarketStatusUseCase {
 
     private final ExchangeCoinQueryPort exchangeCoinQueryPort;
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isSuspended(Long exchangeCoinId) {
+    public boolean isSuspended(Long exchangeId, Long coinId) {
         return exchangeCoinQueryPort
-                .findById(exchangeCoinId)
+                .findByExchangeIdAndCoinId(exchangeId, coinId)
                 .map(ExchangeCoin::isSuspended)
-                .orElse(true);
+                .orElse(false);
     }
 }
