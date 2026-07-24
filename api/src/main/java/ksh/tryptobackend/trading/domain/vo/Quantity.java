@@ -33,6 +33,10 @@ public record Quantity(BigDecimal value) {
         return new Quantity(value.subtract(other.value));
     }
 
+    public Quantity min(Quantity other) {
+        return value.compareTo(other.value) <= 0 ? this : other;
+    }
+
     public boolean isPositive() {
         return value.compareTo(BigDecimal.ZERO) > 0;
     }
