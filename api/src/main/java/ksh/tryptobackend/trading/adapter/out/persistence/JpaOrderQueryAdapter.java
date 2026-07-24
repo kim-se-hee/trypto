@@ -48,6 +48,13 @@ public class JpaOrderQueryAdapter implements OrderQueryPort {
     }
 
     @Override
+    public List<Long> findPendingOrderIdsByExchangeCoinId(Long exchangeCoinId) {
+        return orderJpaRepository.findByExchangeCoinIdAndStatus(exchangeCoinId, OrderStatus.PENDING).stream()
+                .map(OrderJpaEntity::getId)
+                .toList();
+    }
+
+    @Override
     public List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId) {
         QOrderJpaEntity o = QOrderJpaEntity.orderJpaEntity;
         return queryFactory

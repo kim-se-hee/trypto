@@ -14,6 +14,8 @@ public interface OrderQueryPort {
 
     Order getByIdWithLock(Long orderId);
 
+    List<Long> findPendingOrderIdsByExchangeCoinId(Long exchangeCoinId);
+
     List<FilledOrder> findFilledByWalletAndExchangeCoin(Long walletId, Long exchangeCoinId);
 
     List<Order> findByCursor(
