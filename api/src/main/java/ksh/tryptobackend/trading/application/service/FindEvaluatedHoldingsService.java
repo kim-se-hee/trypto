@@ -29,8 +29,14 @@ public class FindEvaluatedHoldingsService implements FindEvaluatedHoldingsUseCas
         CoinExchangeMapping coinExchangeMapping = findCoinExchangeMapping(exchangeId, holdings);
 
         return holdings.stream()
+                .filter(holding -> isTradable(coinExchangeMapping, holding))
                 .map(holding -> toEvaluatedHoldingResult(holding, coinExchangeMapping))
                 .toList();
+    }
+
+    private boolean isTradable(CoinExchangeMapping coinExchangeMapping, HoldingInfoResult holding) {
+        Long exchangeCoinId = coinExchangeMapping.getExchangeCoinId(holding.coinId());
+        return !marketQueryPort.isSuspended(exchangeCoinId);
     }
 
     private List<HoldingInfoResult> findActiveHoldings(Long walletId) {
