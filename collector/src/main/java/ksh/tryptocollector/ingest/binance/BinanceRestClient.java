@@ -33,7 +33,6 @@ public class BinanceRestClient {
     }
 
     public List<BinanceTickerResponse> fetchUsdtTickers() {
-        Set<String> tradingSymbols = fetchTradingSymbols();
         BinanceTickerResponse[] responses =
                 restClient.get().uri(restUrl).retrieve().body(BinanceTickerResponse[].class);
         if (responses == null) {
@@ -41,6 +40,12 @@ public class BinanceRestClient {
         }
         return Arrays.stream(responses)
                 .filter(r -> r.symbol().endsWith(QUOTE_SUFFIX))
+                .toList();
+    }
+
+    public List<BinanceTickerResponse> fetchTradingUsdtTickers() {
+        Set<String> tradingSymbols = fetchTradingSymbols();
+        return fetchUsdtTickers().stream()
                 .filter(r -> tradingSymbols.contains(r.symbol()))
                 .toList();
     }

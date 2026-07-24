@@ -126,7 +126,7 @@ public class CandleBackfillService {
                         .map(MarketInfo::base)
                         .toList();
             case BINANCE ->
-                binanceRestClient.fetchUsdtTickers().stream()
+                binanceRestClient.fetchTradingUsdtTickers().stream()
                         .map(ticker -> ticker.symbol().replace("USDT", ""))
                         .toList();
         };

@@ -133,7 +133,7 @@ public class MarketStatusSynchronizer {
 
     private Map<String, MarketInfo> binanceTradingMarkets() {
         Map<String, MarketInfo> markets = new HashMap<>();
-        for (BinanceTickerResponse ticker : binanceRestClient.fetchUsdtTickers()) {
+        for (BinanceTickerResponse ticker : binanceRestClient.fetchTradingUsdtTickers()) {
             String base = ticker.symbol().replace(BINANCE_QUOTE, "");
             markets.put(ticker.symbol(), new MarketInfo(base, BINANCE_QUOTE, base + "/" + BINANCE_QUOTE, base));
         }
