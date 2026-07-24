@@ -1,6 +1,10 @@
 package ksh.tryptobackend.trading.application.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import ksh.tryptobackend.trading.application.port.in.MoveHoldingUseCase;
 import ksh.tryptobackend.trading.application.port.in.dto.command.MoveHoldingCommand;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
@@ -31,8 +35,10 @@ public class MoveHoldingService implements MoveHoldingUseCase {
         }
 
         Price acquisitionPrice = acquisitionPriceOf(command);
-        Position source = positionCommandPort.getOrCreate(command.fromWalletId(), command.coinId());
-        Position destination = positionCommandPort.getOrCreate(command.toWalletId(), command.coinId());
+        Map<Long, Position> positions =
+                getPositionsInWalletIdOrder(command.fromWalletId(), command.toWalletId(), command.coinId());
+        Position source = positions.get(command.fromWalletId());
+        Position destination = positions.get(command.toWalletId());
         holdingTransferrer.transfer(source, destination, Quantity.of(command.amount()), acquisitionPrice);
 
         positionCommandPort.save(source);
@@ -50,5 +56,15 @@ public class MoveHoldingService implements MoveHoldingUseCase {
         CoinExchangeMapping mapping =
                 marketQueryPort.findCoinExchangeMapping(command.toExchangeId(), List.of(command.coinId()));
         return marketQueryPort.getCurrentPrice(mapping.getExchangeCoinId(command.coinId()));
+    }
+
+    private Map<Long, Position> getPositionsInWalletIdOrder(Long fromWalletId, Long toWalletId, Long coinId) {
+        return Stream.of(fromWalletId, toWalletId)
+                .sorted()
+                .collect(Collectors.toMap(
+                        walletId -> walletId,
+                        walletId -> positionCommandPort.getOrCreate(walletId, coinId),
+                        (first, second) -> first,
+                        LinkedHashMap::new));
     }
 }
