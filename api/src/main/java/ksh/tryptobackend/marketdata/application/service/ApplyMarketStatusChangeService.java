@@ -54,15 +54,14 @@ public class ApplyMarketStatusChangeService implements ApplyMarketStatusChangeUs
     }
 
     private void suspendMarket(Long exchangeId, String baseSymbol) {
-        coinQueryPort
-                .findBySymbol(baseSymbol)
-                .ifPresent(coin -> exchangeCoinCommandPort
-                        .suspend(exchangeId, coin.coinId())
-                        .ifPresent(suspended -> {
-                            marketStatusNotificationPort.broadcast(notificationOf(suspended, coin.symbol()));
-                            domainEventPublisher.publish(new MarketSuspendedEvent(suspended.exchangeCoinId()));
-                            log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
-                        }));
+        Coin coin =
+                coinQueryPort.findBySymbol(baseSymbol).orElseThrow(() -> new CustomException(ErrorCode.COIN_NOT_FOUND));
+        ExchangeCoin suspended = exchangeCoinCommandPort
+                .suspend(exchangeId, coin.coinId())
+                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_COIN_NOT_FOUND));
+        marketStatusNotificationPort.broadcast(notificationOf(suspended, coin.symbol()));
+        domainEventPublisher.publish(new MarketSuspendedEvent(suspended.exchangeCoinId()));
+        log.info("거래지원 종료 반영: exchangeId={}, coin={}", exchangeId, baseSymbol);
     }
 
     private MarketStatusNotification notificationOf(ExchangeCoin exchangeCoin, String symbol) {
