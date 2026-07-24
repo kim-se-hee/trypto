@@ -38,7 +38,7 @@ class OrderTest {
     }
 
     private static MarketInfo ctx(BigDecimal currentPrice) {
-        return new MarketInfo(PAIR, DOMESTIC_EXCHANGE_INFO, Price.of(currentPrice));
+        return new MarketInfo(PAIR, DOMESTIC_EXCHANGE_INFO, Price.of(currentPrice), false);
     }
 
     @Nested

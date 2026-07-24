@@ -43,6 +43,9 @@ public class Order extends AggregateRoot {
     private OrderStatus status;
 
     public static Order create(PlaceOrderCommand cmd, MarketInfo marketInfo, LocalDateTime now) {
+        if (marketInfo.suspended()) {
+            throw new CustomException(ErrorCode.MARKET_SUSPENDED);
+        }
         OrderMode mode = OrderMode.of(cmd.orderType(), cmd.side());
         InterpretedOrderInput interpreted = mode.interpret(new OrderInput(cmd.volume(), cmd.price()), marketInfo);
 

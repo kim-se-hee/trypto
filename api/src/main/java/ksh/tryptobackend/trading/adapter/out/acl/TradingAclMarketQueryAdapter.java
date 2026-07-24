@@ -7,6 +7,7 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetMarketStatusUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
 import ksh.tryptobackend.trading.application.port.out.MarketQueryPort;
@@ -26,14 +27,17 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
     private final FindExchangeCoinMappingUseCase findExchangeCoinMappingUseCase;
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final GetLivePriceUseCase getLivePriceUseCase;
+    private final GetMarketStatusUseCase getMarketStatusUseCase;
 
     @Override
     public MarketInfo findByExchangeCoinId(Long exchangeCoinId) {
         ExchangeCoinMappingResult mapping = getMapping(exchangeCoinId);
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());
         BigDecimal currentPrice = getLivePriceUseCase.getCurrentPrice(exchangeCoinId);
+        boolean suspended = getMarketStatusUseCase.isSuspended(exchangeCoinId);
 
-        return new MarketInfo(toTradingPair(mapping, detail), toExchangeInfo(detail), Price.of(currentPrice));
+        return new MarketInfo(
+                toTradingPair(mapping, detail), toExchangeInfo(detail), Price.of(currentPrice), suspended);
     }
 
     @Override
