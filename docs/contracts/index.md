@@ -5,6 +5,7 @@
 - [engine-inbox.md](engine-inbox.md) — 매칭 엔진 인바운드 이벤트(주문 접수/취소·시세 tick)를 직렬화하는 단일 큐
 - [ticker-exchange.md](ticker-exchange.md) — 거래소 시세 정규화 결과 실시간 브로드캐스트
 - [outbox-events.md](outbox-events.md) — 매칭 엔진 체결 확정 후 api로 전달되는 이벤트
+- [market-status.md](market-status.md) — 거래소 상장·거래 상태 변화 (collector 발행, api 소비)
 
 ## 공유 저장소 스키마
 
