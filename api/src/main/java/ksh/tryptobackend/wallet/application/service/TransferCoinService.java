@@ -16,6 +16,7 @@ import ksh.tryptobackend.wallet.domain.model.Transfer;
 import ksh.tryptobackend.wallet.domain.model.TransferBalances;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
 import ksh.tryptobackend.wallet.domain.service.CoinTransferrer;
+import ksh.tryptobackend.wallet.domain.service.HoldingMover;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class TransferCoinService implements TransferCoinUseCase {
     private final WalletBalanceCommandPort walletBalanceCommandPort;
 
     private final CoinTransferrer coinTransferrer;
+    private final HoldingMover holdingMover;
 
     private final Clock clock;
 
@@ -57,6 +59,13 @@ public class TransferCoinService implements TransferCoinUseCase {
         coinTransferrer.transfer(balances, command.amount());
 
         walletBalanceCommandPort.saveAll(balances.toList());
+        holdingMover.move(
+                command.fromWalletId(),
+                command.toWalletId(),
+                destination.getExchangeId(),
+                command.coinId(),
+                command.amount());
+
         Transfer saved = transferCommandPort.save(transfer);
         idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.getTransferId());
         return saved;
