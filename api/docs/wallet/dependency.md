@@ -45,3 +45,6 @@
 
 ## InvestmentRound
 - `FindRoundInfoUseCase` — 잔고 조회 시 소유권 검증
+
+## Trading
+- `MoveHoldingUseCase` — 송금 시 보유 내역(평단·수량·매수금액) 이동. 도메인 서비스 `HoldingMover`(구현 `HoldingMoverImpl`)가 위임한다
