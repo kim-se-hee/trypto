@@ -7,7 +7,6 @@ import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +16,7 @@ public class RabbitMQConfig {
 
     public static final String TICKER_EXCHANGE = "ticker.exchange";
     public static final String ENGINE_INBOX_QUEUE = "engine.inbox";
+    public static final String MARKET_STATUS_EXCHANGE = "market.status";
 
     @Bean
     public FanoutExchange tickerExchange() {
@@ -24,9 +24,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public FanoutExchange marketStatusExchange(
-            @Value("${app.rabbitmq.market-status-exchange:market.status}") String marketStatusExchange) {
-        return new FanoutExchange(marketStatusExchange);
+    public FanoutExchange marketStatusExchange() {
+        return new FanoutExchange(MARKET_STATUS_EXCHANGE);
     }
 
     @Bean

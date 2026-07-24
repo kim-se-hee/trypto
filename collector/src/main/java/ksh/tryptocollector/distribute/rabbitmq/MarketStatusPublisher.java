@@ -7,7 +7,6 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -22,9 +21,6 @@ public class MarketStatusPublisher {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.rabbitmq.market-status-exchange:market.status}")
-    private String marketStatusExchange;
-
     public void publish(MarketStatusChanged event) {
         byte[] body;
         try {
@@ -36,7 +32,7 @@ public class MarketStatusPublisher {
         Message message = MessageBuilder.withBody(body)
                 .setContentType(MessageProperties.CONTENT_TYPE_JSON)
                 .build();
-        rabbitTemplate.send(marketStatusExchange, FANOUT_ROUTING_KEY, message);
+        rabbitTemplate.send(RabbitMQConfig.MARKET_STATUS_EXCHANGE, FANOUT_ROUTING_KEY, message);
         log.info("상장 상태 변화 발행: {}", event);
     }
 }
