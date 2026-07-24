@@ -16,6 +16,10 @@ public class MarketInfoCache {
         cache.put(buildKey(exchange, symbolCode), marketInfo);
     }
 
+    public void remove(Exchange exchange, String symbolCode) {
+        cache.remove(buildKey(exchange, symbolCode));
+    }
+
     public Optional<MarketInfo> find(Exchange exchange, String symbolCode) {
         return Optional.ofNullable(cache.get(buildKey(exchange, symbolCode)));
     }
