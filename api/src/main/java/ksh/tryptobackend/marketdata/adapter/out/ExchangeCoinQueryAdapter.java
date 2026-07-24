@@ -25,6 +25,11 @@ public class ExchangeCoinQueryAdapter implements ExchangeCoinQueryPort {
     }
 
     @Override
+    public Optional<ExchangeCoin> findByExchangeIdAndCoinId(Long exchangeId, Long coinId) {
+        return repository.findByExchangeIdAndCoinId(exchangeId, coinId).map(ExchangeCoinJpaEntity::toDomain);
+    }
+
+    @Override
     public boolean existsByExchangeIdAndCoinId(Long exchangeId, Long coinId) {
         return repository.existsByExchangeIdAndCoinId(exchangeId, coinId);
     }

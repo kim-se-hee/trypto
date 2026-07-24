@@ -10,6 +10,8 @@ public interface ExchangeCoinQueryPort {
 
     Optional<ExchangeCoin> findById(Long exchangeCoinId);
 
+    Optional<ExchangeCoin> findByExchangeIdAndCoinId(Long exchangeId, Long coinId);
+
     boolean existsByExchangeIdAndCoinId(Long exchangeId, Long coinId);
 
     ExchangeCoinIdMap findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds);

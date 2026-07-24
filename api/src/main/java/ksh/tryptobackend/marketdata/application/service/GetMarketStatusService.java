@@ -21,4 +21,13 @@ public class GetMarketStatusService implements GetMarketStatusUseCase {
                 .map(ExchangeCoin::isSuspended)
                 .orElse(true);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSuspended(Long exchangeId, Long coinId) {
+        return exchangeCoinQueryPort
+                .findByExchangeIdAndCoinId(exchangeId, coinId)
+                .map(ExchangeCoin::isSuspended)
+                .orElse(false);
+    }
 }
