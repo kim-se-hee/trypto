@@ -50,6 +50,27 @@ symbol: "BTCUSDT"
 
 > `replace("USDT", "")`는 안전하다. `1000SHIBUSDT` 같은 심볼에서도 `USDT`는 끝에만 나타난다.
 
+### 상장 상태 조회 (exchangeInfo)
+
+- **URL:** `GET https://api.binance.com/api/v3/exchangeInfo`
+- **인증:** 불필요 (공개 마켓 데이터)
+- **용도:** 심볼별 거래 상태(`status`)를 제공한다. `ticker/24hr`에는 상태가 없어, 거래중 마켓만 선별할 때 이 응답과 합쳐 쓴다. → [상장 상태 동기화](../market-status-sync.md)
+- **필터:** `?symbolStatus=TRADING`로 거래중 심볼만 받을 수 있다.
+
+**응답 예시 (`symbols` 배열의 단일 항목, 사용 필드만):**
+
+```json
+{
+  "symbol": "BTCUSDT",
+  "status": "TRADING",
+  "baseAsset": "BTC",
+  "quoteAsset": "USDT"
+}
+```
+
+- `status`: `TRADING`(정상 거래) / `HALT`·`BREAK`(거래 정지) 등. `TRADING`만 거래중으로 본다.
+- 심볼이 이 응답에서 아예 사라지면 상장 폐지로 본다.
+
 ### 초기 스냅샷
 
 REST 응답의 `lastPrice`와 `priceChangePercent`를 즉시 Redis에 저장하여, WebSocket 연결 전에도 시세를 제공한다.

@@ -43,6 +43,7 @@
 
 **운영**
 - [docs/server-redundancy.md](docs/server-redundancy.md) — 리더 선출 + 거래소 라이프사이클
+- [docs/market-status-sync.md](docs/market-status-sync.md) — 상장 상태 감지·주기 동기화, 거래지원 종료 마켓 처리
 - [docs/monitoring.md](docs/monitoring.md) — Micrometer 메트릭 목록과 측정 전략
 
 **서비스 간 계약** (루트 `docs/contracts/`)
