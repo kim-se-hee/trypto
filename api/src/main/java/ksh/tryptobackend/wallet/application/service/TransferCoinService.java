@@ -59,12 +59,7 @@ public class TransferCoinService implements TransferCoinUseCase {
         coinTransferrer.transfer(balances, command.amount());
 
         walletBalanceCommandPort.saveAll(balances.toList());
-        holdingMover.move(
-                command.fromWalletId(),
-                command.toWalletId(),
-                destination.getExchangeId(),
-                command.coinId(),
-                command.amount());
+        holdingMover.move(transfer, destination.getExchangeId());
 
         Transfer saved = transferCommandPort.save(transfer);
         idempotencyKeyCommandPort.linkResource(idempotencyKey, saved.getTransferId());

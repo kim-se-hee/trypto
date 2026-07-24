@@ -1,8 +1,8 @@
 package ksh.tryptobackend.wallet.domain.service;
 
-import java.math.BigDecimal;
+import ksh.tryptobackend.wallet.domain.model.Transfer;
 
 public interface HoldingMover {
 
-    void move(Long fromWalletId, Long toWalletId, Long toExchangeId, Long coinId, BigDecimal amount);
+    void move(Transfer transfer, Long toExchangeId);
 }
