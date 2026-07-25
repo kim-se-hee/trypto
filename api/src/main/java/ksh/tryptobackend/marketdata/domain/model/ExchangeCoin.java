@@ -82,4 +82,17 @@ public class ExchangeCoin extends AggregateRoot {
     public MarketStatus status() {
         return status;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ExchangeCoin that = (ExchangeCoin) o;
+        return exchangeCoinId != null && exchangeCoinId.equals(that.exchangeCoinId);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
