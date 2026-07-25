@@ -48,10 +48,8 @@ public class Position {
         }
     }
 
-    public Quantity release(Quantity amount) {
-        Quantity released = holding.totalQuantity().min(amount);
-        this.holding = holding.reduce(released);
-        return released;
+    public void release(Quantity amount) {
+        this.holding = holding.reduce(amount);
     }
 
     public void receive(Quantity amount, Price acquisitionPrice) {

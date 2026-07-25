@@ -38,27 +38,4 @@ class HoldingTransferrerTest {
         assertThat(destination.getHolding().totalQuantity().value()).isEqualByComparingTo(new BigDecimal("4"));
         assertThat(destination.getHolding().avgBuyPrice().value()).isEqualByComparingTo(new BigDecimal("2000"));
     }
-
-    @Test
-    @DisplayName("빈 출발 포지션 — 도착 포지션은 아무것도 받지 않는다")
-    void emptySourceMovesNothing() {
-        Position source = Position.empty(1L, 1L);
-        Position destination = Position.empty(2L, 1L);
-
-        holdingTransferrer.transfer(source, destination, Quantity.of(new BigDecimal("5")), price("2000"));
-
-        assertThat(destination.isHolding()).isFalse();
-    }
-
-    @Test
-    @DisplayName("보유량 초과 요청 — 도착 포지션은 실제 보유량만큼만 받는다")
-    void overRequestMovesOnlyHeldQuantity() {
-        Position source = holdingOf("1000", "10");
-        Position destination = Position.empty(2L, 1L);
-
-        holdingTransferrer.transfer(source, destination, Quantity.of(new BigDecimal("15")), price("2000"));
-
-        assertThat(source.isHolding()).isFalse();
-        assertThat(destination.getHolding().totalQuantity().value()).isEqualByComparingTo(new BigDecimal("10"));
-    }
 }

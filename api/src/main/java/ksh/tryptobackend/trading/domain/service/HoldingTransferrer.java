@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component;
 public class HoldingTransferrer {
 
     public void transfer(Position source, Position destination, Quantity amount, Price acquisitionPrice) {
-        Quantity released = source.release(amount);
-        if (released.isPositive()) {
-            destination.receive(released, acquisitionPrice);
-        }
+        source.release(amount);
+        destination.receive(amount, acquisitionPrice);
     }
 }
