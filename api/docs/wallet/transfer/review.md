@@ -56,3 +56,19 @@
 - [TransferCoinService.java:62] 잔고 비관 락 보유 구간 안에서 Position·매핑·현재가 조회가 추가돼 임계 구역 증가 — 취득가 조회를 락 획득 전으로 이동 고려 (동시성)
 - [MoveHoldingService 전체] 체결 vs 송금이 같은 Position 행을 두고 경쟁하는 낙관적 락 충돌 경로 신설 — 기존 409 `CONCURRENT_MODIFICATION` 처리로 데이터 손상은 없음 (동시성)
 - [Position.java:51-55] release 의 보유량 캡핑 규칙이 spec.md 에 미기재 — 커밋 메시지에만 근거 존재 (컨벤션)
+
+## 4차 차단 이슈 (3차 적용 후 재리뷰, `071a80a7..0b734e10`)
+
+- [ ] **[api/src/main/java/ksh/tryptobackend/trading/application/port/out/PositionCommandPort.java:12] `getTransferPositionsWithLock` 이 `get` 네이밍인데 결측 시 예외 없이 `Position.empty()` 를 생성 — 실제 계약은 getOrCreate** (출처: 컨벤션)
+  - **설명:** conventions.md 의 `get` vs `find` 규칙상 `get` 은 대상이 반드시 존재해야 하고 없으면 예외를 던진다. 그러나 이 메서드 구현(`JpaPositionCommandAdapter.getOrCreateWithLock`)은 행이 없으면 `Position.empty(...)` 를 만들어 돌려준다 — 같은 인터페이스의 `getOrCreate` 와 동일한 "없으면 생성" 의미인데 접미어가 빠졌다. 거울 레퍼런스 `WalletBalanceQueryAdapter.getTransferBalancesWithLock` 은 결측 시 실제로 예외를 던져(`WALLET_BALANCE_NOT_FOUND`) `get` 계약을 지키므로, 이름은 같은 패턴인데 계약이 달라 혼동을 부른다.
+  - **수정 제안:** `getTransferPositionsWithLock` → `getOrCreateTransferPositionsWithLock` 으로 리네이밍하고 `PositionCommandPort`·`JpaPositionCommandAdapter`·`MockPositionAdapter`·`MoveHoldingService` 호출부를 함께 바꾼다.
+
+## 4차 참고 이슈 (수정 안 함, 보고용)
+
+- [MoveHoldingService.java:30-36] 보유 없음 가드(무잠금 SELECT)와 실제 이동 대상(잠금 SELECT)이 서로 다른 스냅샷 — TOC-TOU 틈. 3차에서 이월된 항목이고 `release` 의 수량 클램프로 데이터 손상 없음. "보유 없으면 잠금·시세 조회 전 조기 반환"이라는 비용 절감과 트레이드오프 (ddd | oop)
+- [PositionCommandPort.java:12] `WithLock` 접미어가 잠금 기술을 노출 — 다만 wallet 의 `getTransferBalancesWithLock` 을 의도적으로 거울 삼은 확립된 대칭 컨벤션이라 현행 유지 권장 (ddd)
+- [JpaPositionCommandAdapter.java:24-63] public 메서드 나열이 조회 → 상태 변경 순서라 "상태 변경 → 판별 → 조회" 컨벤션과 어긋남 — 기존 순서를 답습한 것 (oop)
+- [JpaPositionCommandAdapter.java:58-63] `saveAll` 의 (walletId, coinId) 정렬은 교착 방지에 실질 효과 없음(락은 이미 `getTransferPositionsWithLock` 에서 획득 완료). 레퍼런스 `WalletBalanceCommandAdapter.saveAll`·`MockPositionAdapter.saveAll` 은 정렬 없이 `forEach(this::save)` 뿐이라 이 구현만 비대칭 — 단순 `forEach` 로 정리 권장 (동시성)
+- [JpaPositionCommandAdapter.java:58-63] `saveAll` 이 이름과 달리 배치가 아니라 `save()` 순차 호출이라 이미 잠금 로드한 엔티티를 `findById` 로 재조회 — 트래픽 증가 시 로드된 엔티티 직접 갱신으로 재조회 제거 고려 (성능)
+- [JpaPositionCommandAdapter.java:33-39, 65-70] 목적지 Position 최초 생성 시(행 미존재) `FOR UPDATE` 가 잠글 대상이 없어 잠금 공백 — 현재는 호출자 `TransferCoinService` 의 선행 WalletBalance 잠금이 직렬화해 재현 안 됨. `MoveHoldingUseCase` 를 다른 경로에서 호출 시 재검토 필요 (동시성)
+- [MoveHoldingService.java:39-47] Position 비관 락이 트랜잭션 커밋까지 유지돼, 동시 체결 통지(`SettleOrderService`)가 즉시 409 대신 행 락 대기로 바뀜 — 채택된 WalletBalance 패턴의 결과, 데이터 손상 없음. 체결 지연이 문제되면 락 타임아웃 힌트 검토 (동시성)
