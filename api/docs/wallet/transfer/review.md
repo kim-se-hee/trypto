@@ -33,15 +33,15 @@
 
 ## 3차 차단 이슈 (보유 내역 이동, `61b34f57..c5642b1e`)
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/wallet/adapter/out/service/HoldingMoverImpl.java:3-4] Wallet→Trading 역방향 의존 신설로 컨텍스트 순환 의존 — architecture.md 의존 표와 모순** (출처: oop | 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/wallet/adapter/out/service/HoldingMoverImpl.java:3-4] Wallet→Trading 역방향 의존 신설로 컨텍스트 순환 의존 — architecture.md 의존 표와 모순** (출처: oop | 컨벤션) — **완료(`3c2bf3ee`)**
   - **설명:** 이 변경 전 wallet 패키지에는 trading import 가 없었다. `HoldingMoverImpl` 이 trading 의 `MoveHoldingUseCase` 를 호출하면서 기존 Trading→Wallet(`BalanceChangeApplierImpl`) 과 합쳐 양방향 의존이 생겼고, `api/docs/architecture.md` 의 "바운디드 컨텍스트 간 상호작용" 표(`| Wallet | MarketData, InvestmentRound |`)와 코드가 모순된다. `api/docs/wallet/dependency.md` 에는 새 의존을 기록했지만 상위 문서는 갱신하지 않았다.
   - **수정 제안(방향 확정):** 코드 구조는 유지한다. 보유 내역(Position)은 trading 소유이므로 wallet 이 직접 바꾸지 않고 연동형 도메인 서비스 + ACL 로 trading 의 인바운드 포트에 위임하는 현재 구조가 이미 확정된 설계다(`BalanceChangeApplier` 와 대칭). 따라서 이벤트 재구조화가 아니라 **문서 정합화**로 해소한다: ① `architecture.md` 의 Wallet 행을 `MarketData, InvestmentRound, Trading` 으로 갱신하고, ② 같은 문서(또는 wallet/dependency.md 해당 절)에 "Trading↔Wallet 은 컨텍스트 단위로는 상호 의존이지만 유스케이스 경로 단위로는 비순환(BalanceChange: trading→wallet, MoveHolding: wallet→trading, 두 경로는 겹치지 않음)이며, 각 방향 모두 연동형 도메인 서비스 + ACL 로만 접근한다"는 설계 결정을 짧게 기록한다.
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/trading/application/service/MoveHoldingService.java:48-69] 애플리케이션 서비스가 private 메서드 3개로 쪼개져 평평한 오케스트레이션 컨벤션 위반** (출처: 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/trading/application/service/MoveHoldingService.java:48-69] 애플리케이션 서비스가 private 메서드 3개로 쪼개져 평평한 오케스트레이션 컨벤션 위반** (출처: 컨벤션) — **완료(`2cc43831`)**
   - **설명:** conventions.md 애플리케이션 서비스 규칙("private 메소드를 작성하지 않고 영어 읽히듯 메소드를 구현한다")과 달리 `hasNoHolding`·`acquisitionPriceOf`·`getPositionsInWalletIdOrder` 세 private 헬퍼에 분기·매핑·정렬 로직이 들어 있다. 같은 diff 의 `TransferCoinService` 와 레퍼런스 `PlaceOrderService` 는 평평한 단일 흐름이다.
   - **수정 제안:** 아래 3번 이슈와 **한 번에** 해소한다. 정렬·잠금 로직을 어댑터로 내리면(3번) 서비스 본문은 조회 → 가드 → 현재가 조회 → `holdingTransferrer.transfer` → 저장의 평평한 나열로 정리된다. 보유 없음 가드는 `Optional` 결과를 본문에서 바로 판별해 early return 한다.
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/trading/application/service/MoveHoldingService.java:38-45] 지갑 ID 정렬 로드가 실제 잠금·저장 순서를 보장하지 않아 교착 방지가 성립하지 않음** (출처: 동시성 | 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/trading/application/service/MoveHoldingService.java:38-45] 지갑 ID 정렬 로드가 실제 잠금·저장 순서를 보장하지 않아 교착 방지가 성립하지 않음** (출처: 동시성 | 컨벤션) — **완료(`f038b09b`)**
   - **설명:** `PositionCommandPort.getOrCreate` 는 `@Lock` 없는 평범한 SELECT 라 읽기 순서를 정렬해도 DB 락이 걸리지 않고, 실제 배타 락이 걸리는 `save()`(UPDATE) 는 정렬과 무관하게 항상 출발→도착 고정 순서다. 반대 방향 동시 송금 시 교착 가능성이 그대로 남는다. 지금은 호출자 `TransferCoinService` 의 `getTransferBalancesWithLock` 이 같은 키 쌍을 먼저 정렬 잠금해 주는 덕에 우연히 재현되지 않을 뿐, `MoveHoldingUseCase` 는 범용 인바운드 포트로 문서화되어 있어 이 전제는 계약이 아니다. `api/docs/wallet/business-rules.md` 의 "(walletId, coinId) 오름차순 잠금" 규약을 Position 에도 실제로 적용해야 한다.
   - **수정 제안:** `WalletBalanceQueryAdapter.getTransferBalancesWithLock` 을 거울로 삼는다. ① `PositionJpaRepository` 에 `@Lock(PESSIMISTIC_WRITE)` 조회(`findWithLockByWalletIdAndCoinId`)를 추가하고, ② 포트에 출발·도착 Position 을 지갑 ID 오름차순으로 잠그며 getOrCreate 하는 조회 메소드를 추가해 정렬·잠금·생성 로직을 어댑터 안에 응집한다. ③ `save` 호출도 같은 정렬 순서를 따르게 한다. 포트 시그니처가 바뀌므로 인수 테스트의 `MockPositionAdapter` 도 함께 갱신한다(모든 getOrCreate 는 save 로 끝나야 한다는 기존 잠금 규약 유지).
 
