@@ -27,11 +27,8 @@ public class MoveHoldingService implements MoveHoldingUseCase {
     @Override
     @Transactional
     public void moveHolding(MoveHoldingCommand command) {
-        boolean hasHolding = positionCommandPort
-                .findByWalletIdAndCoinId(command.fromWalletId(), command.coinId())
-                .map(Position::isHolding)
-                .orElse(false);
-        if (!hasHolding) {
+        Position sourcePosition = positionCommandPort.getOrCreate(command.fromWalletId(), command.coinId());
+        if (!sourcePosition.isHolding()) {
             return;
         }
 
