@@ -5,11 +5,9 @@ import ksh.tryptobackend.marketdata.adapter.in.dto.MarketStatusChangedMessage;
 import ksh.tryptobackend.marketdata.application.port.in.ApplyMarketStatusChangeUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.command.ApplyMarketStatusChangeCommand;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MarketStatusEventListener {
@@ -21,13 +19,10 @@ public class MarketStatusEventListener {
     @RabbitListener(
             queues = "#{marketStatusQueue.name}",
             autoStartup = "false",
-            id = RabbitMqConfig.MARKET_STATUS_LISTENER_ID)
+            id = RabbitMqConfig.MARKET_STATUS_LISTENER_ID,
+            containerFactory = RabbitMqConfig.MARKET_STATUS_LISTENER_CONTAINER_FACTORY)
     public void onMarketStatusChanged(MarketStatusChangedMessage message) {
-        try {
-            applyMarketStatusChangeUseCase.apply(toCommand(message));
-        } catch (Exception e) {
-            log.error("상장 상태 변화 반영 실패: {}", message, e);
-        }
+        applyMarketStatusChangeUseCase.apply(toCommand(message));
     }
 
     private ApplyMarketStatusChangeCommand toCommand(MarketStatusChangedMessage message) {

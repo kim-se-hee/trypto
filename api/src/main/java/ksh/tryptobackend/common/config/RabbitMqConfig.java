@@ -5,9 +5,13 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +23,15 @@ public class RabbitMqConfig {
 
     public static final String TICKER_MARKETDATA_LISTENER_ID = "tickerMarketdataListener";
     public static final String MARKET_STATUS_LISTENER_ID = "marketStatusListener";
+    public static final String MARKET_STATUS_LISTENER_CONTAINER_FACTORY = "marketStatusListenerContainerFactory";
+
+    private static final String MARKET_STATUS_DEAD_LETTER_EXCHANGE = "market.status.dlx";
+    private static final String MARKET_STATUS_DEAD_LETTER_QUEUE = "market.status.api.dlq";
+    private static final String DEAD_LETTER_EXCHANGE_ARGUMENT = "x-dead-letter-exchange";
+    private static final int MARKET_STATUS_MAX_RETRIES = 3;
+    private static final long MARKET_STATUS_RETRY_INITIAL_INTERVAL_MS = 1000L;
+    private static final double MARKET_STATUS_RETRY_MULTIPLIER = 2.0;
+    private static final long MARKET_STATUS_RETRY_MAX_INTERVAL_MS = 10000L;
 
     @Value("${app.rabbitmq.ticker-exchange:ticker.exchange}")
     private String tickerExchangeName;
@@ -58,12 +71,48 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue marketStatusQueue() {
-        return new Queue(marketStatusQueueName, true, false, false);
+        return QueueBuilder.durable(marketStatusQueueName)
+                .withArgument(DEAD_LETTER_EXCHANGE_ARGUMENT, MARKET_STATUS_DEAD_LETTER_EXCHANGE)
+                .build();
     }
 
     @Bean
     public Binding marketStatusBinding(Queue marketStatusQueue, FanoutExchange marketStatusFanoutExchange) {
         return BindingBuilder.bind(marketStatusQueue).to(marketStatusFanoutExchange);
+    }
+
+    @Bean
+    public FanoutExchange marketStatusDeadLetterExchange() {
+        return new FanoutExchange(MARKET_STATUS_DEAD_LETTER_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue marketStatusDeadLetterQueue() {
+        return QueueBuilder.durable(MARKET_STATUS_DEAD_LETTER_QUEUE).build();
+    }
+
+    @Bean
+    public Binding marketStatusDeadLetterBinding(
+            Queue marketStatusDeadLetterQueue, FanoutExchange marketStatusDeadLetterExchange) {
+        return BindingBuilder.bind(marketStatusDeadLetterQueue).to(marketStatusDeadLetterExchange);
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory marketStatusListenerContainerFactory(
+            ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jsonMessageConverter);
+        factory.setDefaultRequeueRejected(false);
+        factory.setAdviceChain(RetryInterceptorBuilder.stateless()
+                .maxRetries(MARKET_STATUS_MAX_RETRIES)
+                .backOffOptions(
+                        MARKET_STATUS_RETRY_INITIAL_INTERVAL_MS,
+                        MARKET_STATUS_RETRY_MULTIPLIER,
+                        MARKET_STATUS_RETRY_MAX_INTERVAL_MS)
+                .recoverer(new RejectAndDontRequeueRecoverer())
+                .build());
+        return factory;
     }
 
     @Bean
