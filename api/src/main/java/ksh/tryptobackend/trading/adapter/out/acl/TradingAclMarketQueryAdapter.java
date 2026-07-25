@@ -2,6 +2,9 @@ package ksh.tryptobackend.trading.adapter.out.acl;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
@@ -41,11 +44,6 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
     }
 
     @Override
-    public boolean isSuspended(Long exchangeCoinId) {
-        return getMarketStatusUseCase.isSuspended(exchangeCoinId);
-    }
-
-    @Override
     public TradingPair getTradingPair(Long exchangeCoinId) {
         ExchangeCoinMappingResult mapping = getMapping(exchangeCoinId);
         ExchangeDetailResult detail = getDetail(mapping.exchangeId());
@@ -59,7 +57,16 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
 
     @Override
     public CoinExchangeMapping findCoinExchangeMapping(Long exchangeId, List<Long> coinIds) {
-        return new CoinExchangeMapping(findExchangeCoinMappingUseCase.findExchangeCoinIdMap(exchangeId, coinIds));
+        List<ExchangeCoinMappingResult> mappings =
+                findExchangeCoinMappingUseCase.findExchangeCoinMappings(exchangeId, coinIds);
+        Map<Long, Long> exchangeCoinIdByCoinId = mappings.stream()
+                .collect(
+                        Collectors.toMap(ExchangeCoinMappingResult::coinId, ExchangeCoinMappingResult::exchangeCoinId));
+        Set<Long> suspendedCoinIds = mappings.stream()
+                .filter(ExchangeCoinMappingResult::suspended)
+                .map(ExchangeCoinMappingResult::coinId)
+                .collect(Collectors.toSet());
+        return new CoinExchangeMapping(exchangeCoinIdByCoinId, suspendedCoinIds);
     }
 
     private ExchangeCoinMappingResult getMapping(Long exchangeCoinId) {
