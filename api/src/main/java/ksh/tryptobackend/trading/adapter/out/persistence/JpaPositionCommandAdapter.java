@@ -30,7 +30,7 @@ public class JpaPositionCommandAdapter implements PositionCommandPort {
     }
 
     @Override
-    public TransferPositions getTransferPositionsWithLock(Long coinId, Long fromWalletId, Long toWalletId) {
+    public TransferPositions getOrCreateTransferPositionsWithLock(Long coinId, Long fromWalletId, Long toWalletId) {
         Map<Long, Position> lockedByWalletId = new LinkedHashMap<>();
         Stream.of(fromWalletId, toWalletId)
                 .sorted()

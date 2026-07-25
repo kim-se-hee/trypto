@@ -39,7 +39,7 @@ public class MoveHoldingService implements MoveHoldingUseCase {
                 marketQueryPort.findCoinExchangeMapping(command.toExchangeId(), List.of(command.coinId()));
         Price acquisitionPrice = marketQueryPort.getCurrentPrice(mapping.getExchangeCoinId(command.coinId()));
 
-        TransferPositions positions = positionCommandPort.getTransferPositionsWithLock(
+        TransferPositions positions = positionCommandPort.getOrCreateTransferPositionsWithLock(
                 command.coinId(), command.fromWalletId(), command.toWalletId());
         holdingTransferrer.transfer(
                 positions.source(), positions.destination(), Quantity.of(command.amount()), acquisitionPrice);

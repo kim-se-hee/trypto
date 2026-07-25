@@ -9,7 +9,7 @@ public interface PositionCommandPort {
 
     Position getOrCreate(Long walletId, Long coinId);
 
-    TransferPositions getTransferPositionsWithLock(Long coinId, Long fromWalletId, Long toWalletId);
+    TransferPositions getOrCreateTransferPositionsWithLock(Long coinId, Long fromWalletId, Long toWalletId);
 
     Optional<Position> findByWalletIdAndCoinId(Long walletId, Long coinId);
 
