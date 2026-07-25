@@ -57,6 +57,12 @@ public class Wallet {
         }
     }
 
+    public void verifyTradable(boolean suspended) {
+        if (suspended) {
+            throw new CustomException(ErrorCode.MARKET_SUSPENDED);
+        }
+    }
+
     private WalletBalance openBalance(Long coinId, Long baseCurrencyCoinId) {
         WalletBalance balance = WalletBalance.createEmpty(walletId, coinId);
         if (coinId.equals(baseCurrencyCoinId)) {

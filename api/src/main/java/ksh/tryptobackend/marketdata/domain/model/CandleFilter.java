@@ -7,7 +7,7 @@ import ksh.tryptobackend.common.exception.ErrorCode;
 
 public record CandleFilter(String exchange, String symbol, CandleInterval interval, int limit, Instant cursor) {
 
-    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("[A-Za-z0-9_-]+");
+    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("[\\p{L}\\p{N}_-]+");
     private static final String MARKET_SYMBOL_SEPARATOR = "/";
     private static final int DEFAULT_LIMIT = 60;
 

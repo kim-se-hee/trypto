@@ -16,10 +16,16 @@ public class RabbitMQConfig {
 
     public static final String TICKER_EXCHANGE = "ticker.exchange";
     public static final String ENGINE_INBOX_QUEUE = "engine.inbox";
+    public static final String MARKET_STATUS_EXCHANGE = "market.status";
 
     @Bean
     public FanoutExchange tickerExchange() {
         return new FanoutExchange(TICKER_EXCHANGE);
+    }
+
+    @Bean
+    public FanoutExchange marketStatusExchange() {
+        return new FanoutExchange(MARKET_STATUS_EXCHANGE);
     }
 
     @Bean

@@ -81,6 +81,7 @@ erDiagram
         id exchange_id FK "거래소 ID (exchange_id + coin_id 복합 유니크)"
         id coin_id FK "코인 ID"
         string display_name "거래소별 표시명"
+        string status "TRADING SUSPENDED (거래중/거래지원 종료)"
     }
 
     WALLET {

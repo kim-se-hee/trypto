@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeCoinJpaEntity;
+import ksh.tryptobackend.marketdata.domain.vo.MarketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpaEntity, Long> {
@@ -17,4 +18,6 @@ public interface ExchangeCoinJpaRepository extends JpaRepository<ExchangeCoinJpa
     List<ExchangeCoinJpaEntity> findByExchangeIdAndCoinIdIn(Long exchangeId, Collection<Long> coinIds);
 
     List<ExchangeCoinJpaEntity> findByExchangeId(Long exchangeId);
+
+    List<ExchangeCoinJpaEntity> findByStatus(MarketStatus status);
 }

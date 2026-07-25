@@ -159,7 +159,7 @@ public class ExchangeInitializer {
     }
 
     private void loadBinanceMetadata() {
-        var tickers = binanceRestClient.fetchUsdtTickers();
+        var tickers = binanceRestClient.fetchTradingUsdtTickers();
         for (var ticker : tickers) {
             String base = ticker.symbol().replace("USDT", "");
             MarketInfo info = new MarketInfo(base, "USDT", base + "/USDT", base);

@@ -51,6 +51,7 @@ public enum ErrorCode {
     WALLET_ACCESS_DENIED(403, "wallet.access.denied"),
     ROUND_ACCESS_DENIED(403, "round.access.denied"),
     ROUND_NOT_ACTIVE(409, "round.not.active"),
+    MARKET_SUSPENDED(409, "market.suspended"),
     NICKNAME_SAME_AS_CURRENT(400, "nickname.same.as.current"),
     INVALID_NICKNAME_LENGTH(400, "invalid.nickname.length"),
     NICKNAME_ALREADY_EXISTS(409, "nickname.already.exists"),

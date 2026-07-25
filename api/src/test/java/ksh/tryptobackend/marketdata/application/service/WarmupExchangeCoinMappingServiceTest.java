@@ -20,6 +20,7 @@ import ksh.tryptobackend.marketdata.domain.model.ExchangeMarketType;
 import ksh.tryptobackend.marketdata.domain.vo.CoinSymbols;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinMapping;
 import ksh.tryptobackend.marketdata.domain.vo.ExchangeSymbolKey;
+import ksh.tryptobackend.marketdata.domain.vo.MarketStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +62,7 @@ class WarmupExchangeCoinMappingServiceTest {
         when(exchangeQueryPort.findExchangeDetailById(1L)).thenReturn(Optional.of(upbit));
         when(coinQueryPort.findSymbolsByIds(Set.of(100L))).thenReturn(new CoinSymbols(Map.of(100L, "KRW")));
         when(exchangeCoinQueryPort.findByExchangeId(1L))
-                .thenReturn(new ExchangeCoins(List.of(new ExchangeCoin(10L, 1L, 5L, "Bitcoin"))));
+                .thenReturn(new ExchangeCoins(List.of(new ExchangeCoin(10L, 1L, 5L, "Bitcoin", MarketStatus.TRADING))));
         when(coinQueryPort.findSymbolsByIds(Set.of(5L))).thenReturn(new CoinSymbols(Map.of(5L, "BTC")));
 
         // When

@@ -9,6 +9,7 @@ import ksh.tryptobackend.marketdata.application.port.in.FindCoinInfoUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindCoinSymbolsUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinsUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.GetCoinMarketStatusUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.CoinInfoResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinListResult;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeDetailResult;
@@ -25,6 +26,7 @@ public class WalletAclMarketDataQueryAdapter implements MarketDataQueryPort {
     private final FindCoinInfoUseCase findCoinInfoUseCase;
     private final FindCoinSymbolsUseCase findCoinSymbolsUseCase;
     private final FindExchangeCoinsUseCase findExchangeCoinsUseCase;
+    private final GetCoinMarketStatusUseCase getCoinMarketStatusUseCase;
 
     @Override
     public BaseCurrency getBaseCurrency(Long exchangeId) {
@@ -42,6 +44,11 @@ public class WalletAclMarketDataQueryAdapter implements MarketDataQueryPort {
         return findExchangeCoinsUseCase.findByExchangeId(exchangeId).stream()
                 .map(ExchangeCoinListResult::coinId)
                 .toList();
+    }
+
+    @Override
+    public boolean isCoinSuspended(Long exchangeId, Long coinId) {
+        return getCoinMarketStatusUseCase.isSuspended(exchangeId, coinId);
     }
 
     private Long getBaseCurrencyCoinId(Long exchangeId) {

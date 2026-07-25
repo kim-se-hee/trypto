@@ -33,6 +33,7 @@ exchange:
     ws-url: wss://ws-api.bithumb.com/websocket/v1
   binance:
     rest-url: https://api.binance.com/api/v3/ticker/24hr
+    exchange-info-url: https://api.binance.com/api/v3/exchangeInfo
     candle-url: https://api.binance.com/api/v3/klines
     ws-url: wss://stream.binance.com:9443/ws/!miniTicker@arr
 
@@ -49,6 +50,9 @@ ticker:
 
 market-meta:
   redis-key-prefix: market-meta
+
+market-status:
+  sync-interval-ms: 180000
 
 influxdb:
   url: ${INFLUXDB_URL:http://localhost:8086}

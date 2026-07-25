@@ -31,7 +31,8 @@ public class FindExchangeCoinsService implements FindExchangeCoinsUseCase {
         if (!exchangeQueryPort.existsById(exchangeId)) {
             throw new CustomException(ErrorCode.EXCHANGE_NOT_FOUND);
         }
-        ExchangeCoins exchangeCoins = exchangeCoinQueryPort.findByExchangeId(exchangeId);
+        ExchangeCoins exchangeCoins =
+                exchangeCoinQueryPort.findByExchangeId(exchangeId).onlyTrading();
         CoinSymbols coinSymbols = coinQueryPort.findSymbolsByIds(exchangeCoins.coinIds());
         TickerSnapshots tickerSnapshots =
                 tickerSnapshotQueryPort.findByExchangeCoinIds(exchangeCoins.exchangeCoinIds());

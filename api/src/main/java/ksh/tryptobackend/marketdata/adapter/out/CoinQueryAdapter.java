@@ -2,6 +2,7 @@ package ksh.tryptobackend.marketdata.adapter.out;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.CoinJpaEntity;
@@ -36,5 +37,10 @@ public class CoinQueryAdapter implements CoinQueryPort {
         return coinJpaRepository.findByIdIn(coinIds).stream()
                 .map(CoinJpaEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Coin> findBySymbol(String symbol) {
+        return coinJpaRepository.findBySymbol(symbol).map(CoinJpaEntity::toDomain);
     }
 }

@@ -1,15 +1,13 @@
 package ksh.tryptobackend.marketdata.adapter.out;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.entity.ExchangeCoinJpaEntity;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeCoinJpaRepository;
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoins;
-import ksh.tryptobackend.marketdata.domain.vo.ExchangeCoinIdMap;
+import ksh.tryptobackend.marketdata.domain.vo.MarketStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,15 +23,27 @@ public class ExchangeCoinQueryAdapter implements ExchangeCoinQueryPort {
     }
 
     @Override
+    public Optional<ExchangeCoin> findByExchangeIdAndCoinId(Long exchangeId, Long coinId) {
+        return repository.findByExchangeIdAndCoinId(exchangeId, coinId).map(ExchangeCoinJpaEntity::toDomain);
+    }
+
+    @Override
     public boolean existsByExchangeIdAndCoinId(Long exchangeId, Long coinId) {
         return repository.existsByExchangeIdAndCoinId(exchangeId, coinId);
     }
 
     @Override
-    public ExchangeCoinIdMap findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds) {
-        Map<Long, Long> map = repository.findByExchangeIdAndCoinIdIn(exchangeId, coinIds).stream()
-                .collect(Collectors.toMap(ExchangeCoinJpaEntity::getCoinId, ExchangeCoinJpaEntity::getId));
-        return new ExchangeCoinIdMap(map);
+    public List<ExchangeCoin> findByExchangeIdAndCoinIds(Long exchangeId, List<Long> coinIds) {
+        return repository.findByExchangeIdAndCoinIdIn(exchangeId, coinIds).stream()
+                .map(ExchangeCoinJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Long> findSuspendedExchangeCoinIds() {
+        return repository.findByStatus(MarketStatus.SUSPENDED).stream()
+                .map(ExchangeCoinJpaEntity::getId)
+                .toList();
     }
 
     @Override

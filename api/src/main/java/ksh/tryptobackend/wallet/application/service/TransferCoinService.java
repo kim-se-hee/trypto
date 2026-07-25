@@ -49,6 +49,8 @@ public class TransferCoinService implements TransferCoinUseCase {
         Wallet destination = walletQueryPort.getById(command.toWalletId());
         source.verifySameRoundAs(destination);
         source.verifyOwnedBy(command.requesterId(), investmentRoundQueryPort.getOwnerId(source.getRoundId()));
+        source.verifyTradable(marketDataQueryPort.isCoinSuspended(source.getExchangeId(), command.coinId()));
+        destination.verifyTradable(marketDataQueryPort.isCoinSuspended(destination.getExchangeId(), command.coinId()));
 
         Transfer transfer = Transfer.create(command, now);
         destination.verifyHandles(

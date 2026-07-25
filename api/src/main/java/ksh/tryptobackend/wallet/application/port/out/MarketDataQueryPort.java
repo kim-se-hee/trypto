@@ -12,4 +12,6 @@ public interface MarketDataQueryPort {
     Map<Long, String> findCoinSymbols(Set<Long> coinIds);
 
     List<Long> findCoinIdsByExchange(Long exchangeId);
+
+    boolean isCoinSuspended(Long exchangeId, Long coinId);
 }

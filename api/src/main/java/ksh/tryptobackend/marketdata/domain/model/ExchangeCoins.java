@@ -13,6 +13,10 @@ public class ExchangeCoins {
         this.values = List.copyOf(values);
     }
 
+    public ExchangeCoins onlyTrading() {
+        return new ExchangeCoins(values.stream().filter(ExchangeCoin::isTrading).toList());
+    }
+
     public Set<Long> coinIds() {
         return values.stream().map(ExchangeCoin::coinId).collect(Collectors.toSet());
     }

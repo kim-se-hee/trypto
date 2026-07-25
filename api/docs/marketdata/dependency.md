@@ -19,8 +19,8 @@
 
 ## FindExchangeCoinMappingUseCase
 - `findById(Long exchangeCoinId) → Optional<ExchangeCoinMappingResult>`
-- `findExchangeCoinIdMap(Long exchangeId, List<Long> coinIds) → Map<Long, Long>`
-- Returns `ExchangeCoinMappingResult { exchangeCoinId: Long, exchangeId: Long, coinId: Long }`
+- `findExchangeCoinMappings(Long exchangeId, List<Long> coinIds) → List<ExchangeCoinMappingResult>`
+- Returns `ExchangeCoinMappingResult { exchangeCoinId: Long, exchangeId: Long, coinId: Long, suspended: boolean }`
 
 ## GetLivePriceUseCase
 - `getCurrentPrice(Long exchangeCoinId) → BigDecimal`
@@ -34,6 +34,15 @@
 
 ## FindBtcDailyPricesUseCase
 - `findBtcDailyPrices(LocalDate startDate, LocalDate endDate, String currency) → List<BtcDailyPriceResult>` — 후회 차트 BTC 벤치마크
+
+## GetMarketStatusUseCase
+- `isSuspended(Long exchangeCoinId) → boolean` — 상장 코인의 거래지원 종료 여부
+
+## GetCoinMarketStatusUseCase
+- `isSuspended(Long exchangeId, Long coinId) → boolean` — 거래소·코인 기준 거래지원 종료 여부
+
+## FindSuspendedExchangeCoinIdsUseCase
+- `findSuspendedExchangeCoinIds() → List<Long>` — 거래지원 종료 상태인 상장 코인 식별자 목록
 
 # 의존
 
