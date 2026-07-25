@@ -42,6 +42,7 @@
 - `FindCoinInfoUseCase` — 기축통화 심볼 조회 (잔고 조회)
 - `FindCoinSymbolsUseCase` — 코인 심볼 조회 (송금 내역 응답 보강)
 - `FindExchangeCoinsUseCase` — 거래소 코인 목록 조회 (지갑 생성 시 잔고 사전 생성)
+- `GetCoinMarketStatusUseCase` — 거래지원 종료 여부 확인 (송금 거절)
 
 ## InvestmentRound
 - `FindRoundInfoUseCase` — 잔고 조회 시 소유권 검증

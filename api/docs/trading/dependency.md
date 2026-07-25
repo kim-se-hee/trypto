@@ -27,7 +27,9 @@ trading 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 않
 소비 UseCase 를 `MarketInfo`·`TradingPair`·`Price`·`CoinExchangeMapping` 로 번역한다.
 - `GetLivePriceUseCase` — 현재가 조회
 - `FindExchangeDetailUseCase` — 거래소 상세(수수료율·기준통화) 조회
-- `FindExchangeCoinMappingUseCase` — 거래소-코인 매핑
+- `FindExchangeCoinMappingUseCase` — 거래소-코인 매핑(거래지원 종료 여부 포함)
+- `GetMarketStatusUseCase` — 거래지원 종료 여부 조회
+- `FindSuspendedExchangeCoinIdsUseCase` — 거래지원 종료 상장 코인 목록(미체결 자동취소 보정용)
 
 ### WalletQueryPort ← Wallet (`TradingAclWalletQueryAdapter`)
 소비 UseCase 를 `WalletRef` 로 번역한다.
