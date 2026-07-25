@@ -14,12 +14,12 @@ public class CoinExchangeMapping {
         this.suspendedCoinIds = Set.copyOf(suspendedCoinIds);
     }
 
-    public Long getExchangeCoinId(Long coinId) {
-        return exchangeCoinIdByCoinId.get(coinId);
-    }
-
     public boolean isTradable(Long coinId) {
         return exchangeCoinIdByCoinId.containsKey(coinId) && !suspendedCoinIds.contains(coinId);
+    }
+
+    public Long getExchangeCoinId(Long coinId) {
+        return exchangeCoinIdByCoinId.get(coinId);
     }
 
     @Override
