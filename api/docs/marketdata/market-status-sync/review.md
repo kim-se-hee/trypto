@@ -57,7 +57,7 @@
 
 재리뷰 범위: `1964bb0b..HEAD`(1차 수정 커밋). 5개 리뷰어 차단 0, conv-api 가 수정 과정에서 새로 유입된 위반 1건 발견.
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/trading/domain/vo/CoinExchangeMapping.java:17,21] 판별 메서드가 조회 메서드보다 뒤에 위치** (출처: 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/trading/domain/vo/CoinExchangeMapping.java:17,21] 판별 메서드가 조회 메서드보다 뒤에 위치** (출처: 컨벤션)
   - **설명:** 이슈6 수정 때 추가한 판별 메서드 `isTradable`이 기존 조회 메서드 `getExchangeCoinId` 뒤에 붙어, "상태 변경 → 판별 → 조회" 나열 순서 컨벤션을 어겼다. 원래 조회 메서드 하나뿐이라 없던 문제가 이번 변경으로 처음 발생.
   - **수정 제안:** `isTradable`을 `getExchangeCoinId` 앞으로 옮긴다.
 
