@@ -59,7 +59,7 @@
 
 ## 4차 차단 이슈 (3차 적용 후 재리뷰, `071a80a7..0b734e10`)
 
-- [ ] **[api/src/main/java/ksh/tryptobackend/trading/application/port/out/PositionCommandPort.java:12] `getTransferPositionsWithLock` 이 `get` 네이밍인데 결측 시 예외 없이 `Position.empty()` 를 생성 — 실제 계약은 getOrCreate** (출처: 컨벤션)
+- [x] **[api/src/main/java/ksh/tryptobackend/trading/application/port/out/PositionCommandPort.java:12] `getTransferPositionsWithLock` 이 `get` 네이밍인데 결측 시 예외 없이 `Position.empty()` 를 생성 — 실제 계약은 getOrCreate** (출처: 컨벤션) — **완료(`16b288f6`)**
   - **설명:** conventions.md 의 `get` vs `find` 규칙상 `get` 은 대상이 반드시 존재해야 하고 없으면 예외를 던진다. 그러나 이 메서드 구현(`JpaPositionCommandAdapter.getOrCreateWithLock`)은 행이 없으면 `Position.empty(...)` 를 만들어 돌려준다 — 같은 인터페이스의 `getOrCreate` 와 동일한 "없으면 생성" 의미인데 접미어가 빠졌다. 거울 레퍼런스 `WalletBalanceQueryAdapter.getTransferBalancesWithLock` 은 결측 시 실제로 예외를 던져(`WALLET_BALANCE_NOT_FOUND`) `get` 계약을 지키므로, 이름은 같은 패턴인데 계약이 달라 혼동을 부른다.
   - **수정 제안:** `getTransferPositionsWithLock` → `getOrCreateTransferPositionsWithLock` 으로 리네이밍하고 `PositionCommandPort`·`JpaPositionCommandAdapter`·`MockPositionAdapter`·`MoveHoldingService` 호출부를 함께 바꾼다.
 
