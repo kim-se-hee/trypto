@@ -10,6 +10,7 @@ import ksh.tryptobackend.trading.domain.service.BalanceChangeApplier;
 import ksh.tryptobackend.trading.domain.vo.TradingPair;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -22,7 +23,7 @@ public class AutoCancelOrdersService implements AutoCancelOrdersUseCase {
     private final BalanceChangeApplier balanceChangeApplier;
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void autoCancel(Long exchangeCoinId) {
         List<Long> pendingOrderIds = orderQueryPort.findPendingOrderIdsByExchangeCoinId(exchangeCoinId);
         if (pendingOrderIds.isEmpty()) {
