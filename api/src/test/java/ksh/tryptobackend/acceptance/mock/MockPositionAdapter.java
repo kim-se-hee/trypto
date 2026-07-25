@@ -1,14 +1,17 @@
 package ksh.tryptobackend.acceptance.mock;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 import ksh.tryptobackend.trading.application.port.out.PositionCommandPort;
 import ksh.tryptobackend.trading.application.port.out.PositionQueryPort;
 import ksh.tryptobackend.trading.domain.model.Position;
+import ksh.tryptobackend.trading.domain.model.TransferPositions;
 import ksh.tryptobackend.trading.domain.vo.Holding;
 import ksh.tryptobackend.trading.domain.vo.Money;
 import ksh.tryptobackend.trading.domain.vo.Price;
@@ -34,6 +37,15 @@ public class MockPositionAdapter implements PositionCommandPort, PositionQueryPo
     }
 
     @Override
+    public TransferPositions getOrCreateTransferPositionsWithLock(Long coinId, Long fromWalletId, Long toWalletId) {
+        Map<Long, Position> lockedByWalletId = new LinkedHashMap<>();
+        Stream.of(fromWalletId, toWalletId)
+                .sorted()
+                .forEach(walletId -> lockedByWalletId.put(walletId, getOrCreate(walletId, coinId)));
+        return new TransferPositions(lockedByWalletId.get(fromWalletId), lockedByWalletId.get(toWalletId));
+    }
+
+    @Override
     public List<Position> findAllByWalletId(Long walletId) {
         return positions.values().stream()
                 .filter(p -> p.getWalletId().equals(walletId))
@@ -49,6 +61,11 @@ public class MockPositionAdapter implements PositionCommandPort, PositionQueryPo
             lock.unlock();
         }
         return position;
+    }
+
+    @Override
+    public void saveAll(List<Position> positionsToSave) {
+        positionsToSave.forEach(this::save);
     }
 
     public void setHolding(

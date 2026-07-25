@@ -48,6 +48,14 @@ public class Position {
         }
     }
 
+    public void release(Quantity amount) {
+        this.holding = holding.reduce(amount);
+    }
+
+    public void receive(Quantity amount, Price acquisitionPrice) {
+        this.holding = holding.addBuy(acquisitionPrice, amount);
+    }
+
     public boolean isHolding() {
         return holding.isHolding();
     }

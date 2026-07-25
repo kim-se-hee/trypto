@@ -121,6 +121,66 @@ class PositionTest {
     }
 
     @Nested
+    @DisplayName("보유 이동")
+    class MoveHoldingTest {
+
+        @Test
+        @DisplayName("일부 내보내기 — 수량·매수금액 비례 차감, 평균 매수가 유지")
+        void partialRelease() {
+            Position position = holdingOf("1000", "10");
+
+            position.release(Quantity.of(new BigDecimal("4")));
+
+            assertThat(position.getHolding().avgBuyPrice().value()).isEqualByComparingTo(new BigDecimal("1000"));
+            assertThat(position.getHolding().totalQuantity().value()).isEqualByComparingTo(new BigDecimal("6"));
+            assertThat(position.getHolding().totalBuyAmount().value()).isEqualByComparingTo(new BigDecimal("6000"));
+        }
+
+        @Test
+        @DisplayName("전량 내보내기 — 보유 내역이 빈 상태가 된다")
+        void fullRelease() {
+            Position position = holdingOf("1000", "10");
+
+            position.release(Quantity.of(new BigDecimal("10")));
+
+            assertThat(position.isHolding()).isFalse();
+        }
+
+        @Test
+        @DisplayName("빈 포지션에 받기 — 취득가가 평균 매수가가 된다")
+        void receiveIntoEmpty() {
+            Position position = Position.empty(1L, 1L);
+
+            position.receive(Quantity.of(new BigDecimal("4")), price("2000"));
+
+            assertThat(position.getHolding().avgBuyPrice().value()).isEqualByComparingTo(new BigDecimal("2000"));
+            assertThat(position.getHolding().totalQuantity().value()).isEqualByComparingTo(new BigDecimal("4"));
+            assertThat(position.getHolding().totalBuyAmount().value()).isEqualByComparingTo(new BigDecimal("8000"));
+        }
+
+        @Test
+        @DisplayName("기존 보유에 받기 — 가중 평균으로 합산")
+        void receiveIntoExisting() {
+            Position position = holdingOf("1000", "10");
+
+            position.receive(Quantity.of(new BigDecimal("10")), price("2000"));
+
+            assertThat(position.getHolding().avgBuyPrice().value()).isEqualByComparingTo(new BigDecimal("1500"));
+            assertThat(position.getHolding().totalQuantity().value()).isEqualByComparingTo(new BigDecimal("20"));
+        }
+
+        @Test
+        @DisplayName("평균 매수가보다 낮은 취득가로 받기 — 물타기 카운트 미증가")
+        void receiveDoesNotIncrementAveragingDown() {
+            Position position = holdingOf("1000", "10");
+
+            position.receive(Quantity.of(new BigDecimal("10")), price("500"));
+
+            assertThat(position.getAveragingDownCount()).isZero();
+        }
+    }
+
+    @Nested
     @DisplayName("상태 판별")
     class StateCheckTest {
 
