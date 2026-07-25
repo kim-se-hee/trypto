@@ -9,6 +9,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeCoinMappingUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.FindExchangeDetailUseCase;
+import ksh.tryptobackend.marketdata.application.port.in.FindSuspendedExchangeCoinIdsUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.GetLivePriceUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.GetMarketStatusUseCase;
 import ksh.tryptobackend.marketdata.application.port.in.dto.result.ExchangeCoinMappingResult;
@@ -31,6 +32,7 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
     private final FindExchangeDetailUseCase findExchangeDetailUseCase;
     private final GetLivePriceUseCase getLivePriceUseCase;
     private final GetMarketStatusUseCase getMarketStatusUseCase;
+    private final FindSuspendedExchangeCoinIdsUseCase findSuspendedExchangeCoinIdsUseCase;
 
     @Override
     public MarketInfo findByExchangeCoinId(Long exchangeCoinId) {
@@ -67,6 +69,11 @@ public class TradingAclMarketQueryAdapter implements MarketQueryPort {
                 .map(ExchangeCoinMappingResult::coinId)
                 .collect(Collectors.toSet());
         return new CoinExchangeMapping(exchangeCoinIdByCoinId, suspendedCoinIds);
+    }
+
+    @Override
+    public List<Long> findSuspendedExchangeCoinIds() {
+        return findSuspendedExchangeCoinIdsUseCase.findSuspendedExchangeCoinIds();
     }
 
     private ExchangeCoinMappingResult getMapping(Long exchangeCoinId) {

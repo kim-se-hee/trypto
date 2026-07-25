@@ -7,6 +7,7 @@ import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeC
 import ksh.tryptobackend.marketdata.application.port.out.ExchangeCoinQueryPort;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoin;
 import ksh.tryptobackend.marketdata.domain.model.ExchangeCoins;
+import ksh.tryptobackend.marketdata.domain.vo.MarketStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,13 @@ public class ExchangeCoinQueryAdapter implements ExchangeCoinQueryPort {
     public List<ExchangeCoin> findByExchangeIdAndCoinIds(Long exchangeId, List<Long> coinIds) {
         return repository.findByExchangeIdAndCoinIdIn(exchangeId, coinIds).stream()
                 .map(ExchangeCoinJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Long> findSuspendedExchangeCoinIds() {
+        return repository.findByStatus(MarketStatus.SUSPENDED).stream()
+                .map(ExchangeCoinJpaEntity::getId)
                 .toList();
     }
 

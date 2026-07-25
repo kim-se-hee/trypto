@@ -15,5 +15,7 @@ public interface ExchangeCoinQueryPort {
 
     List<ExchangeCoin> findByExchangeIdAndCoinIds(Long exchangeId, List<Long> coinIds);
 
+    List<Long> findSuspendedExchangeCoinIds();
+
     ExchangeCoins findByExchangeId(Long exchangeId);
 }

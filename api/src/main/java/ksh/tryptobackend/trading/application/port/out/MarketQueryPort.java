@@ -15,4 +15,6 @@ public interface MarketQueryPort {
     Price getCurrentPrice(Long exchangeCoinId);
 
     CoinExchangeMapping findCoinExchangeMapping(Long exchangeId, List<Long> coinIds);
+
+    List<Long> findSuspendedExchangeCoinIds();
 }
