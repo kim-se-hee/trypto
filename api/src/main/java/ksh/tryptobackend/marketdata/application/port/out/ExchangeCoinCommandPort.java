@@ -7,7 +7,7 @@ public interface ExchangeCoinCommandPort {
 
     ExchangeCoin save(Long exchangeId, Long coinId, String displayName);
 
-    ExchangeCoin register(Long exchangeId, Long coinId, String displayName);
+    ExchangeCoin register(Long exchangeId, Long coinId, String displayName, String symbol);
 
-    Optional<ExchangeCoin> suspend(Long exchangeId, Long coinId);
+    Optional<ExchangeCoin> suspend(Long exchangeId, Long coinId, String symbol);
 }

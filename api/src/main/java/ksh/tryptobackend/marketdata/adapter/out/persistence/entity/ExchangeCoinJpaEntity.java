@@ -55,12 +55,8 @@ public class ExchangeCoinJpaEntity {
         this.displayName = displayName;
     }
 
-    public void markTrading() {
-        this.status = MarketStatus.TRADING;
-    }
-
-    public void markSuspended() {
-        this.status = MarketStatus.SUSPENDED;
+    public void applyStatus(MarketStatus status) {
+        this.status = status;
     }
 
     public ExchangeCoin toDomain() {
