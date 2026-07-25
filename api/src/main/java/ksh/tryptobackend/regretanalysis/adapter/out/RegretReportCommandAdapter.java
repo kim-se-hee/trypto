@@ -15,12 +15,6 @@ public class RegretReportCommandAdapter implements RegretReportCommandPort {
     private final RegretReportJpaRepository repository;
 
     @Override
-    public RegretReport save(RegretReport domain) {
-        RegretReportJpaEntity saved = repository.save(RegretReportJpaEntity.fromDomain(domain));
-        return saved.toDomain();
-    }
-
-    @Override
     public void saveAll(List<RegretReport> reports) {
         List<RegretReportJpaEntity> entities =
                 reports.stream().map(RegretReportJpaEntity::fromDomain).toList();
