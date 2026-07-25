@@ -52,3 +52,18 @@
 - [collector/.../metadata/MarketStatusSynchronizer.java:76-81] 회차 중간 실패 시 `tradingBaseline` 미갱신 → 다음 회차 중복 발행 가능(데이터 손상은 없음) (동시성)
 - [api/.../marketdata/adapter/out/persistence/entity/ExchangeCoinJpaEntity.java] `@Version` 등 낙관적 락 부재 → 경쟁 컨슈머 처리 순서 역전 시 최신 상태가 덮어써질 이론적 위험(3분 주기라 가능성 낮음) (동시성)
 - [collector/.../metadata/MarketInfoCache.java · MarketStatusSynchronizer.java] 리더십 재획득 시 `ExchangeInitializer`(전량 재적재) vs `MarketStatusSynchronizer`(증분 diff) 미조율(다음 회차 자동 회복, 최대 3분 불일치) (동시성)
+
+## 2차 차단 이슈
+
+재리뷰 범위: `1964bb0b..HEAD`(1차 수정 커밋). 5개 리뷰어 차단 0, conv-api 가 수정 과정에서 새로 유입된 위반 1건 발견.
+
+- [ ] **[api/src/main/java/ksh/tryptobackend/trading/domain/vo/CoinExchangeMapping.java:17,21] 판별 메서드가 조회 메서드보다 뒤에 위치** (출처: 컨벤션)
+  - **설명:** 이슈6 수정 때 추가한 판별 메서드 `isTradable`이 기존 조회 메서드 `getExchangeCoinId` 뒤에 붙어, "상태 변경 → 판별 → 조회" 나열 순서 컨벤션을 어겼다. 원래 조회 메서드 하나뿐이라 없던 문제가 이번 변경으로 처음 발생.
+  - **수정 제안:** `isTradable`을 `getExchangeCoinId` 앞으로 옮긴다.
+
+## 2차 참고 이슈 (수정 안 함, 보고용)
+
+- [api/.../marketdata/adapter/in/MarketStatusEventListener.java ↔ trading/.../SuspendedMarketOrderCancelListener.java · ApplyMarketStatusChangeService.java] **(중요)** 이벤트 자동취소가 `suspend` 트랜잭션과 같은 트랜잭션이라, 이슈9로 예외 삼킴을 걷어낸 뒤에는 자동취소 실패 시 `suspend` 자체가 롤백된다. 그러면 코인이 SUSPENDED로 커밋되지 않아 이슈8 보정 스윕도 그 마켓을 못 찾는다 — 정작 "취소 실패로 잠긴 금액" 케이스가 안전망 사각지대. `SuspendedMarketOrderCancelListener`를 `@TransactionalEventListener(AFTER_COMMIT)` + 자체 트랜잭션으로 분리하면 suspend·알림은 확정되고 회수는 스윕이 보장 (ddd, 선택 수정)
+- [api/.../trading/adapter/in/scheduling/SuspendedMarketOrderSweeper.java] 60초 스윕이 "한 번이라도 종료된" 마켓 전체를 무기한 재조회 → 상장 폐지 누적 시 `orders`(쓰기 100 TPS) 반복 조회 증가. `(exchange_coin_id, status)` 인덱스 추가 + 스윕 대상 축소 검토 (성능)
+- [api/.../common/config/RabbitMqConfig.java] 상태 리스너 동기 재시도(백오프 최대 ~7초)가 컨슈머 스레드를 블로킹 → 단일 인스턴스/실패 집중 시 다른 마켓 상태 반영 지연. 컨테이너 concurrency 상향 또는 지연 허용 확인 (성능, 동시성)
+- [api/.../trading/adapter/in/scheduling/SuspendedMarketOrderSweeper.java · OrderJpaRepository] 다중 인스턴스 동시 스윕 시 `findPendingOrderIdsByExchangeCoinId`에 `ORDER BY id` 부재로 이론적 데드락 → 정렬 명시로 제거 가능(중복 취소는 이미 방지됨) (동시성)
