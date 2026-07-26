@@ -80,7 +80,9 @@ GET /api/rounds/1/regret?exchangeId=1
         "violationDetailId": 1,
         "orderId": 15,
         "coinSymbol": "DOGE",
-        "violatedRules": ["CHASE_BUY_BAN"],
+        "violatedRules": [
+          { "ruleType": "CHASE_BUY_BAN", "lossAmount": 385000 }
+        ],
         "profitLoss": -385000,
         "occurredAt": "2026-01-22T14:30:00"
       },
@@ -88,7 +90,9 @@ GET /api/rounds/1/regret?exchangeId=1
         "violationDetailId": 2,
         "orderId": 18,
         "coinSymbol": "SOL",
-        "violatedRules": ["CHASE_BUY_BAN"],
+        "violatedRules": [
+          { "ruleType": "CHASE_BUY_BAN", "lossAmount": -120000 }
+        ],
         "profitLoss": 120000,
         "occurredAt": "2026-01-25T11:00:00"
       },
@@ -96,8 +100,11 @@ GET /api/rounds/1/regret?exchangeId=1
         "violationDetailId": 3,
         "orderId": 22,
         "coinSymbol": "SHIB",
-        "violatedRules": ["LOSS_CUT", "AVERAGING_DOWN_LIMIT"],
-        "profitLoss": -220000,
+        "violatedRules": [
+          { "ruleType": "LOSS_CUT", "lossAmount": 350000 },
+          { "ruleType": "AVERAGING_DOWN_LIMIT", "lossAmount": 120000 }
+        ],
+        "profitLoss": -470000,
         "occurredAt": "2026-02-03T09:45:00"
       }
     ]
@@ -144,9 +151,18 @@ GET /api/rounds/1/regret?exchangeId=1
 | violationDetailId | Long | 위반 거래 ID |
 | orderId | Long (nullable) | 주문 ID. 주문 시점 위반(추격매수, 물타기, 과매매)은 해당 주문 ID. 가격 모니터링 위반(손절, 익절)은 null |
 | coinSymbol | String | 코인 심볼 (예: BTC, ETH, DOGE) |
-| violatedRules | String[] | 위반한 규칙 유형 목록 (하나의 거래가 여러 규칙 위반 가능). `LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT` |
-| profitLoss | BigDecimal | 해당 거래의 실현/미실현 손익 (기축통화 단위). 음수: 손실, 양수: 이익 |
+| violatedRules | Object[] | 위반한 규칙과 그 규칙 몫의 위반 손익 (하나의 거래가 여러 규칙 위반 가능) |
+| profitLoss | BigDecimal | 해당 거래의 위반으로 발생한 손익 (기축통화 단위). 음수: 손실, 양수: 이익. `violatedRules[].lossAmount` 합계와 부호가 반대다 |
 | occurredAt | LocalDateTime | 위반 발생 시각. 주문 시점 위반은 체결 시각, 가격 모니터링 위반은 감지 시각 |
+
+#### violationDetails[].violatedRules[]
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
+| lossAmount | BigDecimal | 이 거래에서 해당 원칙으로 발생한 위반 손익 (기축통화 단위. 양수: 손실, 음수: 오히려 이익). 하나의 거래가 같은 원칙을 여러 번 어긴 경우 합산한 값 |
+
+같은 원칙의 `lossAmount` 를 모든 거래에 걸쳐 합하면 `ruleImpacts[].totalLossAmount` 와 같다. 복기 그래프의 원칙 토글은 이 값과 `occurredAt` 을 사용한다.
 
 ### 에러 응답
 
