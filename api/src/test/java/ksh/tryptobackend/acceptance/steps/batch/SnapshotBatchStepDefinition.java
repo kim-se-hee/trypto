@@ -106,11 +106,13 @@ public class SnapshotBatchStepDefinition {
             Long walletId = Long.valueOf(row.get("walletId"));
             Long coinId = Long.valueOf(row.get("coinId"));
             BigDecimal balance = new BigDecimal(row.get("balance"));
+            BigDecimal locked = row.get("locked") == null ? BigDecimal.ZERO : new BigDecimal(row.get("locked"));
             jdbcTemplate.update(
-                    "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?," + " ?, ?, 0)",
+                    "INSERT INTO wallet_balance (wallet_id, coin_id, available, locked) VALUES (?," + " ?, ?, ?)",
                     walletId,
                     coinId,
-                    balance);
+                    balance,
+                    locked);
         }
     }
 
@@ -126,12 +128,16 @@ public class SnapshotBatchStepDefinition {
 
             holdingAdapter.setHolding(walletId, coinId, avgBuyPrice, quantity, 0);
 
+            // display_name·status 는 NOT NULL 이고 기본값이 없다. 빠뜨리면 INSERT IGNORE 가 경고로 삼켜
+            // status 가 SUSPENDED 로 들어가고, 거래 정지된 상장은 평가 대상에서 빠져 평가액이 0 이 된다.
             Long exchangeCoinId = exchangeId * 100 + coinId;
             jdbcTemplate.update(
-                    "INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id)" + " VALUES (?, ?, ?)",
+                    "INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id,"
+                            + " display_name, status) VALUES (?, ?, ?, ?, 'TRADING')",
                     exchangeCoinId,
                     exchangeId,
-                    coinId);
+                    coinId,
+                    "coin-" + coinId);
 
             livePriceAdapter.setPrice(exchangeCoinId, currentPrice);
         }

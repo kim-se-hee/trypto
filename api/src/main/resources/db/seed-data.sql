@@ -13,7 +13,9 @@ INSERT IGNORE INTO exchange_market (exchange_id, name, market_type, base_currenc
     (3, 'BINANCE', 'OVERSEAS', 1, 0.001000);
 
 -- 빗썸(2)은 BTC 만 상장한다. 거래소마다 상장 코인이 다른 상황을 시나리오에서 재현하기 위함이다.
-INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name) VALUES
-    (10, 1, 2, '비트코인'),
-    (11, 1, 3, '이더리움'),
-    (12, 2, 2, '비트코인');
+-- status 는 기본값이 없는 ENUM 이라 생략하면 MySQL 이 목록의 첫 값인 SUSPENDED 를 넣는다.
+-- 거래 정지 상태로 시드되면 주문·평가가 전부 막히므로 TRADING 을 명시한다.
+INSERT IGNORE INTO exchange_coin (exchange_coin_id, exchange_id, coin_id, display_name, status) VALUES
+    (10, 1, 2, '비트코인', 'TRADING'),
+    (11, 1, 3, '이더리움', 'TRADING'),
+    (12, 2, 2, '비트코인', 'TRADING');
