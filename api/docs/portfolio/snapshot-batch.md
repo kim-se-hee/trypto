@@ -12,19 +12,25 @@ ACTIVE 라운드의 거래소별 일별 자산 상태를 캡처한다. 이 스�
 
 | Step | Reader | Processor | Writer |
 |------|--------|-----------|--------|
-| snapshotStep | ACTIVE 라운드의 거래소별 지갑 | 잔고 + 보유코인 x Redis 현재가 = 거래소별 총 자산 | PORTFOLIO_SNAPSHOT + DETAIL 저장 |
+| snapshotStep | ACTIVE 라운드의 거래소별 지갑 | 기축통화 총 잔고 + 보유코인 x Redis 현재가 = 거래소별 총 자산 | PORTFOLIO_SNAPSHOT + DETAIL 저장 |
 
 ## 처리 절차
 
 1. `INVESTMENT_ROUND`에서 `status = ACTIVE`인 모든 라운드를 조회한다
 2. 각 라운드의 `WALLET`에서 거래소별 지갑을 조회한다
 3. 각 지갑별로:
-   - `WALLET_BALANCE`에서 기축통화(KRW/USDT) 잔고를 조회한다
+   - `WALLET_BALANCE`에서 기축통화(KRW/USDT) 총 잔고(가용 잔고 + 잠금 잔고)를 조회한다
    - `HOLDING`에서 보유 코인 목록을 조회한다
    - Redis에서 각 코인의 현재가를 조회한다
-   - 거래소별 총 자산 = 기축통화 잔고 + SUM(보유수량 x 현재가)
+   - 거래소별 총 자산 = 기축통화 총 잔고 + SUM(보유수량 x 현재가)
    - KRW 환산: 국내 거래소는 그대로, 바이낸스는 USDT x 1,400
 4. `PORTFOLIO_SNAPSHOT` + `PORTFOLIO_SNAPSHOT_DETAIL` 적재
+
+## 자산 기준
+
+기축통화는 가용 잔고가 아니라 총 잔고(가용 + 잠금)를 쓴다. 미체결 지정가 매수 주문이 점유한 금액도 사용자의 자산이며, 가용 잔고만 더하면 배치 시각에 미체결 주문이 남아 있는 만큼 그날 자산이 실제보다 작게 기록된다. 실시간 보유 자산 조회와 동일한 기준이다.
+
+보유 코인 평가액은 `HOLDING`에서 조회하므로 지정가 매도 주문이 점유한 수량도 그대로 포함된다. 점유 금액과 보유 수량은 서로 다른 원장에서 오므로 이중 계상되지 않는다.
 
 ## 저장 데이터
 
