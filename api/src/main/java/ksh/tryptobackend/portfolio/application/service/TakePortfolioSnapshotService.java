@@ -47,7 +47,7 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
     private BigDecimal calculateTotalAsset(
             TakeSnapshotCommand command, ExchangeSnapshot exchangeSnapshot, EvaluatedHoldings evaluatedHoldings) {
         BigDecimal balance =
-                walletQueryPort.getAvailableBalance(command.walletId(), exchangeSnapshot.baseCurrencyCoinId());
+                walletQueryPort.getBaseCurrencyBalance(command.walletId(), exchangeSnapshot.baseCurrencyCoinId());
         return balance.add(evaluatedHoldings.totalEvaluatedAmount());
     }
 }
