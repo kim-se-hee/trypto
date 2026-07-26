@@ -177,7 +177,6 @@ Future<void> _showRuleDetail(BuildContext context, RuleImpact impact) {
       final color = ruleColor(context, rule);
       final threshold = ruleThresholdLabel(rule, impact.thresholdValue);
       final loss = impact.totalLossAmount;
-      final gap = impact.impactGap;
 
       return SafeArea(
         child: Padding(
@@ -211,12 +210,6 @@ Future<void> _showRuleDetail(BuildContext context, RuleImpact impact) {
               ),
               if (loss != null)
                 _DetailRow(label: '누적 손실', value: formatKRWCompact(loss)),
-              if (gap != null)
-                _DetailRow(
-                  label: '영향도',
-                  value: formatProfitPercent(gap),
-                  color: context.profitColor(gap),
-                ),
               const SizedBox(height: TryptoSpacing.sm),
               Text(
                 '칩을 눌러 이 원칙을 시뮬레이션에서 켜고 끌 수 있습니다.',

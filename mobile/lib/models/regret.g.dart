@@ -13,8 +13,8 @@ RegretReport _$RegretReportFromJson(Map<String, dynamic> json) => RegretReport(
   currency: json['currency'] as String,
   totalViolations: (json['totalViolations'] as num).toInt(),
   missedProfit: (json['missedProfit'] as num).toDouble(),
-  actualProfitRate: (json['actualProfitRate'] as num).toDouble(),
-  ruleFollowedProfitRate: (json['ruleFollowedProfitRate'] as num).toDouble(),
+  actualAsset: (json['actualAsset'] as num).toDouble(),
+  ruleFollowedAsset: (json['ruleFollowedAsset'] as num).toDouble(),
   ruleImpacts: (json['ruleImpacts'] as List<dynamic>)
       .map((e) => RuleImpact.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -42,7 +42,6 @@ RuleImpact _$RuleImpactFromJson(Map<String, dynamic> json) => RuleImpact(
   thresholdValue: (json['thresholdValue'] as num?)?.toDouble(),
   thresholdUnit: json['thresholdUnit'] as String?,
   totalLossAmount: (json['totalLossAmount'] as num?)?.toDouble(),
-  impactGap: (json['impactGap'] as num?)?.toDouble(),
 );
 
 const _$RuleTypeEnumMap = {

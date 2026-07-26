@@ -21,8 +21,8 @@ class RegretReport {
     required this.currency,
     required this.totalViolations,
     required this.missedProfit,
-    required this.actualProfitRate,
-    required this.ruleFollowedProfitRate,
+    required this.actualAsset,
+    required this.ruleFollowedAsset,
     required this.ruleImpacts,
     required this.violationDetails,
     this.reportId,
@@ -49,8 +49,8 @@ class RegretReport {
   final DateTime? analysisEnd;
 
   final double missedProfit;
-  final double actualProfitRate;
-  final double ruleFollowedProfitRate;
+  final double actualAsset;
+  final double ruleFollowedAsset;
   final List<RuleImpact> ruleImpacts;
   final List<ViolationDetail> violationDetails;
 
@@ -68,7 +68,6 @@ class RuleImpact {
     this.thresholdValue,
     this.thresholdUnit,
     this.totalLossAmount,
-    this.impactGap,
   });
 
   factory RuleImpact.fromJson(Map<String, dynamic> json) =>
@@ -88,7 +87,6 @@ class RuleImpact {
 
   final int violationCount;
   final double? totalLossAmount;
-  final double? impactGap;
 }
 
 @JsonSerializable(createToJson: false)

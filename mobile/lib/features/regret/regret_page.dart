@@ -371,16 +371,23 @@ class _Hero extends StatelessWidget {
               children: [
                 Expanded(
                   child: _StatTile(
-                    label: '실제',
-                    value: formatProfitPercent(report.actualProfitRate),
-                    color: context.profitColor(report.actualProfitRate),
+                    label: '실제 자산',
+                    value: formatCurrencyCompact(
+                      report.actualAsset,
+                      report.currency,
+                    ),
                   ),
                 ),
                 Expanded(
                   child: _StatTile(
                     label: '규칙 준수 시',
-                    value: formatProfitPercent(report.ruleFollowedProfitRate),
-                    color: context.profitColor(report.ruleFollowedProfitRate),
+                    value: formatCurrencyCompact(
+                      report.ruleFollowedAsset,
+                      report.currency,
+                    ),
+                    color: report.ruleFollowedAsset > report.actualAsset
+                        ? colors.positive
+                        : null,
                   ),
                 ),
                 Expanded(
