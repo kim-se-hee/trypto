@@ -15,14 +15,13 @@ interface RegretChartProps {
 
 function formatKRWShort(value: number): string {
   const abs = Math.abs(value);
-  if (abs >= 1_0000_0000) {
-    const eok = Math.floor(abs / 1_0000_0000);
-    const man = Math.round((abs % 1_0000_0000) / 1_0000);
-    if (man > 0) return `${eok}억${man.toLocaleString("ko-KR")}만`;
-    return `${eok}억`;
-  }
-  if (abs >= 1_0000) return `${Math.round(abs / 1_0000).toLocaleString("ko-KR")}만`;
-  return abs.toLocaleString("ko-KR");
+  if (abs < 1_0000) return abs.toLocaleString("ko-KR");
+  const man = Math.round(abs / 1_0000);
+  const eok = Math.floor(man / 1_0000);
+  const rest = man % 1_0000;
+  if (eok === 0) return `${man.toLocaleString("ko-KR")}만`;
+  if (rest > 0) return `${eok}억${rest.toLocaleString("ko-KR")}만`;
+  return `${eok}억`;
 }
 
 const W = 700;
