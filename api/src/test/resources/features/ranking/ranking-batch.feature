@@ -9,13 +9,13 @@
       | 1      | 1       | 5          |
       | 2      | 2       | 3          |
     그리고 스냅샷 데이터가 존재한다
-      | userId | roundId | exchangeId | totalAssetKrw | totalInvestmentKrw |
-      | 1      | 1       | 1          | 11000000      | 10000000           |
-      | 2      | 2       | 1          | 9500000       | 10000000           |
+      | userId | roundId | exchangeId | totalAssetKrw |
+      | 1      | 1       | 1          | 11000000      |
+      | 2      | 2       | 1          | 9500000       |
     그리고 비교 스냅샷 데이터가 존재한다
-      | userId | roundId | exchangeId | totalAssetKrw | totalInvestmentKrw |
-      | 1      | 1       | 1          | 10000000      | 10000000           |
-      | 2      | 2       | 1          | 10000000      | 10000000           |
+      | userId | roundId | exchangeId | totalAssetKrw |
+      | 1      | 1       | 1          | 10000000      |
+      | 2      | 2       | 1          | 10000000      |
     만일 랭킹 배치를 실행한다
     그러면 랭킹 배치가 COMPLETED 상태이다
     그리고 DAILY 랭킹이 2건 생성된다

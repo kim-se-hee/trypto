@@ -2,7 +2,7 @@
 
 ### 참고사항
 
-- 배치가 생성한 리포트를 조회한다. 리포트가 없으면 `REPORT_NOT_FOUND` 에러를 반환한다
+- 배치가 생성한 리포트를 조회한다. 리포트가 아직 없으면 (라운드 시작 당일 등) 에러가 아니라 빈 리포트를 반환한다. 요약 지표는 모두 0, `violationDetails`는 빈 배열이며, `ruleImpacts`는 라운드에 설정된 원칙을 위반 횟수·손실 0으로 채워 반환한다
 - 거래소별로 요청한다
 
 `GET /api/rounds/{roundId}/regret?exchangeId={exchangeId}`
@@ -41,9 +41,9 @@ GET /api/rounds/1/regret?exchangeId=1
     "totalViolations": 5,
     "analysisStart": "2026-01-15",
     "analysisEnd": "2026-02-25",
-    "missedProfit": 893837,
-    "actualProfitRate": 4.0,
-    "ruleFollowedProfitRate": 12.9,
+    "missedProfit": 735000,
+    "actualAsset": 12000000,
+    "ruleFollowedAsset": 12735000,
 
     "ruleImpacts": [
       {
@@ -53,8 +53,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 20,
         "thresholdUnit": "%",
         "violationCount": 2,
-        "totalLossAmount": 265000,
-        "impactGap": 4.5
+        "totalLossAmount": 265000
       },
       {
         "ruleImpactId": 2,
@@ -63,8 +62,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 2,
         "thresholdUnit": "회",
         "violationCount": 1,
-        "totalLossAmount": 120000,
-        "impactGap": 1.2
+        "totalLossAmount": 120000
       },
       {
         "ruleImpactId": 3,
@@ -73,8 +71,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 10,
         "thresholdUnit": "%",
         "violationCount": 2,
-        "totalLossAmount": 350000,
-        "impactGap": 3.5
+        "totalLossAmount": 350000
       }
     ],
 
@@ -123,21 +120,22 @@ GET /api/rounds/1/regret?exchangeId=1
 | analysisStart | LocalDate | 분석 시작일 (라운드 시작일) |
 | analysisEnd | LocalDate | 분석 종료일 (배치가 적재한 마지막 스냅샷 날짜) |
 | missedProfit | BigDecimal | 놓친 수익 금액 (기축통화 단위) |
-| actualProfitRate | BigDecimal | 실제 수익률 (%) |
-| ruleFollowedProfitRate | BigDecimal | 모든 원칙 준수 시 시뮬레이션 수익률 (%) |
+| actualAsset | BigDecimal | 실제 자산. 마지막 스냅샷의 총 자산 (기축통화 단위) |
+| ruleFollowedAsset | BigDecimal | 모든 원칙 준수 시 도달했을 자산. 실제 자산 + 놓친 수익 (기축통화 단위) |
 
 #### ruleImpacts[]
 
+라운드에 설정된 모든 원칙을 포함한다. 위반이 없는 원칙은 위반 횟수·손실 0으로 채운다.
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| ruleImpactId | Long | 시나리오 ID |
+| ruleImpactId | Long (nullable) | 규칙별 손실 ID. 위반이 없어 0으로 채워진 원칙은 null |
 | ruleId | Long | 투자 원칙 ID |
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
 | thresholdValue | BigDecimal | 설정된 기준값 |
 | thresholdUnit | String | 기준값 단위 (`%` 또는 `회`) |
 | violationCount | Integer | 해당 거래소에서 해당 규칙의 위반 횟수 |
 | totalLossAmount | BigDecimal | 위반으로 인한 총 손실 금액 (기축통화 단위. 양수: 손실, 음수: 오히려 이익) |
-| impactGap | BigDecimal | 수익률 영향 차이 (%p). 원칙 준수 시 수익률 - 실제 수익률 |
 
 #### violationDetails[]
 
@@ -157,7 +155,6 @@ GET /api/rounds/1/regret?exchangeId=1
 | ROUND_NOT_FOUND | 404 | 투자 라운드를 찾을 수 없음 |
 | ROUND_ACCESS_DENIED | 403 | 본인의 라운드가 아님 |
 | WALLET_NOT_FOUND | 404 | 해당 거래소의 지갑이 라운드에 존재하지 않음 |
-| REPORT_NOT_FOUND | 404 | 복기 리포트가 아직 생성되지 않음 (배치 실행 전 조회 시) |
 
 투자 원칙이 없는 라운드는 에러 대신 빈 `ruleImpacts`/`violationDetails`를 반환한다.
 

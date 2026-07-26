@@ -33,12 +33,6 @@ public class RegretAnalysisAclPortfolioQueryAdapter implements PortfolioQueryPor
 
     private AssetSnapshot toAssetSnapshot(SnapshotInfoResult result) {
         return AssetSnapshot.reconstitute(
-                result.snapshotId(),
-                result.roundId(),
-                result.exchangeId(),
-                result.totalAsset(),
-                result.totalInvestment(),
-                result.totalProfitRate(),
-                result.snapshotDate());
+                result.snapshotId(), result.roundId(), result.exchangeId(), result.totalAsset(), result.snapshotDate());
     }
 }

@@ -53,11 +53,11 @@ public class RegretReportJpaEntity {
     @Column(name = "missed_profit", nullable = false, precision = 30, scale = 8)
     private BigDecimal missedProfit;
 
-    @Column(name = "actual_profit_rate", nullable = false, precision = 10, scale = 4)
-    private BigDecimal actualProfitRate;
+    @Column(name = "actual_asset", nullable = false, precision = 30, scale = 8)
+    private BigDecimal actualAsset;
 
-    @Column(name = "rule_followed_profit_rate", nullable = false, precision = 10, scale = 4)
-    private BigDecimal ruleFollowedProfitRate;
+    @Column(name = "rule_followed_asset", nullable = false, precision = 30, scale = 8)
+    private BigDecimal ruleFollowedAsset;
 
     @Column(name = "analysis_start", nullable = false)
     private LocalDate analysisStart;
@@ -84,8 +84,8 @@ public class RegretReportJpaEntity {
         entity.exchangeId = report.getExchangeId();
         entity.totalViolations = report.getTotalViolations();
         entity.missedProfit = report.getMissedProfit();
-        entity.actualProfitRate = report.getActualProfitRate();
-        entity.ruleFollowedProfitRate = report.getRuleFollowedProfitRate();
+        entity.actualAsset = report.getActualAsset();
+        entity.ruleFollowedAsset = report.getRuleFollowedAsset();
         entity.analysisStart = report.getAnalysisStart();
         entity.analysisEnd = report.getAnalysisEnd();
         entity.createdAt = report.getCreatedAt();
@@ -102,8 +102,8 @@ public class RegretReportJpaEntity {
     public void updateFrom(RegretReport report) {
         this.totalViolations = report.getTotalViolations();
         this.missedProfit = report.getMissedProfit();
-        this.actualProfitRate = report.getActualProfitRate();
-        this.ruleFollowedProfitRate = report.getRuleFollowedProfitRate();
+        this.actualAsset = report.getActualAsset();
+        this.ruleFollowedAsset = report.getRuleFollowedAsset();
         this.analysisStart = report.getAnalysisStart();
         this.analysisEnd = report.getAnalysisEnd();
 
@@ -139,8 +139,8 @@ public class RegretReportJpaEntity {
                 exchangeId,
                 totalViolations,
                 missedProfit,
-                actualProfitRate,
-                ruleFollowedProfitRate,
+                actualAsset,
+                ruleFollowedAsset,
                 analysisStart,
                 analysisEnd,
                 createdAt,

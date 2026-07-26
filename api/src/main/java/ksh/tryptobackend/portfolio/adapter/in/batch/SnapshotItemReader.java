@@ -33,7 +33,6 @@ public class SnapshotItemReader implements ItemReader<SnapshotInput> {
     }
 
     private SnapshotInput toSnapshotInput(SnapshotInputResult result) {
-        return new SnapshotInput(
-                result.roundId(), result.userId(), result.exchangeId(), result.walletId(), result.seedAmount());
+        return new SnapshotInput(result.roundId(), result.userId(), result.exchangeId(), result.walletId());
     }
 }

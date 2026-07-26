@@ -45,18 +45,6 @@ public class PortfolioSnapshotJpaEntity {
     @Column(name = "total_asset_krw", nullable = false, precision = 30, scale = 8)
     private BigDecimal totalAssetKrw;
 
-    @Column(name = "total_investment", nullable = false, precision = 30, scale = 8)
-    private BigDecimal totalInvestment;
-
-    @Column(name = "total_investment_krw", nullable = false, precision = 30, scale = 8)
-    private BigDecimal totalInvestmentKrw;
-
-    @Column(name = "total_profit", nullable = false, precision = 30, scale = 8)
-    private BigDecimal totalProfit;
-
-    @Column(name = "total_profit_rate", nullable = false, precision = 10, scale = 4)
-    private BigDecimal totalProfitRate;
-
     @Column(name = "snapshot_date", nullable = false)
     private LocalDate snapshotDate;
 
@@ -72,10 +60,6 @@ public class PortfolioSnapshotJpaEntity {
         entity.exchangeId = snapshot.getExchangeId();
         entity.totalAsset = snapshot.getTotalAsset();
         entity.totalAssetKrw = snapshot.getTotalAssetKrw();
-        entity.totalInvestment = snapshot.getTotalInvestment();
-        entity.totalInvestmentKrw = snapshot.getTotalInvestmentKrw();
-        entity.totalProfit = snapshot.getTotalProfit();
-        entity.totalProfitRate = snapshot.getTotalProfitRate();
         entity.snapshotDate = snapshot.getSnapshotDate();
         entity.details = snapshot.getDetails().stream()
                 .map(SnapshotDetailJpaEntity::fromDomain)
@@ -93,10 +77,6 @@ public class PortfolioSnapshotJpaEntity {
                 .exchangeId(exchangeId)
                 .totalAsset(totalAsset)
                 .totalAssetKrw(totalAssetKrw)
-                .totalInvestment(totalInvestment)
-                .totalInvestmentKrw(totalInvestmentKrw)
-                .totalProfit(totalProfit)
-                .totalProfitRate(totalProfitRate)
                 .snapshotDate(snapshotDate)
                 .details(domainDetails)
                 .build();

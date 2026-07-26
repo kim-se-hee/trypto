@@ -20,7 +20,6 @@ import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.Regre
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 import ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
@@ -220,12 +219,12 @@ public class RegretReportStepDefinition {
                 EXCHANGE_ID_WITH_REPORT,
                 3,
                 new BigDecimal("150000"),
-                new BigDecimal("-5.25"),
-                new BigDecimal("2.30"),
+                new BigDecimal("10000000"),
+                new BigDecimal("10150000"),
                 LocalDate.of(2025, 1, 1),
                 LocalDate.of(2025, 1, 15),
                 now,
-                List.of(RuleImpact.create(ruleId, 3, new BigDecimal("50000"), ImpactGap.of(new BigDecimal("7.55")))),
+                List.of(RuleImpact.create(ruleId, 3, new BigDecimal("50000"))),
                 List.of(
                         ViolationDetail.create(
                                 100L,

@@ -70,8 +70,8 @@ class GenerateRegretReportServiceTest {
     }
 
     @Test
-    @DisplayName("위반이 없으면 원칙 준수 수익률은 실제 수익률과 같다")
-    void generateReport_noViolations_ruleFollowedRateEqualsActualRate() {
+    @DisplayName("위반이 없으면 원칙 준수 시 자산은 실제 자산과 같다")
+    void generateReport_noViolations_ruleFollowedAssetEqualsActualAsset() {
         when(portfolioQueryPort.findLatestSnapshot(ROUND_ID, EXCHANGE_ID)).thenReturn(Optional.of(snapshot()));
         when(tradingQueryPort.findViolatedOrders(ROUND_ID, EXCHANGE_ID, WALLET_ID))
                 .thenReturn(new ViolatedOrders(List.of()));
@@ -79,7 +79,8 @@ class GenerateRegretReportServiceTest {
         RegretReport report =
                 generateRegretReportService.generateReport(COMMAND).orElseThrow();
 
-        assertThat(report.getRuleFollowedProfitRate()).isEqualByComparingTo(report.getActualProfitRate());
+        assertThat(report.getActualAsset()).isEqualByComparingTo(new BigDecimal("5200000"));
+        assertThat(report.getRuleFollowedAsset()).isEqualByComparingTo(report.getActualAsset());
     }
 
     @Test
@@ -95,12 +96,6 @@ class GenerateRegretReportServiceTest {
 
     private AssetSnapshot snapshot() {
         return AssetSnapshot.reconstitute(
-                1L,
-                ROUND_ID,
-                EXCHANGE_ID,
-                new BigDecimal("5200000"),
-                new BigDecimal("5000000"),
-                new BigDecimal("4.00"),
-                LocalDate.of(2026, 7, 14));
+                1L, ROUND_ID, EXCHANGE_ID, new BigDecimal("5200000"), LocalDate.of(2026, 7, 14));
     }
 }

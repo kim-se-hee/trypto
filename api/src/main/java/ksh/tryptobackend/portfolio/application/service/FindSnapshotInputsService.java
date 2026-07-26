@@ -29,11 +29,7 @@ public class FindSnapshotInputsService implements FindSnapshotInputsUseCase {
         return activeRounds.values().stream()
                 .flatMap(round -> walletSnapshots.findByRoundId(round.roundId()).stream()
                         .map(wallet -> new SnapshotInputResult(
-                                round.roundId(),
-                                round.userId(),
-                                wallet.exchangeId(),
-                                wallet.walletId(),
-                                wallet.seedAmount())))
+                                round.roundId(), round.userId(), wallet.exchangeId(), wallet.walletId())))
                 .toList();
     }
 }

@@ -11,8 +11,8 @@ export interface AssetSnapshot {
 
 export interface RegretSummary {
   missedProfit: number;
-  actualProfitRate: number;
-  ruleFollowedProfitRate: number;
+  actualAsset: number;
+  ruleFollowedAsset: number;
   totalViolations: number;
 }
 

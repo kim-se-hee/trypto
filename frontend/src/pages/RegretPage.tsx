@@ -14,8 +14,8 @@ import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
 /** 복기 리포트는 야간 배치로 생성된다. 배치 전에는 서버가 0으로 채운 빈 리포트를 준다. */
 const EMPTY_SUMMARY: RegretSummary = {
   missedProfit: 0,
-  actualProfitRate: 0,
-  ruleFollowedProfitRate: 0,
+  actualAsset: 0,
+  ruleFollowedAsset: 0,
   totalViolations: 0,
 };
 
@@ -139,7 +139,7 @@ export function RegretPage() {
         )}
 
         <p className="mt-3 text-[11px] text-muted-foreground/60">
-          * 모의투자 데이터입니다. 규칙 준수 시 수익률은 시뮬레이션 결과입니다.
+          * 모의투자 데이터입니다. 규칙 준수 시 자산은 시뮬레이션 결과입니다.
         </p>
       </main>
     </div>

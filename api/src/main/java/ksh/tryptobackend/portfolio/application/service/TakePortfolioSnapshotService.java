@@ -5,7 +5,6 @@ import java.util.List;
 import ksh.tryptobackend.portfolio.application.port.in.TakePortfolioSnapshotUseCase;
 import ksh.tryptobackend.portfolio.application.port.in.dto.command.TakeSnapshotCommand;
 import ksh.tryptobackend.portfolio.application.port.in.dto.result.SnapshotResult;
-import ksh.tryptobackend.portfolio.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.portfolio.application.port.out.MarketDataQueryPort;
 import ksh.tryptobackend.portfolio.application.port.out.TradingQueryPort;
 import ksh.tryptobackend.portfolio.application.port.out.WalletQueryPort;
@@ -22,7 +21,6 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
 
     private final MarketDataQueryPort marketDataQueryPort;
     private final WalletQueryPort walletQueryPort;
-    private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final TradingQueryPort tradingQueryPort;
 
     @Override
@@ -32,8 +30,6 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
                 tradingQueryPort.findEvaluatedHoldings(command.walletId(), command.exchangeId());
 
         BigDecimal totalAsset = calculateTotalAsset(command, exchangeSnapshot, evaluatedHoldings);
-        BigDecimal totalInvestment = calculateTotalInvestment(command);
-
         List<SnapshotDetail> details = evaluatedHoldings.toSnapshotDetails(totalAsset);
 
         PortfolioSnapshot snapshot = PortfolioSnapshot.create(
@@ -41,7 +37,6 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
                 command.roundId(),
                 command.exchangeId(),
                 totalAsset,
-                totalInvestment,
                 exchangeSnapshot.conversionRate(),
                 command.snapshotDate(),
                 details);
@@ -54,11 +49,5 @@ public class TakePortfolioSnapshotService implements TakePortfolioSnapshotUseCas
         BigDecimal balance =
                 walletQueryPort.getAvailableBalance(command.walletId(), exchangeSnapshot.baseCurrencyCoinId());
         return balance.add(evaluatedHoldings.totalEvaluatedAmount());
-    }
-
-    private BigDecimal calculateTotalInvestment(TakeSnapshotCommand command) {
-        BigDecimal emergencyFunding =
-                investmentRoundQueryPort.sumEmergencyFunding(command.roundId(), command.exchangeId());
-        return command.seedAmount().add(emergencyFunding);
     }
 }

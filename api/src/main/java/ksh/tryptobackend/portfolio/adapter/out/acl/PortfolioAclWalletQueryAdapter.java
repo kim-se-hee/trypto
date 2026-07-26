@@ -50,6 +50,6 @@ public class PortfolioAclWalletQueryAdapter implements WalletQueryPort {
     }
 
     private WalletSnapshot toWalletSnapshot(WalletResult result) {
-        return new WalletSnapshot(result.walletId(), result.roundId(), result.exchangeId(), result.seedAmount());
+        return new WalletSnapshot(result.walletId(), result.roundId(), result.exchangeId());
     }
 }

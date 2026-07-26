@@ -67,11 +67,10 @@ class PortfolioDataSeeder {
             double profitRate = baseProfitRate + dailyVariation * (SNAPSHOT_DAYS - day) / SNAPSHOT_DAYS;
             BigDecimal profitRateBd = new BigDecimal(profitRate).setScale(4, RoundingMode.HALF_UP);
 
-            BigDecimal totalInvestment = DEFAULT_SEED.divide(new BigDecimal("3"), 8, RoundingMode.HALF_UP);
-            BigDecimal totalAsset = totalInvestment
+            BigDecimal seedPerExchange = DEFAULT_SEED.divide(new BigDecimal("3"), 8, RoundingMode.HALF_UP);
+            BigDecimal totalAsset = seedPerExchange
                     .multiply(BigDecimal.ONE.add(profitRateBd.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP)))
                     .setScale(8, RoundingMode.HALF_UP);
-            BigDecimal totalProfit = totalAsset.subtract(totalInvestment);
 
             List<SnapshotDetail> details = createSnapshotDetails(ctx);
 
@@ -81,10 +80,6 @@ class PortfolioDataSeeder {
                     .exchangeId(exchangeId)
                     .totalAsset(totalAsset)
                     .totalAssetKrw(totalAsset)
-                    .totalInvestment(totalInvestment)
-                    .totalInvestmentKrw(totalInvestment)
-                    .totalProfit(totalProfit)
-                    .totalProfitRate(profitRateBd)
                     .snapshotDate(date)
                     .details(details)
                     .build();

@@ -29,8 +29,8 @@ interface BackendViolationDetail {
 
 interface BackendRegretReportResponse {
   missedProfit: number;
-  actualProfitRate: number;
-  ruleFollowedProfitRate: number;
+  actualAsset: number;
+  ruleFollowedAsset: number;
   totalViolations: number;
   ruleImpacts: BackendRuleImpact[];
   violationDetails: BackendViolationDetail[];
@@ -98,8 +98,8 @@ export async function getRegretReport(
 
   const summary: RegretSummary = {
     missedProfit: Number(data.missedProfit),
-    actualProfitRate: Number(data.actualProfitRate),
-    ruleFollowedProfitRate: Number(data.ruleFollowedProfitRate),
+    actualAsset: Number(data.actualAsset),
+    ruleFollowedAsset: Number(data.ruleFollowedAsset),
     totalViolations: data.totalViolations,
   };
 

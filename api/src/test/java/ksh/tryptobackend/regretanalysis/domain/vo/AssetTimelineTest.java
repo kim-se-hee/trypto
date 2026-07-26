@@ -18,7 +18,7 @@ class AssetTimelineTest {
     private static final LocalDate DAY_3 = LocalDate.of(2025, 1, 3);
 
     private AssetSnapshot snapshotOn(LocalDate date, BigDecimal totalAsset) {
-        return AssetSnapshot.reconstitute(1L, 1L, 1L, totalAsset, BigDecimal.ZERO, BigDecimal.ZERO, date);
+        return AssetSnapshot.reconstitute(1L, 1L, 1L, totalAsset, date);
     }
 
     @Nested

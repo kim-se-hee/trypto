@@ -23,7 +23,6 @@ public class FindSnapshotSummariesService implements FindSnapshotSummariesUseCas
     }
 
     private SnapshotSummaryResult toResult(UserSnapshotSummary summary) {
-        return new SnapshotSummaryResult(
-                summary.userId(), summary.roundId(), summary.totalAssetKrw(), summary.totalInvestmentKrw());
+        return new SnapshotSummaryResult(summary.userId(), summary.roundId(), summary.totalAssetKrw());
     }
 }
