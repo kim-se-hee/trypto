@@ -106,8 +106,8 @@ export function RegretPage() {
   }, [loadRegretData]);
 
   const simulationLine = useMemo(
-    () => computeSimulationLine(snapshots, enabledRules),
-    [snapshots, enabledRules],
+    () => computeSimulationLine(snapshots, enabledRules, violationTrades),
+    [snapshots, enabledRules, violationTrades],
   );
 
   const toggleRule = (ruleType: RuleType) => {
