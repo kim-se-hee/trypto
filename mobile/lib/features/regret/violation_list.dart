@@ -94,7 +94,7 @@ class ViolationTile extends StatelessWidget {
                 child: Row(
                   children: [
                     for (final rule in violation.violatedRules) ...[
-                      RuleTag(rule: rule),
+                      RuleTag(rule: rule.ruleType),
                       const SizedBox(width: TryptoSpacing.xs),
                     ],
                   ],
@@ -186,7 +186,7 @@ Future<void> _showViolationDetail(
                 runSpacing: TryptoSpacing.xs,
                 children: [
                   for (final rule in violation.violatedRules)
-                    RuleTag(rule: rule),
+                    RuleTag(rule: rule.ruleType),
                 ],
               ),
             ],

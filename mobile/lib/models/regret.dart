@@ -89,6 +89,21 @@ class RuleImpact {
   final double? totalLossAmount;
 }
 
+/// 위반 거래가 어긴 원칙 하나와 그 원칙 몫의 위반 손익.
+@JsonSerializable(createToJson: false)
+class ViolatedRule {
+  const ViolatedRule({required this.ruleType, required this.lossAmount});
+
+  factory ViolatedRule.fromJson(Map<String, dynamic> json) =>
+      _$ViolatedRuleFromJson(json);
+
+  @JsonKey(unknownEnumValue: RuleType.unknown)
+  final RuleType ruleType;
+
+  /// 양수면 손해, 음수면 어긴 쪽이 결과적으로 이득이었다.
+  final double lossAmount;
+}
+
 @JsonSerializable(createToJson: false)
 class ViolationDetail {
   const ViolationDetail({
@@ -107,9 +122,8 @@ class ViolationDetail {
   final int? orderId;
   final String coinSymbol;
 
-  /// enum 이름 문자열 배열로 온다(`["CHASE_BUY_BAN", ...]`).
-  @JsonKey(unknownEnumValue: RuleType.unknown)
-  final List<RuleType> violatedRules;
+  /// 원칙 이름과 그 원칙 몫의 위반 손익이 짝으로 온다. 복기 그래프의 원칙 토글이 이 금액을 쓴다.
+  final List<ViolatedRule> violatedRules;
 
   final double profitLoss;
 

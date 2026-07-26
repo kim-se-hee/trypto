@@ -29,11 +29,15 @@ class RegretAssetChart extends StatefulWidget {
     required this.chart,
     required this.enabledRules,
     required this.btcEnabled,
+    required this.violations,
   });
 
   final RegretChart chart;
   final Set<RuleType> enabledRules;
   final bool btcEnabled;
+
+  /// 규칙 토글 곡선은 리포트의 위반 거래에서 켜 둔 규칙 몫만 골라 누적해 그린다.
+  final List<ViolationDetail> violations;
 
   @override
   State<RegretAssetChart> createState() => _RegretAssetChartState();
@@ -54,7 +58,11 @@ class _RegretAssetChartState extends State<RegretAssetChart> {
     final currency = widget.chart.currency;
 
     final actual = [for (final point in history) point.actualAsset];
-    final simulation = simulationLine(history, widget.enabledRules);
+    final simulation = simulationLine(
+      history,
+      widget.enabledRules,
+      widget.violations,
+    );
     final btcHold = [for (final point in history) point.btcHoldAsset];
     final showSimulation = widget.enabledRules.isNotEmpty;
 
