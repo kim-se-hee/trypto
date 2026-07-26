@@ -24,15 +24,15 @@ SnapshotJob 완료 직후
    - 최신 스냅샷을 조회한다. 스냅샷이 없으면 해당 건은 생성하지 않고 건너뛴다
    - 투자 원칙, 위반 기록, 주문 체결 이력을 조회한다
    - 위반분 우선 매칭으로 `loss_amount`를 계산한다 ([business-rules.md](business-rules.md) 참조)
-   - 규칙별 시나리오를 생성한다 (`impactGap` 계산)
-   - 최신 스냅샷에서 `missedProfit`을 계산한다
+   - 규칙별 시나리오를 생성한다 (원칙별 총 위반 손익 합산)
+   - 위반 손익 합에서 `missedProfit`을, 최신 스냅샷의 총 자산에서 `actualAsset`을 구해 `ruleFollowedAsset`을 산출한다
 2. `REGRET_REPORT` + `RULE_IMPACT` + `VIOLATION_DETAIL`를 upsert한다
 
 ## 생성 조건
 
 리포트 생성 여부는 위반 유무가 아니라 **스냅샷 유무**로 결정한다.
 
-- 위반이 0건이어도 스냅샷이 있으면 리포트를 생성한다. 이때 `totalViolations`, `missedProfit`은 0이고 `ruleFollowedProfitRate`는 `actualProfitRate`와 같으며, `RULE_IMPACT`와 `VIOLATION_DETAIL`은 빈 목록이다. 원칙을 모두 준수한 사용자도 복기 화면에서 자산 추이와 BTC 벤치마크를 확인할 수 있어야 하기 때문이다
+- 위반이 0건이어도 스냅샷이 있으면 리포트를 생성한다. 이때 `totalViolations`, `missedProfit`은 0이고 `ruleFollowedAsset`은 `actualAsset`과 같으며, `RULE_IMPACT`와 `VIOLATION_DETAIL`은 빈 목록이다. 원칙을 모두 준수한 사용자도 복기 화면에서 자산 추이와 BTC 벤치마크를 확인할 수 있어야 하기 때문이다
 - 스냅샷이 없으면 리포트를 생성하지 않는다. 자산 추이를 그릴 근거가 없기 때문이다
 
 ## 갱신 정책

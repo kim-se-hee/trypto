@@ -5,11 +5,11 @@
 ## FindSnapshotsUseCase
 - `findLatestByRoundIdAndExchangeId(Long roundId, Long exchangeId) → Optional<SnapshotInfoResult>`
 - `findAllByRoundIdAndExchangeId(Long roundId, Long exchangeId) → List<SnapshotInfoResult>`
-- Returns `SnapshotInfoResult { snapshotId: Long, roundId: Long, exchangeId: Long, totalAsset: BigDecimal, totalInvestment: BigDecimal, totalProfitRate: BigDecimal, snapshotDate: LocalDate }`
+- Returns `SnapshotInfoResult { snapshotId: Long, roundId: Long, exchangeId: Long, totalAsset: BigDecimal, snapshotDate: LocalDate }`
 
 ## FindSnapshotSummariesUseCase
 - `findLatestSummaries(LocalDate snapshotDate) → List<SnapshotSummaryResult>`
-- Returns `SnapshotSummaryResult { userId: Long, roundId: Long, totalAssetKrw: BigDecimal, totalInvestmentKrw: BigDecimal }`
+- Returns `SnapshotSummaryResult { userId: Long, roundId: Long, totalAssetKrw: BigDecimal }`
 
 ## FindSnapshotDetailsUseCase
 - `findLatestSnapshotDetails(Long userId, Long roundId) → List<SnapshotDetailResult>`
@@ -33,9 +33,8 @@ portfolio 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 �
 - `GetAvailableBalanceUseCase` — 가용/총 잔고 조회
 
 ### InvestmentRoundQueryPort ← InvestmentRound (`PortfolioAclInvestmentRoundQueryAdapter`)
-소비 UseCase 를 `ActiveRounds`·긴급 충전 합계로 번역한다.
+소비 UseCase 를 `ActiveRounds` 로 번역한다.
 - `FindActiveRoundsUseCase` — 스냅샷 대상 라운드 조회
-- `SumEmergencyFundingUseCase` — 긴급 충전 합산
 
 ### TradingQueryPort ← Trading (`PortfolioAclTradingQueryAdapter`)
 소비 UseCase 를 `PortfolioHoldings`·`EvaluatedHoldings` 로 번역한다.

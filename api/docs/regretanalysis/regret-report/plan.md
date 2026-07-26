@@ -41,9 +41,9 @@ GET /api/rounds/1/regret?exchangeId=1
     "totalViolations": 5,
     "analysisStart": "2026-01-15",
     "analysisEnd": "2026-02-25",
-    "missedProfit": 893837,
-    "actualProfitRate": 4.0,
-    "ruleFollowedProfitRate": 12.9,
+    "missedProfit": 735000,
+    "actualAsset": 12000000,
+    "ruleFollowedAsset": 12735000,
 
     "ruleImpacts": [
       {
@@ -53,8 +53,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 20,
         "thresholdUnit": "%",
         "violationCount": 2,
-        "totalLossAmount": 265000,
-        "impactGap": 4.5
+        "totalLossAmount": 265000
       },
       {
         "ruleImpactId": 2,
@@ -63,8 +62,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 2,
         "thresholdUnit": "회",
         "violationCount": 1,
-        "totalLossAmount": 120000,
-        "impactGap": 1.2
+        "totalLossAmount": 120000
       },
       {
         "ruleImpactId": 3,
@@ -73,8 +71,7 @@ GET /api/rounds/1/regret?exchangeId=1
         "thresholdValue": 10,
         "thresholdUnit": "%",
         "violationCount": 2,
-        "totalLossAmount": 350000,
-        "impactGap": 3.5
+        "totalLossAmount": 350000
       }
     ],
 
@@ -123,8 +120,8 @@ GET /api/rounds/1/regret?exchangeId=1
 | analysisStart | LocalDate | 분석 시작일 (라운드 시작일) |
 | analysisEnd | LocalDate | 분석 종료일 (배치가 적재한 마지막 스냅샷 날짜) |
 | missedProfit | BigDecimal | 놓친 수익 금액 (기축통화 단위) |
-| actualProfitRate | BigDecimal | 실제 수익률 (%) |
-| ruleFollowedProfitRate | BigDecimal | 모든 원칙 준수 시 시뮬레이션 수익률 (%) |
+| actualAsset | BigDecimal | 실제 자산. 마지막 스냅샷의 총 자산 (기축통화 단위) |
+| ruleFollowedAsset | BigDecimal | 모든 원칙 준수 시 도달했을 자산. 실제 자산 + 놓친 수익 (기축통화 단위) |
 
 #### ruleImpacts[]
 
@@ -137,7 +134,6 @@ GET /api/rounds/1/regret?exchangeId=1
 | thresholdUnit | String | 기준값 단위 (`%` 또는 `회`) |
 | violationCount | Integer | 해당 거래소에서 해당 규칙의 위반 횟수 |
 | totalLossAmount | BigDecimal | 위반으로 인한 총 손실 금액 (기축통화 단위. 양수: 손실, 음수: 오히려 이익) |
-| impactGap | BigDecimal | 수익률 영향 차이 (%p). 원칙 준수 시 수익률 - 실제 수익률 |
 
 #### violationDetails[]
 

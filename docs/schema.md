@@ -181,10 +181,6 @@ erDiagram
         id exchange_id FK "거래소 ID"
         number total_asset "총 자산 (거래소 기축통화 단위)"
         number total_asset_krw "총 자산 (원화 환산)"
-        number total_investment "총 투입금 (거래소 기축통화 단위)"
-        number total_investment_krw "총 투입금 (원화 환산)"
-        number total_profit "수익금 (거래소 기축통화 단위)"
-        number total_profit_rate "총 수익률"
         date snapshot_date "스냅샷 날짜"
     }
 
@@ -218,8 +214,8 @@ erDiagram
         id exchange_id FK "거래소 ID"
         number total_violations "총 위반 횟수"
         number missed_profit "놓친 수익 (기축통화 단위)"
-        number actual_profit_rate "실제 수익률"
-        number rule_followed_profit_rate "원칙 준수 시 수익률"
+        number actual_asset "실제 자산 (기축통화 단위)"
+        number rule_followed_asset "원칙 준수 시 자산 (기축통화 단위)"
         date analysis_start "분석 시작일"
         date analysis_end "분석 종료일"
         datetime created_at "생성일"
@@ -231,7 +227,6 @@ erDiagram
         id rule_id FK "투자 원칙 ID"
         number violation_count "위반 횟수"
         number total_loss_amount "총 손실 금액 (기축통화 단위)"
-        number impact_gap "수익률 영향 차이 (%p)"
     }
 
     VIOLATION_DETAIL {
