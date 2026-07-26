@@ -34,12 +34,20 @@ export interface BenchmarkItem {
 
 export type ViolationEmotion = "FOMO" | "감이 좋아서" | "복수 매매";
 
+export interface ViolatedRule {
+  ruleType: RuleType;
+  /** 이 거래에서 해당 원칙으로 발생한 위반 손익. 양수면 손해, 음수면 어긴 쪽이 이득이었다. */
+  lossAmount: number;
+}
+
 export interface ViolationTrade {
   id: number;
   coinSymbol: string;
   date: string;
+  /** yyyy-MM-dd 로 잘라 그래프 날짜와 맞춘다. 표시용 date 는 연도가 없어 쓸 수 없다. */
+  occurredAt: string;
   emotion?: ViolationEmotion;
-  violatedRules: RuleType[];
+  violatedRules: ViolatedRule[];
   profitLoss: number;
 }
 
@@ -70,27 +78,36 @@ export const RULE_COLORS: Record<RuleType, string> = {
 };
 
 /**
- * 규칙별 영향도 가중치 (합 = 1).
- * 활성화된 규칙의 가중치 합만큼 actual → ruleFollowed 사이를 보간한다.
+ * 켜 둔 규칙이 실제로 유발한 위반 손익을 발생일 순으로 누적해 실제 자산에 더한다.
+ *
+ * 서버가 전체 규칙 곡선(`ruleFollowed`)을 만드는 방식과 같은 계산이므로, 규칙을 모두 켜면
+ * 두 곡선이 모든 지점에서 일치한다. 위반이 없는 날은 직전 누적값을 유지해 계단 모양이 된다.
  */
-export const RULE_IMPACT_WEIGHTS: Record<RuleType, number> = {
-  STOP_LOSS: 0.30,
-  NO_CHASE_BUY: 0.25,
-  TAKE_PROFIT: 0.20,
-  OVERTRADE_LIMIT: 0.15,
-  AVERAGING_LIMIT: 0.10,
-};
-
-/** 활성화된 규칙 기반으로 시뮬레이션 자산 시계열을 계산한다. */
 export function computeSimulationLine(
   snapshots: AssetSnapshot[],
   enabledRules: Set<RuleType>,
+  violationTrades: ViolationTrade[],
 ): number[] {
-  const totalWeight = Array.from(enabledRules).reduce(
-    (sum, r) => sum + (RULE_IMPACT_WEIGHTS[r] ?? 0),
-    0,
-  );
-  return snapshots.map((s) => Math.round(s.actual + (s.ruleFollowed - s.actual) * totalWeight));
+  const dailyLosses = violationTrades
+    .map((trade) => ({
+      date: trade.occurredAt.slice(0, 10),
+      amount: trade.violatedRules
+        .filter((rule) => enabledRules.has(rule.ruleType))
+        .reduce((sum, rule) => sum + rule.lossAmount, 0),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  let cumulative = 0;
+  let next = 0;
+
+  return snapshots.map((snapshot) => {
+    // 그래프 시작일 이전에 발생한 위반은 첫 점에서 한꺼번에 반영된다.
+    while (next < dailyLosses.length && dailyLosses[next].date <= snapshot.fullDate) {
+      cumulative += dailyLosses[next].amount;
+      next += 1;
+    }
+    return Math.round(snapshot.actual + cumulative);
+  });
 }
 
 // ── 감정 라벨 색상 ──────────────────────────────────────

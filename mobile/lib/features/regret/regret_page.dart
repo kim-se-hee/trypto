@@ -239,6 +239,7 @@ class _Content extends StatelessWidget {
                       chart: chart,
                       enabledRules: enabledRules,
                       btcEnabled: btcEnabled,
+                      violations: report.violationDetails,
                     ),
                     // 배치 전에는 규칙 임팩트도 비어 있다. 토글 행을 그리지 않는다.
                     if (!report.isEmpty) ...[

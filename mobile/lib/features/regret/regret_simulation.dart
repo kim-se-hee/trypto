@@ -1,44 +1,56 @@
 import 'dart:math' as math;
 
+import '../../core/format/server_time.dart';
 import '../../models/enums.dart';
 import '../../models/regret.dart';
 
 /// 복기 화면의 순수 계산 전량. 위젯 없이 테스트한다.
 ///
-/// **웹과 값이 일치해야 한다**(사양서 §6.3.4). 가중치·보간식·반올림을 그대로 이식한다.
+/// **웹과 값이 일치해야 한다**(사양서 §6.3.4). 누적식·반올림을 그대로 이식한다.
 
-/// 합계 1.0. 5종 전부 켜면 서버의 `ruleFollowedAsset` 과 정확히 같아진다.
-const Map<RuleType, double> ruleImpactWeights = {
-  RuleType.lossCut: 0.30,
-  RuleType.chaseBuyBan: 0.25,
-  RuleType.profitTake: 0.20,
-  RuleType.overtradingLimit: 0.15,
-  RuleType.averagingDownLimit: 0.10,
-};
-
-double totalRuleWeight(Set<RuleType> enabled) {
-  var total = 0.0;
-  for (final rule in enabled) {
-    total += ruleImpactWeights[rule] ?? 0;
-  }
-  return total;
-}
-
-/// `sim[i] = round(actual[i] + (ruleFollowed[i] - actual[i]) × totalWeight)`
+/// 켜 둔 규칙이 실제로 유발한 위반 손익을 발생일 순으로 누적해 그날의 실제 자산에 더한다.
 ///
-/// 실제 곡선과 규칙 준수 곡선 사이를 가중치 합만큼 선형 보간한 **근사값**이다. 서버 재계산은
-/// 일어나지 않는다.
+/// 서버가 전체 규칙 곡선(`ruleFollowedAsset`)을 만드는 방식과 같은 계산이므로, 규칙을 모두 켜면
+/// 두 곡선이 모든 지점에서 일치한다. 위반이 없는 날은 직전 누적값을 유지해 계단 모양이 된다.
 List<double> simulationLine(
   List<AssetHistoryPoint> history,
   Set<RuleType> enabled,
+  List<ViolationDetail> violations,
 ) {
-  final weight = totalRuleWeight(enabled);
-  return [
-    for (final point in history)
-      (point.actualAsset +
-              (point.ruleFollowedAsset - point.actualAsset) * weight)
-          .roundToDouble(),
-  ];
+  final dailyLosses =
+      [
+        for (final violation in violations)
+          (
+            date: ServerTime.kstDate(violation.occurredAt),
+            amount: _enabledLoss(violation, enabled),
+          ),
+      ]..sort((a, b) => a.date.compareTo(b.date));
+
+  final line = <double>[];
+  var cumulative = 0.0;
+  var next = 0;
+
+  for (final point in history) {
+    // 그래프 시작일 이전에 발생한 위반은 첫 점에서 한꺼번에 반영된다.
+    while (next < dailyLosses.length &&
+        !dailyLosses[next].date.isAfter(point.snapshotDate)) {
+      cumulative += dailyLosses[next].amount;
+      next += 1;
+    }
+    line.add((point.actualAsset + cumulative).roundToDouble());
+  }
+
+  return line;
+}
+
+double _enabledLoss(ViolationDetail violation, Set<RuleType> enabled) {
+  var total = 0.0;
+  for (final rule in violation.violatedRules) {
+    if (enabled.contains(rule.ruleType)) {
+      total += rule.lossAmount;
+    }
+  }
+  return total;
 }
 
 /// BTC 홀드 벤치마크 수익률. 웹은 이 값을 `0%` 로 하드코딩해 두었다(사양서 §6.3.4).

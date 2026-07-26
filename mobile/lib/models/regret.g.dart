@@ -53,18 +53,21 @@ const _$RuleTypeEnumMap = {
   RuleType.unknown: 'UNKNOWN',
 };
 
+ViolatedRule _$ViolatedRuleFromJson(Map<String, dynamic> json) => ViolatedRule(
+  ruleType: $enumDecode(
+    _$RuleTypeEnumMap,
+    json['ruleType'],
+    unknownValue: RuleType.unknown,
+  ),
+  lossAmount: (json['lossAmount'] as num).toDouble(),
+);
+
 ViolationDetail _$ViolationDetailFromJson(Map<String, dynamic> json) =>
     ViolationDetail(
       violationDetailId: (json['violationDetailId'] as num).toInt(),
       coinSymbol: json['coinSymbol'] as String,
       violatedRules: (json['violatedRules'] as List<dynamic>)
-          .map(
-            (e) => $enumDecode(
-              _$RuleTypeEnumMap,
-              e,
-              unknownValue: RuleType.unknown,
-            ),
-          )
+          .map((e) => ViolatedRule.fromJson(e as Map<String, dynamic>))
           .toList(),
       profitLoss: (json['profitLoss'] as num).toDouble(),
       occurredAt: const KstDateTimeConverter().fromJson(

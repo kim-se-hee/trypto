@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -103,8 +104,8 @@ public record RegretReportResult(
                             first.getViolationDetailId(),
                             first.getOrderId(),
                             coinSymbols.getOrDefault(first.getCoinId(), ""),
-                            extractViolatedRuleNames(entry.getValue(), ruleMap),
-                            first.getProfitLoss(),
+                            extractViolatedRules(entry.getValue(), ruleMap),
+                            sumProfitLoss(entry.getValue()),
                             first.getOccurredAt());
                 })
                 .toList();
@@ -117,18 +118,31 @@ public record RegretReportResult(
                         detail.getViolationDetailId(),
                         null,
                         coinSymbols.getOrDefault(detail.getCoinId(), ""),
-                        List.of(ruleMap.get(detail.getRuleId()).ruleType().name()),
+                        List.of(new ViolatedRuleResult(
+                                ruleMap.get(detail.getRuleId()).ruleType(), detail.getLossAmount())),
                         detail.getProfitLoss(),
                         detail.getOccurredAt()))
                 .toList();
     }
 
-    private static List<String> extractViolatedRuleNames(
+    /**
+     * 하나의 주문이 같은 원칙을 여러 번 어겼다면 위반 손익을 합쳐 하나로 만든다. 복기 그래프가 원칙별로 곡선을 되돌릴 때 이 금액을 사용한다.
+     */
+    private static List<ViolatedRuleResult> extractViolatedRules(
             List<ViolationDetail> violations, Map<Long, AnalysisRule> ruleMap) {
-        return violations.stream()
-                .map(d -> ruleMap.get(d.getRuleId()).ruleType().name())
-                .distinct()
+        Map<RuleType, BigDecimal> lossByRuleType = new LinkedHashMap<>();
+        for (ViolationDetail violation : violations) {
+            RuleType ruleType = ruleMap.get(violation.getRuleId()).ruleType();
+            lossByRuleType.merge(ruleType, violation.getLossAmount(), BigDecimal::add);
+        }
+
+        return lossByRuleType.entrySet().stream()
+                .map(entry -> new ViolatedRuleResult(entry.getKey(), entry.getValue()))
                 .toList();
+    }
+
+    private static BigDecimal sumProfitLoss(List<ViolationDetail> violations) {
+        return violations.stream().map(ViolationDetail::getProfitLoss).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public record RuleImpactResult(
@@ -140,11 +154,13 @@ public record RegretReportResult(
             int violationCount,
             BigDecimal totalLossAmount) {}
 
+    public record ViolatedRuleResult(RuleType ruleType, BigDecimal lossAmount) {}
+
     public record ViolationDetailResult(
             Long violationDetailId,
             Long orderId,
             String coinSymbol,
-            List<String> violatedRules,
+            List<ViolatedRuleResult> violatedRules,
             BigDecimal profitLoss,
             LocalDateTime occurredAt) {}
 }

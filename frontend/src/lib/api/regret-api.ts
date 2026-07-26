@@ -18,11 +18,16 @@ interface BackendRuleImpact {
   thresholdValue: number;
 }
 
+interface BackendViolatedRule {
+  ruleType: BackendRuleType;
+  lossAmount: number;
+}
+
 interface BackendViolationDetail {
   violationDetailId: number;
   orderId: number;
   coinSymbol: string;
-  violatedRules: BackendRuleType[];
+  violatedRules: BackendViolatedRule[];
   profitLoss: number;
   occurredAt: string;
 }
@@ -121,7 +126,11 @@ export async function getRegretReport(
       id: detail.violationDetailId,
       coinSymbol: detail.coinSymbol,
       date: `${d.getMonth() + 1}/${d.getDate()}`,
-      violatedRules: detail.violatedRules.map(toFrontRuleType),
+      occurredAt: detail.occurredAt,
+      violatedRules: detail.violatedRules.map((rule) => ({
+        ruleType: toFrontRuleType(rule.ruleType),
+        lossAmount: Number(rule.lossAmount),
+      })),
       profitLoss: Number(detail.profitLoss),
     };
   });

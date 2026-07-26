@@ -90,16 +90,16 @@ export function ViolationTradeList({ trades, baseCurrency }: ViolationTradeListP
               )}
 
               {/* 위반 규칙 태그 */}
-              {trade.violatedRules.map((ruleType) => (
+              {trade.violatedRules.map((rule) => (
                 <span
-                  key={ruleType}
+                  key={rule.ruleType}
                   className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
                   style={{
-                    backgroundColor: `${RULE_COLORS[ruleType]}15`,
-                    color: RULE_COLORS[ruleType],
+                    backgroundColor: `${RULE_COLORS[rule.ruleType]}15`,
+                    color: RULE_COLORS[rule.ruleType],
                   }}
                 >
-                  {RULE_LABELS[ruleType]}
+                  {RULE_LABELS[rule.ruleType]}
                 </span>
               ))}
 

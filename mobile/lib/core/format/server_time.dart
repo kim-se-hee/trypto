@@ -20,6 +20,13 @@ class ServerTime {
   /// LocalDate(`2026-07-15`) → 시간대 변환 없는 그 날짜.
   static DateTime parseLocalDate(String raw) => DateTime.parse(raw);
 
+  /// 시각을 서버 기준(KST) 날짜로 자른다. 기기 시간대가 KST 가 아니어도 서버가 `LocalDate` 로
+  /// 남긴 날짜(스냅샷 날짜 등)와 어긋나지 않는다.
+  static DateTime kstDate(DateTime at) {
+    final kst = at.toUtc().add(kstOffset);
+    return DateTime(kst.year, kst.month, kst.day);
+  }
+
   /// `referenceDate` 처럼 서버가 `yyyy-MM-dd` 로만 받는 파라미터용.
   static String formatLocalDate(DateTime date) => _date.format(date);
 

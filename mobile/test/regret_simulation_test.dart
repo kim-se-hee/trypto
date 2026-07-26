@@ -1,72 +1,135 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trypto/core/format/server_time.dart';
 import 'package:trypto/features/regret/regret_simulation.dart';
 import 'package:trypto/models/enums.dart';
 import 'package:trypto/models/regret.dart';
 
-AssetHistoryPoint _point(double actual, double ruleFollowed, double btc) =>
-    AssetHistoryPoint(
-      snapshotDate: DateTime(2026, 7, 15),
-      actualAsset: actual,
-      ruleFollowedAsset: ruleFollowed,
-      btcHoldAsset: btc,
-    );
-
-ViolationDetail _violation(double profitLoss) => ViolationDetail(
-  violationDetailId: 1,
-  coinSymbol: 'BTC',
-  violatedRules: const [RuleType.chaseBuyBan],
-  profitLoss: profitLoss,
-  occurredAt: DateTime(2026, 7, 15),
+AssetHistoryPoint _point(
+  double actual,
+  double ruleFollowed,
+  double btc, {
+  DateTime? date,
+}) => AssetHistoryPoint(
+  snapshotDate: date ?? DateTime(2026, 7, 15),
+  actualAsset: actual,
+  ruleFollowedAsset: ruleFollowed,
+  btcHoldAsset: btc,
 );
 
+/// 서버가 내려주는 문자열을 그대로 거쳐 만든다. 기기 시간대에 흔들리지 않게 하기 위함이다.
+ViolationDetail _violation(
+  double profitLoss, {
+  String occurredAt = '2026-07-15T10:00:00',
+  List<ViolatedRule> rules = const [],
+}) => ViolationDetail(
+  violationDetailId: 1,
+  coinSymbol: 'BTC',
+  violatedRules: rules,
+  profitLoss: profitLoss,
+  occurredAt: ServerTime.parseKst(occurredAt),
+);
+
+ViolatedRule _rule(RuleType ruleType, double lossAmount) =>
+    ViolatedRule(ruleType: ruleType, lossAmount: lossAmount);
+
 void main() {
-  group('가중치', () {
-    test('5종의 합이 정확히 1.0 이다', () {
-      expect(totalRuleWeight(ruleImpactWeights.keys.toSet()), 1.0);
-    });
-
-    test('알 수 없는 규칙은 가중치가 0 이다', () {
-      expect(totalRuleWeight({RuleType.unknown}), 0);
-    });
-
-    test('부분 집합의 가중치를 더한다', () {
-      expect(
-        totalRuleWeight({RuleType.lossCut, RuleType.chaseBuyBan}),
-        closeTo(0.55, 1e-9),
-      );
-    });
-  });
-
   group('simulationLine', () {
     final history = [
-      _point(1000000, 1200000, 1100000),
-      _point(900000, 1300000, 1150000),
+      _point(1000000, 1200000, 1100000, date: DateTime(2026, 7, 14)),
+      _point(900000, 1300000, 1150000, date: DateTime(2026, 7, 15)),
     ];
 
-    test('전부 켜면 서버의 규칙 준수 곡선과 정확히 일치한다', () {
-      final line = simulationLine(history, ruleImpactWeights.keys.toSet());
-      expect(line, [1200000, 1300000]);
+    // 7/14 추격매수 20만, 7/15 손절 20만 → 누적 20만 → 40만. history 의 규칙 준수 곡선과 같다.
+    final violations = [
+      _violation(
+        -200000,
+        occurredAt: '2026-07-14T09:00:00',
+        rules: [_rule(RuleType.chaseBuyBan, 200000)],
+      ),
+      _violation(
+        -200000,
+        occurredAt: '2026-07-15T09:00:00',
+        rules: [_rule(RuleType.lossCut, 200000)],
+      ),
+    ];
+
+    test('전부 켜면 서버의 규칙 준수 곡선과 모든 지점에서 일치한다', () {
+      final line = simulationLine(history, {
+        RuleType.chaseBuyBan,
+        RuleType.lossCut,
+      }, violations);
+      expect(line, [for (final point in history) point.ruleFollowedAsset]);
     });
 
     test('전부 끄면 실제 곡선과 같다', () {
-      expect(simulationLine(history, {}), [1000000, 900000]);
+      expect(simulationLine(history, {}, violations), [1000000, 900000]);
     });
 
-    test('가중치 합만큼 선형 보간하고 반올림한다', () {
-      // 0.30 + 0.25 = 0.55
-      final line = simulationLine(history, {
-        RuleType.lossCut,
-        RuleType.chaseBuyBan,
-      });
-      // 1000000 + (1200000-1000000)*0.55 = 1110000
-      // 900000  + (1300000-900000)*0.55  = 1120000
-      expect(line, [1110000, 1120000]);
+    test('켜 둔 규칙 몫만 누적한다', () {
+      final line = simulationLine(history, {RuleType.chaseBuyBan}, violations);
+      // 7/15 의 위반은 손절이라 꺼져 있고, 7/14 의 20만만 남는다.
+      expect(line, [1200000, 1100000]);
+    });
+
+    test('위반이 없는 날은 직전 누적값을 유지한다', () {
+      final line = simulationLine(
+        [
+          _point(1000000, 0, 0, date: DateTime(2026, 7, 14)),
+          _point(1000000, 0, 0, date: DateTime(2026, 7, 15)),
+          _point(1000000, 0, 0, date: DateTime(2026, 7, 16)),
+        ],
+        {RuleType.chaseBuyBan},
+        violations,
+      );
+      expect(line, [1200000, 1200000, 1200000]);
+    });
+
+    test('위반 손익이 음수면 실제 자산 아래로 내려간다', () {
+      final line = simulationLine(
+        [_point(1000000, 0, 0)],
+        {RuleType.chaseBuyBan},
+        [
+          _violation(
+            60000,
+            rules: [_rule(RuleType.chaseBuyBan, -60000)],
+          ),
+        ],
+      );
+      expect(line, [940000]);
+    });
+
+    test('그래프 시작일 이전에 발생한 위반은 첫 점에 포함된다', () {
+      final line = simulationLine(
+        [_point(1000000, 0, 0)],
+        {RuleType.chaseBuyBan},
+        [
+          _violation(
+            -50000,
+            occurredAt: '2026-07-01T09:00:00',
+            rules: [_rule(RuleType.chaseBuyBan, 50000)],
+          ),
+        ],
+      );
+      expect(line, [1050000]);
+    });
+
+    test('위반이 없으면 실제 곡선과 같다', () {
+      expect(simulationLine(history, {RuleType.chaseBuyBan}, []), [
+        1000000,
+        900000,
+      ]);
     });
 
     test('소수는 round 로 다듬는다', () {
       final line = simulationLine(
-        [_point(100, 101, 0)],
-        {RuleType.averagingDownLimit}, // 0.10 → 100.1
+        [_point(100, 0, 0)],
+        {RuleType.chaseBuyBan},
+        [
+          _violation(
+            -0.4,
+            rules: [_rule(RuleType.chaseBuyBan, 0.4)],
+          ),
+        ],
       );
       expect(line, [100]);
     });

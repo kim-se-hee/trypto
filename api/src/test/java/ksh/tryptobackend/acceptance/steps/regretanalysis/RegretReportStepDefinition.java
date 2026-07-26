@@ -1,11 +1,14 @@
 package ksh.tryptobackend.acceptance.steps.regretanalysis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.InvestmentRoundJpaEntity;
@@ -24,6 +27,7 @@ import ksh.tryptobackend.wallet.adapter.out.persistence.entity.WalletJpaEntity;
 import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletJpaRepository;
 import ksh.tryptobackend.wallet.domain.model.Wallet;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.client.RestTestClient.BodyContentSpec;
 
 public class RegretReportStepDefinition {
 
@@ -140,6 +144,45 @@ public class RegretReportStepDefinition {
                 .expectBody()
                 .jsonPath("$.data.violationDetails.length()")
                 .isEqualTo(count);
+    }
+
+    @Then("첫 번째 위반 상세의 위반 원칙은 {string}이다")
+    public void 첫_번째_위반_상세의_위반_원칙은_이다(String ruleType) {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.violationDetails[0].violatedRules[0].ruleType")
+                .isEqualTo(ruleType);
+    }
+
+    @Then("첫 번째 위반 상세의 원칙별 손실 금액은 {int}이다")
+    public void 첫_번째_위반_상세의_원칙별_손실_금액은_이다(int lossAmount) {
+        apiClient
+                .getLastResponse()
+                .expectBody()
+                .jsonPath("$.data.violationDetails[0].violatedRules[0].lossAmount")
+                .value(actual -> assertThat(((Number) actual).doubleValue()).isEqualTo(lossAmount));
+    }
+
+    /** 건별 금액을 모두 더하면 원칙별 합계와 같아야 한다. 어긋나면 어느 한쪽 집계가 틀린 것이다. */
+    @Then("위반 상세의 원칙별 손실 금액 합계는 규칙별 영향도의 총 손실과 같다")
+    public void 위반_상세의_원칙별_손실_금액_합계는_규칙별_영향도의_총_손실과_같다() {
+        BodyContentSpec body = apiClient.getLastResponse().expectBody();
+
+        List<Double> impactTotals = new ArrayList<>();
+        body.jsonPath("$.data.ruleImpacts[*].totalLossAmount").value(values -> impactTotals.addAll(toDoubles(values)));
+
+        body.jsonPath("$.data.violationDetails[*].violatedRules[*].lossAmount")
+                .value(values -> assertThat(sum(toDoubles(values))).isEqualTo(sum(impactTotals)));
+    }
+
+    private static List<Double> toDoubles(Object values) {
+        return ((List<?>) values)
+                .stream().map(value -> ((Number) value).doubleValue()).toList();
+    }
+
+    private static double sum(List<Double> values) {
+        return values.stream().mapToDouble(Double::doubleValue).sum();
     }
 
     private String regretReportUrl(Long roundId, Long exchangeId) {
