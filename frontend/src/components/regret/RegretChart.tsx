@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { formatCurrency, formatCurrencyCompact, formatCurrencyShort } from "@/lib/formatters";
 import type { RegretSummary, AssetSnapshot, ViolationMarker } from "@/lib/types/regret";
 import { getTickInterval } from "@/lib/types/regret";
 
@@ -11,17 +12,7 @@ interface RegretChartProps {
   btcHoldValues: number[] | null; // null이면 비활성
   hasEnabledRules: boolean;
   totalDays: number;
-}
-
-function formatKRWShort(value: number): string {
-  const abs = Math.abs(value);
-  if (abs < 1_0000) return abs.toLocaleString("ko-KR");
-  const man = Math.round(abs / 1_0000);
-  const eok = Math.floor(man / 1_0000);
-  const rest = man % 1_0000;
-  if (eok === 0) return `${man.toLocaleString("ko-KR")}만`;
-  if (rest > 0) return `${eok}억${rest.toLocaleString("ko-KR")}만`;
-  return `${eok}억`;
+  baseCurrency: string;          // 거래소 기축통화 (KRW/USDT)
 }
 
 const W = 700;
@@ -36,6 +27,7 @@ export function RegretChart({
   btcHoldValues,
   hasEnabledRules,
   totalDays,
+  baseCurrency,
 }: RegretChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -68,9 +60,10 @@ export function RegretChart({
     const btcPath = btcHoldValues ? toPath(btcHoldValues) : null;
 
     // Y축 눈금
+    // 눈금값은 반올림하지 않는다. USDT처럼 소수 단위 자산은 반올림하면 눈금이 서로 겹친다.
     const yTicks = Array.from({ length: 5 }, (_, i) => {
       const val = yMin + ((yMax - yMin) / 4) * i;
-      return { value: Math.round(val), y: getY(val) };
+      return { value: val, y: getY(val) };
     });
 
     // X축 라벨 — 시즌 기간에 따라 adaptive 간격
@@ -129,8 +122,8 @@ export function RegretChart({
       <div className="mb-5">
         <p className="text-xs font-medium text-muted-foreground">놓친 수익</p>
         <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-negative">
-          {summary.missedProfit.toLocaleString("ko-KR")}
-          <span className="ml-2 text-base font-bold text-muted-foreground">KRW</span>
+          {summary.missedProfit < 0 ? "-" : ""}
+          {formatCurrency(Math.abs(summary.missedProfit), baseCurrency)}
         </p>
       </div>
 
@@ -139,7 +132,7 @@ export function RegretChart({
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">실제 자산</p>
           <p className="mt-1 font-mono text-base font-bold tabular-nums">
-            {summary.actualAsset.toLocaleString("ko-KR")}
+            {formatCurrencyCompact(summary.actualAsset, baseCurrency)}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
@@ -148,7 +141,7 @@ export function RegretChart({
             "mt-1 font-mono text-base font-bold tabular-nums",
             summary.ruleFollowedAsset > summary.actualAsset ? "text-positive" : "",
           )}>
-            {summary.ruleFollowedAsset.toLocaleString("ko-KR")}
+            {formatCurrencyCompact(summary.ruleFollowedAsset, baseCurrency)}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
@@ -192,8 +185,8 @@ export function RegretChart({
             onMouseLeave={() => setHoveredIndex(null)}
           >
             {/* Y축 그리드 */}
-            {chartData.yTicks.map((tick) => (
-              <g key={tick.value}>
+            {chartData.yTicks.map((tick, i) => (
+              <g key={i}>
                 <line
                   x1={PAD.left} y1={tick.y}
                   x2={W - PAD.right} y2={tick.y}
@@ -204,7 +197,7 @@ export function RegretChart({
                   textAnchor="end" dominantBaseline="middle"
                   fill="var(--muted-foreground)" fontSize={10} fontFamily="inherit"
                 >
-                  {formatKRWShort(tick.value)}
+                  {formatCurrencyShort(tick.value, baseCurrency)}
                 </text>
               </g>
             ))}
@@ -300,18 +293,18 @@ export function RegretChart({
                 <p className="mb-1 font-semibold">{snapshots[hoveredIndex].fullDate}</p>
                 <p>
                   <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  실제: {formatKRWShort(snapshots[hoveredIndex].actual)}
+                  실제: {formatCurrencyShort(snapshots[hoveredIndex].actual, baseCurrency)}
                 </p>
                 {hasEnabledRules && (
                   <p>
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-negative" />
-                    시뮬레이션: {formatKRWShort(simulationLine[hoveredIndex])}
+                    시뮬레이션: {formatCurrencyShort(simulationLine[hoveredIndex], baseCurrency)}
                   </p>
                 )}
                 {btcHoldValues && (
                   <p>
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#f7931a" }} />
-                    BTC 홀드: {formatKRWShort(btcHoldValues[hoveredIndex])}
+                    BTC 홀드: {formatCurrencyShort(btcHoldValues[hoveredIndex], baseCurrency)}
                   </p>
                 )}
                 {chartData.hoverPoints[hoveredIndex].violation && (

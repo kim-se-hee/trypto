@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { ExchangeTabs } from "@/components/market/ExchangeTabs";
 import { RegretChart } from "@/components/regret/RegretChart";
 import { MeVsMe } from "@/components/regret/MeVsMe";
 import { ViolationTradeList } from "@/components/regret/ViolationTradeList";
@@ -9,6 +11,7 @@ import type { RuleType } from "@/lib/types/round";
 import type { AssetSnapshot, RegretSummary, ViolationMarker, RuleToggleItem, BenchmarkItem, ViolationTrade } from "@/lib/types/regret";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
+import { EXCHANGES } from "@/lib/types/coins";
 import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
 
 /** 복기 리포트는 야간 배치로 생성된다. 배치 전에는 서버가 0으로 채운 빈 리포트를 준다. */
@@ -20,8 +23,31 @@ const EMPTY_SUMMARY: RegretSummary = {
 };
 
 export function RegretPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { activeRound } = useRound();
+
+  // 거래소마다 기축통화가 달라 복기 지표는 합산하지 않는다. 탭으로 하나씩 본다.
+  const exchangeTabItems = useMemo(() => {
+    if (!activeRound) return [];
+    return activeRound.wallets.map((w) => {
+      const exchange = EXCHANGES.find((e) => e.id === w.exchangeId);
+      return {
+        id: exchange?.key ?? String(w.exchangeId),
+        name: exchange?.name ?? String(w.exchangeId),
+        baseCurrency: exchange?.baseCurrency ?? "",
+      };
+    });
+  }, [activeRound]);
+
+  const defaultExchange = exchangeTabItems[0]?.id ?? "upbit";
+  const requestedExchange = searchParams.get("exchange") ?? defaultExchange;
+  // 라운드에 없는 거래소가 쿼리로 들어오면 첫 번째 지갑으로 되돌린다.
+  const selectedExchange = exchangeTabItems.some((e) => e.id === requestedExchange)
+    ? requestedExchange
+    : defaultExchange;
+  const selectedExchangeItem = exchangeTabItems.find((e) => e.id === selectedExchange);
+  const baseCurrency = selectedExchangeItem?.baseCurrency ?? "KRW";
 
   const [enabledRules, setEnabledRules] = useState<Set<RuleType>>(
     new Set(["STOP_LOSS", "TAKE_PROFIT", "NO_CHASE_BUY", "AVERAGING_LIMIT", "OVERTRADE_LIMIT"]),
@@ -45,16 +71,18 @@ export function RegretPage() {
   const loadRegretData = useCallback(async () => {
     if (!user || !activeRound) return;
 
-    // 첫 번째 거래소의 exchangeId 사용
-    const firstWallet = activeRound.wallets[0];
-    if (!firstWallet) return;
+    const exchange = EXCHANGES.find((e) => e.key === selectedExchange);
+    if (!exchange) return;
+
+    const wallet = activeRound.wallets.find((w) => w.exchangeId === exchange.id);
+    if (!wallet) return;
 
     setLoading(true);
     setLoadFailed(false);
     try {
       const [reportData, chartData] = await Promise.all([
-        getRegretReport(activeRound.roundId, firstWallet.exchangeId, user.userId),
-        getRegretChart(activeRound.roundId, firstWallet.exchangeId, user.userId),
+        getRegretReport(activeRound.roundId, exchange.id, user.userId),
+        getRegretChart(activeRound.roundId, exchange.id, user.userId),
       ]);
 
       setSummary(reportData.summary);
@@ -71,7 +99,7 @@ export function RegretPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, activeRound]);
+  }, [user, activeRound, selectedExchange]);
 
   useEffect(() => {
     void loadRegretData();
@@ -98,10 +126,20 @@ export function RegretPage() {
       {/* Page header */}
       <section className="animate-enter border-b border-border/40 pb-6 pt-8">
         <div className="mx-auto max-w-6xl px-4">
-          <h1 className="font-display text-3xl tracking-tight">투자 복기</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            규칙만 지켰으면 얼마를 벌었을까?
-          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="font-display text-3xl tracking-tight">투자 복기</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                규칙만 지켰으면 얼마를 벌었을까?
+                {selectedExchangeItem && ` · ${selectedExchangeItem.name} ${baseCurrency} 기준`}
+              </p>
+            </div>
+            <ExchangeTabs
+              exchanges={exchangeTabItems}
+              selected={selectedExchange}
+              onSelect={(id) => setSearchParams({ exchange: id })}
+            />
+          </div>
         </div>
       </section>
 
@@ -122,6 +160,7 @@ export function RegretPage() {
               btcHoldValues={btcHoldEnabled ? btcHoldValues : null}
               hasEnabledRules={enabledRules.size > 0}
               totalDays={totalDays}
+              baseCurrency={baseCurrency}
             />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
@@ -133,7 +172,7 @@ export function RegretPage() {
                 ruleToggles={ruleToggles}
                 benchmarks={benchmarks}
               />
-              <ViolationTradeList trades={violationTrades} />
+              <ViolationTradeList trades={violationTrades} baseCurrency={baseCurrency} />
             </div>
           </div>
         )}
