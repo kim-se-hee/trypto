@@ -160,7 +160,7 @@ GET /api/rounds/1/regret?exchangeId=1
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
-| lossAmount | BigDecimal | 이 거래에서 해당 원칙으로 발생한 위반 손익 (기축통화 단위. 양수: 손실, 음수: 오히려 이익). 하나의 거래가 같은 원칙을 여러 번 어긴 경우 합산한 값 |
+| lossAmount | BigDecimal | 이 거래에서 해당 원칙으로 발생한 위반 손익 (기축통화 단위. 양수: 손실, 음수: 오히려 이익). 같은 주문이 같은 원칙을 여러 번 어긴 경우 합산한 값 |
 
 같은 원칙의 `lossAmount` 를 모든 거래에 걸쳐 합하면 `ruleImpacts[].totalLossAmount` 와 같다. 복기 그래프의 원칙 토글은 이 값과 `occurredAt` 을 사용한다.
 

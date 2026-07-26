@@ -66,20 +66,31 @@ public record RegretReportResponse(
         }
     }
 
+    public record ViolatedRuleResponse(String ruleType, BigDecimal lossAmount) {
+
+        public static ViolatedRuleResponse from(RegretReportResult.ViolatedRuleResult result) {
+            return new ViolatedRuleResponse(result.ruleType().name(), result.lossAmount());
+        }
+    }
+
     public record ViolationDetailResponse(
             Long violationDetailId,
             Long orderId,
             String coinSymbol,
-            List<String> violatedRules,
+            List<ViolatedRuleResponse> violatedRules,
             BigDecimal profitLoss,
             LocalDateTime occurredAt) {
 
         public static ViolationDetailResponse from(RegretReportResult.ViolationDetailResult result) {
+            List<ViolatedRuleResponse> violatedRules = result.violatedRules().stream()
+                    .map(ViolatedRuleResponse::from)
+                    .toList();
+
             return new ViolationDetailResponse(
                     result.violationDetailId(),
                     result.orderId(),
                     result.coinSymbol(),
-                    result.violatedRules(),
+                    violatedRules,
                     result.profitLoss(),
                     result.occurredAt());
         }
