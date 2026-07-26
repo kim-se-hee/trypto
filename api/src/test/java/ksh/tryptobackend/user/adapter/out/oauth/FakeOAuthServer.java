@@ -13,12 +13,14 @@ class FakeOAuthServer {
 
     private static final String TOKEN_PATH = "/token";
     private static final String USER_INFO_PATH = "/userinfo";
+    private static final String TOKEN_INFO_PATH = "/tokeninfo";
     private static final String TOKEN_RESPONSE = "{\"access_token\":\"fake-access-token\"}";
     private static final int OK = 200;
 
     private final HttpServer server;
     private final String userInfoResponse;
     private final Map<String, String> tokenRequestForm = new HashMap<>();
+    private String tokenInfoResponse = "{}";
 
     private FakeOAuthServer(HttpServer server, String userInfoResponse) {
         this.server = server;
@@ -30,6 +32,7 @@ class FakeOAuthServer {
         FakeOAuthServer fake = new FakeOAuthServer(server, userInfoResponse);
         server.createContext(TOKEN_PATH, fake::handleToken);
         server.createContext(USER_INFO_PATH, fake::handleUserInfo);
+        server.createContext(TOKEN_INFO_PATH, fake::handleTokenInfo);
         server.start();
         return fake;
     }
@@ -46,8 +49,17 @@ class FakeOAuthServer {
         return baseUri() + USER_INFO_PATH;
     }
 
+    String tokenInfoUri() {
+        return baseUri() + TOKEN_INFO_PATH;
+    }
+
     Map<String, String> tokenRequestForm() {
         return Map.copyOf(tokenRequestForm);
+    }
+
+    /** ID 토큰 검증 응답은 시나리오마다 발급자·발급 대상을 바꿔야 하므로 테스트가 직접 지정한다. */
+    void tokenInfoResponse(String response) {
+        this.tokenInfoResponse = response;
     }
 
     private String baseUri() {
@@ -63,6 +75,10 @@ class FakeOAuthServer {
 
     private void handleUserInfo(HttpExchange exchange) throws IOException {
         respond(exchange, userInfoResponse);
+    }
+
+    private void handleTokenInfo(HttpExchange exchange) throws IOException {
+        respond(exchange, tokenInfoResponse);
     }
 
     private static Map<String, String> parseForm(String body) {

@@ -18,9 +18,12 @@ import org.junit.jupiter.api.Test;
 
 class GoogleOAuthClientTest {
 
-    private static final String USER_INFO_RESPONSE = "{\"sub\":\"google-sub-1\"}";
+    private static final String SUBJECT = "google-sub-1";
+    private static final String USER_INFO_RESPONSE = "{\"sub\":\"" + SUBJECT + "\"}";
     private static final String AUTHORIZATION_CODE = "authorization-code";
     private static final String CODE_VERIFIER = "code-verifier";
+    private static final String APP_ID_TOKEN = "app-id-token";
+    private static final String GOOGLE_ISSUER = "https://accounts.google.com";
 
     private static final OAuthCredentials WEB_CREDENTIALS =
             new OAuthCredentials("google-web-id", "google-web-secret", "http://localhost:5173/auth/google/callback");
@@ -85,14 +88,42 @@ class GoogleOAuthClientTest {
     }
 
     @Test
-    @DisplayName("액세스 토큰 로그인은 지원하지 않아 미지원 예외를 던진다")
-    void getIdentityByAccessToken_notSupported_throwsAccessTokenLoginNotSupported() {
+    @DisplayName("앱이 네이티브로 받은 ID 토큰은 발급자·발급 대상 확인 후 신원으로 바뀐다")
+    void getIdentityByAccessToken_trustedIssuerAndOwnAudience_resolvesIdentity() {
+        server.tokenInfoResponse(tokenInfo(GOOGLE_ISSUER, WEB_CREDENTIALS.clientId()));
         GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
 
-        assertThatThrownBy(() -> client.getIdentityByAccessToken("app-access-token"))
+        SocialIdentity identity = client.getIdentityByAccessToken(APP_ID_TOKEN);
+
+        assertThat(identity).isEqualTo(SocialIdentity.of(Provider.GOOGLE, SUBJECT));
+    }
+
+    @Test
+    @DisplayName("구글이 발급하지 않은 ID 토큰은 로그인에 실패한다")
+    void getIdentityByAccessToken_untrustedIssuer_throwsSocialLoginFailed() {
+        server.tokenInfoResponse(tokenInfo("https://accounts.attacker.example", WEB_CREDENTIALS.clientId()));
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
+
+        assertThatThrownBy(() -> client.getIdentityByAccessToken(APP_ID_TOKEN))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.ACCESS_TOKEN_LOGIN_NOT_SUPPORTED);
+                .isEqualTo(ErrorCode.SOCIAL_LOGIN_FAILED);
+    }
+
+    @Test
+    @DisplayName("다른 앱에 발급된 ID 토큰은 로그인에 실패한다")
+    void getIdentityByAccessToken_otherAppAudience_throwsSocialLoginFailed() {
+        server.tokenInfoResponse(tokenInfo(GOOGLE_ISSUER, "another-app-client-id"));
+        GoogleOAuthClient client = new GoogleOAuthClient(configuredProperties());
+
+        assertThatThrownBy(() -> client.getIdentityByAccessToken(APP_ID_TOKEN))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.SOCIAL_LOGIN_FAILED);
+    }
+
+    private String tokenInfo(String issuer, String audience) {
+        return "{\"sub\":\"%s\",\"aud\":\"%s\",\"iss\":\"%s\"}".formatted(SUBJECT, audience, issuer);
     }
 
     private GoogleOAuthProperties configuredProperties() {
@@ -109,6 +140,7 @@ class GoogleOAuthClientTest {
         properties.setCredentials(credentials);
         properties.setTokenUri(server.tokenUri());
         properties.setUserInfoUri(server.userInfoUri());
+        properties.setTokenInfoUri(server.tokenInfoUri());
         return properties;
     }
 }
