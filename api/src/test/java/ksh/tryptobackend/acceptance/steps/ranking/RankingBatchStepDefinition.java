@@ -177,18 +177,13 @@ public class RankingBatchStepDefinition {
     private void insertSnapshot(Map<String, String> row, LocalDate snapshotDate) {
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, "
-                        + "total_asset, total_asset_krw, total_investment, total_investment_krw, "
-                        + "total_profit, total_profit_rate, snapshot_date) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        + "total_asset, total_asset_krw, snapshot_date) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)",
                 Long.valueOf(row.get("userId")),
                 Long.valueOf(row.get("roundId")),
                 Long.valueOf(row.get("exchangeId")),
                 new BigDecimal(row.get("totalAssetKrw")),
                 new BigDecimal(row.get("totalAssetKrw")),
-                new BigDecimal(row.get("totalInvestmentKrw")),
-                new BigDecimal(row.get("totalInvestmentKrw")),
-                new BigDecimal(row.get("totalAssetKrw")).subtract(new BigDecimal(row.get("totalInvestmentKrw"))),
-                BigDecimal.ZERO,
                 snapshotDate);
     }
 }

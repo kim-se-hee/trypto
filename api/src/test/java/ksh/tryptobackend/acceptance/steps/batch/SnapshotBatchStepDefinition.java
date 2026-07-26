@@ -137,21 +137,6 @@ public class SnapshotBatchStepDefinition {
         }
     }
 
-    @Given("스냅샷용 긴급자금 합계는 {int}이다")
-    public void 스냅샷용_긴급자금_합계는_이다(int amount, DataTable table) {
-        for (Map<String, String> row : table.asMaps()) {
-            Long roundId = Long.valueOf(row.get("roundId"));
-            Long exchangeId = Long.valueOf(row.get("exchangeId"));
-            jdbcTemplate.update(
-                    "INSERT INTO emergency_funding (round_id, exchange_id, amount, created_at)"
-                            + " VALUES (?, ?, ?, ?)",
-                    roundId,
-                    exchangeId,
-                    new BigDecimal(amount),
-                    LocalDateTime.now());
-        }
-    }
-
     @When("스냅샷 배치를 실행한다")
     public void 스냅샷_배치를_실행한다() throws Exception {
         JobParameters params = new JobParametersBuilder()
@@ -182,17 +167,6 @@ public class SnapshotBatchStepDefinition {
     @Then("첫 번째 스냅샷의 총자산은 {long}이다")
     public void 첫_번째_스냅샷의_총자산은_이다(long totalAsset) {
         assertThat(savedSnapshots.get(0).getTotalAsset()).isEqualByComparingTo(new BigDecimal(totalAsset));
-    }
-
-    @Then("첫 번째 스냅샷의 총투자금은 {long}이다")
-    public void 첫_번째_스냅샷의_총투자금은_이다(long totalInvestment) {
-        assertThat(savedSnapshots.get(0).getTotalInvestment()).isEqualByComparingTo(new BigDecimal(totalInvestment));
-    }
-
-    @Then("첫 번째 스냅샷의 수익률은 {double}이다")
-    public void 첫_번째_스냅샷의_수익률은_이다(double profitRate) {
-        assertThat(savedSnapshots.get(0).getTotalProfitRate())
-                .isEqualByComparingTo(new BigDecimal(String.valueOf(profitRate)));
     }
 
     @Then("스냅샷 상세가 {int}건 생성된다")

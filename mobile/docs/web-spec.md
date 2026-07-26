@@ -506,11 +506,11 @@ private static final String[] PUBLIC_PATTERNS = {
 |---|---|---|
 | `reportId`, `roundId`, `exchangeId`, `exchangeName`, `currency`, `analysisStart`, `analysisEnd` | long / string / LocalDate | 미사용 |
 | `totalViolations` | int | 사용 |
-| `missedProfit`, `actualProfitRate`, `ruleFollowedProfitRate` | BigDecimal | 사용 |
-| `ruleImpacts[]` | `{ ruleImpactId, ruleId, ruleType: string, thresholdValue, thresholdUnit: string, violationCount: int, totalLossAmount, impactGap }` | `ruleType`, `thresholdValue`, `violationCount` 만 사용 |
+| `missedProfit`, `actualAsset`, `ruleFollowedAsset` | BigDecimal | 사용 |
+| `ruleImpacts[]` | `{ ruleImpactId, ruleId, ruleType: string, thresholdValue, thresholdUnit: string, violationCount: int, totalLossAmount }` | `ruleType`, `thresholdValue`, `violationCount` 만 사용 |
 | `violationDetails[]` | `{ violationDetailId, orderId, coinSymbol, violatedRules: string[], profitLoss, occurredAt: LocalDateTime }` | 전부 사용 |
 
-`ruleType` 과 `violatedRules` 는 **enum 이름 문자열**(`LOSS_CUT` 등)로 직렬화된다. `exchangeName`·`currency`·`analysisStart/End`·`totalLossAmount`·`impactGap` 은 웹이 쓰지 않으므로, Flutter 에서는 이를 노출해 정보량을 늘릴 수 있다(§6 참조).
+`ruleType` 과 `violatedRules` 는 **enum 이름 문자열**(`LOSS_CUT` 등)로 직렬화된다. `exchangeName`·`currency`·`analysisStart/End`·`totalLossAmount` 은 웹이 쓰지 않으므로, Flutter 에서는 이를 노출해 정보량을 늘릴 수 있다(§6 참조).
 
 **RegretChartResponse** (`RegretChartResponse.java:8-31`): `roundId, exchangeId, exchangeName, currency, totalDays: int, assetHistory: [{ snapshotDate: yyyy-MM-dd, actualAsset, ruleFollowedAsset, btcHoldAsset }], violationMarkers: [{ snapshotDate, assetValue }]`. 프론트는 서버가 주는 `totalDays` 를 무시하고 `assetHistory.length` 로 다시 계산한다(`regret-api.ts:142`).
 
@@ -2652,7 +2652,7 @@ if (!firstWallet) return;                     // 요청 자체를 하지 않음
 
 프론트는 서버의 `totalDays` 를 쓰지 않고 `assetHistory.length` 로 재계산한다. 또한 마커의 `type` 은 **항상 `"loss"` 로 고정**된다 — `"gain"` 분기는 코드에만 존재하고 실제로 도달하지 않는다.
 
-**Flutter 개선 제안**: 거래소 선택기를 추가해 `activeRound.wallets` 의 모든 거래소를 볼 수 있게 하고, 응답의 `exchangeName`·`currency` 를 표기해 통화 단위(KRW/USDT) 혼동을 막는다. `analysisStart~analysisEnd` 를 "분석 구간"으로, `impactGap` 을 규칙별 영향도로 노출하면 웹보다 정보량을 늘릴 수 있다.
+**Flutter 개선 제안**: 거래소 선택기를 추가해 `activeRound.wallets` 의 모든 거래소를 볼 수 있게 하고, 응답의 `exchangeName`·`currency` 를 표기해 통화 단위(KRW/USDT) 혼동을 막는다. `analysisStart~analysisEnd` 를 "분석 구간"으로, `totalLossAmount` 를 규칙별 누적 손실로 노출하면 웹보다 정보량을 늘릴 수 있다.
 
 #### 6.3.3 RuleType 매핑 (필수 이식 대상)
 
@@ -2782,7 +2782,7 @@ class RegretChartData {
 #### 6.4.4 상단 요약과 범례
 
 - 최상단: 라벨 "놓친 수익", 값 `missedProfit.toLocaleString("ko-KR")` + `KRW`, 30px 굵게 negative 색.
-- 3-stat 카드: `실제 {actualProfitRate}%` / `규칙 준수 시 {ruleFollowedProfitRate}%` / `위반 {totalViolations}건`. 앞의 두 값은 **소수점 절삭 없이 원본 그대로 출력**되고 부호에 따라 색이 갈린다. 서버 `BigDecimal` scale 이 그대로 노출되므로 **Flutter 에서는 `toStringAsFixed(2)` 로 다듬을 것을 권장한다.**
+- 3-stat 카드: `실제 자산 {actualAsset}` / `규칙 준수 시 {ruleFollowedAsset}` / `위반 {totalViolations}건`. 앞의 두 값은 기축통화 금액이며 천 단위 구분 기호를 붙여 출력한다. 원칙 준수 시 자산이 실제 자산보다 크면 positive 색으로 강조한다.
 - 범례: 실제(실선) / 규칙 준수 시뮬레이션(점선, 활성 시) / BTC 홀드(활성 시) / 위반 지점(점).
 
 #### 6.4.5 인터랙션(웹)

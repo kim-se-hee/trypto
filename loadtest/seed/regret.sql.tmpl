@@ -47,7 +47,7 @@ FROM r CROSS JOIN (
 --   analysis_start = 라운드 시작(= 첫 스냅샷일 = REGRET_DAYS-1 일 전), analysis_end = 마지막 스냅샷일(오늘).
 INSERT INTO regret_report (
   report_id, user_id, round_id, exchange_id,
-  total_violations, missed_profit, actual_profit_rate, rule_followed_profit_rate,
+  total_violations, missed_profit, actual_asset, rule_followed_asset,
   analysis_start, analysis_end, created_at
 )
 WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
@@ -58,8 +58,8 @@ SELECT
   1                                                            AS exchange_id,
   7                                                            AS total_violations,
   893837.00000000                                              AS missed_profit,
-  4.0000                                                       AS actual_profit_rate,
-  12.9000                                                      AS rule_followed_profit_rate,
+  10290000000.00000000                                         AS actual_asset,
+  10290893837.00000000                                         AS rule_followed_asset,
   DATE_SUB(CURDATE(), INTERVAL @REGRET_DAYS@ - 1 DAY)          AS analysis_start,
   CURDATE()                                                    AS analysis_end,
   NOW()                                                        AS created_at
@@ -67,19 +67,18 @@ FROM r;
 
 -- rule_impact — report 당 규칙 수(3)만큼. report_id 로 FK 연결.
 INSERT INTO rule_impact (
-  report_id, rule_id, violation_count, total_loss_amount, impact_gap
+  report_id, rule_id, violation_count, total_loss_amount
 )
 WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
 SELECT
   r.n                                       AS report_id,
   (r.n - 1) * 3 + k.k                       AS rule_id,
   k.violation_count                         AS violation_count,
-  k.total_loss_amount                       AS total_loss_amount,
-  k.impact_gap                              AS impact_gap
+  k.total_loss_amount                       AS total_loss_amount
 FROM r CROSS JOIN (
-  SELECT 1 AS k, 2 AS violation_count, 350000.00000000 AS total_loss_amount, 3.5000 AS impact_gap  -- LOSS_CUT
-  UNION ALL SELECT 2, 2, 265000.00000000, 4.5000                                                    -- CHASE_BUY_BAN
-  UNION ALL SELECT 3, 1, 120000.00000000, 1.2000                                                    -- AVERAGING_DOWN_LIMIT
+  SELECT 1 AS k, 2 AS violation_count, 350000.00000000 AS total_loss_amount  -- LOSS_CUT
+  UNION ALL SELECT 2, 2, 265000.00000000                                      -- CHASE_BUY_BAN
+  UNION ALL SELECT 3, 1, 120000.00000000                                      -- AVERAGING_DOWN_LIMIT
 ) k;
 
 -- violation_detail — report 당 7행. coin_id 2~11 순환, loss_amount/profit_loss/occurred_at 을
@@ -116,8 +115,7 @@ FROM r CROSS JOIN (
 --   d 에 따라 완만히 증가시켜 자산 추이가 평평하지 않게 한다. user_id/round_id == n.
 INSERT INTO portfolio_snapshot
   (user_id, round_id, exchange_id,
-   total_asset, total_asset_krw, total_investment, total_investment_krw,
-   total_profit, total_profit_rate, snapshot_date)
+   total_asset, total_asset_krw, snapshot_date)
 WITH RECURSIVE
   r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@),
   d AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM d WHERE k < @REGRET_DAYS@ - 1)
@@ -127,10 +125,6 @@ SELECT
   1                                                         AS exchange_id,
   10000000000.00000000 + d.k * 10000000.00000000           AS total_asset,
   10000000000.00000000 + d.k * 10000000.00000000           AS total_asset_krw,
-  10000000000.00000000                                      AS total_investment,
-  10000000000.00000000                                      AS total_investment_krw,
-  d.k * 10000000.00000000                                   AS total_profit,
-  CAST(d.k * 0.1 AS DECIMAL(10,4))                          AS total_profit_rate,
   DATE_SUB(CURDATE(), INTERVAL (@REGRET_DAYS@ - 1) - d.k DAY) AS snapshot_date
 FROM r CROSS JOIN d;
 

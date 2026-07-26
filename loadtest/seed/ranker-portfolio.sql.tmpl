@@ -30,8 +30,7 @@ CREATE INDEX idx_ranking_user_period_date ON ranking (user_id, period, reference
 -- snapshot_id 는 (user-1)*@SNAPSHOT_DAYS@ + day + 1 로 결정해 detail 이 그대로 참조한다.
 INSERT INTO portfolio_snapshot
   (snapshot_id, user_id, round_id, exchange_id,
-   total_asset, total_asset_krw, total_investment, total_investment_krw,
-   total_profit, total_profit_rate, snapshot_date)
+   total_asset, total_asset_krw, snapshot_date)
 WITH RECURSIVE
   u AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM u WHERE n < @SNAPSHOT_USERS@),
   d AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM d WHERE k < @SNAPSHOT_DAYS@ - 1)
@@ -42,10 +41,6 @@ SELECT
   1                                       AS exchange_id,
   100000000.00000000                      AS total_asset,
   100000000.00000000                      AS total_asset_krw,
-  100000000.00000000                      AS total_investment,
-  100000000.00000000                      AS total_investment_krw,
-  0.00000000                              AS total_profit,
-  0.0000                                  AS total_profit_rate,
   DATE_SUB(CURDATE(), INTERVAL d.k DAY)   AS snapshot_date
 FROM u CROSS JOIN d;
 

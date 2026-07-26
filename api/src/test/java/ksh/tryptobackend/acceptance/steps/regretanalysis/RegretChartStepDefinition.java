@@ -145,7 +145,7 @@ public class RegretChartStepDefinition {
 
         jdbcTemplate.update(
                 "INSERT INTO regret_report (user_id, round_id, exchange_id, total_violations, "
-                        + "missed_profit, actual_profit_rate, rule_followed_profit_rate, "
+                        + "missed_profit, actual_asset, rule_followed_asset, "
                         + "analysis_start, analysis_end, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 USER_ID,
@@ -153,15 +153,15 @@ public class RegretChartStepDefinition {
                 EXCHANGE_ID_UPBIT,
                 2,
                 new BigDecimal("150000.00000000"),
-                new BigDecimal("4.0000"),
-                new BigDecimal("5.5000"),
+                new BigDecimal("10400000.00000000"),
+                new BigDecimal("10550000.00000000"),
                 DAY1,
                 DAY3,
                 createdAt);
 
         jdbcTemplate.update(
                 "INSERT INTO regret_report (user_id, round_id, exchange_id, total_violations, "
-                        + "missed_profit, actual_profit_rate, rule_followed_profit_rate, "
+                        + "missed_profit, actual_asset, rule_followed_asset, "
                         + "analysis_start, analysis_end, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 USER_ID,
@@ -169,8 +169,8 @@ public class RegretChartStepDefinition {
                 EXCHANGE_ID_BITHUMB,
                 0,
                 new BigDecimal("0.00000000"),
-                new BigDecimal("0.0000"),
-                new BigDecimal("0.0000"),
+                new BigDecimal("0.00000000"),
+                new BigDecimal("0.00000000"),
                 DAY1,
                 DAY3,
                 createdAt);
@@ -207,49 +207,20 @@ public class RegretChartStepDefinition {
     }
 
     private void insertPortfolioSnapshots() {
-        insertSnapshot(
-                ROUND_ID,
-                EXCHANGE_ID_UPBIT,
-                DAY1,
-                new BigDecimal("10000000.00000000"),
-                new BigDecimal("10000000.00000000"),
-                new BigDecimal("0.0000"));
-        insertSnapshot(
-                ROUND_ID,
-                EXCHANGE_ID_UPBIT,
-                DAY2,
-                new BigDecimal("10200000.00000000"),
-                new BigDecimal("10000000.00000000"),
-                new BigDecimal("2.0000"));
-        insertSnapshot(
-                ROUND_ID,
-                EXCHANGE_ID_UPBIT,
-                DAY3,
-                new BigDecimal("10400000.00000000"),
-                new BigDecimal("10000000.00000000"),
-                new BigDecimal("4.0000"));
+        insertSnapshot(ROUND_ID, EXCHANGE_ID_UPBIT, DAY1, new BigDecimal("10000000.00000000"));
+        insertSnapshot(ROUND_ID, EXCHANGE_ID_UPBIT, DAY2, new BigDecimal("10200000.00000000"));
+        insertSnapshot(ROUND_ID, EXCHANGE_ID_UPBIT, DAY3, new BigDecimal("10400000.00000000"));
     }
 
-    private void insertSnapshot(
-            Long roundId,
-            Long exchangeId,
-            LocalDate date,
-            BigDecimal totalAsset,
-            BigDecimal totalInvestment,
-            BigDecimal profitRate) {
+    private void insertSnapshot(Long roundId, Long exchangeId, LocalDate date, BigDecimal totalAsset) {
         jdbcTemplate.update(
                 "INSERT INTO portfolio_snapshot (user_id, round_id, exchange_id, total_asset,"
-                        + " total_asset_krw, total_investment, total_investment_krw, total_profit,"
-                        + " total_profit_rate, snapshot_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        + " total_asset_krw, snapshot_date) VALUES (?, ?, ?, ?, ?, ?)",
                 USER_ID,
                 roundId,
                 exchangeId,
                 totalAsset,
                 totalAsset,
-                totalInvestment,
-                totalInvestment,
-                totalAsset.subtract(totalInvestment),
-                profitRate,
                 date.atStartOfDay());
     }
 
