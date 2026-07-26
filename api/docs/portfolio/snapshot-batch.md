@@ -26,12 +26,6 @@ ACTIVE 라운드의 거래소별 일별 자산 상태를 캡처한다. 이 스�
    - KRW 환산: 국내 거래소는 그대로, 바이낸스는 USDT x 1,400
 4. `PORTFOLIO_SNAPSHOT` + `PORTFOLIO_SNAPSHOT_DETAIL` 적재
 
-### 거래소별 투입금과 수익률을 적재하지 않는 이유
-
-자산은 송금으로 거래소 사이를 이동하지만 시드머니와 긴급 자금은 최초 투입 거래소에 고정된다. 따라서 거래소 단위의 투입금은 실제 자산 이동을 반영하지 못하며, 이를 기준으로 삼은 수익금·수익률은 송금이 일어나는 즉시 실제 성과와 어긋난다. 시드머니를 투입할 수 없는 해외 거래소는 기준 자체가 존재하지 않아 산출이 불가능하다.
-
-거래소별 성과는 금액으로만 제공한다. 상세 배경은 [regretanalysis/regret-report/spec.md](../regretanalysis/regret-report/spec.md)를 참조한다.
-
 ## 저장 데이터
 
 **PORTFOLIO_SNAPSHOT** (거래소별 1행)

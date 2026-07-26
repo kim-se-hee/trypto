@@ -127,7 +127,7 @@ GET /api/rounds/1/regret?exchangeId=1
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| ruleImpactId | Long | 시나리오 ID |
+| ruleImpactId | Long | 규칙별 손실 ID |
 | ruleId | Long | 투자 원칙 ID |
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
 | thresholdValue | BigDecimal | 설정된 기준값 |

@@ -16,7 +16,7 @@ SnapshotJob 완료 직후
 
 | Step | Reader | Processor | Writer |
 |------|--------|-----------|--------|
-| reportStep | ACTIVE 라운드의 위반 기록 + 주문 이력 | 위반분 우선 매칭, loss 계산, 시나리오 생성 | REGRET_REPORT + RULE_IMPACT + VIOLATION_DETAIL 저장 |
+| reportStep | ACTIVE 라운드의 위반 기록 + 주문 이력 | 위반분 우선 매칭, loss 계산, 규칙별 손실 집계 | REGRET_REPORT + RULE_IMPACT + VIOLATION_DETAIL 저장 |
 
 ## 처리 절차
 
@@ -24,7 +24,7 @@ SnapshotJob 완료 직후
    - 최신 스냅샷을 조회한다. 스냅샷이 없으면 해당 건은 생성하지 않고 건너뛴다
    - 투자 원칙, 위반 기록, 주문 체결 이력을 조회한다
    - 위반분 우선 매칭으로 `loss_amount`를 계산한다 ([business-rules.md](business-rules.md) 참조)
-   - 규칙별 시나리오를 생성한다 (원칙별 총 위반 손익 합산)
+   - 규칙별 손실을 집계한다 (원칙별 위반 횟수·총 위반 손익)
    - 위반 손익 합에서 `missedProfit`을, 최신 스냅샷의 총 자산에서 `actualAsset`을 구해 `ruleFollowedAsset`을 산출한다
 2. `REGRET_REPORT` + `RULE_IMPACT` + `VIOLATION_DETAIL`를 upsert한다
 
