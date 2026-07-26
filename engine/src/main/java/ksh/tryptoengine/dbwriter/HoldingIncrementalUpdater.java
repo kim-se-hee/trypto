@@ -18,6 +18,8 @@ public class HoldingIncrementalUpdater {
 
     static final HoldingState EMPTY = new HoldingState(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0);
 
+    private static final int SCALE = 8;
+
     private final JdbcTemplate jdbc;
 
     public void apply(List<FillCommand> fills) {
@@ -82,7 +84,7 @@ public class HoldingIncrementalUpdater {
                 BigDecimal newQty = qty.add(q);
                 BigDecimal newAvg = qty.signum() == 0
                         ? p
-                        : avg.multiply(qty).add(p.multiply(q)).divide(newQty, 8, RoundingMode.HALF_UP);
+                        : avg.multiply(qty).add(p.multiply(q)).divide(newQty, SCALE, RoundingMode.HALF_UP);
                 if (qty.signum() > 0 && newAvg.compareTo(avg) < 0) {
                     adCount++;
                 }
@@ -90,7 +92,16 @@ public class HoldingIncrementalUpdater {
                 qty = newQty;
                 avg = newAvg;
             } else {
-                qty = qty.subtract(q);
+                // 매도는 판 수량만큼 원금도 함께 덜어낸다. 전량 매도면 보유가 사라지므로 평단·매수금액을 비운다
+                BigDecimal newQty = qty.subtract(q);
+                if (newQty.signum() <= 0) {
+                    avg = BigDecimal.ZERO;
+                    qty = BigDecimal.ZERO;
+                    totalBuy = BigDecimal.ZERO;
+                } else {
+                    totalBuy = totalBuy.subtract(avg.multiply(q).setScale(SCALE, RoundingMode.FLOOR));
+                    qty = newQty;
+                }
             }
         }
 

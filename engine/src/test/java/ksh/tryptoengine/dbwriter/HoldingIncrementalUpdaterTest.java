@@ -54,25 +54,68 @@ class HoldingIncrementalUpdaterTest {
     }
 
     @Test
-    void SELL은_수량만_감소하고_평단은_유지() {
+    void 일부_SELL은_평단을_유지하고_판_수량만큼_매수금액을_덜어낸다() {
         HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
 
         HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("500", "3")));
 
         assertThat(result.avg()).isEqualByComparingTo("150");
         assertThat(result.qty()).isEqualByComparingTo("7");
-        assertThat(result.totalBuy()).isEqualByComparingTo("1500");
+        assertThat(result.totalBuy()).isEqualByComparingTo("1050");
         assertThat(result.adCount()).isZero();
     }
 
     @Test
-    void 전량_SELL_후_수량은_0이고_평단은_유지() {
-        HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
+    void 전량_SELL은_평단과_매수금액까지_비운다() {
+        HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 2);
 
         HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "10")));
 
-        assertThat(result.avg()).isEqualByComparingTo("150");
+        assertThat(result.avg()).isEqualByComparingTo("0");
         assertThat(result.qty()).isEqualByComparingTo("0");
+        assertThat(result.totalBuy()).isEqualByComparingTo("0");
+        assertThat(result.adCount()).isEqualTo(2);
+    }
+
+    @Test
+    void 보유_수량을_넘겨_SELL해도_수량은_음수가_되지_않는다() {
+        HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
+
+        HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "12")));
+
+        assertThat(result.qty()).isEqualByComparingTo("0");
+        assertThat(result.avg()).isEqualByComparingTo("0");
+        assertThat(result.totalBuy()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void 전량_SELL_후_재매수하면_새_체결가가_평단이_되고_매수금액도_새로_쌓인다() {
+        HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 0);
+
+        HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "10"), buy("200", "4")));
+
+        assertThat(result.avg()).isEqualByComparingTo("200");
+        assertThat(result.qty()).isEqualByComparingTo("4");
+        assertThat(result.totalBuy()).isEqualByComparingTo("800");
+    }
+
+    @Test
+    void 매수금액은_어떤_체결_시퀀스에서도_평단_곱하기_수량과_일치한다() {
+        List<FillCommand> fills = List.of(
+                buy("120.50", "3.5"),
+                buy("115.25", "2"),
+                sell("300", "1.5"),
+                buy("130", "4"),
+                sell("400", "2"),
+                buy("110", "1.25"));
+
+        HoldingState state = HoldingIncrementalUpdater.EMPTY;
+        for (FillCommand fill : fills) {
+            state = HoldingIncrementalUpdater.applyFills(state, List.of(fill));
+
+            BigDecimal expected = state.avg().multiply(state.qty());
+            assertThat(state.totalBuy().subtract(expected).abs()).isLessThan(bd("0.000001"));
+        }
     }
 
     @Test
@@ -146,7 +189,15 @@ class HoldingIncrementalUpdaterTest {
                 qty = newQty;
                 avg = newAvg;
             } else {
-                qty = qty.subtract(q);
+                BigDecimal newQty = qty.subtract(q);
+                if (newQty.signum() <= 0) {
+                    avg = BigDecimal.ZERO;
+                    qty = BigDecimal.ZERO;
+                    totalBuy = BigDecimal.ZERO;
+                } else {
+                    totalBuy = totalBuy.subtract(avg.multiply(q).setScale(8, RoundingMode.FLOOR));
+                    qty = newQty;
+                }
             }
         }
         return new HoldingState(avg, qty, totalBuy, adCount);
