@@ -2,7 +2,7 @@
 
 ### 참고사항
 
-- 배치가 생성한 리포트를 조회한다. 리포트가 없으면 `REPORT_NOT_FOUND` 에러를 반환한다
+- 배치가 생성한 리포트를 조회한다. 리포트가 아직 없으면 (라운드 시작 당일 등) 에러가 아니라 빈 리포트를 반환한다. 요약 지표는 모두 0, `violationDetails`는 빈 배열이며, `ruleImpacts`는 라운드에 설정된 원칙을 위반 횟수·손실 0으로 채워 반환한다
 - 거래소별로 요청한다
 
 `GET /api/rounds/{roundId}/regret?exchangeId={exchangeId}`
@@ -125,9 +125,11 @@ GET /api/rounds/1/regret?exchangeId=1
 
 #### ruleImpacts[]
 
+라운드에 설정된 모든 원칙을 포함한다. 위반이 없는 원칙은 위반 횟수·손실 0으로 채운다.
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| ruleImpactId | Long | 규칙별 손실 ID |
+| ruleImpactId | Long (nullable) | 규칙별 손실 ID. 위반이 없어 0으로 채워진 원칙은 null |
 | ruleId | Long | 투자 원칙 ID |
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
 | thresholdValue | BigDecimal | 설정된 기준값 |
@@ -153,7 +155,6 @@ GET /api/rounds/1/regret?exchangeId=1
 | ROUND_NOT_FOUND | 404 | 투자 라운드를 찾을 수 없음 |
 | ROUND_ACCESS_DENIED | 403 | 본인의 라운드가 아님 |
 | WALLET_NOT_FOUND | 404 | 해당 거래소의 지갑이 라운드에 존재하지 않음 |
-| REPORT_NOT_FOUND | 404 | 복기 리포트가 아직 생성되지 않음 (배치 실행 전 조회 시) |
 
 투자 원칙이 없는 라운드는 에러 대신 빈 `ruleImpacts`/`violationDetails`를 반환한다.
 
