@@ -137,21 +137,18 @@ export function RegretChart({
       {/* 3-stat 카드 */}
       <div className="mb-6 grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
-          <p className="text-[11px] font-medium text-muted-foreground">실제</p>
-          <p className={cn(
-            "mt-1 font-mono text-lg font-bold tabular-nums",
-            summary.actualProfitRate >= 0 ? "text-positive" : "text-negative",
-          )}>
-            {summary.actualProfitRate >= 0 ? "+" : ""}{summary.actualProfitRate}%
+          <p className="text-[11px] font-medium text-muted-foreground">실제 자산</p>
+          <p className="mt-1 font-mono text-base font-bold tabular-nums">
+            {summary.actualAsset.toLocaleString("ko-KR")}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">규칙 준수 시</p>
           <p className={cn(
-            "mt-1 font-mono text-lg font-bold tabular-nums",
-            summary.ruleFollowedProfitRate >= 0 ? "text-positive" : "text-negative",
+            "mt-1 font-mono text-base font-bold tabular-nums",
+            summary.ruleFollowedAsset > summary.actualAsset ? "text-positive" : "",
           )}>
-            {summary.ruleFollowedProfitRate >= 0 ? "+" : ""}{summary.ruleFollowedProfitRate}%
+            {summary.ruleFollowedAsset.toLocaleString("ko-KR")}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
