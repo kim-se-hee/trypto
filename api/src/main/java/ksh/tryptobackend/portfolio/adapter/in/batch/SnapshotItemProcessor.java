@@ -25,12 +25,7 @@ public class SnapshotItemProcessor implements ItemProcessor<SnapshotInput, Snaps
     @Override
     public SnapshotResult process(SnapshotInput input) {
         TakeSnapshotCommand command = new TakeSnapshotCommand(
-                input.roundId(),
-                input.userId(),
-                input.exchangeId(),
-                input.walletId(),
-                input.seedAmount(),
-                getSnapshotDate());
+                input.roundId(), input.userId(), input.exchangeId(), input.walletId(), getSnapshotDate());
         return takePortfolioSnapshotUseCase.takeSnapshot(command);
     }
 

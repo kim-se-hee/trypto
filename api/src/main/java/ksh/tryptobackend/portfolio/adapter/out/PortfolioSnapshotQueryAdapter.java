@@ -49,8 +49,6 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
                         snapshot.roundId,
                         snapshot.exchangeId,
                         snapshot.totalAsset,
-                        snapshot.totalInvestment,
-                        snapshot.totalProfitRate,
                         snapshot.snapshotDate))
                 .from(snapshot)
                 .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
@@ -69,8 +67,6 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
                         snapshot.roundId,
                         snapshot.exchangeId,
                         snapshot.totalAsset,
-                        snapshot.totalInvestment,
-                        snapshot.totalProfitRate,
                         snapshot.snapshotDate))
                 .from(snapshot)
                 .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
@@ -82,11 +78,7 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
     public List<UserSnapshotSummary> findLatestSummaries(LocalDate snapshotDate) {
         return queryFactory
                 .select(Projections.constructor(
-                        UserSnapshotSummary.class,
-                        snapshot.userId,
-                        snapshot.roundId,
-                        snapshot.totalAssetKrw.sum(),
-                        snapshot.totalInvestmentKrw.sum()))
+                        UserSnapshotSummary.class, snapshot.userId, snapshot.roundId, snapshot.totalAssetKrw.sum()))
                 .from(snapshot)
                 .where(snapshot.snapshotDate.eq(snapshotDate))
                 .groupBy(snapshot.userId, snapshot.roundId)

@@ -42,7 +42,6 @@ public class RankingAclPortfolioQueryAdapter implements PortfolioQueryPort {
     }
 
     private SnapshotSummary toSnapshotSummary(SnapshotSummaryResult result) {
-        return new SnapshotSummary(
-                result.userId(), result.roundId(), result.totalAssetKrw(), result.totalInvestmentKrw());
+        return new SnapshotSummary(result.userId(), result.roundId(), result.totalAssetKrw());
     }
 }

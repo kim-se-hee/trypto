@@ -31,12 +31,6 @@ public class FindSnapshotsService implements FindSnapshotsUseCase {
 
     private SnapshotInfoResult toResult(SnapshotOverview info) {
         return new SnapshotInfoResult(
-                info.snapshotId(),
-                info.roundId(),
-                info.exchangeId(),
-                info.totalAsset(),
-                info.totalInvestment(),
-                info.totalProfitRate(),
-                info.snapshotDate());
+                info.snapshotId(), info.roundId(), info.exchangeId(), info.totalAsset(), info.snapshotDate());
     }
 }
