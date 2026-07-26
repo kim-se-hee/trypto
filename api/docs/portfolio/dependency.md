@@ -30,7 +30,7 @@ portfolio 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하지 �
 소비 UseCase 를 `PortfolioWallet`·`WalletSnapshots`·잔고로 번역한다.
 - `FindWalletUseCase` — 지갑·라운드별 지갑 조회
 - `GetWalletOwnerIdUseCase` — 지갑 소유자 확인
-- `GetAvailableBalanceUseCase` — 가용/총 잔고 조회
+- `GetAvailableBalanceUseCase` — 기축통화 총 잔고(가용 + 잠금) 조회
 
 ### InvestmentRoundQueryPort ← InvestmentRound (`PortfolioAclInvestmentRoundQueryAdapter`)
 소비 UseCase 를 `ActiveRounds` 로 번역한다.

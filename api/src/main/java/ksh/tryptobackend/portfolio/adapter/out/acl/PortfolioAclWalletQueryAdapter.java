@@ -37,11 +37,6 @@ public class PortfolioAclWalletQueryAdapter implements WalletQueryPort {
     }
 
     @Override
-    public BigDecimal getAvailableBalance(Long walletId, Long coinId) {
-        return getAvailableBalanceUseCase.getAvailableBalance(walletId, coinId);
-    }
-
-    @Override
     public WalletSnapshots findWalletSnapshots(List<Long> roundIds) {
         List<WalletSnapshot> wallets = findWalletUseCase.findByRoundIds(roundIds).stream()
                 .map(this::toWalletSnapshot)

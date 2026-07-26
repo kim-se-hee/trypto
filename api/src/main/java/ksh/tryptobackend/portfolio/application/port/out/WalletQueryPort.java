@@ -11,7 +11,5 @@ public interface WalletQueryPort {
 
     BigDecimal getBaseCurrencyBalance(Long walletId, Long baseCurrencyCoinId);
 
-    BigDecimal getAvailableBalance(Long walletId, Long coinId);
-
     WalletSnapshots findWalletSnapshots(List<Long> roundIds);
 }
