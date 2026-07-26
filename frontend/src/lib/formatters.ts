@@ -36,6 +36,25 @@ export function formatCurrencyCompact(value: number, baseCurrency: string): stri
   return Math.round(value).toLocaleString("ko-KR");
 }
 
+// ── 통화별 금액 약어 (차트 축·툴팁처럼 폭이 좁은 자리 전용) ──
+
+export function formatCurrencyShort(value: number, baseCurrency: string): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (baseCurrency === "USDT") {
+    if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 10_000) return `${sign}$${(abs / 1_000).toFixed(1)}K`;
+    return `${sign}$${abs.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  }
+  if (abs < 1_0000) return `${sign}${Math.round(abs).toLocaleString("ko-KR")}`;
+  const man = Math.round(abs / 1_0000);
+  const eok = Math.floor(man / 1_0000);
+  const rest = man % 1_0000;
+  if (eok === 0) return `${sign}${man.toLocaleString("ko-KR")}만`;
+  if (rest > 0) return `${sign}${eok}억${rest.toLocaleString("ko-KR")}만`;
+  return `${sign}${eok}억`;
+}
+
 // ── 법정통화 환산 표시 (≈ 접두사 포함) ──────────────────────
 
 export function formatFiatEstimate(value: number, baseCurrency: string): string {
