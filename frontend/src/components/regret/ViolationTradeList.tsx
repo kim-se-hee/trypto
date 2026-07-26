@@ -7,6 +7,7 @@ import {
 } from "@/lib/types/regret";
 import type { ViolationFilter } from "@/lib/types/regret";
 import { cn } from "@/lib/utils";
+import { formatCurrencyCompact } from "@/lib/formatters";
 
 const FILTER_TABS: { key: ViolationFilter; label: string }[] = [
   { key: "ALL", label: "전체" },
@@ -16,9 +17,10 @@ const FILTER_TABS: { key: ViolationFilter; label: string }[] = [
 
 interface ViolationTradeListProps {
   trades: ViolationTrade[];
+  baseCurrency: string;
 }
 
-export function ViolationTradeList({ trades }: ViolationTradeListProps) {
+export function ViolationTradeList({ trades, baseCurrency }: ViolationTradeListProps) {
   const [filter, setFilter] = useState<ViolationFilter>("ALL");
 
   const filtered = useMemo(() => {
@@ -107,8 +109,8 @@ export function ViolationTradeList({ trades }: ViolationTradeListProps) {
                   isLoss ? "text-negative" : "text-positive",
                 )}
               >
-                {isLoss ? "" : "+"}
-                {trade.profitLoss.toLocaleString("ko-KR")}
+                {isLoss ? "-" : "+"}
+                {formatCurrencyCompact(Math.abs(trade.profitLoss), baseCurrency)}
               </span>
             </div>
           );
