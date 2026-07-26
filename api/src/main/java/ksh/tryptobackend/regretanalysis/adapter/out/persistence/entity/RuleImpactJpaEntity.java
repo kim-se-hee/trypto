@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,20 +35,16 @@ public class RuleImpactJpaEntity {
     @Column(name = "total_loss_amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal totalLossAmount;
 
-    @Column(name = "impact_gap", nullable = false, precision = 10, scale = 4)
-    private BigDecimal impactGap;
-
     static RuleImpactJpaEntity fromDomain(RuleImpact ruleImpact) {
         RuleImpactJpaEntity entity = new RuleImpactJpaEntity();
         entity.id = ruleImpact.getRuleImpactId();
         entity.ruleId = ruleImpact.getRuleId();
         entity.violationCount = ruleImpact.getViolationCount();
         entity.totalLossAmount = ruleImpact.getTotalLossAmount();
-        entity.impactGap = ruleImpact.getImpactGap().value();
         return entity;
     }
 
     RuleImpact toDomain() {
-        return RuleImpact.reconstitute(id, reportId, ruleId, violationCount, totalLossAmount, ImpactGap.of(impactGap));
+        return RuleImpact.reconstitute(id, reportId, ruleId, violationCount, totalLossAmount);
     }
 }

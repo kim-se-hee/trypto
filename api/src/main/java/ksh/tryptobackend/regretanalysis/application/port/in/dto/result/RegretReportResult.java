@@ -27,8 +27,8 @@ public record RegretReportResult(
         LocalDate analysisStart,
         LocalDate analysisEnd,
         BigDecimal missedProfit,
-        BigDecimal actualProfitRate,
-        BigDecimal ruleFollowedProfitRate,
+        BigDecimal actualAsset,
+        BigDecimal ruleFollowedAsset,
         List<RuleImpactResult> ruleImpacts,
         List<ViolationDetailResult> violationDetails) {
 
@@ -47,8 +47,8 @@ public record RegretReportResult(
                 report.getAnalysisStart(),
                 report.getAnalysisEnd(),
                 report.getMissedProfit(),
-                report.getActualProfitRate(),
-                report.getRuleFollowedProfitRate(),
+                report.getActualAsset(),
+                report.getRuleFollowedAsset(),
                 toRuleImpactResults(report.getRuleImpacts(), ruleMap),
                 toViolationDetailResults(report.getViolationDetails(), ruleMap, coinSymbols));
     }
@@ -73,7 +73,6 @@ public record RegretReportResult(
                     rule.thresholdValue(),
                     ThresholdUnit.from(rule.ruleType()).symbol(),
                     0,
-                    BigDecimal.ZERO,
                     BigDecimal.ZERO);
         }
 
@@ -84,8 +83,7 @@ public record RegretReportResult(
                 rule.thresholdValue(),
                 ThresholdUnit.from(rule.ruleType()).symbol(),
                 ruleImpact.getViolationCount(),
-                ruleImpact.getTotalLossAmount(),
-                ruleImpact.getImpactGap().value());
+                ruleImpact.getTotalLossAmount());
     }
 
     private static List<ViolationDetailResult> toViolationDetailResults(
@@ -140,8 +138,7 @@ public record RegretReportResult(
             BigDecimal thresholdValue,
             String thresholdUnit,
             int violationCount,
-            BigDecimal totalLossAmount,
-            BigDecimal impactGap) {}
+            BigDecimal totalLossAmount) {}
 
     public record ViolationDetailResult(
             Long violationDetailId,

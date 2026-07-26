@@ -3,7 +3,6 @@ package ksh.tryptobackend.regretanalysis.domain.model;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 
 public class ViolationDetails {
 
@@ -30,14 +29,13 @@ public class ViolationDetails {
         return details.stream().filter(ViolationDetail::isMonitoringViolation).toList();
     }
 
-    public List<RuleImpact> toRuleImpacts(BigDecimal totalInvestment) {
+    public List<RuleImpact> toRuleImpacts() {
         return details.stream().collect(Collectors.groupingBy(ViolationDetail::getRuleId)).entrySet().stream()
                 .map(entry -> {
                     BigDecimal totalLoss = entry.getValue().stream()
                             .map(ViolationDetail::getLossAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    ImpactGap gap = ImpactGap.calculate(totalLoss, totalInvestment);
-                    return RuleImpact.create(entry.getKey(), entry.getValue().size(), totalLoss, gap);
+                    return RuleImpact.create(entry.getKey(), entry.getValue().size(), totalLoss);
                 })
                 .toList();
     }

@@ -1,7 +1,6 @@
 package ksh.tryptobackend.regretanalysis.domain.model;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,15 +18,13 @@ public class RegretReport {
     private final Long exchangeId;
     private final int totalViolations;
     private final BigDecimal missedProfit;
-    private final BigDecimal actualProfitRate;
-    private final BigDecimal ruleFollowedProfitRate;
+    private final BigDecimal actualAsset;
+    private final BigDecimal ruleFollowedAsset;
     private final LocalDate analysisStart;
     private final LocalDate analysisEnd;
     private final LocalDateTime createdAt;
     private final List<RuleImpact> ruleImpacts;
     private final ViolationDetails violationDetails;
-
-    private static final int RATE_SCALE = 4;
 
     public static RegretReport generate(
             Long userId,
@@ -38,10 +35,8 @@ public class RegretReport {
             List<ViolationDetail> violationDetails,
             LocalDate analysisStart,
             Clock clock) {
-        BigDecimal actualProfitRate = snapshot.getTotalProfitRate();
+        BigDecimal actualAsset = snapshot.getTotalAsset();
         BigDecimal missedProfit = sumLossAmounts(violationDetails);
-        BigDecimal ruleFollowedProfitRate =
-                calculateRuleFollowedRate(actualProfitRate, missedProfit, snapshot.getTotalInvestment());
 
         return RegretReport.builder()
                 .userId(userId)
@@ -49,8 +44,8 @@ public class RegretReport {
                 .exchangeId(exchangeId)
                 .totalViolations(violationDetails.size())
                 .missedProfit(missedProfit)
-                .actualProfitRate(actualProfitRate)
-                .ruleFollowedProfitRate(ruleFollowedProfitRate)
+                .actualAsset(actualAsset)
+                .ruleFollowedAsset(actualAsset.add(missedProfit))
                 .analysisStart(analysisStart)
                 .analysisEnd(LocalDate.now(clock))
                 .createdAt(LocalDateTime.now(clock))
@@ -65,8 +60,8 @@ public class RegretReport {
                 .exchangeId(exchangeId)
                 .totalViolations(0)
                 .missedProfit(BigDecimal.ZERO)
-                .actualProfitRate(BigDecimal.ZERO)
-                .ruleFollowedProfitRate(BigDecimal.ZERO)
+                .actualAsset(BigDecimal.ZERO)
+                .ruleFollowedAsset(BigDecimal.ZERO)
                 .ruleImpacts(List.of())
                 .violationDetails(new ViolationDetails(List.of()))
                 .build();
@@ -78,17 +73,6 @@ public class RegretReport {
         return sum.max(BigDecimal.ZERO);
     }
 
-    private static BigDecimal calculateRuleFollowedRate(
-            BigDecimal actualProfitRate, BigDecimal missedProfit, BigDecimal totalInvestment) {
-        if (totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
-            return actualProfitRate;
-        }
-        BigDecimal impactRate = missedProfit
-                .divide(totalInvestment, RATE_SCALE, RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"));
-        return actualProfitRate.add(impactRate);
-    }
-
     public static RegretReport reconstitute(
             Long reportId,
             Long userId,
@@ -96,8 +80,8 @@ public class RegretReport {
             Long exchangeId,
             int totalViolations,
             BigDecimal missedProfit,
-            BigDecimal actualProfitRate,
-            BigDecimal ruleFollowedProfitRate,
+            BigDecimal actualAsset,
+            BigDecimal ruleFollowedAsset,
             LocalDate analysisStart,
             LocalDate analysisEnd,
             LocalDateTime createdAt,
@@ -110,8 +94,8 @@ public class RegretReport {
                 .exchangeId(exchangeId)
                 .totalViolations(totalViolations)
                 .missedProfit(missedProfit)
-                .actualProfitRate(actualProfitRate)
-                .ruleFollowedProfitRate(ruleFollowedProfitRate)
+                .actualAsset(actualAsset)
+                .ruleFollowedAsset(ruleFollowedAsset)
                 .analysisStart(analysisStart)
                 .analysisEnd(analysisEnd)
                 .createdAt(createdAt)

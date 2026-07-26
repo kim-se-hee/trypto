@@ -16,8 +16,8 @@ public record RegretReportResponse(
         LocalDate analysisStart,
         LocalDate analysisEnd,
         BigDecimal missedProfit,
-        BigDecimal actualProfitRate,
-        BigDecimal ruleFollowedProfitRate,
+        BigDecimal actualAsset,
+        BigDecimal ruleFollowedAsset,
         List<RuleImpactResponse> ruleImpacts,
         List<ViolationDetailResponse> violationDetails) {
 
@@ -39,8 +39,8 @@ public record RegretReportResponse(
                 result.analysisStart(),
                 result.analysisEnd(),
                 result.missedProfit(),
-                result.actualProfitRate(),
-                result.ruleFollowedProfitRate(),
+                result.actualAsset(),
+                result.ruleFollowedAsset(),
                 ruleImpactResponses,
                 violationDetailResponses);
     }
@@ -52,8 +52,7 @@ public record RegretReportResponse(
             BigDecimal thresholdValue,
             String thresholdUnit,
             int violationCount,
-            BigDecimal totalLossAmount,
-            BigDecimal impactGap) {
+            BigDecimal totalLossAmount) {
 
         public static RuleImpactResponse from(RegretReportResult.RuleImpactResult result) {
             return new RuleImpactResponse(
@@ -63,8 +62,7 @@ public record RegretReportResponse(
                     result.thresholdValue(),
                     result.thresholdUnit(),
                     result.violationCount(),
-                    result.totalLossAmount(),
-                    result.impactGap());
+                    result.totalLossAmount());
         }
     }
 

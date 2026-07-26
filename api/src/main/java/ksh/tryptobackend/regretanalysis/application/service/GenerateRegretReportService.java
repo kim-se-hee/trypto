@@ -39,7 +39,7 @@ public class GenerateRegretReportService implements GenerateRegretReportUseCase 
                 tradingQueryPort.findViolatedOrders(command.roundId(), command.exchangeId(), command.walletId());
         CurrentPrices currentPrices = marketDataQueryPort.findCurrentPrices(violations.exchangeCoinIds());
         List<ViolationDetail> details = violations.calculateDetails(currentPrices);
-        List<RuleImpact> impacts = new ViolationDetails(details).toRuleImpacts(snapshot.getTotalInvestment());
+        List<RuleImpact> impacts = new ViolationDetails(details).toRuleImpacts();
 
         return RegretReport.generate(
                 command.userId(),

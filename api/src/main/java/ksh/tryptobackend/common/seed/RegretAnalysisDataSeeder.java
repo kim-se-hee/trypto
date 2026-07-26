@@ -11,7 +11,6 @@ import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.Regre
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReport;
 import ksh.tryptobackend.regretanalysis.domain.model.RuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -65,8 +64,7 @@ class RegretAnalysisDataSeeder {
 
         int totalViolations = violationDetails.size();
         BigDecimal missedProfit = new BigDecimal("150000");
-        BigDecimal actualProfitRate = new BigDecimal("5.20");
-        BigDecimal ruleFollowedProfitRate = new BigDecimal("8.50");
+        BigDecimal actualAsset = new BigDecimal("10520000");
 
         RegretReport report = RegretReport.reconstitute(
                 null,
@@ -75,8 +73,8 @@ class RegretAnalysisDataSeeder {
                 exchangeId,
                 totalViolations,
                 missedProfit,
-                actualProfitRate,
-                ruleFollowedProfitRate,
+                actualAsset,
+                actualAsset.add(missedProfit),
                 today.minusDays(30),
                 today,
                 now,
@@ -89,13 +87,7 @@ class RegretAnalysisDataSeeder {
     private List<RuleImpact> createRuleImpacts(List<Long> ruleIds) {
         List<RuleImpact> impacts = new ArrayList<>();
         for (int i = 0; i < Math.min(3, ruleIds.size()); i++) {
-            impacts.add(RuleImpact.reconstitute(
-                    null,
-                    null,
-                    ruleIds.get(i),
-                    2 + i,
-                    new BigDecimal((i + 1) * 50000),
-                    ImpactGap.of(new BigDecimal("1." + (i + 1) + "0"))));
+            impacts.add(RuleImpact.reconstitute(null, null, ruleIds.get(i), 2 + i, new BigDecimal((i + 1) * 50000)));
         }
         return impacts;
     }

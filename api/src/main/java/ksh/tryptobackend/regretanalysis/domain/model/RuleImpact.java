@@ -1,7 +1,6 @@
 package ksh.tryptobackend.regretanalysis.domain.model;
 
 import java.math.BigDecimal;
-import ksh.tryptobackend.regretanalysis.domain.vo.ImpactGap;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,31 +13,23 @@ public class RuleImpact {
     private final Long ruleId;
     private final int violationCount;
     private final BigDecimal totalLossAmount;
-    private final ImpactGap impactGap;
 
-    public static RuleImpact create(Long ruleId, int violationCount, BigDecimal totalLossAmount, ImpactGap impactGap) {
+    public static RuleImpact create(Long ruleId, int violationCount, BigDecimal totalLossAmount) {
         return RuleImpact.builder()
                 .ruleId(ruleId)
                 .violationCount(violationCount)
                 .totalLossAmount(totalLossAmount)
-                .impactGap(impactGap)
                 .build();
     }
 
     public static RuleImpact reconstitute(
-            Long ruleImpactId,
-            Long reportId,
-            Long ruleId,
-            int violationCount,
-            BigDecimal totalLossAmount,
-            ImpactGap impactGap) {
+            Long ruleImpactId, Long reportId, Long ruleId, int violationCount, BigDecimal totalLossAmount) {
         return RuleImpact.builder()
                 .ruleImpactId(ruleImpactId)
                 .reportId(reportId)
                 .ruleId(ruleId)
                 .violationCount(violationCount)
                 .totalLossAmount(totalLossAmount)
-                .impactGap(impactGap)
                 .build();
     }
 }
