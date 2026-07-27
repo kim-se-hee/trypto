@@ -12,12 +12,22 @@ interface RegretChartProps {
   btcHoldValues: number[] | null; // null이면 비활성
   hasEnabledRules: boolean;
   totalDays: number;
-  baseCurrency: string;          // 거래소 기축통화 (KRW/USDT)
 }
 
 const W = 700;
 const H = 280;
 const PAD = { top: 20, right: 20, bottom: 32, left: 60 };
+
+/** 라운드 전체를 합친 그래프라 거래소 기축통화가 섞인다. 서버가 원화로 환산해 내려준다. */
+const CHART_CURRENCY = "KRW";
+
+/** 위반 손실은 양수가 손해다. 부호에 따라 같은 숫자라도 정반대의 이야기가 된다. */
+function describeViolationLoss(summary: RegretSummary): string {
+  if (summary.totalViolations === 0) return "원칙을 어긴 거래가 없습니다.";
+  const amount = formatCurrency(Math.abs(summary.totalViolationLoss), CHART_CURRENCY);
+  if (summary.totalViolationLoss > 0) return `원칙만 지켰다면 ${amount} 더 벌었습니다.`;
+  return `원칙을 어긴 게 오히려 ${amount} 이득이었습니다.`;
+}
 
 export function RegretChart({
   summary,
@@ -27,7 +37,6 @@ export function RegretChart({
   btcHoldValues,
   hasEnabledRules,
   totalDays,
-  baseCurrency,
 }: RegretChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -78,14 +87,14 @@ export function RegretChart({
       xLabels.push({ date: snapshots[n - 1].date, x: getX(n - 1) });
     }
 
-    // 위반 마커 — snapshot index 기준으로 매핑
-    const markerByIndex = new Map<number, "loss" | "gain">();
-    const markerPoints: { x: number; y: number; type: "loss" | "gain" }[] = [];
+    // 위반 마커 — snapshot index 기준으로 매핑. 날짜당 하나이며 어긴 원칙은 구분하지 않는다.
+    const violatedIndexes = new Set<number>();
+    const markerPoints: { x: number; y: number }[] = [];
     for (const m of markers) {
       const idx = snapshots.findIndex((s) => s.date === m.date);
       if (idx === -1) continue;
-      markerByIndex.set(idx, m.type);
-      markerPoints.push({ x: getX(idx), y: getY(m.value), type: m.type });
+      violatedIndexes.add(idx);
+      markerPoints.push({ x: getX(idx), y: getY(m.value) });
     }
 
     // 호버
@@ -94,7 +103,7 @@ export function RegretChart({
       actualY: getY(s.actual),
       simY: getY(simulationLine[i]),
       btcY: btcHoldValues ? getY(btcHoldValues[i]) : null,
-      violation: markerByIndex.get(i) ?? null,
+      violated: violatedIndexes.has(i),
     }));
 
     return { actualPath, simPath, btcPath, yTicks, xLabels, markerPoints, hoverPoints };
@@ -120,11 +129,15 @@ export function RegretChart({
     <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 상단 요약 */}
       <div className="mb-5">
-        <p className="text-xs font-medium text-muted-foreground">놓친 수익</p>
-        <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-negative">
-          {summary.missedProfit < 0 ? "-" : ""}
-          {formatCurrency(Math.abs(summary.missedProfit), baseCurrency)}
+        <p className="text-xs font-medium text-muted-foreground">위반 손실</p>
+        <p className={cn(
+          "mt-1 font-mono text-3xl font-bold tabular-nums",
+          summary.totalViolationLoss > 0 ? "text-negative" : "text-positive",
+        )}>
+          {summary.totalViolationLoss < 0 ? "-" : ""}
+          {formatCurrency(Math.abs(summary.totalViolationLoss), CHART_CURRENCY)}
         </p>
+        <p className="mt-1 text-xs text-muted-foreground">{describeViolationLoss(summary)}</p>
       </div>
 
       {/* 3-stat 카드 */}
@@ -132,7 +145,7 @@ export function RegretChart({
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">실제 자산</p>
           <p className="mt-1 font-mono text-base font-bold tabular-nums">
-            {formatCurrencyCompact(summary.actualAsset, baseCurrency)}
+            {formatCurrencyCompact(summary.actualAsset, CHART_CURRENCY)}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
@@ -141,7 +154,7 @@ export function RegretChart({
             "mt-1 font-mono text-base font-bold tabular-nums",
             summary.ruleFollowedAsset > summary.actualAsset ? "text-positive" : "",
           )}>
-            {formatCurrencyCompact(summary.ruleFollowedAsset, baseCurrency)}
+            {formatCurrencyCompact(summary.ruleFollowedAsset, CHART_CURRENCY)}
           </p>
         </div>
         <div className="rounded-xl bg-secondary/50 px-3 py-3">
@@ -197,7 +210,7 @@ export function RegretChart({
                   textAnchor="end" dominantBaseline="middle"
                   fill="var(--muted-foreground)" fontSize={10} fontFamily="inherit"
                 >
-                  {formatCurrencyShort(tick.value, baseCurrency)}
+                  {formatCurrencyShort(tick.value, CHART_CURRENCY)}
                 </text>
               </g>
             ))}
@@ -242,7 +255,7 @@ export function RegretChart({
               <circle
                 key={i}
                 cx={pt.x} cy={pt.y} r={3}
-                fill={pt.type === "loss" ? "var(--negative)" : "var(--warning)"}
+                fill="var(--negative)"
                 stroke="white" strokeWidth={1.5}
               />
             ))}
@@ -293,26 +306,23 @@ export function RegretChart({
                 <p className="mb-1 font-semibold">{snapshots[hoveredIndex].fullDate}</p>
                 <p>
                   <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  실제: {formatCurrencyShort(snapshots[hoveredIndex].actual, baseCurrency)}
+                  실제: {formatCurrencyShort(snapshots[hoveredIndex].actual, CHART_CURRENCY)}
                 </p>
                 {hasEnabledRules && (
                   <p>
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-negative" />
-                    시뮬레이션: {formatCurrencyShort(simulationLine[hoveredIndex], baseCurrency)}
+                    시뮬레이션: {formatCurrencyShort(simulationLine[hoveredIndex], CHART_CURRENCY)}
                   </p>
                 )}
                 {btcHoldValues && (
                   <p>
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#f7931a" }} />
-                    BTC 홀드: {formatCurrencyShort(btcHoldValues[hoveredIndex], baseCurrency)}
+                    BTC 홀드: {formatCurrencyShort(btcHoldValues[hoveredIndex], CHART_CURRENCY)}
                   </p>
                 )}
-                {chartData.hoverPoints[hoveredIndex].violation && (
-                  <p className={cn(
-                    "mt-1 border-t border-white/20 pt-1 font-semibold",
-                    chartData.hoverPoints[hoveredIndex].violation === "loss" ? "text-red-300" : "text-amber-300",
-                  )}>
-                    {chartData.hoverPoints[hoveredIndex].violation === "loss" ? "규칙 위반 (손실)" : "규칙 위반 (수익)"}
+                {chartData.hoverPoints[hoveredIndex].violated && (
+                  <p className="mt-1 border-t border-white/20 pt-1 font-semibold text-red-300">
+                    규칙 위반
                   </p>
                 )}
               </div>

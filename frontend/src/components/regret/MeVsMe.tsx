@@ -1,7 +1,11 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrencyShort } from "@/lib/formatters";
 import type { RuleToggleItem, BenchmarkItem } from "@/lib/types/regret";
 import type { RuleType } from "@/lib/types/round";
+
+/** 규칙별 손실은 거래소를 합친 값이라 원화로만 온다. */
+const LOSS_CURRENCY = "KRW";
 
 interface MeVsMeProps {
   enabledRules: Set<RuleType>;
@@ -59,16 +63,24 @@ export function MeVsMe({
                 {isEnabled && <Check className="h-3 w-3" strokeWidth={3} />}
               </div>
 
-              <span className="flex-1 text-sm font-semibold">{rule.label}</span>
-
-              <span
-                className="font-mono text-sm font-bold tabular-nums"
-                style={{ color: rule.color }}
-              >
-                {rule.thresholdValue > 0 ? "+" : ""}
-                {rule.thresholdValue}
-                {rule.thresholdUnit}
-              </span>
+              <div className="flex flex-1 flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">{rule.label}</span>
+                  <span
+                    className="font-mono text-sm font-bold tabular-nums"
+                    style={{ color: rule.color }}
+                  >
+                    {rule.thresholdValue > 0 ? "+" : ""}
+                    {rule.thresholdValue}
+                    {rule.thresholdUnit}
+                  </span>
+                </div>
+                {/* 이 원칙만 지켰다면 자산에 남았을 금액. 음수면 어긴 쪽이 이득이었다. */}
+                <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {rule.totalLossAmount < 0 ? "-" : ""}
+                  {formatCurrencyShort(Math.abs(rule.totalLossAmount), LOSS_CURRENCY)}
+                </span>
+              </div>
 
               <span className="rounded-md bg-negative/12 px-2 py-0.5 text-xs font-bold text-negative">
                 위반 {rule.violationCount}
