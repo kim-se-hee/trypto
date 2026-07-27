@@ -12,6 +12,7 @@ import ksh.tryptobackend.trading.domain.event.OrderFilledEvent;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
 import ksh.tryptobackend.trading.domain.vo.BalanceChange;
 import ksh.tryptobackend.trading.domain.vo.Fill;
+import ksh.tryptobackend.trading.domain.vo.HoldingSnapshot;
 import ksh.tryptobackend.trading.domain.vo.InterpretedOrderInput;
 import ksh.tryptobackend.trading.domain.vo.MarketInfo;
 import ksh.tryptobackend.trading.domain.vo.Money;
@@ -42,7 +43,8 @@ public class Order extends AggregateRoot {
     private Fill fill;
     private OrderStatus status;
 
-    public static Order create(PlaceOrderCommand cmd, MarketInfo marketInfo, LocalDateTime now) {
+    public static Order create(
+            PlaceOrderCommand cmd, MarketInfo marketInfo, HoldingSnapshot holdingSnapshot, LocalDateTime now) {
         if (marketInfo.suspended()) {
             throw new CustomException(ErrorCode.MARKET_SUSPENDED);
         }
@@ -60,7 +62,7 @@ public class Order extends AggregateRoot {
                 .createdAt(now)
                 .build();
 
-        order.registerEvent(OrderPlacedEvent.of(order, marketInfo));
+        order.registerEvent(OrderPlacedEvent.of(order, marketInfo, holdingSnapshot));
         if (order.isMarketOrder()) {
             order.fill(marketInfo.currentPrice(), marketInfo.tradingPair().quoteScale(), now);
             order.registerEvent(OrderFilledEvent.of(order, marketInfo));
