@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
 import ksh.tryptobackend.trading.adapter.out.persistence.repository.OrderJpaRepository;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class OrderStepDefinition {
@@ -25,9 +25,12 @@ public class OrderStepDefinition {
     private static final Long EXCHANGE_COIN_ID = 10L;
     private static final Long KRW_COIN_ID = 1L;
     private static final Long BTC_COIN_ID = 2L;
+    // exchange_coin 10 = UPBIT(base_currency KRW) + BTC. seed-data.sql 기준.
+    private static final String BTC_TICKER_KEY = "ticker:UPBIT:BTC/KRW";
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     private final CommonApiClient apiClient;
     private final MockLivePriceAdapter livePriceAdapter;
-    private final MockPriceChangeRateAdapter priceChangeRateAdapter;
+    private final StringRedisTemplate redisTemplate;
     private final OrderJpaRepository orderJpaRepository;
     private final ExchangeJpaRepository exchangeJpaRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -39,13 +42,13 @@ public class OrderStepDefinition {
     public OrderStepDefinition(
             CommonApiClient apiClient,
             MockLivePriceAdapter livePriceAdapter,
-            MockPriceChangeRateAdapter priceChangeRateAdapter,
+            StringRedisTemplate redisTemplate,
             OrderJpaRepository orderJpaRepository,
             ExchangeJpaRepository exchangeJpaRepository,
             JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.livePriceAdapter = livePriceAdapter;
-        this.priceChangeRateAdapter = priceChangeRateAdapter;
+        this.redisTemplate = redisTemplate;
         this.orderJpaRepository = orderJpaRepository;
         this.exchangeJpaRepository = exchangeJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -264,6 +267,28 @@ public class OrderStepDefinition {
                         + " VALUES (?, 'OVERTRADING_LIMIT', ?, NOW())",
                 ROUND_ID,
                 maxOrderCount);
+    }
+
+    @Given("추격 매수 금지 규칙이 {int}%로 설정되어 있다")
+    public void 추격_매수_금지_규칙이_퍼센트로_설정되어_있다(int thresholdPercent) {
+        ensureUserRoundWallet();
+        jdbcTemplate.update(
+                "INSERT INTO investment_rule (round_id, rule_type, threshold_value, created_at)"
+                        + " VALUES (?, 'CHASE_BUY_BAN', ?, NOW())",
+                ROUND_ID,
+                thresholdPercent);
+    }
+
+    // collector 가 적재하는 형식 그대로 넣는다. 변동률은 퍼센트가 아니라 비율이므로,
+    // 어댑터가 퍼센트로 환산해 도메인에 넘기는 것까지 이 시나리오가 검증한다.
+    @Given("BTC가 {int}% 상승한 상태다")
+    public void BTC가_퍼센트_상승한_상태다(int risePercent) {
+        BigDecimal ratio = BigDecimal.valueOf(risePercent).divide(HUNDRED);
+        String tickerJson = String.format(
+                "{\"exchange\":\"UPBIT\",\"base\":\"BTC\",\"quote\":\"KRW\",\"displayName\":\"비트코인\","
+                        + "\"lastPrice\":100274000,\"changeRate\":%s,\"quoteTurnover\":892400000000,\"tsMs\":%d}",
+                ratio.toPlainString(), System.currentTimeMillis());
+        redisTemplate.opsForValue().set(BTC_TICKER_KEY, tickerJson);
     }
 
     @Given("물타기 제한 규칙이 {int}회로 설정되어 있다")
