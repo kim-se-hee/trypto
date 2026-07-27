@@ -16,6 +16,10 @@
 - Returns `InvestmentRuleResult { ruleId: Long, ruleType: RuleType, thresholdValue: BigDecimal }`
 - `RuleType`: LOSS_CUT, PROFIT_TAKE, CHASE_BUY_BAN, AVERAGING_DOWN_LIMIT, OVERTRADING_LIMIT
 
+## FindEmergencyFundingsUseCase
+- `findByRoundId(Long roundId) → List<EmergencyFundingResult>`
+- Returns `EmergencyFundingResult { fundingId: Long, exchangeId: Long, amount: BigDecimal, chargedAt: LocalDateTime }`
+
 ## CheckRuleViolationsUseCase
 - `checkViolations(CheckRuleViolationsQuery query) → List<RuleViolationResult>`
 - Returns `RuleViolationResult { ruleId: Long, violationReason: String, createdAt: LocalDateTime }`

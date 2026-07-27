@@ -7,13 +7,14 @@ regretanalysis 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하
 ## ACL 출력 포트 (읽기 번역)
 
 ### InvestmentRoundQueryPort ← InvestmentRound (`RegretAnalysisAclInvestmentRoundQueryAdapter`)
-소비 UseCase 를 `AnalysisRound`·`AnalysisRules`·`AnalysisActiveRound` 로 번역한다.
+소비 UseCase 를 `AnalysisRound`·`AnalysisRules`·`EmergencyCharge`·`AnalysisActiveRound` 로 번역한다.
 - `FindRoundInfoUseCase` — 라운드 정보 조회
 - `FindInvestmentRulesUseCase` — 투자 원칙 조회
-- `FindActiveRoundsUseCase` — 후회 리포트 대상 활성 라운드 조회
+- `FindEmergencyFundingsUseCase` — BTC 홀드 벤치마크용 긴급 충전 내역(충전일·금액) 조회
+- `FindActiveRoundsUseCase` — 복기 리포트 대상 활성 라운드 조회
 
 ### WalletQueryPort ← Wallet (`RegretAnalysisAclWalletQueryAdapter`)
-소비 UseCase 를 지갑 존재 여부·`AnalysisWallet` 로 번역한다.
+소비 UseCase 를 `AnalysisWallet` 로 번역한다.
 - `FindWalletUseCase` — 라운드별 지갑 조회
 
 ### TradingQueryPort ← Trading (`RegretAnalysisAclTradingQueryAdapter`)

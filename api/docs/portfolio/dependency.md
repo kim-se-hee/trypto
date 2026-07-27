@@ -6,6 +6,8 @@
 - `findLatestByRoundIdAndExchangeId(Long roundId, Long exchangeId) → Optional<SnapshotInfoResult>`
 - `findAllByRoundIdAndExchangeId(Long roundId, Long exchangeId) → List<SnapshotInfoResult>`
 - Returns `SnapshotInfoResult { snapshotId: Long, roundId: Long, exchangeId: Long, totalAsset: BigDecimal, snapshotDate: LocalDate }`
+- `findDailyTotalsByRoundId(Long roundId) → List<DailyAssetTotalResult>` — 라운드 전체의 일별 원화 자산 합계 (복기 그래프)
+- Returns `DailyAssetTotalResult { snapshotDate: LocalDate, totalAssetKrw: BigDecimal }`
 
 ## FindSnapshotSummariesUseCase
 - `findLatestSummaries(LocalDate snapshotDate) → List<SnapshotSummaryResult>`

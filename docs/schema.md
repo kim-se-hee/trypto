@@ -213,7 +213,7 @@ erDiagram
         id round_id FK "라운드 ID"
         id exchange_id FK "거래소 ID"
         number total_violations "총 위반 횟수"
-        number missed_profit "놓친 수익 (기축통화 단위)"
+        number total_violation_loss "위반 손실 합계 (기축통화 단위, 양수가 손해)"
         number actual_asset "실제 자산 (기축통화 단위)"
         number rule_followed_asset "원칙 준수 시 자산 (기축통화 단위)"
         date analysis_start "분석 시작일"
@@ -235,8 +235,7 @@ erDiagram
         id order_id FK "주문 ID (nullable)"
         id rule_id FK "위반 원칙 ID"
         id coin_id FK "코인 ID"
-        number loss_amount "규칙 위반 손실 금액 (기축통화 단위)"
-        number profit_loss "거래 손익 (기축통화 단위)"
+        number loss_amount "규칙 위반 손실 금액 (기축통화 단위, 양수가 손해)"
         datetime occurred_at "발생 시각"
     }
 

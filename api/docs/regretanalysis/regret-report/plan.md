@@ -39,7 +39,6 @@ GET /api/rounds/1/regret
 
     "ruleImpacts": [
       {
-        "ruleImpactId": 1,
         "ruleId": 3,
         "ruleType": "CHASE_BUY_BAN",
         "thresholdValue": 20,
@@ -48,7 +47,6 @@ GET /api/rounds/1/regret
         "totalLossAmount": 245000
       },
       {
-        "ruleImpactId": 2,
         "ruleId": 4,
         "ruleType": "AVERAGING_DOWN_LIMIT",
         "thresholdValue": 2,
@@ -57,7 +55,6 @@ GET /api/rounds/1/regret
         "totalLossAmount": 120000
       },
       {
-        "ruleImpactId": 3,
         "ruleId": 5,
         "ruleType": "OVERTRADING_LIMIT",
         "thresholdValue": 5,
@@ -66,7 +63,6 @@ GET /api/rounds/1/regret
         "totalLossAmount": 350000
       },
       {
-        "ruleImpactId": null,
         "ruleId": 1,
         "ruleType": "LOSS_CUT",
         "thresholdValue": 10,
@@ -142,10 +138,10 @@ GET /api/rounds/1/regret
 #### ruleImpacts[]
 
 라운드에 설정된 모든 원칙을 포함한다. 위반이 없는 원칙은 위반 횟수·손실 0으로 채운다.
+거래소마다 남은 규칙별 손실 행을 원칙 기준으로 더한 결과이므로 행 식별자는 내려주지 않는다. 원칙은 `ruleId` 로 구분한다.
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| ruleImpactId | Long (nullable) | 규칙별 손실 ID. 위반이 없어 0으로 채워진 원칙은 null |
 | ruleId | Long | 투자 원칙 ID |
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
 | thresholdValue | BigDecimal | 설정된 기준값 |
