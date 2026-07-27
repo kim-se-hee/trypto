@@ -108,6 +108,41 @@ class PositionTest {
         }
 
         @Test
+        @DisplayName("전량 매도 — 물타기 카운트도 초기화")
+        void fullSellResetsAveragingDownCount() {
+            Position position = holdingOf("50000000", "0.01");
+            position.applyFill(buy("40000000", "0.01"), price("40000000"));
+
+            position.applyFill(sell("0.02"), price("40000000"));
+
+            assertThat(position.getAveragingDownCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("전량 매도 후 재매수 — 물타기 카운트는 0부터 다시 센다")
+        void averagingDownCountRestartsAfterFullSell() {
+            Position position = holdingOf("50000000", "0.01");
+            position.applyFill(buy("40000000", "0.01"), price("40000000"));
+            position.applyFill(sell("0.02"), price("40000000"));
+
+            position.applyFill(buy("30000000", "0.01"), price("30000000"));
+            position.applyFill(buy("20000000", "0.01"), price("20000000"));
+
+            assertThat(position.getAveragingDownCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("부분 매도 — 물타기 카운트 유지")
+        void partialSellKeepsAveragingDownCount() {
+            Position position = holdingOf("50000000", "0.02");
+            position.applyFill(buy("40000000", "0.02"), price("40000000"));
+
+            position.applyFill(sell("0.01"), price("40000000"));
+
+            assertThat(position.getAveragingDownCount()).isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("부분 매도 후 재매수 — 평균 매수가가 부풀려지지 않는다")
         void partialSellThenBuyKeepsAverageCorrect() {
             Position position = holdingOf("100", "10");
