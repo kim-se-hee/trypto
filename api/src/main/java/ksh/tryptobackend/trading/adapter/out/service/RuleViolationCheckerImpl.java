@@ -8,9 +8,7 @@ import ksh.tryptobackend.investmentround.application.port.in.CheckRuleViolations
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.CheckRuleViolationsQuery;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RuleViolationCheckResult;
 import ksh.tryptobackend.trading.application.port.out.OrderQueryPort;
-import ksh.tryptobackend.trading.application.port.out.PositionQueryPort;
 import ksh.tryptobackend.trading.domain.event.OrderPlacedEvent;
-import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.trading.domain.model.RuleViolation;
 import ksh.tryptobackend.trading.domain.service.RuleViolationChecker;
 import lombok.RequiredArgsConstructor;
@@ -20,18 +18,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RuleViolationCheckerImpl implements RuleViolationChecker {
 
-    private final PositionQueryPort positionQueryPort;
     private final OrderQueryPort orderQueryPort;
     private final CheckRuleViolationsUseCase checkRuleViolationsUseCase;
 
     @Override
     public List<RuleViolation> check(OrderPlacedEvent event) {
-        Position position = positionQueryPort
-                .findByWalletIdAndCoinId(event.walletId(), event.coinId())
-                .orElseGet(() -> Position.empty(event.walletId(), event.coinId()));
         long todayOrderCount = countTodayOrders(event.walletId(), event.createdAt());
 
-        CheckRuleViolationsQuery query = RuleViolationTranslator.toQuery(event, position, todayOrderCount);
+        CheckRuleViolationsQuery query = RuleViolationTranslator.toQuery(event, todayOrderCount);
         List<RuleViolationCheckResult> results = checkRuleViolationsUseCase.checkViolations(query);
         return RuleViolationTranslator.toRuleViolations(results);
     }
