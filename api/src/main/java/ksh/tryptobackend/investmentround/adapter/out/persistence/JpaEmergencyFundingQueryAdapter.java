@@ -2,8 +2,11 @@ package ksh.tryptobackend.investmentround.adapter.out.persistence;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
+import java.util.List;
+import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.EmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.QEmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
+import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,5 +36,13 @@ public class JpaEmergencyFundingQueryAdapter implements EmergencyFundingQueryPor
                 .where(e.roundId.eq(roundId), e.exchangeId.eq(exchangeId))
                 .fetchOne();
         return result != null ? result : BigDecimal.ZERO;
+    }
+
+    @Override
+    public List<EmergencyFunding> findAllByRoundId(Long roundId) {
+        QEmergencyFundingJpaEntity e = QEmergencyFundingJpaEntity.emergencyFundingJpaEntity;
+        return queryFactory.selectFrom(e).where(e.roundId.eq(roundId)).orderBy(e.createdAt.asc()).fetch().stream()
+                .map(EmergencyFundingJpaEntity::toDomain)
+                .toList();
     }
 }
