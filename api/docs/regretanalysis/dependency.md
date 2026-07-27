@@ -29,8 +29,8 @@ regretanalysis 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하
 - `GetLivePriceUseCase` — 실시간 가격 조회
 
 ### PortfolioQueryPort ← Portfolio (`RegretAnalysisAclPortfolioQueryAdapter`)
-소비 UseCase 를 `AssetTimeline`·`AssetSnapshot` 로 번역한다.
-- `FindSnapshotsUseCase` — 포트폴리오 스냅샷 조회
+소비 UseCase 를 `AssetTimeline`(`DailyAsset` 묶음)·`AssetSnapshot` 로 번역한다.
+- `FindSnapshotsUseCase` — 라운드 일별 원화 자산 합계(그래프용)와 거래소별 최신 스냅샷(배치용) 조회
 
 # 배치
 
