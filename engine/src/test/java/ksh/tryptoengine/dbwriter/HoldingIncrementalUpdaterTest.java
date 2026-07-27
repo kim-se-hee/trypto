@@ -66,7 +66,7 @@ class HoldingIncrementalUpdaterTest {
     }
 
     @Test
-    void 전량_SELL은_평단과_매수금액까지_비운다() {
+    void 전량_SELL은_평단_매수금액_물타기횟수까지_비운다() {
         HoldingState start = new HoldingState(bd("150"), bd("10"), bd("1500"), 2);
 
         HoldingState result = HoldingIncrementalUpdater.applyFills(start, List.of(sell("999", "10")));
@@ -74,7 +74,7 @@ class HoldingIncrementalUpdaterTest {
         assertThat(result.avg()).isEqualByComparingTo("0");
         assertThat(result.qty()).isEqualByComparingTo("0");
         assertThat(result.totalBuy()).isEqualByComparingTo("0");
-        assertThat(result.adCount()).isEqualTo(2);
+        assertThat(result.adCount()).isZero();
     }
 
     @Test
@@ -194,6 +194,7 @@ class HoldingIncrementalUpdaterTest {
                     avg = BigDecimal.ZERO;
                     qty = BigDecimal.ZERO;
                     totalBuy = BigDecimal.ZERO;
+                    adCount = 0;
                 } else {
                     totalBuy = totalBuy.subtract(avg.multiply(q).setScale(8, RoundingMode.FLOOR));
                     qty = newQty;
