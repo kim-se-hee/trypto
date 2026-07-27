@@ -92,12 +92,13 @@ public class HoldingIncrementalUpdater {
                 qty = newQty;
                 avg = newAvg;
             } else {
-                // 매도는 판 수량만큼 원금도 함께 덜어낸다. 전량 매도면 보유가 사라지므로 평단·매수금액을 비운다
+                // 매도는 판 수량만큼 원금도 함께 덜어낸다. 전량 매도면 보유 자체가 끝나므로 물타기 횟수까지 비운다
                 BigDecimal newQty = qty.subtract(q);
                 if (newQty.signum() <= 0) {
                     avg = BigDecimal.ZERO;
                     qty = BigDecimal.ZERO;
                     totalBuy = BigDecimal.ZERO;
+                    adCount = 0;
                 } else {
                     totalBuy = totalBuy.subtract(avg.multiply(q).setScale(SCALE, RoundingMode.FLOOR));
                     qty = newQty;
