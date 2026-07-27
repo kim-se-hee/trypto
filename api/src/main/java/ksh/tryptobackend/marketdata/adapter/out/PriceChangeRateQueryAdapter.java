@@ -26,6 +26,10 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
 
     private static final String TICKER_KEY_PREFIX = "ticker:";
 
+    // collector 가 적재하는 changeRate 는 비율(1% = 0.01)이고 투자 원칙 기준값은 퍼센트(1% = 1)다.
+    // 단위 환산은 두 표현이 만나는 이 어댑터 경계에서 끝내고, 도메인에는 퍼센트만 넘긴다.
+    private static final BigDecimal RATIO_TO_PERCENT = BigDecimal.valueOf(100);
+
     private final StringRedisTemplate redisTemplate;
     private final ExchangeCoinJpaRepository exchangeCoinRepository;
     private final ExchangeJpaRepository exchangeRepository;
@@ -74,7 +78,7 @@ public class PriceChangeRateQueryAdapter implements PriceChangeRateQueryPort {
             if (changeRateNode == null) {
                 return BigDecimal.ZERO;
             }
-            return changeRateNode.decimalValue();
+            return changeRateNode.decimalValue().multiply(RATIO_TO_PERCENT);
         } catch (JacksonException e) {
             return BigDecimal.ZERO;
         }
