@@ -1,6 +1,7 @@
 package ksh.tryptobackend.investmentround.domain.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import ksh.tryptobackend.common.domain.vo.RuleType;
@@ -13,6 +14,7 @@ public sealed interface Rule {
 
     BigDecimal ZERO = BigDecimal.ZERO;
     BigDecimal MIN_COUNT = BigDecimal.ONE;
+    int RATE_DISPLAY_SCALE = 2;
 
     Long id();
 
@@ -46,6 +48,13 @@ public sealed interface Rule {
         if (thresholdValue.compareTo(ZERO) <= 0) {
             throw new CustomException(ErrorCode.INVALID_RULE_THRESHOLD);
         }
+    }
+
+    /** 위반 사유 문구에만 쓰는 표시용 변환이다. 판정은 반올림하지 않은 원본 값으로 한다. */
+    static String formatRate(BigDecimal rate) {
+        return rate.setScale(RATE_DISPLAY_SCALE, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
     }
 
     static void validateCount(BigDecimal thresholdValue) {
@@ -111,7 +120,8 @@ public sealed interface Rule {
             if (context.changeRate().compareTo(thresholdValue) < 0) {
                 return Optional.empty();
             }
-            String reason = String.format("상승률 %s%% ≥ %s%%", context.changeRate(), thresholdValue);
+            String reason =
+                    String.format("상승률 %s%% ≥ %s%%", formatRate(context.changeRate()), formatRate(thresholdValue));
             return Optional.of(new DetectedViolation(id, reason, context.now()));
         }
     }
