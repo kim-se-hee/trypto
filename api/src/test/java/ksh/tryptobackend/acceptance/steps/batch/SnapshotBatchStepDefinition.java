@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.PortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.SnapshotDetailJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.persistence.repository.PortfolioSnapshotJpaRepository;
@@ -33,7 +32,6 @@ public class SnapshotBatchStepDefinition {
     private final JobRepository jobRepository;
     private final PortfolioSnapshotJpaRepository snapshotRepository;
     private final SnapshotDetailJpaRepository detailRepository;
-    private final MockPositionAdapter holdingAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
     private final JdbcTemplate jdbcTemplate;
 
@@ -45,7 +43,6 @@ public class SnapshotBatchStepDefinition {
             JobRepository jobRepository,
             PortfolioSnapshotJpaRepository snapshotRepository,
             SnapshotDetailJpaRepository detailRepository,
-            MockPositionAdapter holdingAdapter,
             MockLivePriceAdapter livePriceAdapter,
             JdbcTemplate jdbcTemplate) {
         this.jobOperator = jobOperator;
@@ -53,7 +50,6 @@ public class SnapshotBatchStepDefinition {
         this.jobRepository = jobRepository;
         this.snapshotRepository = snapshotRepository;
         this.detailRepository = detailRepository;
-        this.holdingAdapter = holdingAdapter;
         this.livePriceAdapter = livePriceAdapter;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -62,7 +58,6 @@ public class SnapshotBatchStepDefinition {
     public void 스냅샷_배치_데이터를_초기화한다() {
         // 글로벌 DatabaseCleanupHook 이 매 시나리오 시작 시 scenario 테이블을 모두 TRUNCATE 한다.
         // seed 테이블(coin/exchange_market/exchange_coin/...)은 청소 대상이 아니므로 본 step 에서도 건드리지 않는다.
-        holdingAdapter.clear();
         livePriceAdapter.clear();
     }
 
@@ -126,7 +121,7 @@ public class SnapshotBatchStepDefinition {
             BigDecimal quantity = new BigDecimal(row.get("quantity"));
             BigDecimal currentPrice = new BigDecimal(row.get("currentPrice"));
 
-            holdingAdapter.setHolding(walletId, coinId, avgBuyPrice, quantity, 0);
+            seedPosition(walletId, coinId, avgBuyPrice, quantity, 0);
 
             // display_name·status 는 NOT NULL 이고 기본값이 없다. 빠뜨리면 INSERT IGNORE 가 경고로 삼켜
             // status 가 SUSPENDED 로 들어가고, 거래 정지된 상장은 평가 대상에서 빠져 평가액이 0 이 된다.
@@ -225,5 +220,22 @@ public class SnapshotBatchStepDefinition {
                 "Exchange-" + exchangeId,
                 marketType,
                 baseCurrencyCoinId);
+    }
+
+    private void seedPosition(
+            Long walletId, Long coinId, BigDecimal avgBuyPrice, BigDecimal quantity, int averagingDownCount) {
+        jdbcTemplate.update(
+                "INSERT INTO position (wallet_id, coin_id, avg_buy_price, total_quantity,"
+                        + " total_buy_amount, averaging_down_count, version) VALUES (?, ?, ?, ?, ?, ?, 0)"
+                        + " ON DUPLICATE KEY UPDATE avg_buy_price = VALUES(avg_buy_price),"
+                        + " total_quantity = VALUES(total_quantity),"
+                        + " total_buy_amount = VALUES(total_buy_amount),"
+                        + " averaging_down_count = VALUES(averaging_down_count)",
+                walletId,
+                coinId,
+                avgBuyPrice,
+                quantity,
+                avgBuyPrice.multiply(quantity),
+                averagingDownCount);
     }
 }

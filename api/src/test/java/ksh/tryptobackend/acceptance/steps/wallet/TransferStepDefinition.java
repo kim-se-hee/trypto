@@ -11,9 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
-import ksh.tryptobackend.trading.domain.model.Position;
 import ksh.tryptobackend.wallet.adapter.out.persistence.repository.WalletBalanceJpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -35,7 +33,6 @@ public class TransferStepDefinition {
     private final CommonApiClient apiClient;
     private final WalletBalanceJpaRepository walletBalanceJpaRepository;
     private final JdbcTemplate jdbcTemplate;
-    private final MockPositionAdapter holdingAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
 
     private Long lastTransferId;
@@ -45,12 +42,10 @@ public class TransferStepDefinition {
             CommonApiClient apiClient,
             WalletBalanceJpaRepository walletBalanceJpaRepository,
             JdbcTemplate jdbcTemplate,
-            MockPositionAdapter holdingAdapter,
             MockLivePriceAdapter livePriceAdapter) {
         this.apiClient = apiClient;
         this.walletBalanceJpaRepository = walletBalanceJpaRepository;
         this.jdbcTemplate = jdbcTemplate;
-        this.holdingAdapter = holdingAdapter;
         this.livePriceAdapter = livePriceAdapter;
     }
 
@@ -146,7 +141,7 @@ public class TransferStepDefinition {
 
     @Given("출금 지갑에 평단 {double}원 수량 {double}개의 BTC 보유 내역이 있다")
     public void 출금_지갑에_평단_수량의_BTC_보유_내역이_있다(double avgBuyPrice, double quantity) {
-        holdingAdapter.setHolding(
+        seedPosition(
                 FROM_WALLET_ID,
                 COIN_ID,
                 new BigDecimal(String.valueOf(avgBuyPrice)),
@@ -176,11 +171,8 @@ public class TransferStepDefinition {
 
     @Then("입금 지갑의 BTC 보유 내역은 없다")
     public void 입금_지갑의_BTC_보유_내역은_없다() {
-        boolean holding = holdingAdapter
-                .findByWalletIdAndCoinId(TO_WALLET_ID, COIN_ID)
-                .map(Position::isHolding)
-                .orElse(false);
-        assertThat(holding).isFalse();
+        BigDecimal quantity = findTotalQuantity(TO_WALLET_ID, COIN_ID);
+        assertThat(quantity == null || quantity.signum() == 0).isTrue();
     }
 
     @Then("두 응답의 transferId가 동일하다")
@@ -189,12 +181,17 @@ public class TransferStepDefinition {
     }
 
     private void assertHolding(Long walletId, double avgBuyPrice, double quantity) {
-        Position position = holdingAdapter
-                .findByWalletIdAndCoinId(walletId, COIN_ID)
+        Map<String, Object> row = jdbcTemplate
+                .queryForList(
+                        "SELECT avg_buy_price, total_quantity FROM position WHERE wallet_id = ? AND coin_id = ?",
+                        walletId,
+                        COIN_ID)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new AssertionError("보유 내역이 없다: walletId=" + walletId));
-        assertThat(position.getHolding().avgBuyPrice().value())
+        assertThat((BigDecimal) row.get("avg_buy_price"))
                 .isEqualByComparingTo(new BigDecimal(String.valueOf(avgBuyPrice)));
-        assertThat(position.getHolding().totalQuantity().value())
+        assertThat((BigDecimal) row.get("total_quantity"))
                 .isEqualByComparingTo(new BigDecimal(String.valueOf(quantity)));
     }
 
@@ -236,5 +233,32 @@ public class TransferStepDefinition {
         if (data != null && data.get("transferId") instanceof Number num) {
             lastTransferId = num.longValue();
         }
+    }
+
+    private void seedPosition(
+            Long walletId, Long coinId, BigDecimal avgBuyPrice, BigDecimal quantity, int averagingDownCount) {
+        jdbcTemplate.update(
+                "INSERT INTO position (wallet_id, coin_id, avg_buy_price, total_quantity,"
+                        + " total_buy_amount, averaging_down_count, version) VALUES (?, ?, ?, ?, ?, ?, 0)"
+                        + " ON DUPLICATE KEY UPDATE avg_buy_price = VALUES(avg_buy_price),"
+                        + " total_quantity = VALUES(total_quantity),"
+                        + " total_buy_amount = VALUES(total_buy_amount),"
+                        + " averaging_down_count = VALUES(averaging_down_count)",
+                walletId,
+                coinId,
+                avgBuyPrice,
+                quantity,
+                avgBuyPrice.multiply(quantity),
+                averagingDownCount);
+    }
+
+    private BigDecimal findTotalQuantity(Long walletId, Long coinId) {
+        return jdbcTemplate
+                .queryForList(
+                        "SELECT total_quantity FROM position WHERE wallet_id = ? AND coin_id = ?", walletId, coinId)
+                .stream()
+                .findFirst()
+                .map(r -> (BigDecimal) r.get("total_quantity"))
+                .orElse(null);
     }
 }

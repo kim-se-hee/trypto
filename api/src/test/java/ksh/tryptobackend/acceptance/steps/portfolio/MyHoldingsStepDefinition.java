@@ -6,7 +6,6 @@ import io.cucumber.java.en.When;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -21,17 +20,12 @@ public class MyHoldingsStepDefinition {
 
     private final CommonApiClient apiClient;
     private final JdbcTemplate jdbcTemplate;
-    private final MockPositionAdapter holdingAdapter;
     private final MockLivePriceAdapter livePriceAdapter;
 
     public MyHoldingsStepDefinition(
-            CommonApiClient apiClient,
-            JdbcTemplate jdbcTemplate,
-            MockPositionAdapter holdingAdapter,
-            MockLivePriceAdapter livePriceAdapter) {
+            CommonApiClient apiClient, JdbcTemplate jdbcTemplate, MockLivePriceAdapter livePriceAdapter) {
         this.apiClient = apiClient;
         this.jdbcTemplate = jdbcTemplate;
-        this.holdingAdapter = holdingAdapter;
         this.livePriceAdapter = livePriceAdapter;
     }
 
@@ -194,12 +188,29 @@ public class MyHoldingsStepDefinition {
     }
 
     private void setUpHoldings() {
-        holdingAdapter.setHolding(1L, BTC_COIN_ID, new BigDecimal("132500000"), new BigDecimal("0.052341"), 0);
-        holdingAdapter.setHolding(1L, ETH_COIN_ID, new BigDecimal("5120000"), new BigDecimal("1.245"), 0);
+        seedPosition(1L, BTC_COIN_ID, new BigDecimal("132500000"), new BigDecimal("0.052341"), 0);
+        seedPosition(1L, ETH_COIN_ID, new BigDecimal("5120000"), new BigDecimal("1.245"), 0);
     }
 
     private void setUpLivePrices() {
         livePriceAdapter.setPrice(BTC_EXCHANGE_COIN_ID, new BigDecimal("143250000"));
         livePriceAdapter.setPrice(ETH_EXCHANGE_COIN_ID, new BigDecimal("4821000"));
+    }
+
+    private void seedPosition(
+            Long walletId, Long coinId, BigDecimal avgBuyPrice, BigDecimal quantity, int averagingDownCount) {
+        jdbcTemplate.update(
+                "INSERT INTO position (wallet_id, coin_id, avg_buy_price, total_quantity,"
+                        + " total_buy_amount, averaging_down_count, version) VALUES (?, ?, ?, ?, ?, ?, 0)"
+                        + " ON DUPLICATE KEY UPDATE avg_buy_price = VALUES(avg_buy_price),"
+                        + " total_quantity = VALUES(total_quantity),"
+                        + " total_buy_amount = VALUES(total_buy_amount),"
+                        + " averaging_down_count = VALUES(averaging_down_count)",
+                walletId,
+                coinId,
+                avgBuyPrice,
+                quantity,
+                avgBuyPrice.multiply(quantity),
+                averagingDownCount);
     }
 }

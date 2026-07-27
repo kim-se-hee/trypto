@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import ksh.tryptobackend.acceptance.mock.MockLivePriceAdapter;
-import ksh.tryptobackend.acceptance.mock.MockPositionAdapter;
 import ksh.tryptobackend.acceptance.mock.MockPriceChangeRateAdapter;
 import ksh.tryptobackend.acceptance.testclient.CommonApiClient;
 import ksh.tryptobackend.marketdata.adapter.out.persistence.repository.ExchangeJpaRepository;
@@ -28,7 +27,6 @@ public class OrderStepDefinition {
     private static final Long BTC_COIN_ID = 2L;
     private final CommonApiClient apiClient;
     private final MockLivePriceAdapter livePriceAdapter;
-    private final MockPositionAdapter holdingAdapter;
     private final MockPriceChangeRateAdapter priceChangeRateAdapter;
     private final OrderJpaRepository orderJpaRepository;
     private final ExchangeJpaRepository exchangeJpaRepository;
@@ -41,14 +39,12 @@ public class OrderStepDefinition {
     public OrderStepDefinition(
             CommonApiClient apiClient,
             MockLivePriceAdapter livePriceAdapter,
-            MockPositionAdapter holdingAdapter,
             MockPriceChangeRateAdapter priceChangeRateAdapter,
             OrderJpaRepository orderJpaRepository,
             ExchangeJpaRepository exchangeJpaRepository,
             JdbcTemplate jdbcTemplate) {
         this.apiClient = apiClient;
         this.livePriceAdapter = livePriceAdapter;
-        this.holdingAdapter = holdingAdapter;
         this.priceChangeRateAdapter = priceChangeRateAdapter;
         this.orderJpaRepository = orderJpaRepository;
         this.exchangeJpaRepository = exchangeJpaRepository;
@@ -156,6 +152,22 @@ public class OrderStepDefinition {
         extractOrderIdIfSuccess();
     }
 
+    @When("보유한 BTC를 전량 시장가 매도한다")
+    public void 보유한_BTC를_전량_시장가_매도한다() {
+        BigDecimal quantity = jdbcTemplate
+                .queryForList(
+                        "SELECT total_quantity FROM position WHERE wallet_id = ? AND coin_id = ?",
+                        WALLET_ID,
+                        BTC_COIN_ID)
+                .stream()
+                .findFirst()
+                .map(r -> (BigDecimal) r.get("total_quantity"))
+                .orElseThrow(() -> new IllegalStateException("보유 중인 BTC 가 없다"));
+        Map<String, Object> body = createOrderBody("SELL", "MARKET", quantity.doubleValue(), null);
+        apiClient.post("/api/orders", body);
+        extractOrderIdIfSuccess();
+    }
+
     @When("지정가 매수 주문을 {double}개에 가격 {long}원으로 요청한다")
     public void 지정가_매수_주문을_개에_가격_원으로_요청한다(double volume, long price) {
         Map<String, Object> body = createOrderBody("BUY", "LIMIT", volume, price);
@@ -252,6 +264,16 @@ public class OrderStepDefinition {
                         + " VALUES (?, 'OVERTRADING_LIMIT', ?, NOW())",
                 ROUND_ID,
                 maxOrderCount);
+    }
+
+    @Given("물타기 제한 규칙이 {int}회로 설정되어 있다")
+    public void 물타기_제한_규칙이_회로_설정되어_있다(int maxAveragingDownCount) {
+        ensureUserRoundWallet();
+        jdbcTemplate.update(
+                "INSERT INTO investment_rule (round_id, rule_type, threshold_value, created_at)"
+                        + " VALUES (?, 'AVERAGING_DOWN_LIMIT', ?, NOW())",
+                ROUND_ID,
+                maxAveragingDownCount);
     }
 
     @Then("주문에 룰 위반이 {int}건 기록되어 있다")
