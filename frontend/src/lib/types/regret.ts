@@ -9,8 +9,10 @@ export interface AssetSnapshot {
   ruleFollowed: number; // 전체 규칙 준수
 }
 
+/** 라운드 전체를 합친 요약. 금액은 모두 원화다. */
 export interface RegretSummary {
-  missedProfit: number;
+  /** 위반 손실 합계. 양수면 원칙을 지켰다면 더 벌었을 금액, 음수면 어긴 쪽이 이득이었던 금액이다. */
+  totalViolationLoss: number;
   actualAsset: number;
   ruleFollowedAsset: number;
   totalViolations: number;
@@ -23,6 +25,8 @@ export interface RuleToggleItem {
   thresholdValue: number;
   thresholdUnit: string;
   violationCount: number;
+  /** 이 원칙만 지켰다면 자산에 남았을 금액 (원화). */
+  totalLossAmount: number;
 }
 
 export interface BenchmarkItem {
@@ -36,27 +40,38 @@ export type ViolationEmotion = "FOMO" | "감이 좋아서" | "복수 매매";
 
 export interface ViolatedRule {
   ruleType: RuleType;
-  /** 이 거래에서 해당 원칙으로 발생한 위반 손익. 양수면 손해, 음수면 어긴 쪽이 이득이었다. */
+  /** 이 거래에서 해당 원칙으로 발생한 위반 손실. 거래소 기축통화 단위이며, 양수면 손해다. */
   lossAmount: number;
+  /** 같은 값의 원화 환산액. 거래소가 섞이는 그래프 계산은 이쪽을 쓴다. */
+  lossAmountKrw: number;
 }
 
+/** 한 행은 주문 하나다. 한 주문이 여러 원칙을 어겼으면 행을 나누지 않고 violatedRules 에 나열한다. */
 export interface ViolationTrade {
   id: number;
   coinSymbol: string;
   date: string;
   /** yyyy-MM-dd 로 잘라 그래프 날짜와 맞춘다. 표시용 date 는 연도가 없어 쓸 수 없다. */
   occurredAt: string;
+  exchangeId: number;
+  exchangeName: string;
+  /** 발생 거래소의 기축통화 (KRW/USDT). 목록은 이 통화로 금액을 보여준다. */
+  currency: string;
   emotion?: ViolationEmotion;
   violatedRules: ViolatedRule[];
-  profitLoss: number;
+  totalLossAmount: number;
+  totalLossAmountKrw: number;
 }
 
+/** 손익 축. 위반 손실은 양수가 손해이므로 손실은 0 초과다. */
 export type ViolationFilter = "ALL" | "LOSS" | "PROFIT";
+
+/** 거래소 축. "ALL" 이면 전 거래소, 그 외에는 거래소 ID 다. */
+export type ExchangeFilter = "ALL" | number;
 
 export interface ViolationMarker {
   date: string;
   value: number;
-  type: "loss" | "gain";
 }
 
 // ── RuleType → 한국어/색상 매핑 ──────────────────────────
@@ -78,10 +93,12 @@ export const RULE_COLORS: Record<RuleType, string> = {
 };
 
 /**
- * 켜 둔 규칙이 실제로 유발한 위반 손익을 발생일 순으로 누적해 실제 자산에 더한다.
+ * 켜 둔 규칙이 실제로 유발한 위반 손실을 발생일 순으로 누적해 실제 자산에 더한다.
  *
  * 서버가 전체 규칙 곡선(`ruleFollowed`)을 만드는 방식과 같은 계산이므로, 규칙을 모두 켜면
  * 두 곡선이 모든 지점에서 일치한다. 위반이 없는 날은 직전 누적값을 유지해 계단 모양이 된다.
+ *
+ * 그래프는 라운드 전체를 원화로 합친 곡선이므로 거래소 기축통화가 아니라 원화 환산액을 쓴다.
  */
 export function computeSimulationLine(
   snapshots: AssetSnapshot[],
@@ -93,7 +110,7 @@ export function computeSimulationLine(
       date: trade.occurredAt.slice(0, 10),
       amount: trade.violatedRules
         .filter((rule) => enabledRules.has(rule.ruleType))
-        .reduce((sum, rule) => sum + rule.lossAmount, 0),
+        .reduce((sum, rule) => sum + rule.lossAmountKrw, 0),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 

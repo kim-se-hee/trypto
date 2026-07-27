@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class BtcDailyPrices {
@@ -21,8 +22,16 @@ public class BtcDailyPrices {
         return new BtcDailyPrices(priceByDate);
     }
 
-    public Map<LocalDate, BigDecimal> toMap() {
-        return priceByDate;
+    public Optional<BigDecimal> findClosingPriceAt(LocalDate date) {
+        return Optional.ofNullable(priceByDate.get(date));
+    }
+
+    /** 자금이 들어온 날에 종가가 없으면(주말·수집 누락) 그 이전 가장 가까운 종가로 산다. */
+    public Optional<BigDecimal> findLatestClosingPriceUntil(LocalDate date) {
+        return priceByDate.keySet().stream()
+                .filter(priced -> !priced.isAfter(date))
+                .max(LocalDate::compareTo)
+                .map(priceByDate::get);
     }
 
     @Override

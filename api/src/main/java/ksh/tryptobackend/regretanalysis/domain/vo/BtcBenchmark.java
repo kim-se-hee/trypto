@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public final class BtcBenchmark {
 
-    private static final int PRICE_SCALE = 8;
+    private static final int QUANTITY_SCALE = 8;
     private static final MathContext MATH_CONTEXT = new MathContext(20, RoundingMode.HALF_UP);
 
     public record DailyValue(LocalDate date, BigDecimal assetValue) {}
@@ -26,28 +26,36 @@ public final class BtcBenchmark {
         this.entryByDate = entries.stream().collect(Collectors.toMap(DailyValue::date, Function.identity()));
     }
 
-    public static BtcBenchmark calculate(
-            BigDecimal seedMoney,
-            Map<LocalDate, BigDecimal> btcPriceByDate,
-            List<LocalDate> snapshotDates,
-            LocalDate startDate) {
-        BigDecimal btcPriceAtStart = btcPriceByDate.get(startDate);
-        if (btcPriceAtStart == null || btcPriceAtStart.compareTo(BigDecimal.ZERO) == 0) {
-            return new BtcBenchmark(List.of());
-        }
-
-        BigDecimal btcQuantity = seedMoney.divide(btcPriceAtStart, PRICE_SCALE, RoundingMode.HALF_UP);
-
+    public static BtcBenchmark calculate(CapitalInflows inflows, BtcDailyPrices btcDailyPrices, List<LocalDate> dates) {
         List<DailyValue> result = new ArrayList<>();
-        for (LocalDate date : snapshotDates) {
-            BigDecimal dailyPrice = btcPriceByDate.get(date);
-            if (dailyPrice == null) {
-                result.add(new DailyValue(date, BigDecimal.ZERO));
-            } else {
-                result.add(new DailyValue(date, btcQuantity.multiply(dailyPrice, MATH_CONTEXT)));
+        BigDecimal holdingQuantity = BigDecimal.ZERO;
+        int inflowIndex = 0;
+        List<CapitalInflows.CapitalInflow> pendingInflows = inflows.values();
+
+        for (LocalDate date : dates) {
+            while (inflowIndex < pendingInflows.size()
+                    && !pendingInflows.get(inflowIndex).date().isAfter(date)) {
+                holdingQuantity = holdingQuantity.add(buyQuantity(pendingInflows.get(inflowIndex), btcDailyPrices));
+                inflowIndex++;
             }
+            result.add(new DailyValue(date, evaluate(holdingQuantity, date, btcDailyPrices)));
         }
         return new BtcBenchmark(result);
+    }
+
+    private static BigDecimal buyQuantity(CapitalInflows.CapitalInflow inflow, BtcDailyPrices btcDailyPrices) {
+        return btcDailyPrices
+                .findLatestClosingPriceUntil(inflow.date())
+                .filter(price -> price.signum() > 0)
+                .map(price -> inflow.amount().divide(price, QUANTITY_SCALE, RoundingMode.HALF_UP))
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static BigDecimal evaluate(BigDecimal quantity, LocalDate date, BtcDailyPrices btcDailyPrices) {
+        return btcDailyPrices
+                .findClosingPriceAt(date)
+                .map(price -> quantity.multiply(price, MATH_CONTEXT))
+                .orElse(BigDecimal.ZERO);
     }
 
     public BigDecimal getAssetValueAt(LocalDate date) {

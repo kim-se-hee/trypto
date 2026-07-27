@@ -16,22 +16,15 @@ public class ViolationDetail {
     private final Long ruleId;
     private final Long coinId;
     private final BigDecimal lossAmount;
-    private final BigDecimal profitLoss;
     private final LocalDateTime occurredAt;
 
     public static ViolationDetail create(
-            Long orderId,
-            Long ruleId,
-            Long coinId,
-            BigDecimal lossAmount,
-            BigDecimal profitLoss,
-            LocalDateTime occurredAt) {
+            Long orderId, Long ruleId, Long coinId, BigDecimal lossAmount, LocalDateTime occurredAt) {
         return ViolationDetail.builder()
                 .orderId(orderId)
                 .ruleId(ruleId)
                 .coinId(coinId)
                 .lossAmount(lossAmount)
-                .profitLoss(profitLoss)
                 .occurredAt(occurredAt)
                 .build();
     }
@@ -55,7 +48,6 @@ public class ViolationDetail {
             Long ruleId,
             Long coinId,
             BigDecimal lossAmount,
-            BigDecimal profitLoss,
             LocalDateTime occurredAt) {
         return ViolationDetail.builder()
                 .violationDetailId(violationDetailId)
@@ -64,7 +56,6 @@ public class ViolationDetail {
                 .ruleId(ruleId)
                 .coinId(coinId)
                 .lossAmount(lossAmount)
-                .profitLoss(profitLoss)
                 .occurredAt(occurredAt)
                 .build();
     }

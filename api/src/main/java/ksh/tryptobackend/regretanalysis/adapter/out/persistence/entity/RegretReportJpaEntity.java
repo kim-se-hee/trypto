@@ -50,8 +50,8 @@ public class RegretReportJpaEntity {
     @Column(name = "total_violations", nullable = false)
     private int totalViolations;
 
-    @Column(name = "missed_profit", nullable = false, precision = 30, scale = 8)
-    private BigDecimal missedProfit;
+    @Column(name = "total_violation_loss", nullable = false, precision = 30, scale = 8)
+    private BigDecimal totalViolationLoss;
 
     @Column(name = "actual_asset", nullable = false, precision = 30, scale = 8)
     private BigDecimal actualAsset;
@@ -83,7 +83,7 @@ public class RegretReportJpaEntity {
         entity.roundId = report.getRoundId();
         entity.exchangeId = report.getExchangeId();
         entity.totalViolations = report.getTotalViolations();
-        entity.missedProfit = report.getMissedProfit();
+        entity.totalViolationLoss = report.getTotalViolationLoss();
         entity.actualAsset = report.getActualAsset();
         entity.ruleFollowedAsset = report.getRuleFollowedAsset();
         entity.analysisStart = report.getAnalysisStart();
@@ -101,7 +101,7 @@ public class RegretReportJpaEntity {
      */
     public void updateFrom(RegretReport report) {
         this.totalViolations = report.getTotalViolations();
-        this.missedProfit = report.getMissedProfit();
+        this.totalViolationLoss = report.getTotalViolationLoss();
         this.actualAsset = report.getActualAsset();
         this.ruleFollowedAsset = report.getRuleFollowedAsset();
         this.analysisStart = report.getAnalysisStart();
@@ -138,7 +138,7 @@ public class RegretReportJpaEntity {
                 roundId,
                 exchangeId,
                 totalViolations,
-                missedProfit,
+                totalViolationLoss,
                 actualAsset,
                 ruleFollowedAsset,
                 analysisStart,

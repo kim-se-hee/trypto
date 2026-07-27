@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,18 @@ class BtcBenchmarkTest {
     private static final LocalDate DAY_2 = LocalDate.of(2025, 1, 2);
     private static final LocalDate DAY_3 = LocalDate.of(2025, 1, 3);
 
+    private static BtcDailyPrices pricesOf(BtcDailyPrice... prices) {
+        return BtcDailyPrices.of(List.of(prices));
+    }
+
+    private static BtcDailyPrice priceOn(LocalDate date, String closePrice) {
+        return new BtcDailyPrice(date, new BigDecimal(closePrice));
+    }
+
+    private static CapitalInflows seedOnly(String seedMoney) {
+        return CapitalInflows.of(new BigDecimal(seedMoney), List.of(), DAY_1);
+    }
+
     @Nested
     @DisplayName("BTC 벤치마크 계산")
     class CalculateTest {
@@ -24,54 +35,75 @@ class BtcBenchmarkTest {
         @DisplayName("시드머니로 BTC를 매수한 뒤 일별 가치를 계산한다")
         void calculate_normalCase_dailyValuesComputed() {
             // Given
-            BigDecimal seedMoney = new BigDecimal("1000000");
-            BigDecimal btcPriceDay1 = new BigDecimal("50000000");
-            BigDecimal btcPriceDay2 = new BigDecimal("55000000");
-            BigDecimal btcPriceDay3 = new BigDecimal("45000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(
-                    DAY_1, btcPriceDay1,
-                    DAY_2, btcPriceDay2,
-                    DAY_3, btcPriceDay3);
+            BtcDailyPrices prices =
+                    pricesOf(priceOn(DAY_1, "50000000"), priceOn(DAY_2, "55000000"), priceOn(DAY_3, "45000000"));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, dates);
 
             // Then
-            // btcQuantity = 1000000 / 50000000 = 0.02
-            // DAY_1: 0.02 * 50000000 = 1000000
-            // DAY_2: 0.02 * 55000000 = 1100000
-            // DAY_3: 0.02 * 45000000 = 900000
             assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1000000"));
             assertThat(benchmark.getAssetValueAt(DAY_2)).isEqualByComparingTo(new BigDecimal("1100000"));
             assertThat(benchmark.getAssetValueAt(DAY_3)).isEqualByComparingTo(new BigDecimal("900000"));
         }
 
         @Test
-        @DisplayName("시작일 BTC 가격이 0이면 빈 벤치마크를 반환한다")
-        void calculate_zeroPriceAtStart_emptyBenchmark() {
+        @DisplayName("긴급 충전은 충전일 종가로 추가 매수한다")
+        void calculate_emergencyCharge_buysMoreAtChargedDatePrice() {
             // Given
-            BigDecimal seedMoney = new BigDecimal("1000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(DAY_1, BigDecimal.ZERO);
-            List<LocalDate> dates = List.of(DAY_1);
+            BtcDailyPrices prices =
+                    pricesOf(priceOn(DAY_1, "50000000"), priceOn(DAY_2, "40000000"), priceOn(DAY_3, "50000000"));
+            CapitalInflows inflows = CapitalInflows.of(
+                    new BigDecimal("1000000"), List.of(new EmergencyCharge(DAY_2, new BigDecimal("400000"))), DAY_1);
 
             // When
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
+            BtcBenchmark benchmark = BtcBenchmark.calculate(inflows, prices, List.of(DAY_1, DAY_2, DAY_3));
+
+            // Then
+            assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1000000"));
+            assertThat(benchmark.getAssetValueAt(DAY_2)).isEqualByComparingTo(new BigDecimal("1200000"));
+            assertThat(benchmark.getAssetValueAt(DAY_3)).isEqualByComparingTo(new BigDecimal("1500000"));
+        }
+
+        @Test
+        @DisplayName("첫날보다 앞선 충전은 시드머니와 함께 첫날에 매수한다")
+        void calculate_chargeBeforeFirstDate_buysOnFirstDate() {
+            // Given
+            BtcDailyPrices prices = pricesOf(priceOn(DAY_1, "50000000"));
+            CapitalInflows inflows = CapitalInflows.of(
+                    new BigDecimal("1000000"),
+                    List.of(new EmergencyCharge(DAY_1.minusDays(3), new BigDecimal("500000"))),
+                    DAY_1);
+
+            // When
+            BtcBenchmark benchmark = BtcBenchmark.calculate(inflows, prices, List.of(DAY_1));
+
+            // Then
+            assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1500000"));
+        }
+
+        @Test
+        @DisplayName("시작일 BTC 가격이 0이면 자산은 0이다")
+        void calculate_zeroPriceAtStart_zeroAsset() {
+            // Given
+            BtcDailyPrices prices = pricesOf(priceOn(DAY_1, "0"));
+
+            // When
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, List.of(DAY_1));
 
             // Then
             assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(BigDecimal.ZERO);
         }
 
         @Test
-        @DisplayName("시작일 BTC 가격이 없으면 빈 벤치마크를 반환한다")
-        void calculate_nullPriceAtStart_emptyBenchmark() {
+        @DisplayName("시작일 BTC 가격이 없으면 자산은 0이다")
+        void calculate_noPriceAtStart_zeroAsset() {
             // Given
-            BigDecimal seedMoney = new BigDecimal("1000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of();
-            List<LocalDate> dates = List.of(DAY_1);
+            BtcDailyPrices prices = pricesOf();
 
             // When
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, List.of(DAY_1));
 
             // Then
             assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(BigDecimal.ZERO);
@@ -81,14 +113,11 @@ class BtcBenchmarkTest {
         @DisplayName("특정 날짜에 BTC 가격이 없으면 해당 날짜 자산은 0이다")
         void calculate_missingPriceOnDate_zeroForThatDate() {
             // Given
-            BigDecimal seedMoney = new BigDecimal("1000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(
-                    DAY_1, new BigDecimal("50000000"),
-                    DAY_3, new BigDecimal("60000000"));
+            BtcDailyPrices prices = pricesOf(priceOn(DAY_1, "50000000"), priceOn(DAY_3, "60000000"));
             List<LocalDate> dates = List.of(DAY_1, DAY_2, DAY_3);
 
             // When
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, dates);
 
             // Then
             assertThat(benchmark.getAssetValueAt(DAY_1)).isEqualByComparingTo(new BigDecimal("1000000"));
@@ -101,17 +130,12 @@ class BtcBenchmarkTest {
         void calculate_fractionalDivision_precisionMaintained() {
             // Given
             BigDecimal seedMoney = new BigDecimal("1000000");
-            BigDecimal btcPriceDay1 = new BigDecimal("30000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(DAY_1, btcPriceDay1, DAY_2, new BigDecimal("30000000"));
-            List<LocalDate> dates = List.of(DAY_1, DAY_2);
+            BtcDailyPrices prices = pricesOf(priceOn(DAY_1, "30000000"), priceOn(DAY_2, "30000000"));
 
             // When
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, dates, DAY_1);
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, List.of(DAY_1, DAY_2));
 
             // Then
-            // btcQuantity = 1000000 / 30000000 = 0.03333333 (8자리)
-            // DAY_1: 0.03333333 * 30000000 ≈ 999999.9 (근사치이지만 원래 시드머니에 가까워야 함)
-            // DAY_2: 동일
             BigDecimal day1Value = benchmark.getAssetValueAt(DAY_1);
             assertThat(day1Value).isNotNull();
             assertThat(day1Value.subtract(seedMoney).abs()).isLessThan(new BigDecimal("10"));
@@ -126,9 +150,8 @@ class BtcBenchmarkTest {
         @DisplayName("존재하지 않는 날짜를 조회하면 0을 반환한다")
         void getAssetValueAt_nonExistentDate_returnsZero() {
             // Given
-            BigDecimal seedMoney = new BigDecimal("1000000");
-            Map<LocalDate, BigDecimal> priceMap = Map.of(DAY_1, new BigDecimal("50000000"));
-            BtcBenchmark benchmark = BtcBenchmark.calculate(seedMoney, priceMap, List.of(DAY_1), DAY_1);
+            BtcDailyPrices prices = pricesOf(priceOn(DAY_1, "50000000"));
+            BtcBenchmark benchmark = BtcBenchmark.calculate(seedOnly("1000000"), prices, List.of(DAY_1));
 
             // When
             BigDecimal value = benchmark.getAssetValueAt(DAY_3);

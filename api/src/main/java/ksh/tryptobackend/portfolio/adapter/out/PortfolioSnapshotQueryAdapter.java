@@ -10,6 +10,7 @@ import java.util.Optional;
 import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.QPortfolioSnapshotJpaEntity;
 import ksh.tryptobackend.portfolio.adapter.out.persistence.entity.QSnapshotDetailJpaEntity;
 import ksh.tryptobackend.portfolio.application.port.out.PortfolioSnapshotQueryPort;
+import ksh.tryptobackend.portfolio.domain.vo.DailyAssetTotal;
 import ksh.tryptobackend.portfolio.domain.vo.HoldingSummary;
 import ksh.tryptobackend.portfolio.domain.vo.SnapshotOverview;
 import ksh.tryptobackend.portfolio.domain.vo.UserSnapshotSummary;
@@ -70,6 +71,18 @@ public class PortfolioSnapshotQueryAdapter implements PortfolioSnapshotQueryPort
                         snapshot.snapshotDate))
                 .from(snapshot)
                 .where(snapshot.roundId.eq(roundId), snapshot.exchangeId.eq(exchangeId))
+                .orderBy(snapshot.snapshotDate.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<DailyAssetTotal> findDailyTotalsByRoundId(Long roundId) {
+        return queryFactory
+                .select(Projections.constructor(
+                        DailyAssetTotal.class, snapshot.snapshotDate, snapshot.totalAssetKrw.sum()))
+                .from(snapshot)
+                .where(snapshot.roundId.eq(roundId))
+                .groupBy(snapshot.snapshotDate)
                 .orderBy(snapshot.snapshotDate.asc())
                 .fetch();
     }

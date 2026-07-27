@@ -19,6 +19,7 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrice;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrices;
 import ksh.tryptobackend.regretanalysis.domain.vo.CurrentPrices;
+import ksh.tryptobackend.regretanalysis.domain.vo.ExchangeCatalog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +41,11 @@ public class RegretAnalysisAclMarketDataQueryAdapter implements MarketDataQueryP
                 .findExchangeDetail(exchangeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
         return toAnalysisExchange(exchangeId, result);
+    }
+
+    @Override
+    public ExchangeCatalog findExchanges(Set<Long> exchangeIds) {
+        return ExchangeCatalog.of(exchangeIds.stream().collect(Collectors.toMap(id -> id, this::getExchange)));
     }
 
     @Override

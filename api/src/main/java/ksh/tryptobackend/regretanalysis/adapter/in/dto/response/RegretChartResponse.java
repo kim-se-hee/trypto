@@ -6,13 +6,7 @@ import java.util.List;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult;
 
 public record RegretChartResponse(
-        Long roundId,
-        Long exchangeId,
-        String exchangeName,
-        String currency,
-        int totalDays,
-        List<AssetHistoryItem> assetHistory,
-        List<ViolationMarkerItem> violationMarkers) {
+        Long roundId, int totalDays, List<AssetHistoryItem> assetHistory, List<ViolationMarkerItem> violationMarkers) {
 
     public record AssetHistoryItem(
             LocalDate snapshotDate, BigDecimal actualAsset, BigDecimal ruleFollowedAsset, BigDecimal btcHoldAsset) {
@@ -33,9 +27,6 @@ public record RegretChartResponse(
     public static RegretChartResponse from(RegretChartResult result) {
         return new RegretChartResponse(
                 result.roundId(),
-                result.exchangeId(),
-                result.exchangeName(),
-                result.currency(),
                 result.totalDays(),
                 result.assetHistory().stream().map(AssetHistoryItem::from).toList(),
                 result.violationMarkers().stream()

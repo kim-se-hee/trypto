@@ -8,10 +8,12 @@ import '../../models/regret.dart';
 ///
 /// **웹과 값이 일치해야 한다**(사양서 §6.3.4). 누적식·반올림을 그대로 이식한다.
 
-/// 켜 둔 규칙이 실제로 유발한 위반 손익을 발생일 순으로 누적해 그날의 실제 자산에 더한다.
+/// 켜 둔 규칙이 실제로 유발한 위반 손실을 발생일 순으로 누적해 그날의 실제 자산에 더한다.
 ///
 /// 서버가 전체 규칙 곡선(`ruleFollowedAsset`)을 만드는 방식과 같은 계산이므로, 규칙을 모두 켜면
 /// 두 곡선이 모든 지점에서 일치한다. 위반이 없는 날은 직전 누적값을 유지해 계단 모양이 된다.
+///
+/// 곡선은 라운드 전체를 원화로 합친 것이므로 거래소 기축통화가 아니라 원화 환산액을 누적한다.
 List<double> simulationLine(
   List<AssetHistoryPoint> history,
   Set<RuleType> enabled,
@@ -47,7 +49,7 @@ double _enabledLoss(ViolationDetail violation, Set<RuleType> enabled) {
   var total = 0.0;
   for (final rule in violation.violatedRules) {
     if (enabled.contains(rule.ruleType)) {
-      total += rule.lossAmount;
+      total += rule.lossAmountKrw;
     }
   }
   return total;
@@ -87,7 +89,8 @@ int labelTickInterval(int totalDays) {
   return (min: min - padding, max: max + padding);
 }
 
-/// 위반 거래 필터. **`profitLoss == 0` 은 수익으로 분류된다**(사양서 §6.3.5).
+/// 위반 거래의 손익 축 필터. 위반 손실은 **양수가 손해**이므로 손실은 0 초과이고,
+/// **0 이하는 수익으로 분류된다** — 원칙을 어긴 쪽이 오히려 이득이었던 거래다.
 enum ViolationFilter {
   all('전체'),
   loss('손실'),
@@ -99,16 +102,32 @@ enum ViolationFilter {
 
   bool matches(ViolationDetail violation) => switch (this) {
     ViolationFilter.all => true,
-    ViolationFilter.loss => violation.profitLoss < 0,
-    ViolationFilter.profit => violation.profitLoss >= 0,
+    ViolationFilter.loss => violation.totalLossAmount > 0,
+    ViolationFilter.profit => violation.totalLossAmount <= 0,
   };
 }
 
-/// 정렬하지 않는다 — 서버 순서 그대로다(주문 단위 위반 먼저, 모니터링 위반 뒤).
+/// 위반 거래의 거래소 축 필터. null 이면 전 거래소다. 손익 축과 조합해서 쓴다.
 List<ViolationDetail> filterViolations(
   List<ViolationDetail> violations,
-  ViolationFilter filter,
-) => [
+  ViolationFilter filter, {
+  int? exchangeId,
+}) => [
   for (final violation in violations)
-    if (filter.matches(violation)) violation,
+    if (filter.matches(violation) &&
+        (exchangeId == null || violation.exchangeId == exchangeId))
+      violation,
 ];
+
+/// 라운드에서 위반이 실제로 일어난 거래소만 (ID, 이름) 으로 추린다. 서버 순서를 유지한다.
+List<({int id, String name})> violatedExchanges(
+  List<ViolationDetail> violations,
+) {
+  final names = <int, String>{};
+  for (final violation in violations) {
+    names.putIfAbsent(violation.exchangeId, () => violation.exchangeName);
+  }
+  return [
+    for (final entry in names.entries) (id: entry.key, name: entry.value),
+  ];
+}

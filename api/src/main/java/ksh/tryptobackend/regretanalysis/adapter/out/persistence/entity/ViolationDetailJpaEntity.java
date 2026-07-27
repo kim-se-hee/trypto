@@ -39,9 +39,6 @@ public class ViolationDetailJpaEntity {
     @Column(name = "loss_amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal lossAmount;
 
-    @Column(name = "profit_loss", nullable = false, precision = 30, scale = 8)
-    private BigDecimal profitLoss;
-
     @Column(name = "occurred_at", nullable = false)
     private LocalDateTime occurredAt;
 
@@ -52,12 +49,11 @@ public class ViolationDetailJpaEntity {
         entity.ruleId = detail.getRuleId();
         entity.coinId = detail.getCoinId();
         entity.lossAmount = detail.getLossAmount();
-        entity.profitLoss = detail.getProfitLoss();
         entity.occurredAt = detail.getOccurredAt();
         return entity;
     }
 
     public ViolationDetail toDomain() {
-        return ViolationDetail.reconstitute(id, reportId, orderId, ruleId, coinId, lossAmount, profitLoss, occurredAt);
+        return ViolationDetail.reconstitute(id, reportId, orderId, ruleId, coinId, lossAmount, occurredAt);
     }
 }

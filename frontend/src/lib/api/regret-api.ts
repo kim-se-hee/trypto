@@ -16,24 +16,31 @@ interface BackendRuleImpact {
   ruleType: BackendRuleType;
   violationCount: number;
   thresholdValue: number;
+  totalLossAmount: number;
 }
 
 interface BackendViolatedRule {
   ruleType: BackendRuleType;
   lossAmount: number;
+  lossAmountKrw: number;
 }
 
 interface BackendViolationDetail {
   violationDetailId: number;
-  orderId: number;
+  orderId: number | null;
+  exchangeId: number;
+  exchangeName: string;
+  currency: string;
   coinSymbol: string;
   violatedRules: BackendViolatedRule[];
-  profitLoss: number;
+  totalLossAmount: number;
+  totalLossAmountKrw: number;
   occurredAt: string;
 }
 
 interface BackendRegretReportResponse {
-  missedProfit: number;
+  roundId: number;
+  totalViolationLoss: number;
   actualAsset: number;
   ruleFollowedAsset: number;
   totalViolations: number;
@@ -49,6 +56,8 @@ interface BackendAssetHistoryItem {
 }
 
 interface BackendRegretChartResponse {
+  roundId: number;
+  totalDays: number;
   assetHistory: BackendAssetHistoryItem[];
   violationMarkers: Array<{
     snapshotDate: string;
@@ -93,16 +102,15 @@ function formatDateLabel(dateStr: string, totalDays: number): string {
 
 export async function getRegretReport(
   roundId: number,
-  exchangeId: number,
   userId: number,
 ): Promise<RegretReportData> {
   const data = await apiGet<BackendRegretReportResponse>(
     `/api/rounds/${roundId}/regret`,
-    { exchangeId, userId },
+    { userId },
   );
 
   const summary: RegretSummary = {
-    missedProfit: Number(data.missedProfit),
+    totalViolationLoss: Number(data.totalViolationLoss),
     actualAsset: Number(data.actualAsset),
     ruleFollowedAsset: Number(data.ruleFollowedAsset),
     totalViolations: data.totalViolations,
@@ -117,6 +125,7 @@ export async function getRegretReport(
       thresholdValue: Number(impact.thresholdValue),
       thresholdUnit: RULE_THRESHOLD_UNIT[ruleType],
       violationCount: impact.violationCount,
+      totalLossAmount: Number(impact.totalLossAmount),
     };
   });
 
@@ -127,11 +136,16 @@ export async function getRegretReport(
       coinSymbol: detail.coinSymbol,
       date: `${d.getMonth() + 1}/${d.getDate()}`,
       occurredAt: detail.occurredAt,
+      exchangeId: detail.exchangeId,
+      exchangeName: detail.exchangeName,
+      currency: detail.currency,
       violatedRules: detail.violatedRules.map((rule) => ({
         ruleType: toFrontRuleType(rule.ruleType),
         lossAmount: Number(rule.lossAmount),
+        lossAmountKrw: Number(rule.lossAmountKrw),
       })),
-      profitLoss: Number(detail.profitLoss),
+      totalLossAmount: Number(detail.totalLossAmount),
+      totalLossAmountKrw: Number(detail.totalLossAmountKrw),
     };
   });
 
@@ -140,15 +154,16 @@ export async function getRegretReport(
 
 export async function getRegretChart(
   roundId: number,
-  exchangeId: number,
   userId: number,
 ): Promise<RegretChartData> {
   const data = await apiGet<BackendRegretChartResponse>(
     `/api/rounds/${roundId}/regret/chart`,
-    { exchangeId, userId },
+    { userId },
   );
 
-  const totalDays = data.assetHistory.length;
+  // 서버가 주는 총 일수는 첫 스냅샷과 마지막 스냅샷의 날짜 차이다. 스냅샷이 빠진 날이 있으면
+  // 개수와 달라지므로, 라벨 간격을 정하는 기준은 서버 값을 그대로 쓴다.
+  const totalDays = data.totalDays;
 
   const snapshots: AssetSnapshot[] = data.assetHistory.map((item) => ({
     date: formatDateLabel(item.snapshotDate, totalDays),
@@ -162,7 +177,6 @@ export async function getRegretChart(
   const markers: ViolationMarker[] = (data.violationMarkers ?? []).map((m) => ({
     date: formatDateLabel(m.snapshotDate, totalDays),
     value: Number(m.assetValue),
-    type: "loss" as const,
   }));
 
   return { snapshots, btcHoldValues, markers, totalDays };

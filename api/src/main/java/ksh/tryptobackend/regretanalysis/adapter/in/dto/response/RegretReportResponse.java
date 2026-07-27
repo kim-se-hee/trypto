@@ -7,15 +7,11 @@ import java.util.List;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretReportResult;
 
 public record RegretReportResponse(
-        Long reportId,
         Long roundId,
-        Long exchangeId,
-        String exchangeName,
-        String currency,
         int totalViolations,
         LocalDate analysisStart,
         LocalDate analysisEnd,
-        BigDecimal missedProfit,
+        BigDecimal totalViolationLoss,
         BigDecimal actualAsset,
         BigDecimal ruleFollowedAsset,
         List<RuleImpactResponse> ruleImpacts,
@@ -30,15 +26,11 @@ public record RegretReportResponse(
                 .toList();
 
         return new RegretReportResponse(
-                result.reportId(),
                 result.roundId(),
-                result.exchangeId(),
-                result.exchangeName(),
-                result.currency(),
                 result.totalViolations(),
                 result.analysisStart(),
                 result.analysisEnd(),
-                result.missedProfit(),
+                result.totalViolationLoss(),
                 result.actualAsset(),
                 result.ruleFollowedAsset(),
                 ruleImpactResponses,
@@ -46,7 +38,6 @@ public record RegretReportResponse(
     }
 
     public record RuleImpactResponse(
-            Long ruleImpactId,
             Long ruleId,
             String ruleType,
             BigDecimal thresholdValue,
@@ -56,7 +47,6 @@ public record RegretReportResponse(
 
         public static RuleImpactResponse from(RegretReportResult.RuleImpactResult result) {
             return new RuleImpactResponse(
-                    result.ruleImpactId(),
                     result.ruleId(),
                     result.ruleType() != null ? result.ruleType().name() : null,
                     result.thresholdValue(),
@@ -66,19 +56,23 @@ public record RegretReportResponse(
         }
     }
 
-    public record ViolatedRuleResponse(String ruleType, BigDecimal lossAmount) {
+    public record ViolatedRuleResponse(String ruleType, BigDecimal lossAmount, BigDecimal lossAmountKrw) {
 
         public static ViolatedRuleResponse from(RegretReportResult.ViolatedRuleResult result) {
-            return new ViolatedRuleResponse(result.ruleType().name(), result.lossAmount());
+            return new ViolatedRuleResponse(result.ruleType().name(), result.lossAmount(), result.lossAmountKrw());
         }
     }
 
     public record ViolationDetailResponse(
             Long violationDetailId,
             Long orderId,
+            Long exchangeId,
+            String exchangeName,
+            String currency,
             String coinSymbol,
             List<ViolatedRuleResponse> violatedRules,
-            BigDecimal profitLoss,
+            BigDecimal totalLossAmount,
+            BigDecimal totalLossAmountKrw,
             LocalDateTime occurredAt) {
 
         public static ViolationDetailResponse from(RegretReportResult.ViolationDetailResult result) {
@@ -89,9 +83,13 @@ public record RegretReportResponse(
             return new ViolationDetailResponse(
                     result.violationDetailId(),
                     result.orderId(),
+                    result.exchangeId(),
+                    result.exchangeName(),
+                    result.currency(),
                     result.coinSymbol(),
                     violatedRules,
-                    result.profitLoss(),
+                    result.totalLossAmount(),
+                    result.totalLossAmountKrw(),
                     result.occurredAt());
         }
     }

@@ -129,6 +129,7 @@ class _RuleChip extends StatelessWidget {
     final colors = context.tryptoColors;
     final rule = impact.ruleType;
     final color = ruleColor(context, rule);
+    final loss = impact.totalLossAmount;
 
     return GestureDetector(
       onLongPress: onLongPress,
@@ -141,6 +142,16 @@ class _RuleChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(ruleLabels[rule] ?? '알 수 없는 원칙'),
+            // 위반 횟수만으로는 그 원칙이 얼마짜리였는지 알 수 없다. 금액을 함께 단다.
+            if (loss != null && loss != 0) ...[
+              const SizedBox(width: TryptoSpacing.xs),
+              NumericText(
+                formatKRWCompact(loss),
+                size: 11,
+                weight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
             if (impact.violationCount > 0) ...[
               const SizedBox(width: TryptoSpacing.xs),
               Container(
@@ -208,8 +219,9 @@ Future<void> _showRuleDetail(BuildContext context, RuleImpact impact) {
                 value: '${impact.violationCount}건',
                 color: impact.violationCount > 0 ? colors.negative : null,
               ),
+              // 이 원칙만 지켰다면 자산에 남았을 금액. 거래소를 합친 원화다.
               if (loss != null)
-                _DetailRow(label: '누적 손실', value: formatKRWCompact(loss)),
+                _DetailRow(label: '총 위반 손실', value: formatKRWCompact(loss)),
               const SizedBox(height: TryptoSpacing.sm),
               Text(
                 '칩을 눌러 이 원칙을 시뮬레이션에서 켜고 끌 수 있습니다.',

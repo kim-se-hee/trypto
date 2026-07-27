@@ -17,20 +17,35 @@ AssetHistoryPoint _point(
 );
 
 /// 서버가 내려주는 문자열을 그대로 거쳐 만든다. 기기 시간대에 흔들리지 않게 하기 위함이다.
+///
+/// [totalLoss] 는 위반 손실 합계다 — **양수가 손해**다.
 ViolationDetail _violation(
-  double profitLoss, {
+  double totalLoss, {
   String occurredAt = '2026-07-15T10:00:00',
   List<ViolatedRule> rules = const [],
+  int exchangeId = 1,
+  String exchangeName = '업비트',
+  String currency = 'KRW',
+  double? totalLossKrw,
 }) => ViolationDetail(
   violationDetailId: 1,
+  exchangeId: exchangeId,
+  exchangeName: exchangeName,
+  currency: currency,
   coinSymbol: 'BTC',
   violatedRules: rules,
-  profitLoss: profitLoss,
+  totalLossAmount: totalLoss,
+  totalLossAmountKrw: totalLossKrw ?? totalLoss,
   occurredAt: ServerTime.parseKst(occurredAt),
 );
 
-ViolatedRule _rule(RuleType ruleType, double lossAmount) =>
-    ViolatedRule(ruleType: ruleType, lossAmount: lossAmount);
+/// [krw] 를 생략하면 원화 거래소로 본다 — 기축통화 금액과 환산액이 같다.
+ViolatedRule _rule(RuleType ruleType, double lossAmount, {double? krw}) =>
+    ViolatedRule(
+      ruleType: ruleType,
+      lossAmount: lossAmount,
+      lossAmountKrw: krw ?? lossAmount,
+    );
 
 void main() {
   group('simulationLine', () {
@@ -42,12 +57,12 @@ void main() {
     // 7/14 추격매수 20만, 7/15 손절 20만 → 누적 20만 → 40만. history 의 규칙 준수 곡선과 같다.
     final violations = [
       _violation(
-        -200000,
+        200000,
         occurredAt: '2026-07-14T09:00:00',
         rules: [_rule(RuleType.chaseBuyBan, 200000)],
       ),
       _violation(
-        -200000,
+        200000,
         occurredAt: '2026-07-15T09:00:00',
         rules: [_rule(RuleType.lossCut, 200000)],
       ),
@@ -84,18 +99,58 @@ void main() {
       expect(line, [1200000, 1200000, 1200000]);
     });
 
-    test('위반 손익이 음수면 실제 자산 아래로 내려간다', () {
+    test('위반 손실이 음수면 실제 자산 아래로 내려간다', () {
       final line = simulationLine(
         [_point(1000000, 0, 0)],
         {RuleType.chaseBuyBan},
         [
           _violation(
-            60000,
+            -60000,
             rules: [_rule(RuleType.chaseBuyBan, -60000)],
           ),
         ],
       );
       expect(line, [940000]);
+    });
+
+    test('해외 거래소 위반은 기축통화가 아니라 원화 환산액으로 누적한다', () {
+      final line = simulationLine(
+        [_point(1000000, 0, 0)],
+        {RuleType.chaseBuyBan},
+        [
+          _violation(
+            100,
+            currency: 'USDT',
+            exchangeId: 3,
+            exchangeName: '바이낸스',
+            totalLossKrw: 140000,
+            rules: [_rule(RuleType.chaseBuyBan, 100, krw: 140000)],
+          ),
+        ],
+      );
+      expect(line, [1140000]);
+    });
+
+    test('거래소가 달라도 같은 원칙이면 함께 누적된다', () {
+      final line = simulationLine(
+        [_point(1000000, 0, 0)],
+        {RuleType.chaseBuyBan},
+        [
+          _violation(
+            105000,
+            rules: [_rule(RuleType.chaseBuyBan, 105000)],
+          ),
+          _violation(
+            100,
+            currency: 'USDT',
+            exchangeId: 3,
+            exchangeName: '바이낸스',
+            totalLossKrw: 140000,
+            rules: [_rule(RuleType.chaseBuyBan, 100, krw: 140000)],
+          ),
+        ],
+      );
+      expect(line, [1245000]);
     });
 
     test('그래프 시작일 이전에 발생한 위반은 첫 점에 포함된다', () {
@@ -104,7 +159,7 @@ void main() {
         {RuleType.chaseBuyBan},
         [
           _violation(
-            -50000,
+            50000,
             occurredAt: '2026-07-01T09:00:00',
             rules: [_rule(RuleType.chaseBuyBan, 50000)],
           ),
@@ -126,7 +181,7 @@ void main() {
         {RuleType.chaseBuyBan},
         [
           _violation(
-            -0.4,
+            0.4,
             rules: [_rule(RuleType.chaseBuyBan, 0.4)],
           ),
         ],
@@ -192,17 +247,73 @@ void main() {
   });
 
   group('filterViolations', () {
-    final violations = [_violation(-1000), _violation(0), _violation(2000)];
+    final violations = [
+      _violation(1000),
+      _violation(0),
+      _violation(-2000),
+      _violation(
+        100,
+        currency: 'USDT',
+        exchangeId: 3,
+        exchangeName: '바이낸스',
+        totalLossKrw: 140000,
+      ),
+    ];
 
-    test('profitLoss == 0 은 수익으로 분류된다', () {
+    test('위반 손실이 0 이하면 수익으로 분류된다', () {
+      expect(filterViolations(violations, ViolationFilter.loss).length, 2);
       expect(filterViolations(violations, ViolationFilter.profit).length, 2);
-      expect(filterViolations(violations, ViolationFilter.loss).length, 1);
-      expect(filterViolations(violations, ViolationFilter.all).length, 3);
+      expect(filterViolations(violations, ViolationFilter.all).length, 4);
+    });
+
+    test('거래소를 지정하면 그 거래소의 위반만 남는다', () {
+      final binance = filterViolations(
+        violations,
+        ViolationFilter.all,
+        exchangeId: 3,
+      );
+      expect(binance.length, 1);
+      expect(binance.single.currency, 'USDT');
+    });
+
+    test('손익 축과 거래소 축은 조합된다', () {
+      expect(
+        filterViolations(
+          violations,
+          ViolationFilter.loss,
+          exchangeId: 1,
+        ).length,
+        1,
+      );
+      expect(
+        filterViolations(
+          violations,
+          ViolationFilter.profit,
+          exchangeId: 3,
+        ),
+        isEmpty,
+      );
     });
 
     test('정렬하지 않고 서버 순서를 유지한다', () {
       final all = filterViolations(violations, ViolationFilter.all);
-      expect(all.map((v) => v.profitLoss), [-1000, 0, 2000]);
+      expect(all.map((v) => v.totalLossAmount), [1000, 0, -2000, 100]);
+    });
+  });
+
+  group('violatedExchanges', () {
+    test('위반이 일어난 거래소만 중복 없이 추린다', () {
+      final exchanges = violatedExchanges([
+        _violation(1000),
+        _violation(2000),
+        _violation(100, exchangeId: 3, exchangeName: '바이낸스'),
+      ]);
+      expect(exchanges.map((e) => e.id), [1, 3]);
+      expect(exchanges.map((e) => e.name), ['업비트', '바이낸스']);
+    });
+
+    test('위반이 없으면 비어 있다', () {
+      expect(violatedExchanges([]), isEmpty);
     });
   });
 }

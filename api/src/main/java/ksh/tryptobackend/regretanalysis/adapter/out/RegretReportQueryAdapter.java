@@ -1,5 +1,6 @@
 package ksh.tryptobackend.regretanalysis.adapter.out;
 
+import java.util.List;
 import java.util.Optional;
 import ksh.tryptobackend.regretanalysis.adapter.out.persistence.entity.RegretReportJpaEntity;
 import ksh.tryptobackend.regretanalysis.adapter.out.persistence.repository.RegretReportJpaRepository;
@@ -19,5 +20,13 @@ public class RegretReportQueryAdapter implements RegretReportQueryPort {
     @Transactional(readOnly = true)
     public Optional<RegretReport> findByRoundIdAndExchangeId(Long roundId, Long exchangeId) {
         return repository.findByRoundIdAndExchangeId(roundId, exchangeId).map(RegretReportJpaEntity::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RegretReport> findAllByRoundId(Long roundId) {
+        return repository.findAllByRoundId(roundId).stream()
+                .map(RegretReportJpaEntity::toDomain)
+                .toList();
     }
 }

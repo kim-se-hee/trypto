@@ -4,12 +4,15 @@ import java.util.List;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisActiveRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
+import ksh.tryptobackend.regretanalysis.domain.vo.EmergencyCharge;
 
 public interface InvestmentRoundQueryPort {
 
     AnalysisRound getRound(Long roundId);
 
     AnalysisRules findRules(Long roundId);
+
+    List<EmergencyCharge> findEmergencyCharges(Long roundId);
 
     List<AnalysisActiveRound> findActiveRounds();
 }

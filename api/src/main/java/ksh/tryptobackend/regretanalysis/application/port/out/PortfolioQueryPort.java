@@ -6,7 +6,7 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 
 public interface PortfolioQueryPort {
 
-    AssetTimeline getAssetTimeline(Long roundId, Long exchangeId);
+    AssetTimeline getRoundAssetTimeline(Long roundId);
 
     Optional<AssetSnapshot> findLatestSnapshot(Long roundId, Long exchangeId);
 }

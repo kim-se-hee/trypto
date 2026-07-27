@@ -495,26 +495,32 @@ private static final String[] PUBLIC_PATTERNS = {
 
 | 메서드 | 경로 | 인증 | 파라미터 | 응답 `data` |
 |---|---|---|---|---|
-| GET | `/api/rounds/{roundId}/regret` | 필요 | path `roundId`; query `exchangeId: long`(필수) | `RegretReportResponse` |
-| GET | `/api/rounds/{roundId}/regret/chart` | 필요 | path `roundId`; query `exchangeId: long`(필수) | `RegretChartResponse` |
+| GET | `/api/rounds/{roundId}/regret` | 필요 | path `roundId` | `RegretReportResponse` |
+| GET | `/api/rounds/{roundId}/regret/chart` | 필요 | path `roundId` | `RegretChartResponse` |
 
-두 요청 모두 세션 인증이 필요하고, 라운드 소유자가 아니면 서버가 거부한다(`round.validateOwnedBy(userId)`). 해당 라운드에 그 거래소 지갑이 없으면 `WALLET_NOT_FOUND`(`GetRegretReportService.java:34-36`).
+두 요청 모두 세션 인증이 필요하고, 라운드 소유자가 아니면 서버가 거부한다(`round.validateOwnedBy(userId)`).
 
-**RegretReportResponse** (`regretanalysis/adapter/in/dto/response/RegretReportResponse.java:9-88`)
+복기는 **라운드 단위**다. 거래소를 가려서 조회하지 않으며, 서버가 라운드에 속한 거래소를 모두 합쳐 내린다. 요약·규칙별 손실·자산 곡선의 금액은 전부 원화이고, 바이낸스(USDT) 몫은 고정 환율 1 USDT = 1,400원으로 환산해 더한다. 거래소 기축통화는 위반 거래 한 건 한 건에만 남는다.
+
+**RegretReportResponse** (`regretanalysis/adapter/in/dto/response/RegretReportResponse.java`)
 
 | 필드 | 타입 | 웹 프론트 사용 여부 |
 |---|---|---|
-| `reportId`, `roundId`, `exchangeId`, `exchangeName`, `currency`, `analysisStart`, `analysisEnd` | long / string / LocalDate | 미사용 |
+| `roundId`, `analysisStart`, `analysisEnd` | long / LocalDate | 미사용 |
 | `totalViolations` | int | 사용 |
-| `missedProfit`, `actualAsset`, `ruleFollowedAsset` | BigDecimal | 사용 |
-| `ruleImpacts[]` | `{ ruleImpactId, ruleId, ruleType: string, thresholdValue, thresholdUnit: string, violationCount: int, totalLossAmount }` | `ruleType`, `thresholdValue`, `violationCount` 만 사용 |
-| `violationDetails[]` | `{ violationDetailId, orderId, coinSymbol, violatedRules: string[], profitLoss, occurredAt: LocalDateTime }` | 전부 사용 |
+| `totalViolationLoss`, `actualAsset`, `ruleFollowedAsset` | BigDecimal | 사용 |
+| `ruleImpacts[]` | `{ ruleId, ruleType: string, thresholdValue, thresholdUnit: string, violationCount: int, totalLossAmount }` | `ruleType`, `thresholdValue`, `violationCount`, `totalLossAmount` 사용 |
+| `violationDetails[]` | `{ violationDetailId, orderId, exchangeId, exchangeName, currency, coinSymbol, violatedRules: [{ ruleType, lossAmount, lossAmountKrw }], totalLossAmount, totalLossAmountKrw, occurredAt: LocalDateTime }` | 전부 사용 |
 
-`ruleType` 과 `violatedRules` 는 **enum 이름 문자열**(`LOSS_CUT` 등)로 직렬화된다. `exchangeName`·`currency`·`analysisStart/End`·`totalLossAmount` 은 웹이 쓰지 않으므로, Flutter 에서는 이를 노출해 정보량을 늘릴 수 있다(§6 참조).
+`ruleType` 은 **enum 이름 문자열**(`LOSS_CUT` 등)로 직렬화된다.
 
-**RegretChartResponse** (`RegretChartResponse.java:8-31`): `roundId, exchangeId, exchangeName, currency, totalDays: int, assetHistory: [{ snapshotDate: yyyy-MM-dd, actualAsset, ruleFollowedAsset, btcHoldAsset }], violationMarkers: [{ snapshotDate, assetValue }]`. 프론트는 서버가 주는 `totalDays` 를 무시하고 `assetHistory.length` 로 다시 계산한다(`regret-api.ts:142`).
+`totalViolationLoss` 와 `lossAmount` 계열은 모두 **위반 손실**이라 **양수가 손해**다. 음수면 원칙을 어긴 쪽이 오히려 이득이었던 경우이며 서버는 0으로 보정하지 않는다. 화면은 부호에 따라 문구를 바꿔야 한다.
 
-리포트는 **야간 배치 산출물**이다. 배치 전에는 서버가 0으로 채운 빈 리포트를 200 으로 반환한다(`GetRegretReportService.java:40-42`, `RegretReport.empty(...)`).
+`ruleImpacts[]` 는 거래소별 행을 원칙 기준으로 더한 결과라 행 식별자가 없다. 원칙은 `ruleId` 로 구분한다.
+
+**RegretChartResponse** (`RegretChartResponse.java`): `roundId, totalDays: int, assetHistory: [{ snapshotDate: yyyy-MM-dd, actualAsset, ruleFollowedAsset, btcHoldAsset }], violationMarkers: [{ snapshotDate, assetValue }]`. `totalDays` 는 첫 스냅샷과 마지막 스냅샷의 날짜 차이 + 1 이라 `assetHistory` 개수와 다를 수 있다.
+
+리포트는 **야간 배치 산출물**이다. 배치 전에는 서버가 0으로 채운 빈 리포트를 200 으로 반환한다. 이때 합칠 리포트가 없어 `analysisStart`·`analysisEnd` 가 null 이며, 이것이 집계 전 판별식이 된다.
 
 #### 1.6.9 시세 메타·캔들 (ExchangeCoinController / CandleController)
 

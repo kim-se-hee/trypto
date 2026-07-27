@@ -65,7 +65,7 @@ ACTIVE 라운드의 거래소별 일별 자산 상태를 캡처한다. 이 스�
 |------|----------|
 | 랭킹 | `SUM(total_asset_krw) GROUP BY user_id` — 전 거래소 KRW 합산 |
 | 랭커 포트폴리오 | 최신 snapshot_date의 DETAIL — 코인별 상세 |
-| 후회 그래프 | `WHERE exchange_id = ? ORDER BY snapshot_date` — 거래소별 일별 시계열 |
+| 후회 그래프 | `SUM(total_asset_krw) WHERE round_id = ? GROUP BY snapshot_date` — 라운드 전체의 일별 시계열 |
 | 후회 리포트 | `WHERE exchange_id = ? ORDER BY snapshot_date DESC LIMIT 1` — 거래소별 마지막 자산 |
 
 ## ENDED 라운드 처리
