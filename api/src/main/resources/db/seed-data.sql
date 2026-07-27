@@ -5,12 +5,15 @@
 INSERT IGNORE INTO coin (coin_id, symbol, name) VALUES
     (1, 'KRW', '원화'),
     (2, 'BTC', '비트코인'),
-    (3, 'ETH', '이더리움');
+    (3, 'ETH', '이더리움'),
+    (4, 'USDT', '테더');
 
+-- 바이낸스의 기축통화는 USDT 다 (application.yml 의 exchanges 설정과 동일).
+-- KRW 로 시드하면 원화 환산이 필요한 시나리오가 환산 없이도 통과해 버려 검증이 헛돈다.
 INSERT IGNORE INTO exchange_market (exchange_id, name, market_type, base_currency_coin_id, fee_rate) VALUES
     (1, 'UPBIT', 'DOMESTIC', 1, 0.000500),
     (2, 'BITHUMB', 'DOMESTIC', 1, 0.002500),
-    (3, 'BINANCE', 'OVERSEAS', 1, 0.001000);
+    (3, 'BINANCE', 'OVERSEAS', 4, 0.001000);
 
 -- 빗썸(2)은 BTC 만 상장한다. 거래소마다 상장 코인이 다른 상황을 시나리오에서 재현하기 위함이다.
 -- status 는 기본값이 없는 ENUM 이라 생략하면 MySQL 이 목록의 첫 값인 SUSPENDED 를 넣는다.
