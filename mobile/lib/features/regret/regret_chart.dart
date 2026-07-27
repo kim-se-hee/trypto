@@ -55,7 +55,8 @@ class _RegretAssetChartState extends State<RegretAssetChart> {
 
     final theme = Theme.of(context);
     final colors = context.tryptoColors;
-    final currency = widget.chart.currency;
+    // 라운드에 속한 거래소를 합친 곡선이라 통화는 언제나 원화다.
+    const currency = roundCurrency;
 
     final actual = [for (final point in history) point.actualAsset];
     final simulation = simulationLine(
@@ -328,8 +329,10 @@ class _ValuePanel extends StatelessWidget {
               ),
               const Spacer(),
               if (violated)
+                // 마커는 그날 원칙을 어겼다는 사실만 알린다. 어떤 원칙을 얼마나 어겼는지는
+                // 아래 위반 거래 목록이 맡는다.
                 Text(
-                  '규칙 위반 (손실)',
+                  '규칙 위반',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: colors.negative,
                   ),

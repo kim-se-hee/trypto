@@ -8,11 +8,8 @@ part of 'regret.dart';
 
 RegretReport _$RegretReportFromJson(Map<String, dynamic> json) => RegretReport(
   roundId: (json['roundId'] as num).toInt(),
-  exchangeId: (json['exchangeId'] as num).toInt(),
-  exchangeName: json['exchangeName'] as String,
-  currency: json['currency'] as String,
   totalViolations: (json['totalViolations'] as num).toInt(),
-  missedProfit: (json['missedProfit'] as num).toDouble(),
+  totalViolationLoss: (json['totalViolationLoss'] as num).toDouble(),
   actualAsset: (json['actualAsset'] as num).toDouble(),
   ruleFollowedAsset: (json['ruleFollowedAsset'] as num).toDouble(),
   ruleImpacts: (json['ruleImpacts'] as List<dynamic>)
@@ -21,7 +18,6 @@ RegretReport _$RegretReportFromJson(Map<String, dynamic> json) => RegretReport(
   violationDetails: (json['violationDetails'] as List<dynamic>)
       .map((e) => ViolationDetail.fromJson(e as Map<String, dynamic>))
       .toList(),
-  reportId: (json['reportId'] as num?)?.toInt(),
   analysisStart: const NullableLocalDateConverter().fromJson(
     json['analysisStart'] as String?,
   ),
@@ -32,7 +28,6 @@ RegretReport _$RegretReportFromJson(Map<String, dynamic> json) => RegretReport(
 
 RuleImpact _$RuleImpactFromJson(Map<String, dynamic> json) => RuleImpact(
   violationCount: (json['violationCount'] as num).toInt(),
-  ruleImpactId: (json['ruleImpactId'] as num?)?.toInt(),
   ruleId: (json['ruleId'] as num?)?.toInt(),
   ruleType: $enumDecodeNullable(
     _$RuleTypeEnumMap,
@@ -60,16 +55,21 @@ ViolatedRule _$ViolatedRuleFromJson(Map<String, dynamic> json) => ViolatedRule(
     unknownValue: RuleType.unknown,
   ),
   lossAmount: (json['lossAmount'] as num).toDouble(),
+  lossAmountKrw: (json['lossAmountKrw'] as num).toDouble(),
 );
 
 ViolationDetail _$ViolationDetailFromJson(Map<String, dynamic> json) =>
     ViolationDetail(
       violationDetailId: (json['violationDetailId'] as num).toInt(),
+      exchangeId: (json['exchangeId'] as num).toInt(),
+      exchangeName: json['exchangeName'] as String,
+      currency: json['currency'] as String,
       coinSymbol: json['coinSymbol'] as String,
       violatedRules: (json['violatedRules'] as List<dynamic>)
           .map((e) => ViolatedRule.fromJson(e as Map<String, dynamic>))
           .toList(),
-      profitLoss: (json['profitLoss'] as num).toDouble(),
+      totalLossAmount: (json['totalLossAmount'] as num).toDouble(),
+      totalLossAmountKrw: (json['totalLossAmountKrw'] as num).toDouble(),
       occurredAt: const KstDateTimeConverter().fromJson(
         json['occurredAt'] as String,
       ),
@@ -78,9 +78,6 @@ ViolationDetail _$ViolationDetailFromJson(Map<String, dynamic> json) =>
 
 RegretChart _$RegretChartFromJson(Map<String, dynamic> json) => RegretChart(
   roundId: (json['roundId'] as num).toInt(),
-  exchangeId: (json['exchangeId'] as num).toInt(),
-  exchangeName: json['exchangeName'] as String,
-  currency: json['currency'] as String,
   totalDays: (json['totalDays'] as num).toInt(),
   assetHistory: (json['assetHistory'] as List<dynamic>)
       .map((e) => AssetHistoryPoint.fromJson(e as Map<String, dynamic>))
