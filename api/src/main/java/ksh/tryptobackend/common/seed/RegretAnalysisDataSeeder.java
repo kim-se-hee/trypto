@@ -113,7 +113,6 @@ class RegretAnalysisDataSeeder {
                     ruleIds.get(i % ruleIds.size()),
                     coinId,
                     new BigDecimal((i + 1) * 30000),
-                    new BigDecimal((i + 1) * -10000),
                     LocalDateTime.now().minusDays(i + 1)));
         }
         return details;

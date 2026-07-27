@@ -6,45 +6,40 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import ksh.tryptobackend.regretanalysis.domain.model.AssetSnapshot;
 
 public final class AssetTimeline {
 
-    private final List<AssetSnapshot> snapshots;
+    private final List<DailyAsset> dailyAssets;
 
-    private AssetTimeline(List<AssetSnapshot> snapshots) {
-        this.snapshots = snapshots;
+    private AssetTimeline(List<DailyAsset> dailyAssets) {
+        this.dailyAssets = List.copyOf(dailyAssets);
     }
 
-    public static AssetTimeline of(List<AssetSnapshot> snapshots) {
-        return new AssetTimeline(snapshots);
+    public static AssetTimeline of(List<DailyAsset> dailyAssets) {
+        return new AssetTimeline(dailyAssets);
     }
 
     public boolean isEmpty() {
-        return snapshots.isEmpty();
+        return dailyAssets.isEmpty();
     }
 
     public List<LocalDate> getDates() {
-        return snapshots.stream().map(AssetSnapshot::getSnapshotDate).toList();
+        return dailyAssets.stream().map(DailyAsset::date).toList();
     }
 
     public Optional<BigDecimal> findAssetAt(LocalDate date) {
-        return snapshots.stream()
-                .filter(s -> s.getSnapshotDate().equals(date))
+        return dailyAssets.stream()
+                .filter(dailyAsset -> dailyAsset.date().equals(date))
                 .findFirst()
-                .map(AssetSnapshot::getTotalAsset);
-    }
-
-    public BigDecimal getSeedMoney() {
-        return snapshots.getFirst().getTotalAsset();
+                .map(DailyAsset::amount);
     }
 
     public LocalDate getStartDate() {
-        return snapshots.getFirst().getSnapshotDate();
+        return dailyAssets.getFirst().date();
     }
 
     public LocalDate getEndDate() {
-        return snapshots.getLast().getSnapshotDate();
+        return dailyAssets.getLast().date();
     }
 
     public int calculateTotalDays() {
@@ -54,19 +49,19 @@ public final class AssetTimeline {
         return (int) ChronoUnit.DAYS.between(getStartDate(), getEndDate()) + 1;
     }
 
-    public List<AssetSnapshot> getSnapshots() {
-        return snapshots;
+    public List<DailyAsset> getDailyAssets() {
+        return dailyAssets;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AssetTimeline that)) return false;
-        return Objects.equals(snapshots, that.snapshots);
+        return Objects.equals(dailyAssets, that.dailyAssets);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(snapshots);
+        return Objects.hash(dailyAssets);
     }
 }

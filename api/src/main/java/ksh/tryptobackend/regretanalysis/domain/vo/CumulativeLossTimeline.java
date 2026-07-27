@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 
 public final class CumulativeLossTimeline {
 
@@ -23,23 +22,22 @@ public final class CumulativeLossTimeline {
         this.entryByDate = entries.stream().collect(Collectors.toMap(DailyLoss::date, Function.identity()));
     }
 
-    public static CumulativeLossTimeline build(List<ViolationDetail> violations, List<LocalDate> snapshotDates) {
-        List<ViolationDetail> sortedViolations = violations.stream()
-                .sorted(Comparator.comparing(ViolationDetail::getOccurredDate))
+    public static CumulativeLossTimeline build(List<ViolationLoss> losses, List<LocalDate> dates) {
+        List<ViolationLoss> sortedLosses = losses.stream()
+                .sorted(Comparator.comparing(ViolationLoss::occurredDate))
                 .toList();
 
         List<DailyLoss> result = new ArrayList<>();
         BigDecimal cumulativeLoss = BigDecimal.ZERO;
-        int violationIndex = 0;
+        int lossIndex = 0;
 
-        for (LocalDate snapshotDate : snapshotDates) {
-            while (violationIndex < sortedViolations.size()
-                    && !sortedViolations.get(violationIndex).getOccurredDate().isAfter(snapshotDate)) {
-                cumulativeLoss =
-                        cumulativeLoss.add(sortedViolations.get(violationIndex).getLossAmount());
-                violationIndex++;
+        for (LocalDate date : dates) {
+            while (lossIndex < sortedLosses.size()
+                    && !sortedLosses.get(lossIndex).occurredDate().isAfter(date)) {
+                cumulativeLoss = cumulativeLoss.add(sortedLosses.get(lossIndex).amountKrw());
+                lossIndex++;
             }
-            result.add(new DailyLoss(snapshotDate, cumulativeLoss));
+            result.add(new DailyLoss(date, cumulativeLoss));
         }
         return new CumulativeLossTimeline(result);
     }

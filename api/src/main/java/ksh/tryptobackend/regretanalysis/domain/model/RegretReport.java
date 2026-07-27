@@ -17,7 +17,7 @@ public class RegretReport {
     private final Long roundId;
     private final Long exchangeId;
     private final int totalViolations;
-    private final BigDecimal missedProfit;
+    private final BigDecimal totalViolationLoss;
     private final BigDecimal actualAsset;
     private final BigDecimal ruleFollowedAsset;
     private final LocalDate analysisStart;
@@ -36,16 +36,16 @@ public class RegretReport {
             LocalDate analysisStart,
             Clock clock) {
         BigDecimal actualAsset = snapshot.getTotalAsset();
-        BigDecimal missedProfit = sumLossAmounts(violationDetails);
+        BigDecimal totalViolationLoss = sumLossAmounts(violationDetails);
 
         return RegretReport.builder()
                 .userId(userId)
                 .roundId(roundId)
                 .exchangeId(exchangeId)
                 .totalViolations(violationDetails.size())
-                .missedProfit(missedProfit)
+                .totalViolationLoss(totalViolationLoss)
                 .actualAsset(actualAsset)
-                .ruleFollowedAsset(actualAsset.add(missedProfit))
+                .ruleFollowedAsset(actualAsset.add(totalViolationLoss))
                 .analysisStart(analysisStart)
                 .analysisEnd(LocalDate.now(clock))
                 .createdAt(LocalDateTime.now(clock))
@@ -54,23 +54,9 @@ public class RegretReport {
                 .build();
     }
 
-    public static RegretReport empty(Long roundId, Long exchangeId) {
-        return RegretReport.builder()
-                .roundId(roundId)
-                .exchangeId(exchangeId)
-                .totalViolations(0)
-                .missedProfit(BigDecimal.ZERO)
-                .actualAsset(BigDecimal.ZERO)
-                .ruleFollowedAsset(BigDecimal.ZERO)
-                .ruleImpacts(List.of())
-                .violationDetails(new ViolationDetails(List.of()))
-                .build();
-    }
-
+    /** 위반 손실은 양수가 손해다. 원칙을 어긴 쪽이 오히려 이득이었으면 음수 그대로 남겨 화면이 그 사실을 말할 수 있게 한다. */
     private static BigDecimal sumLossAmounts(List<ViolationDetail> violationDetails) {
-        BigDecimal sum =
-                violationDetails.stream().map(ViolationDetail::getLossAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return sum.max(BigDecimal.ZERO);
+        return violationDetails.stream().map(ViolationDetail::getLossAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public static RegretReport reconstitute(
@@ -79,7 +65,7 @@ public class RegretReport {
             Long roundId,
             Long exchangeId,
             int totalViolations,
-            BigDecimal missedProfit,
+            BigDecimal totalViolationLoss,
             BigDecimal actualAsset,
             BigDecimal ruleFollowedAsset,
             LocalDate analysisStart,
@@ -93,7 +79,7 @@ public class RegretReport {
                 .roundId(roundId)
                 .exchangeId(exchangeId)
                 .totalViolations(totalViolations)
-                .missedProfit(missedProfit)
+                .totalViolationLoss(totalViolationLoss)
                 .actualAsset(actualAsset)
                 .ruleFollowedAsset(ruleFollowedAsset)
                 .analysisStart(analysisStart)

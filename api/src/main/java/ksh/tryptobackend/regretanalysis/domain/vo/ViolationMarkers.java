@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
 
 public final class ViolationMarkers {
 
@@ -16,9 +15,10 @@ public final class ViolationMarkers {
         this.markers = markers;
     }
 
-    public static ViolationMarkers from(List<ViolationDetail> violations, AssetTimeline timeline) {
+    /** 거래소가 다르고 어긴 원칙이 달라도 같은 날이면 마커 하나다. 마커는 그날 원칙을 어겼다는 사실만 알리기 때문이다. */
+    public static ViolationMarkers from(List<ViolationLoss> losses, AssetTimeline timeline) {
         Set<LocalDate> violationDates =
-                violations.stream().map(ViolationDetail::getOccurredDate).collect(Collectors.toSet());
+                losses.stream().map(ViolationLoss::occurredDate).collect(Collectors.toSet());
 
         List<ViolationMarker> markers = violationDates.stream()
                 .sorted()

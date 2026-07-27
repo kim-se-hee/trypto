@@ -3,44 +3,34 @@ package ksh.tryptobackend.regretanalysis.application.port.in.dto.result;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
-import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
 import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcBenchmark;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrices;
+import ksh.tryptobackend.regretanalysis.domain.vo.CapitalInflows;
 import ksh.tryptobackend.regretanalysis.domain.vo.CumulativeLossTimeline;
+import ksh.tryptobackend.regretanalysis.domain.vo.DailyAsset;
+import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLoss;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationMarkers;
 
 public record RegretChartResult(
-        Long roundId,
-        Long exchangeId,
-        String exchangeName,
-        String currency,
-        int totalDays,
-        List<DailyComparison> assetHistory,
-        List<ViolationMarkerPoint> violationMarkers) {
+        Long roundId, int totalDays, List<DailyComparison> assetHistory, List<ViolationMarkerPoint> violationMarkers) {
 
-    public static RegretChartResult empty(Long roundId, AnalysisExchange exchange) {
-        return new RegretChartResult(
-                roundId, exchange.exchangeId(), exchange.name(), exchange.currency(), 0, List.of(), List.of());
+    public static RegretChartResult empty(Long roundId) {
+        return new RegretChartResult(roundId, 0, List.of(), List.of());
     }
 
     public static RegretChartResult from(
             Long roundId,
-            AnalysisExchange exchange,
             AssetTimeline timeline,
+            CapitalInflows capitalInflows,
             BtcDailyPrices btcDailyPrices,
-            List<ViolationDetail> violations) {
-        CumulativeLossTimeline lossTimeline = CumulativeLossTimeline.build(violations, timeline.getDates());
-        BtcBenchmark btcBenchmark = BtcBenchmark.calculate(
-                timeline.getSeedMoney(), btcDailyPrices.toMap(), timeline.getDates(), timeline.getStartDate());
-        ViolationMarkers violationMarkers = ViolationMarkers.from(violations, timeline);
+            List<ViolationLoss> violationLosses) {
+        CumulativeLossTimeline lossTimeline = CumulativeLossTimeline.build(violationLosses, timeline.getDates());
+        BtcBenchmark btcBenchmark = BtcBenchmark.calculate(capitalInflows, btcDailyPrices, timeline.getDates());
+        ViolationMarkers violationMarkers = ViolationMarkers.from(violationLosses, timeline);
 
         return new RegretChartResult(
                 roundId,
-                exchange.exchangeId(),
-                exchange.name(),
-                exchange.currency(),
                 timeline.calculateTotalDays(),
                 toAssetHistory(timeline, lossTimeline, btcBenchmark),
                 toViolationMarkerPoints(violationMarkers));
@@ -48,17 +38,19 @@ public record RegretChartResult(
 
     private static List<DailyComparison> toAssetHistory(
             AssetTimeline timeline, CumulativeLossTimeline lossTimeline, BtcBenchmark btcBenchmark) {
-        return timeline.getSnapshots().stream()
-                .map(snapshot -> {
-                    LocalDate date = snapshot.getSnapshotDate();
-                    BigDecimal actualAsset = snapshot.getTotalAsset();
-                    return new DailyComparison(
-                            date,
-                            actualAsset,
-                            lossTimeline.calculateRuleFollowedAsset(actualAsset, date),
-                            btcBenchmark.getAssetValueAt(date));
-                })
+        return timeline.getDailyAssets().stream()
+                .map(dailyAsset -> toDailyComparison(dailyAsset, lossTimeline, btcBenchmark))
                 .toList();
+    }
+
+    private static DailyComparison toDailyComparison(
+            DailyAsset dailyAsset, CumulativeLossTimeline lossTimeline, BtcBenchmark btcBenchmark) {
+        LocalDate date = dailyAsset.date();
+        return new DailyComparison(
+                date,
+                dailyAsset.amount(),
+                lossTimeline.calculateRuleFollowedAsset(dailyAsset.amount(), date),
+                btcBenchmark.getAssetValueAt(date));
     }
 
     private static List<ViolationMarkerPoint> toViolationMarkerPoints(ViolationMarkers violationMarkers) {

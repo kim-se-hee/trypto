@@ -4,9 +4,11 @@ import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.in.FindActiveRoundsUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.FindEmergencyFundingsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.FindInvestmentRulesUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.ActiveRoundResult;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.EmergencyFundingResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.InvestmentRuleResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
 import ksh.tryptobackend.regretanalysis.application.port.out.InvestmentRoundQueryPort;
@@ -15,6 +17,7 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRoundStatus;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRule;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
+import ksh.tryptobackend.regretanalysis.domain.vo.EmergencyCharge;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +27,7 @@ public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentR
 
     private final FindRoundInfoUseCase findRoundInfoUseCase;
     private final FindInvestmentRulesUseCase findInvestmentRulesUseCase;
+    private final FindEmergencyFundingsUseCase findEmergencyFundingsUseCase;
     private final FindActiveRoundsUseCase findActiveRoundsUseCase;
 
     @Override
@@ -39,6 +43,13 @@ public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentR
         return new AnalysisRules(findInvestmentRulesUseCase.findByRoundId(roundId).stream()
                 .map(this::toAnalysisRule)
                 .toList());
+    }
+
+    @Override
+    public List<EmergencyCharge> findEmergencyCharges(Long roundId) {
+        return findEmergencyFundingsUseCase.findByRoundId(roundId).stream()
+                .map(this::toEmergencyCharge)
+                .toList();
     }
 
     @Override
@@ -60,6 +71,10 @@ public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentR
 
     private AnalysisRule toAnalysisRule(InvestmentRuleResult result) {
         return new AnalysisRule(result.ruleId(), result.ruleType(), result.thresholdValue());
+    }
+
+    private EmergencyCharge toEmergencyCharge(EmergencyFundingResult result) {
+        return new EmergencyCharge(result.chargedAt().toLocalDate(), result.amount());
     }
 
     private AnalysisActiveRound toAnalysisActiveRound(ActiveRoundResult result) {

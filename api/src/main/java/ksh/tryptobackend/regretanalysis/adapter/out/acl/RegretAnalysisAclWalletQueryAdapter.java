@@ -15,11 +15,6 @@ public class RegretAnalysisAclWalletQueryAdapter implements WalletQueryPort {
     private final FindWalletUseCase findWalletUseCase;
 
     @Override
-    public boolean existsWallet(Long roundId, Long exchangeId) {
-        return findWalletUseCase.findByRoundIdAndExchangeId(roundId, exchangeId).isPresent();
-    }
-
-    @Override
     public List<AnalysisWallet> findWallets(Long roundId) {
         return findWalletUseCase.findByRoundId(roundId).stream()
                 .map(this::toAnalysisWallet)
