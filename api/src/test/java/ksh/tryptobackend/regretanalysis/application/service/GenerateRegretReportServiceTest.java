@@ -64,7 +64,7 @@ class GenerateRegretReportServiceTest {
 
         assertThat(report).isPresent();
         assertThat(report.get().getTotalViolations()).isZero();
-        assertThat(report.get().getMissedProfit()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(report.get().getTotalViolationLoss()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(report.get().getRuleImpacts()).isEmpty();
         assertThat(report.get().getViolationDetails().toList()).isEmpty();
     }
