@@ -73,5 +73,8 @@ public class Position {
 
     private void applySell(ExecutedFill fill) {
         this.holding = holding.reduce(fill.quantity());
+        if (!holding.isHolding()) {
+            this.averagingDownCount = 0;
+        }
     }
 }
