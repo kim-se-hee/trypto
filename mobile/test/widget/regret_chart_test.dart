@@ -7,9 +7,6 @@ import 'package:trypto/models/regret.dart';
 
 RegretChart _chart(int days) => RegretChart(
   roundId: 1,
-  exchangeId: 1,
-  exchangeName: '업비트',
-  currency: 'KRW',
   totalDays: days,
   assetHistory: [
     for (var i = 0; i < days; i++)
