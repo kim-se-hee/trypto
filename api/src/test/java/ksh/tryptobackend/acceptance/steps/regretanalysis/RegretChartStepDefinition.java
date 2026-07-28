@@ -179,12 +179,14 @@ public class RegretChartStepDefinition {
                 DAY1.atStartOfDay());
     }
 
-    /** 긴급 충전은 현금이 들어오는 국내 거래소로만 들어온다. BTC 홀드 벤치마크는 이 금액을 충전일 종가로 추가 매수한 것으로 본다. */
+    /** BTC 홀드 벤치마크는 긴급 충전 금액을 충전일 종가로 추가 매수한 것으로 본다. 원화 충전이라 환산액은 투입 금액과 같다. */
     private void insertEmergencyFunding() {
         jdbcTemplate.update(
-                "INSERT INTO emergency_funding (round_id, exchange_id, amount, created_at)" + " VALUES (?, ?, ?, ?)",
+                "INSERT INTO emergency_funding (round_id, exchange_id, amount, krw_converted_amount, created_at)"
+                        + " VALUES (?, ?, ?, ?, ?)",
                 ROUND_ID,
                 EXCHANGE_ID_UPBIT,
+                new BigDecimal("400000.00000000"),
                 new BigDecimal("400000.00000000"),
                 DAY2.atTime(9, 0));
     }
