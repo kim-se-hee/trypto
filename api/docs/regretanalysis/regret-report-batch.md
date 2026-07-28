@@ -16,7 +16,7 @@ SnapshotJob 완료 직후
 
 | Step | Reader | Processor | Writer |
 |------|--------|-----------|--------|
-| reportStep | ACTIVE 라운드의 위반 기록 + 주문 이력 | 위반분 우선 매칭, loss 계산, 규칙별 손실 집계 | REGRET_REPORT + RULE_IMPACT + VIOLATION_DETAIL 저장 |
+| reportStep | ACTIVE 라운드의 위반 기록 + 주문 이력 | 위반분 우선 매칭, loss 계산(실현분/미실현분 분리), 규칙별 손실 집계 | REGRET_REPORT + RULE_IMPACT + VIOLATION_DETAIL + VIOLATION_REALIZATION 저장 |
 
 ## 처리 절차
 
@@ -24,9 +24,10 @@ SnapshotJob 완료 직후
    - 최신 스냅샷을 조회한다. 스냅샷이 없으면 해당 건은 생성하지 않고 건너뛴다
    - 투자 원칙, 위반 기록, 주문 체결 이력을 조회한다
    - 위반분 우선 매칭으로 `loss_amount`를 계산한다 ([business-rules.md](business-rules.md) 참조)
+   - 매칭 결과에 따라 위반 손익을 실현분과 미실현분으로 분리하고, 실현분은 매칭된 매도의 체결일 기준으로 실현일별 금액을 `VIOLATION_REALIZATION`에 남긴다. 부분 실현이 여러 날에 걸치면 실현일도 여러 개다. 미실현분은 `loss_amount`에서 실현분 합을 뺀 값이다
    - 규칙별 손실을 집계한다 (원칙별 위반 횟수·총 위반 손실)
-   - 위반 손실 합에서 `totalViolationLoss`를, 최신 스냅샷의 총 자산에서 `actualAsset`을 구해 `ruleFollowedAsset`을 산출한다
-2. `REGRET_REPORT` + `RULE_IMPACT` + `VIOLATION_DETAIL`를 upsert한다
+   - 위반 손실 합에서 `totalViolationLoss`를, 최신 스냅샷의 총 자산에서 `actualAsset`을 구한다. 원칙 준수 시 자산은 라운드 단위 원화 자산과 누적 배수로만 정의되므로 거래소 단위 리포트에서는 산출하지 않는다 (조회 시점의 몫)
+2. `REGRET_REPORT` + `RULE_IMPACT` + `VIOLATION_DETAIL` + `VIOLATION_REALIZATION`을 upsert한다
 
 금액은 해당 거래소의 기축통화 단위(국내: KRW, 바이낸스: USDT)로 저장한다. 원화 환산과 라운드 단위 합산은 조회 시점의 몫이다.
 
@@ -34,7 +35,7 @@ SnapshotJob 완료 직후
 
 리포트 생성 여부는 위반 유무가 아니라 **스냅샷 유무**로 결정한다.
 
-- 위반이 0건이어도 스냅샷이 있으면 리포트를 생성한다. 이때 `totalViolations`, `totalViolationLoss`는 0이고 `ruleFollowedAsset`은 `actualAsset`과 같으며, `RULE_IMPACT`와 `VIOLATION_DETAIL`은 빈 목록이다. 원칙을 모두 준수한 사용자도 복기 화면에서 자산 추이와 BTC 벤치마크를 확인할 수 있어야 하기 때문이다
+- 위반이 0건이어도 스냅샷이 있으면 리포트를 생성한다. 이때 `totalViolations`, `totalViolationLoss`는 0이고, `RULE_IMPACT`와 `VIOLATION_DETAIL`은 빈 목록이다. 원칙을 모두 준수한 사용자도 복기 화면에서 자산 추이와 BTC 벤치마크를 확인할 수 있어야 하기 때문이다
 - 스냅샷이 없으면 리포트를 생성하지 않는다. 자산 추이를 그릴 근거가 없기 때문이다
 
 ## 갱신 정책
