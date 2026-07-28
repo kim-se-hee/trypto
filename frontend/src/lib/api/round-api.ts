@@ -1,4 +1,5 @@
-﻿import type { InvestmentRound, RuleType } from "@/lib/types/round";
+﻿import { EXCHANGES } from "@/lib/types/coins";
+import type { InvestmentRound, RuleType } from "@/lib/types/round";
 import { apiGet, apiPost } from "./client";
 import { toBackendRuleType, toFrontRuleType, type BackendRuleType } from "./mappers";
 import { isApiClientError } from "./types";
@@ -45,9 +46,14 @@ interface StartRoundRequestBody {
   rules: StartRoundRuleRequest[];
 }
 
+export interface CreateRoundSeedParams {
+  exchangeId: number;
+  amount: number;
+}
+
 export interface CreateRoundParams {
   userId: number;
-  initialSeed: number;
+  seeds: CreateRoundSeedParams[];
   emergencyFundingLimit: number;
   rules: Array<{
     ruleType: RuleType;
@@ -57,19 +63,23 @@ export interface CreateRoundParams {
 
 interface ChargeEmergencyFundingRequestBody {
   userId: number;
+  exchangeId: number;
   amount: number;
   idempotencyKey: string;
 }
 
 interface ChargeEmergencyFundingResponse {
   roundId: number;
+  exchangeId: number;
   chargedAmount: number;
+  krwConvertedAmount: number;
   remainingChargeCount: number;
 }
 
 export interface ChargeEmergencyFundingParams {
   roundId: number;
   userId: number;
+  exchangeId: number;
   amount: number;
   idempotencyKey: string;
 }
@@ -98,14 +108,14 @@ function mapRound(data: BackendRound): InvestmentRound {
 }
 
 function toStartRoundBody(params: CreateRoundParams): StartRoundRequestBody {
+  // 시드를 넣지 않은 거래소도 0원으로 보내야 송금받을 지갑이 만들어진다.
+  const amounts = new Map(params.seeds.map((seed) => [seed.exchangeId, seed.amount]));
   return {
     userId: params.userId,
-    // 시드머니는 업비트에만 넣을 수 있다. 나머지 거래소는 0원으로 보내 송금받을 지갑만 만든다.
-    seeds: [
-      { exchangeId: 1, amount: params.initialSeed },
-      { exchangeId: 2, amount: 0 },
-      { exchangeId: 3, amount: 0 },
-    ],
+    seeds: EXCHANGES.map((exchange) => ({
+      exchangeId: exchange.id,
+      amount: amounts.get(exchange.id) ?? 0,
+    })),
     emergencyFundingLimit: params.emergencyFundingLimit,
     rules: params.rules.map((rule) => ({
       ruleType: toBackendRuleType(rule.ruleType),
@@ -143,6 +153,7 @@ export async function chargeEmergencyFunding(
 ): Promise<ChargeEmergencyFundingResponse> {
   const requestBody: ChargeEmergencyFundingRequestBody = {
     userId: params.userId,
+    exchangeId: params.exchangeId,
     amount: params.amount,
     idempotencyKey: params.idempotencyKey,
   };

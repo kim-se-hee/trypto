@@ -10,6 +10,7 @@ import {
   type CreateRoundParams,
 } from "@/lib/api/round-api";
 import { fetchExchangeCoinsWithCache } from "@/lib/api/id-mapping";
+import { EXCHANGES } from "@/lib/types/coins";
 import { RoundContext } from "./RoundContext";
 
 export function RoundProvider({ children }: { children: ReactNode }) {
@@ -111,16 +112,21 @@ export function RoundProvider({ children }: { children: ReactNode }) {
   );
 
   const chargeEmergencyFunding = useCallback(
-    async (amount: number): Promise<boolean> => {
+    async (exchangeId: number, amount: number): Promise<boolean> => {
       if (!activeRound || !user) return false;
       if (activeRound.status !== "ACTIVE") return false;
       if (activeRound.emergencyChargeCount <= 0) return false;
-      if (amount <= 0 || amount > activeRound.emergencyFundingLimit) return false;
+      if (amount <= 0) return false;
+      // 상한은 원화 기준이다. USDT 투입은 서버가 시세로 환산해 검증하므로 여기서 막지 않는다.
+      const baseCurrency = EXCHANGES.find((exchange) => exchange.id === exchangeId)?.baseCurrency;
+      if (!baseCurrency) return false;
+      if (baseCurrency === "KRW" && amount > activeRound.emergencyFundingLimit) return false;
 
       try {
         const result = await chargeEmergencyFundingApi({
           roundId: activeRound.roundId,
           userId: user.userId,
+          exchangeId,
           amount,
           idempotencyKey: createIdempotencyKey(),
         });

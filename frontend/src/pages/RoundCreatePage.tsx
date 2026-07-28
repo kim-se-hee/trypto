@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { RoundCreateHeader } from "@/components/round/RoundCreateHeader";
-import { SeedMoneyCard } from "@/components/round/SeedMoneyCard";
+import { SeedMoneyCard, seedAmountError } from "@/components/round/SeedMoneyCard";
 import { InvestmentRulesSection } from "@/components/round/InvestmentRulesSection";
 import {
   getDefaultRules,
@@ -11,13 +11,16 @@ import {
   type RuleState,
   type SelectableRuleType,
 } from "@/components/round/rules";
+import { EXCHANGES } from "@/lib/types/coins";
 
 export function RoundCreatePage() {
   const { user } = useAuth();
   const { createRound } = useRound();
   const navigate = useNavigate();
 
-  const [seed, setSeed] = useState(0);
+  const [seeds, setSeeds] = useState<Record<number, number>>(
+    () => Object.fromEntries(EXCHANGES.map((exchange) => [exchange.id, 0])),
+  );
   const [emergencyLimit, setEmergencyLimit] = useState(0);
   const [rules, setRules] = useState<RulesMap>(getDefaultRules);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +37,16 @@ export function RoundCreatePage() {
   const enabledRules = (Object.entries(rules) as [SelectableRuleType, RuleState][]).filter(
     ([, r]) => r.enabled,
   );
-  const canSubmit = seed > 0 && emergencyLimit > 0 && enabledRules.length >= 1;
+  const seedEntries = EXCHANGES.map((exchange) => ({ exchange, amount: seeds[exchange.id] ?? 0 }));
+  const hasSeed = seedEntries.some((entry) => entry.amount > 0);
+  const allSeedsValid = seedEntries.every(
+    (entry) => seedAmountError(entry.exchange.baseCurrency, entry.amount) === null,
+  );
+  const canSubmit = hasSeed && allSeedsValid && emergencyLimit > 0 && enabledRules.length >= 1;
+
+  function handleSeedChange(exchangeId: number, value: number) {
+    setSeeds((prev) => ({ ...prev, [exchangeId]: value }));
+  }
 
   async function handleSubmit() {
     if (!canSubmit || !user) return;
@@ -44,7 +56,9 @@ export function RoundCreatePage() {
 
     const created = await createRound({
       userId: user.userId,
-      initialSeed: seed,
+      seeds: seedEntries
+        .filter((entry) => entry.amount > 0)
+        .map((entry) => ({ exchangeId: entry.exchange.id, amount: entry.amount })),
       emergencyFundingLimit: emergencyLimit,
       rules: enabledRules.map(([type, rule]) => ({
         ruleType: type,
@@ -80,8 +94,8 @@ export function RoundCreatePage() {
           <div>
             <h2 className="mb-4 text-lg font-extrabold tracking-tight">자금 설정</h2>
             <SeedMoneyCard
-              seed={seed}
-              onSeedChange={setSeed}
+              seeds={seeds}
+              onSeedChange={handleSeedChange}
               emergencyLimit={emergencyLimit}
               onEmergencyLimitChange={setEmergencyLimit}
             />
@@ -104,7 +118,7 @@ export function RoundCreatePage() {
 
             {!canSubmit && (
               <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                시드머니, 긴급 자금 상한, 투자 원칙 1개 이상 설정이 필요합니다.
+                시드머니(1개 거래소 이상), 긴급 자금 상한, 투자 원칙 1개 이상 설정이 필요합니다.
               </p>
             )}
 
