@@ -96,7 +96,7 @@ export function MeVsMe({
         <div className="space-y-2">
           {benchmarks.map((bm) => {
             const isEnabled = bm.id === "btc-hold" ? btcHoldEnabled : false;
-            const isPositive = bm.profitRate > 0;
+            const isPositive = bm.profitRate !== null && bm.profitRate > 0;
             return (
               <button
                 key={bm.id}
@@ -123,14 +123,16 @@ export function MeVsMe({
                 />
                 <span className="flex-1 text-sm font-medium">{bm.label}</span>
 
-                <span
-                  className={cn(
-                    "font-mono text-sm font-bold tabular-nums",
-                    isPositive ? "text-positive" : "text-negative",
-                  )}
-                >
-                  {isPositive ? "+" : ""}{bm.profitRate}%
-                </span>
+                {bm.profitRate !== null && (
+                  <span
+                    className={cn(
+                      "font-mono text-sm font-bold tabular-nums",
+                      isPositive ? "text-positive" : "text-negative",
+                    )}
+                  >
+                    {isPositive ? "+" : ""}{bm.profitRate.toFixed(2)}%
+                  </span>
+                )}
               </button>
             );
           })}

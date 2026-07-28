@@ -33,7 +33,8 @@ export interface BenchmarkItem {
   id: string;
   label: string;
   color: string;
-  profitRate: number;
+  /** 벤치마크 수익률(%). 계산 근거가 부족하면 null 이며, 이때는 수치를 표시하지 않는다. */
+  profitRate: number | null;
 }
 
 export type ViolationEmotion = "FOMO" | "감이 좋아서" | "복수 매매";
@@ -210,4 +211,12 @@ export function getTickInterval(totalDays: number): number {
   if (totalDays <= 60) return 7;
   if (totalDays <= 180) return 14;
   return 30;
+}
+
+/** BTC 홀드 벤치마크 수익률(%). 평가액이 2개 미만이거나 시작 평가액이 0 이면 계산할 수 없다. */
+export function btcHoldProfitRate(btcHoldValues: number[]): number | null {
+  if (btcHoldValues.length < 2) return null;
+  const first = btcHoldValues[0];
+  if (first === 0) return null;
+  return (btcHoldValues[btcHoldValues.length - 1] / first - 1) * 100;
 }
