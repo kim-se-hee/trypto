@@ -95,7 +95,7 @@ public class FindViolatedOrdersService implements FindViolatedOrdersUseCase {
         }
         return orderQueryPort.findFilledSellOrders(walletId, execution.exchangeCoinId(), execution.filledAt()).stream()
                 .map(FilledOrderResult::from)
-                .map(sell -> new SoldPortionResult(sell.filledPrice(), sell.quantity()))
+                .map(sell -> new SoldPortionResult(sell.filledPrice(), sell.quantity(), sell.filledAt()))
                 .toList();
     }
 }
