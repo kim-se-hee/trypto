@@ -56,9 +56,6 @@ public class RegretReportJpaEntity {
     @Column(name = "actual_asset", nullable = false, precision = 30, scale = 8)
     private BigDecimal actualAsset;
 
-    @Column(name = "rule_followed_asset", nullable = false, precision = 30, scale = 8)
-    private BigDecimal ruleFollowedAsset;
-
     @Column(name = "analysis_start", nullable = false)
     private LocalDate analysisStart;
 
@@ -85,7 +82,6 @@ public class RegretReportJpaEntity {
         entity.totalViolations = report.getTotalViolations();
         entity.totalViolationLoss = report.getTotalViolationLoss();
         entity.actualAsset = report.getActualAsset();
-        entity.ruleFollowedAsset = report.getRuleFollowedAsset();
         entity.analysisStart = report.getAnalysisStart();
         entity.analysisEnd = report.getAnalysisEnd();
         entity.createdAt = report.getCreatedAt();
@@ -103,7 +99,6 @@ public class RegretReportJpaEntity {
         this.totalViolations = report.getTotalViolations();
         this.totalViolationLoss = report.getTotalViolationLoss();
         this.actualAsset = report.getActualAsset();
-        this.ruleFollowedAsset = report.getRuleFollowedAsset();
         this.analysisStart = report.getAnalysisStart();
         this.analysisEnd = report.getAnalysisEnd();
 
@@ -140,7 +135,6 @@ public class RegretReportJpaEntity {
                 totalViolations,
                 totalViolationLoss,
                 actualAsset,
-                ruleFollowedAsset,
                 analysisStart,
                 analysisEnd,
                 createdAt,

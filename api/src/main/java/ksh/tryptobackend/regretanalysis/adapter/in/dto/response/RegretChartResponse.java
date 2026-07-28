@@ -6,7 +6,11 @@ import java.util.List;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult;
 
 public record RegretChartResponse(
-        Long roundId, int totalDays, List<AssetHistoryItem> assetHistory, List<ViolationMarkerItem> violationMarkers) {
+        Long roundId,
+        int totalDays,
+        List<AssetHistoryItem> assetHistory,
+        List<ViolationMarkerItem> violationMarkers,
+        List<EmergencyChargeItem> emergencyCharges) {
 
     public record AssetHistoryItem(
             LocalDate snapshotDate, BigDecimal actualAsset, BigDecimal ruleFollowedAsset, BigDecimal btcHoldAsset) {
@@ -24,6 +28,14 @@ public record RegretChartResponse(
         }
     }
 
+    /** 원칙 골라 보기가 배수를 다시 굴리려면 충전일과 금액이 필요하다. 충전은 위반과 무관한 새 돈이라 그날의 배수를 1 쪽으로 되돌린다. */
+    public record EmergencyChargeItem(LocalDate chargedDate, BigDecimal amount) {
+
+        public static EmergencyChargeItem from(RegretChartResult.EmergencyChargePoint result) {
+            return new EmergencyChargeItem(result.chargedDate(), result.amount());
+        }
+    }
+
     public static RegretChartResponse from(RegretChartResult result) {
         return new RegretChartResponse(
                 result.roundId(),
@@ -31,6 +43,9 @@ public record RegretChartResponse(
                 result.assetHistory().stream().map(AssetHistoryItem::from).toList(),
                 result.violationMarkers().stream()
                         .map(ViolationMarkerItem::from)
+                        .toList(),
+                result.emergencyCharges().stream()
+                        .map(EmergencyChargeItem::from)
                         .toList());
     }
 }

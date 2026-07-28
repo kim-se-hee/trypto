@@ -74,7 +74,6 @@ class RegretAnalysisDataSeeder {
                 totalViolations,
                 missedProfit,
                 actualAsset,
-                actualAsset.add(missedProfit),
                 today.minusDays(30),
                 today,
                 now,

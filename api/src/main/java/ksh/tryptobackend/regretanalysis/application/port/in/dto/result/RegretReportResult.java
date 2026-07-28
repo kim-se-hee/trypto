@@ -8,6 +8,7 @@ import java.util.Map;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.regretanalysis.domain.model.RoundRegretReport;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisExchange;
+import ksh.tryptobackend.regretanalysis.domain.vo.RealizedLoss;
 import ksh.tryptobackend.regretanalysis.domain.vo.RoundRuleImpact;
 import ksh.tryptobackend.regretanalysis.domain.vo.ThresholdUnit;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolatedRule;
@@ -69,7 +70,18 @@ public record RegretReportResult(
     }
 
     private static ViolatedRuleResult toViolatedRuleResult(ViolatedRule violatedRule) {
-        return new ViolatedRuleResult(violatedRule.ruleType(), violatedRule.lossAmount(), violatedRule.lossAmountKrw());
+        return new ViolatedRuleResult(
+                violatedRule.ruleType(),
+                violatedRule.lossAmount(),
+                violatedRule.lossAmountKrw(),
+                violatedRule.krwLoss().unrealizedAmount(),
+                violatedRule.krwLoss().realizedLosses().stream()
+                        .map(RegretReportResult::toRealizationResult)
+                        .toList());
+    }
+
+    private static RealizationResult toRealizationResult(RealizedLoss realizedLoss) {
+        return new RealizationResult(realizedLoss.realizedOn(), realizedLoss.amount());
     }
 
     public record RuleImpactResult(
@@ -80,7 +92,14 @@ public record RegretReportResult(
             int violationCount,
             BigDecimal totalLossAmount) {}
 
-    public record ViolatedRuleResult(RuleType ruleType, BigDecimal lossAmount, BigDecimal lossAmountKrw) {}
+    public record RealizationResult(LocalDate realizedOn, BigDecimal lossAmountKrw) {}
+
+    public record ViolatedRuleResult(
+            RuleType ruleType,
+            BigDecimal lossAmount,
+            BigDecimal lossAmountKrw,
+            BigDecimal unrealizedLossAmountKrw,
+            List<RealizationResult> realizations) {}
 
     public record ViolationDetailResult(
             Long violationDetailId,

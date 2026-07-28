@@ -56,10 +56,30 @@ public record RegretReportResponse(
         }
     }
 
-    public record ViolatedRuleResponse(String ruleType, BigDecimal lossAmount, BigDecimal lossAmountKrw) {
+    /** 매도로 확정된 위반 손실 한 조각. 원칙 골라 보기가 이 날짜로 배수를 만든다. */
+    public record RealizationResponse(LocalDate realizedOn, BigDecimal lossAmountKrw) {
+
+        public static RealizationResponse from(RegretReportResult.RealizationResult result) {
+            return new RealizationResponse(result.realizedOn(), result.lossAmountKrw());
+        }
+    }
+
+    public record ViolatedRuleResponse(
+            String ruleType,
+            BigDecimal lossAmount,
+            BigDecimal lossAmountKrw,
+            BigDecimal unrealizedLossAmountKrw,
+            List<RealizationResponse> realizations) {
 
         public static ViolatedRuleResponse from(RegretReportResult.ViolatedRuleResult result) {
-            return new ViolatedRuleResponse(result.ruleType().name(), result.lossAmount(), result.lossAmountKrw());
+            return new ViolatedRuleResponse(
+                    result.ruleType().name(),
+                    result.lossAmount(),
+                    result.lossAmountKrw(),
+                    result.unrealizedLossAmountKrw(),
+                    result.realizations().stream()
+                            .map(RealizationResponse::from)
+                            .toList());
         }
     }
 

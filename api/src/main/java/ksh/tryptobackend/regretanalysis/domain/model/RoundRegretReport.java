@@ -28,6 +28,7 @@ public class RoundRegretReport {
             int totalViolations,
             BigDecimal totalViolationLoss,
             BigDecimal actualAsset,
+            BigDecimal ruleFollowedAsset,
             LocalDate analysisStart,
             LocalDate analysisEnd,
             List<RoundRuleImpact> ruleImpacts,
@@ -37,7 +38,7 @@ public class RoundRegretReport {
                 .totalViolations(totalViolations)
                 .totalViolationLoss(totalViolationLoss)
                 .actualAsset(actualAsset)
-                .ruleFollowedAsset(actualAsset.add(totalViolationLoss))
+                .ruleFollowedAsset(ruleFollowedAsset)
                 .analysisStart(analysisStart)
                 .analysisEnd(analysisEnd)
                 .ruleImpacts(ruleImpacts)

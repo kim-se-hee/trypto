@@ -1,5 +1,6 @@
 package ksh.tryptobackend.regretanalysis.application.service;
 
+import java.util.List;
 import ksh.tryptobackend.regretanalysis.application.port.in.GetRegretChartUseCase;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.query.GetRegretChartQuery;
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretChartResult;
@@ -11,6 +12,7 @@ import ksh.tryptobackend.regretanalysis.domain.model.RegretReports;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.CapitalInflows;
+import ksh.tryptobackend.regretanalysis.domain.vo.EmergencyCharge;
 import ksh.tryptobackend.regretanalysis.domain.vo.ExchangeCatalog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,15 +42,15 @@ public class GetRegretChartService implements GetRegretChartUseCase {
 
         RegretReports reports = RegretReports.of(regretReportQueryPort.findAllByRoundId(query.roundId()));
         ExchangeCatalog exchanges = marketDataQueryPort.findExchanges(reports.extractExchangeIds());
-        CapitalInflows capitalInflows = CapitalInflows.of(
-                round.initialSeed(),
-                investmentRoundQueryPort.findEmergencyCharges(query.roundId()),
-                timeline.getStartDate());
+        List<EmergencyCharge> emergencyCharges = investmentRoundQueryPort.findEmergencyCharges(query.roundId());
+        CapitalInflows capitalInflows =
+                CapitalInflows.of(round.initialSeed(), emergencyCharges, timeline.getStartDate());
 
         return RegretChartResult.from(
                 query.roundId(),
                 timeline,
                 capitalInflows,
+                emergencyCharges,
                 marketDataQueryPort.findBtcDailyPrices(timeline.getStartDate(), timeline.getEndDate(), CHART_CURRENCY),
                 reports.toViolationLosses(exchanges));
     }

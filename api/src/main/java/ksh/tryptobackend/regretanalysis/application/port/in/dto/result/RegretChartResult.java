@@ -7,49 +7,57 @@ import ksh.tryptobackend.regretanalysis.domain.vo.AssetTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcBenchmark;
 import ksh.tryptobackend.regretanalysis.domain.vo.BtcDailyPrices;
 import ksh.tryptobackend.regretanalysis.domain.vo.CapitalInflows;
-import ksh.tryptobackend.regretanalysis.domain.vo.CumulativeLossTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.DailyAsset;
+import ksh.tryptobackend.regretanalysis.domain.vo.EmergencyCharge;
+import ksh.tryptobackend.regretanalysis.domain.vo.RuleFollowedAssetTimeline;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLoss;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationMarkers;
 
 public record RegretChartResult(
-        Long roundId, int totalDays, List<DailyComparison> assetHistory, List<ViolationMarkerPoint> violationMarkers) {
+        Long roundId,
+        int totalDays,
+        List<DailyComparison> assetHistory,
+        List<ViolationMarkerPoint> violationMarkers,
+        List<EmergencyChargePoint> emergencyCharges) {
 
     public static RegretChartResult empty(Long roundId) {
-        return new RegretChartResult(roundId, 0, List.of(), List.of());
+        return new RegretChartResult(roundId, 0, List.of(), List.of(), List.of());
     }
 
     public static RegretChartResult from(
             Long roundId,
             AssetTimeline timeline,
             CapitalInflows capitalInflows,
+            List<EmergencyCharge> emergencyCharges,
             BtcDailyPrices btcDailyPrices,
             List<ViolationLoss> violationLosses) {
-        CumulativeLossTimeline lossTimeline = CumulativeLossTimeline.build(violationLosses, timeline.getDates());
+        RuleFollowedAssetTimeline ruleFollowedAssets =
+                RuleFollowedAssetTimeline.build(violationLosses, emergencyCharges, timeline);
         BtcBenchmark btcBenchmark = BtcBenchmark.calculate(capitalInflows, btcDailyPrices, timeline.getDates());
         ViolationMarkers violationMarkers = ViolationMarkers.from(violationLosses, timeline);
 
         return new RegretChartResult(
                 roundId,
                 timeline.calculateTotalDays(),
-                toAssetHistory(timeline, lossTimeline, btcBenchmark),
-                toViolationMarkerPoints(violationMarkers));
+                toAssetHistory(timeline, ruleFollowedAssets, btcBenchmark),
+                toViolationMarkerPoints(violationMarkers),
+                toEmergencyChargePoints(emergencyCharges));
     }
 
     private static List<DailyComparison> toAssetHistory(
-            AssetTimeline timeline, CumulativeLossTimeline lossTimeline, BtcBenchmark btcBenchmark) {
+            AssetTimeline timeline, RuleFollowedAssetTimeline ruleFollowedAssets, BtcBenchmark btcBenchmark) {
         return timeline.getDailyAssets().stream()
-                .map(dailyAsset -> toDailyComparison(dailyAsset, lossTimeline, btcBenchmark))
+                .map(dailyAsset -> toDailyComparison(dailyAsset, ruleFollowedAssets, btcBenchmark))
                 .toList();
     }
 
     private static DailyComparison toDailyComparison(
-            DailyAsset dailyAsset, CumulativeLossTimeline lossTimeline, BtcBenchmark btcBenchmark) {
+            DailyAsset dailyAsset, RuleFollowedAssetTimeline ruleFollowedAssets, BtcBenchmark btcBenchmark) {
         LocalDate date = dailyAsset.date();
         return new DailyComparison(
                 date,
                 dailyAsset.amount(),
-                lossTimeline.calculateRuleFollowedAsset(dailyAsset.amount(), date),
+                ruleFollowedAssets.calculateRuleFollowedAsset(dailyAsset.amount(), date),
                 btcBenchmark.getAssetValueAt(date));
     }
 
@@ -59,8 +67,16 @@ public record RegretChartResult(
                 .toList();
     }
 
+    private static List<EmergencyChargePoint> toEmergencyChargePoints(List<EmergencyCharge> emergencyCharges) {
+        return emergencyCharges.stream()
+                .map(charge -> new EmergencyChargePoint(charge.chargedDate(), charge.amount()))
+                .toList();
+    }
+
     public record DailyComparison(
             LocalDate snapshotDate, BigDecimal actualAsset, BigDecimal ruleFollowedAsset, BigDecimal btcHoldAsset) {}
 
     public record ViolationMarkerPoint(LocalDate snapshotDate, BigDecimal assetValue) {}
+
+    public record EmergencyChargePoint(LocalDate chargedDate, BigDecimal amount) {}
 }
