@@ -139,7 +139,8 @@ class InvestmentRoundDataSeeder {
         Long linkExchangeId = ctx.getExchangeId("BITHUMB");
         List<EmergencyFunding> fundings = new ArrayList<>();
         if (linkExchangeId != null) {
-            fundings.add(EmergencyFunding.create(linkExchangeId, new BigDecimal("300000"), now.minusDays(15)));
+            fundings.add(EmergencyFunding.create(
+                    linkExchangeId, new BigDecimal("300000"), new BigDecimal("300000"), now.minusDays(15)));
         }
         rounds.add(createRound(
                 ctx,

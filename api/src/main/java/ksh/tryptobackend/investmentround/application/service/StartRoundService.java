@@ -43,7 +43,7 @@ public class StartRoundService implements StartRoundUseCase {
         InvestmentRound round = InvestmentRound.start(
                 command.userId(),
                 investmentRoundCommandPort.countByUserId(command.userId()),
-                seedAllocations.totalAmount(),
+                seedAllocations.totalKrwAmount(),
                 command.emergencyFundingLimit(),
                 toRules(command, now),
                 now);

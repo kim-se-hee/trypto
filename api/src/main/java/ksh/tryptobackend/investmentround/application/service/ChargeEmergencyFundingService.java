@@ -12,6 +12,7 @@ import ksh.tryptobackend.investmentround.application.port.out.MarketDataQueryPor
 import ksh.tryptobackend.investmentround.application.port.out.WalletQueryPort;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import ksh.tryptobackend.investmentround.domain.service.FundsDepositor;
+import ksh.tryptobackend.investmentround.domain.vo.KrwConversionRate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,11 +36,12 @@ public class ChargeEmergencyFundingService implements ChargeEmergencyFundingUseC
         String idempotencyKey = command.idempotencyKey().toString();
         idempotencyKeyCommandPort.preempt(idempotencyKey, IdempotencyResourceType.EMERGENCY_FUNDING, now);
 
-        Long exchangeId = marketDataQueryPort.getCashInflowExchangeId();
+        Long exchangeId = command.exchangeId();
+        KrwConversionRate krwConversionRate = marketDataQueryPort.getKrwConversionRate(exchangeId);
 
         InvestmentRound round = investmentRoundQueryPort.getByIdWithLock(command.roundId());
         round.validateOwnedBy(command.userId());
-        round.chargeEmergencyFunding(exchangeId, command.amount(), now);
+        round.chargeEmergencyFunding(exchangeId, command.amount(), krwConversionRate, now);
 
         Long walletId = walletQueryPort.getWalletId(command.roundId(), exchangeId);
         Long baseCurrencyCoinId = marketDataQueryPort.getBaseCurrencyCoinId(exchangeId);

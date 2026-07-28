@@ -7,6 +7,7 @@ import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.domain.vo.DetectedViolation;
 import ksh.tryptobackend.investmentround.domain.vo.EmergencyFundingAllowance;
+import ksh.tryptobackend.investmentround.domain.vo.KrwConversionRate;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import ksh.tryptobackend.investmentround.domain.vo.RuleEvaluationInput;
 import lombok.Getter;
@@ -111,15 +112,22 @@ public class InvestmentRound {
         this.endedAt = endedAt;
     }
 
-    public EmergencyFunding chargeEmergencyFunding(Long exchangeId, BigDecimal amount, LocalDateTime now) {
+    public EmergencyFunding chargeEmergencyFunding(
+            Long exchangeId, BigDecimal amount, KrwConversionRate krwConversionRate, LocalDateTime now) {
         if (status != RoundStatus.ACTIVE) {
             throw new CustomException(ErrorCode.ROUND_NOT_ACTIVE);
         }
-        emergencyFundingAllowance.validateChargeable(amount);
+        // 상한은 원화 기준이므로 환산액으로 검증한다. 원화 투입은 항등 환산이라 투입 금액 그대로다.
+        BigDecimal krwConvertedAmount = krwConversionRate.convert(amount);
+        emergencyFundingAllowance.validateChargeable(krwConvertedAmount);
         this.emergencyFundingAllowance = emergencyFundingAllowance.consume();
-        EmergencyFunding funding = EmergencyFunding.create(exchangeId, amount, now);
+        EmergencyFunding funding = EmergencyFunding.create(exchangeId, amount, krwConvertedAmount, now);
         this.fundings.add(funding);
         return funding;
+    }
+
+    public EmergencyFunding latestFunding() {
+        return fundings.latest();
     }
 
     public boolean isEnded() {

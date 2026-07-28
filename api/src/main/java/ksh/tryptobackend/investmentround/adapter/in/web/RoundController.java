@@ -15,6 +15,7 @@ import ksh.tryptobackend.investmentround.adapter.in.dto.response.RoundSummaryRes
 import ksh.tryptobackend.investmentround.adapter.in.dto.response.StartRoundResponse;
 import ksh.tryptobackend.investmentround.application.port.in.ChargeEmergencyFundingUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.EndRoundUseCase;
+import ksh.tryptobackend.investmentround.application.port.in.FindEmergencyFundingsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.FindRoundInfoUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.GetActiveRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.GetRoundSummaryUseCase;
@@ -22,10 +23,12 @@ import ksh.tryptobackend.investmentround.application.port.in.StartRoundUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.command.EndRoundCommand;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetActiveRoundQuery;
 import ksh.tryptobackend.investmentround.application.port.in.dto.query.GetRoundSummaryQuery;
+import ksh.tryptobackend.investmentround.application.port.in.dto.result.EmergencyFundingResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.GetActiveRoundResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundInfoResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.RoundSummaryResult;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.StartRoundResult;
+import ksh.tryptobackend.investmentround.domain.model.EmergencyFunding;
 import ksh.tryptobackend.investmentround.domain.model.InvestmentRound;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,6 +51,7 @@ public class RoundController {
     private final GetRoundSummaryUseCase getRoundSummaryUseCase;
     private final ChargeEmergencyFundingUseCase chargeEmergencyFundingUseCase;
     private final FindRoundInfoUseCase findRoundInfoUseCase;
+    private final FindEmergencyFundingsUseCase findEmergencyFundingsUseCase;
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<StartRoundResponse>> createRound(
@@ -81,19 +85,33 @@ public class RoundController {
             @PathVariable Long roundId,
             @LoginUser Long userId,
             @Valid @RequestBody ChargeEmergencyFundingRequest request) {
-        int remainingChargeCount;
+        ChargeEmergencyFundingResponse response;
         try {
             InvestmentRound round = chargeEmergencyFundingUseCase.charge(request.toCommand(roundId, userId));
-            remainingChargeCount = round.getEmergencyChargeCount();
+            EmergencyFunding funding = round.latestFunding();
+            response = ChargeEmergencyFundingResponse.of(
+                    roundId,
+                    funding.exchangeId(),
+                    funding.amount(),
+                    funding.krwConvertedAmount(),
+                    round.getEmergencyChargeCount());
         } catch (DuplicateRequestException e) {
-            remainingChargeCount = findRoundInfoUseCase
+            // 멱등 중복은 기존 충전 결과를 그대로 돌려준다. 잔여 횟수만 현재값으로 읽는다.
+            EmergencyFundingResult funding = findEmergencyFundingsUseCase
+                    .findByIdempotencyKey(request.idempotencyKey())
+                    .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+            int remainingChargeCount = findRoundInfoUseCase
                     .findById(roundId)
                     .map(RoundInfoResult::emergencyChargeCount)
                     .orElseThrow(() -> new CustomException(ErrorCode.ROUND_NOT_FOUND));
+            response = ChargeEmergencyFundingResponse.of(
+                    roundId,
+                    funding.exchangeId(),
+                    funding.amount(),
+                    funding.krwConvertedAmount(),
+                    remainingChargeCount);
         }
 
-        ChargeEmergencyFundingResponse response =
-                ChargeEmergencyFundingResponse.of(roundId, request.amount(), remainingChargeCount);
         return ResponseEntity.ok(ApiResponseDto.success("긴급 자금을 투입했습니다.", response));
     }
 }

@@ -31,6 +31,11 @@
 
 컨텍스트는 다르지만 같은 트랜잭션으로 커밋한다.
 
+## 원화 환산
+
+- 투입 금액은 대상 거래소의 기축통화 단위다. 한도 검증과 총 투입금 집계는 원화 기준이므로, USDT 투입은 투입 시점의 빗썸 USDT 마켓 현재가로 원화 환산한다.
+- 환산액은 `emergency_funding` 이력에 투입 금액과 함께 기록한다. 이후 시세가 변해도 이력의 환산액은 변하지 않는다.
+
 ## 잔고 레코드 전제
 
 지갑을 생성할 때 모든 코인에 대한 잔고 레코드가 0 으로 함께 선생성된다. 따라서 긴급 충전 처리 중 (지갑, 기축통화 코인) 잔고 레코드가 DB 에 없는 경우는 고려하지 않는다. 잔고 증가 시 레코드가 없어 새로 삽입하거나(upsert) 빈 값을 다루는 분기가 필요 없다.
@@ -78,7 +83,8 @@
 |------|------|------|
 | roundId | Long | 라운드 ID |
 | exchangeId | Long | 투입 대상 거래소 ID |
-| chargedAmount | BigDecimal | 투입 금액 |
+| chargedAmount | BigDecimal | 투입 금액 (대상 거래소 기축통화 단위) |
+| krwConvertedAmount | BigDecimal | 원화 환산액 (KRW 투입은 투입 금액과 동일) |
 | remainingChargeCount | int | 잔여 투입 횟수 (최초=차감 후, 재요청=현재값) |
 
 > 투입 시각(`chargedAt`)은 감사·랭킹 계산을 위해 `emergency_funding` 이력 테이블에는 기록하지만, 클라이언트가 되돌려받아 쓸 일이 없어 **응답에는 포함하지 않는다.**
@@ -92,6 +98,7 @@
     "roundId": 1,
     "exchangeId": 2,
     "chargedAmount": 300000,
+    "krwConvertedAmount": 300000,
     "remainingChargeCount": 1
   }
 }

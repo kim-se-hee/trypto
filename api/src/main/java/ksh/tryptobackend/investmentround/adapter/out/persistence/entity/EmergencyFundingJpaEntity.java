@@ -33,6 +33,9 @@ public class EmergencyFundingJpaEntity {
     @Column(name = "amount", nullable = false, precision = 30, scale = 8)
     private BigDecimal amount;
 
+    @Column(name = "krw_converted_amount", nullable = false, precision = 30, scale = 8)
+    private BigDecimal krwConvertedAmount;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -40,11 +43,12 @@ public class EmergencyFundingJpaEntity {
         EmergencyFundingJpaEntity entity = new EmergencyFundingJpaEntity();
         entity.exchangeId = funding.exchangeId();
         entity.amount = funding.amount();
+        entity.krwConvertedAmount = funding.krwConvertedAmount();
         entity.createdAt = funding.createdAt();
         return entity;
     }
 
     public EmergencyFunding toDomain() {
-        return EmergencyFunding.reconstitute(id, exchangeId, amount, createdAt);
+        return EmergencyFunding.reconstitute(id, exchangeId, amount, krwConvertedAmount, createdAt);
     }
 }

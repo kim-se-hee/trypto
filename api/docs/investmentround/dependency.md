@@ -18,7 +18,9 @@
 
 ## FindEmergencyFundingsUseCase
 - `findByRoundId(Long roundId) → List<EmergencyFundingResult>`
-- Returns `EmergencyFundingResult { fundingId: Long, exchangeId: Long, amount: BigDecimal, chargedAt: LocalDateTime }`
+- `findByIdempotencyKey(UUID idempotencyKey) → Optional<EmergencyFundingResult>`
+- Returns `EmergencyFundingResult { fundingId: Long, exchangeId: Long, amount: BigDecimal, krwConvertedAmount: BigDecimal, chargedAt: LocalDateTime }`
+- `amount` 는 투입 거래소 기축통화 단위, `krwConvertedAmount` 는 투입 시점 환산 원화다. 원화 집계에는 환산액을 쓴다
 
 ## CheckRuleViolationsUseCase
 - `checkViolations(CheckRuleViolationsQuery query) → List<RuleViolationResult>`
@@ -27,7 +29,9 @@
 # 의존
 
 ## MarketData
-- `FindExchangeDetailUseCase` — 거래소 기축통화 확인, 현금 유입 거래소(업비트) 아이디 조회
+- `FindExchangeDetailUseCase` — 거래소 기축통화·국내/해외 구분 확인, 환산 시세 소스 거래소(빗썸) 아이디 조회
+- `FindExchangeCoinMappingUseCase` — 빗썸 USDT 마켓의 거래소-코인 아이디 조회 (원화 환산 시세 소스)
+- `GetLivePriceUseCase` — USDT/KRW 현재가 조회 (시드·긴급 충전 원화 환산)
 
 ## Wallet
 - `CreateWalletWithBalanceUseCase` — 라운드 시작 시 지갑 생성
