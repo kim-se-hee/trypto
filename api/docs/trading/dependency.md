@@ -11,6 +11,7 @@
 
 ## FindViolatedOrdersUseCase
 - `findViolatedOrders(FindViolatedOrdersQuery query) → List<ViolatedOrderResult>`
+- `ViolatedOrderResult.soldPortions` 는 `SoldPortionResult { filledPrice, quantity, filledAt }` 다. 소비 측이 위반 손익의 실현일을 알아야 하므로 매도 체결 시각을 함께 내린다
 
 ## MoveHoldingUseCase
 - `moveHolding(MoveHoldingCommand command) → void`
