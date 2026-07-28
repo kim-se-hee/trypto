@@ -22,6 +22,11 @@ import 'violation_list.dart';
 
 const String _kDisclaimer = '* 모의투자 데이터입니다. 규칙 준수 시 수익률은 시뮬레이션 결과입니다.';
 
+const List<String> _kEstimateNotices = [
+  '규칙 준수 시 자산은 추정값으로 참고용입니다.',
+  '바이낸스 지갑의 금액은 1 USDT = 1,400원 고정 환율로 환산됩니다.',
+];
+
 final DateFormat _analysisDate = DateFormat('M/d', 'en_US');
 
 /// 복기는 라운드 단위다. 거래소를 골라 보지 않고 라운드에 속한 모든 거래소를 원화로 합쳐 본다 —
@@ -197,6 +202,8 @@ class _Content extends StatelessWidget {
                     Row(
                       children: [
                         Text('자산 추이', style: theme.textTheme.titleMedium),
+                        const SizedBox(width: TryptoSpacing.xs),
+                        const _EstimateNoticeButton(),
                         const Spacer(),
                         if (start != null && end != null)
                           Text(
@@ -297,6 +304,59 @@ class _Content extends StatelessWidget {
     );
   }
 }
+
+/// 복기 그래프가 추정값이라는 안내. 문구는 웹과 같아야 한다.
+class _EstimateNoticeButton extends StatelessWidget {
+  const _EstimateNoticeButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return InkResponse(
+      onTap: () => _showEstimateNotice(context),
+      radius: 16,
+      child: Icon(
+        LucideIcons.circleHelp,
+        size: 14,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+Future<void> _showEstimateNotice(BuildContext context) => showDialog<void>(
+  context: context,
+  builder: (context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: const Text('유의 사항'),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final notice in _kEstimateNotices)
+            Padding(
+              padding: const EdgeInsets.only(bottom: TryptoSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('· ', style: theme.textTheme.bodySmall),
+                  Expanded(
+                    child: Text(notice, style: theme.textTheme.bodySmall),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('확인'),
+        ),
+      ],
+    );
+  },
+);
 
 /// "위반 손실" 히어로 + 3-stat 타일. 금액은 라운드 전체를 원화로 합친 값이다.
 class _Hero extends StatelessWidget {
