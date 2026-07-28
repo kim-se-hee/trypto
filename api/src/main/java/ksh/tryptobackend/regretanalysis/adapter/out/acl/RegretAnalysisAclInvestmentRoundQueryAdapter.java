@@ -74,7 +74,8 @@ public class RegretAnalysisAclInvestmentRoundQueryAdapter implements InvestmentR
     }
 
     private EmergencyCharge toEmergencyCharge(EmergencyFundingResult result) {
-        return new EmergencyCharge(result.chargedAt().toLocalDate(), result.amount());
+        // 자금 투입 그래프는 원화 단일 통화로 집계하므로 투입 시점 환산액을 쓴다.
+        return new EmergencyCharge(result.chargedAt().toLocalDate(), result.krwConvertedAmount());
     }
 
     private AnalysisActiveRound toAnalysisActiveRound(ActiveRoundResult result) {
