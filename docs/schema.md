@@ -215,7 +215,6 @@ erDiagram
         number total_violations "총 위반 횟수"
         number total_violation_loss "위반 손실 합계 (기축통화 단위, 양수가 손해)"
         number actual_asset "실제 자산 (기축통화 단위)"
-        number rule_followed_asset "원칙 준수 시 자산 (기축통화 단위)"
         date analysis_start "분석 시작일"
         date analysis_end "분석 종료일"
         datetime created_at "생성일"
@@ -235,8 +234,15 @@ erDiagram
         id order_id FK "주문 ID (nullable)"
         id rule_id FK "위반 원칙 ID"
         id coin_id FK "코인 ID"
-        number loss_amount "규칙 위반 손실 금액 (기축통화 단위, 양수가 손해)"
+        number loss_amount "규칙 위반 손실 총액 = 실현분 합 + 미실현분 (기축통화 단위, 양수가 손해)"
         datetime occurred_at "발생 시각"
+    }
+
+    VIOLATION_REALIZATION {
+        id violation_realization_id PK "주 식별자"
+        id violation_detail_id FK "위반 상세 ID"
+        date realized_on "실현일 (매칭된 매도 체결일)"
+        number loss_amount "실현된 위반 손실 (기축통화 단위, 양수가 손해)"
     }
 
     OUTBOX {
@@ -288,6 +294,7 @@ erDiagram
     EXCHANGE_MARKET ||--o{ REGRET_REPORT : ""
     REGRET_REPORT ||--|{ RULE_IMPACT : ""
     REGRET_REPORT ||--|{ VIOLATION_DETAIL : ""
+    VIOLATION_DETAIL ||--o{ VIOLATION_REALIZATION : ""
     INVESTMENT_RULE ||--o{ RULE_IMPACT : ""
     INVESTMENT_RULE ||--o{ VIOLATION_DETAIL : ""
     COIN ||--o{ VIOLATION_DETAIL : ""

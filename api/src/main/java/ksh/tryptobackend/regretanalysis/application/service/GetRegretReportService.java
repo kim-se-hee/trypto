@@ -5,12 +5,14 @@ import ksh.tryptobackend.regretanalysis.application.port.in.dto.query.GetRegretR
 import ksh.tryptobackend.regretanalysis.application.port.in.dto.result.RegretReportResult;
 import ksh.tryptobackend.regretanalysis.application.port.out.InvestmentRoundQueryPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.MarketDataQueryPort;
+import ksh.tryptobackend.regretanalysis.application.port.out.PortfolioQueryPort;
 import ksh.tryptobackend.regretanalysis.application.port.out.RegretReportQueryPort;
 import ksh.tryptobackend.regretanalysis.domain.model.RegretReports;
 import ksh.tryptobackend.regretanalysis.domain.model.RoundRegretReport;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRound;
 import ksh.tryptobackend.regretanalysis.domain.vo.AnalysisRules;
 import ksh.tryptobackend.regretanalysis.domain.vo.ExchangeCatalog;
+import ksh.tryptobackend.regretanalysis.domain.vo.RuleFollowedAssetTimeline;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class GetRegretReportService implements GetRegretReportUseCase {
     private final RegretReportQueryPort regretReportQueryPort;
     private final InvestmentRoundQueryPort investmentRoundQueryPort;
     private final MarketDataQueryPort marketDataQueryPort;
+    private final PortfolioQueryPort portfolioQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,7 +35,11 @@ public class GetRegretReportService implements GetRegretReportUseCase {
         RegretReports reports = RegretReports.of(regretReportQueryPort.findAllByRoundId(query.roundId()));
         ExchangeCatalog exchanges = marketDataQueryPort.findExchanges(reports.extractExchangeIds());
         AnalysisRules rules = investmentRoundQueryPort.findRules(query.roundId());
-        RoundRegretReport merged = reports.merge(query.roundId(), rules, exchanges);
+        RuleFollowedAssetTimeline ruleFollowedAssets = RuleFollowedAssetTimeline.build(
+                reports.toViolationLosses(exchanges),
+                investmentRoundQueryPort.findEmergencyCharges(query.roundId()),
+                portfolioQueryPort.getRoundAssetTimeline(query.roundId()));
+        RoundRegretReport merged = reports.merge(query.roundId(), rules, exchanges, ruleFollowedAssets);
 
         return RegretReportResult.from(merged, marketDataQueryPort.findCoinSymbols(reports.extractCoinIds()));
     }

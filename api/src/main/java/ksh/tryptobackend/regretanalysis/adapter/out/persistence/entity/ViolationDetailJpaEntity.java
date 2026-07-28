@@ -1,14 +1,20 @@
 package ksh.tryptobackend.regretanalysis.adapter.out.persistence.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import ksh.tryptobackend.regretanalysis.domain.model.ViolationDetail;
+import ksh.tryptobackend.regretanalysis.domain.vo.RealizedLoss;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,6 +48,10 @@ public class ViolationDetailJpaEntity {
     @Column(name = "occurred_at", nullable = false)
     private LocalDateTime occurredAt;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "violation_detail_id")
+    private List<ViolationRealizationJpaEntity> realizations = new ArrayList<>();
+
     static ViolationDetailJpaEntity fromDomain(ViolationDetail detail) {
         ViolationDetailJpaEntity entity = new ViolationDetailJpaEntity();
         entity.id = detail.getViolationDetailId();
@@ -50,10 +60,16 @@ public class ViolationDetailJpaEntity {
         entity.coinId = detail.getCoinId();
         entity.lossAmount = detail.getLossAmount();
         entity.occurredAt = detail.getOccurredAt();
+        detail.getRealizedLosses()
+                .forEach(realized -> entity.realizations.add(ViolationRealizationJpaEntity.fromDomain(realized)));
         return entity;
     }
 
     public ViolationDetail toDomain() {
-        return ViolationDetail.reconstitute(id, reportId, orderId, ruleId, coinId, lossAmount, occurredAt);
+        List<RealizedLoss> realizedLosses = realizations.stream()
+                .map(ViolationRealizationJpaEntity::toDomain)
+                .toList();
+        return ViolationDetail.reconstitute(
+                id, reportId, orderId, ruleId, coinId, lossAmount, realizedLosses, occurredAt);
     }
 }

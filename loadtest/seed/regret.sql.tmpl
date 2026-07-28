@@ -47,7 +47,7 @@ FROM r CROSS JOIN (
 --   analysis_start = 라운드 시작(= 첫 스냅샷일 = REGRET_DAYS-1 일 전), analysis_end = 마지막 스냅샷일(오늘).
 INSERT INTO regret_report (
   report_id, user_id, round_id, exchange_id,
-  total_violations, total_violation_loss, actual_asset, rule_followed_asset,
+  total_violations, total_violation_loss, actual_asset,
   analysis_start, analysis_end, created_at
 )
 WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r WHERE n < @REGRET_ROUNDS@)
@@ -59,7 +59,6 @@ SELECT
   7                                                            AS total_violations,
   893837.00000000                                              AS total_violation_loss,
   10290000000.00000000                                         AS actual_asset,
-  10290893837.00000000                                         AS rule_followed_asset,
   DATE_SUB(CURDATE(), INTERVAL @REGRET_DAYS@ - 1 DAY)          AS analysis_start,
   CURDATE()                                                    AS analysis_end,
   NOW()                                                        AS created_at

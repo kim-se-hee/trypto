@@ -1,10 +1,10 @@
 package ksh.tryptobackend.regretanalysis.domain.model;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import ksh.tryptobackend.regretanalysis.domain.vo.CurrentPrices;
+import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossBreakdown;
 
 public class ViolatedOrders {
 
@@ -27,12 +27,12 @@ public class ViolatedOrders {
     }
 
     private ViolationDetail toViolationDetail(ViolatedOrder violation, CurrentPrices currentPrices) {
-        BigDecimal lossAmount = violation.calculateLoss(currentPrices.getPrice(violation.getExchangeCoinId()));
+        ViolationLossBreakdown loss = violation.calculateLoss(currentPrices.getPrice(violation.getExchangeCoinId()));
         return ViolationDetail.create(
                 violation.getOrderId(),
                 violation.getRuleId(),
                 violation.getExchangeCoinId(),
-                lossAmount,
+                loss,
                 violation.getViolatedAt());
     }
 }

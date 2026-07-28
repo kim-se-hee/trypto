@@ -81,7 +81,15 @@ GET /api/rounds/1/regret
         "currency": "KRW",
         "coinSymbol": "DOGE",
         "violatedRules": [
-          { "ruleType": "CHASE_BUY_BAN", "lossAmount": 385000, "lossAmountKrw": 385000 }
+          {
+            "ruleType": "CHASE_BUY_BAN",
+            "lossAmount": 385000,
+            "lossAmountKrw": 385000,
+            "unrealizedLossAmountKrw": 85000,
+            "realizations": [
+              { "realizedOn": "2026-01-30", "lossAmountKrw": 300000 }
+            ]
+          }
         ],
         "totalLossAmount": 385000,
         "totalLossAmountKrw": 385000,
@@ -133,7 +141,7 @@ GET /api/rounds/1/regret
 | analysisEnd | LocalDate | 분석 종료일. 거래소별 리포트 중 가장 늦은 스냅샷 날짜 |
 | totalViolationLoss | BigDecimal | 위반 손실 합계 (원화). 양수면 원칙을 지켰다면 더 벌었을 금액, 음수면 어긴 쪽이 이득이었던 금액. 0으로 보정하지 않는다 |
 | actualAsset | BigDecimal | 실제 자산 (원화). 마지막 스냅샷의 전 거래소 자산 합 |
-| ruleFollowedAsset | BigDecimal | 모든 원칙 준수 시 도달했을 자산 (원화). `actualAsset + totalViolationLoss` |
+| ruleFollowedAsset | BigDecimal | 모든 원칙 준수 시 도달했을 자산 (원화). `(actualAsset + 미실현 위반 손실 합계) × 누적 배수` — 배수 산출은 [../business-rules.md](../business-rules.md)의 실현 손익의 배수 환산 참조 |
 
 #### ruleImpacts[]
 
@@ -182,9 +190,18 @@ GET /api/rounds/1/regret
 |------|------|------|
 | ruleType | String | 원칙 유형 (`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`, `AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`) |
 | lossAmount | BigDecimal | 이 주문에서 해당 원칙으로 발생한 위반 손실 (기축통화 단위. 양수: 손실, 음수: 오히려 이익) |
-| lossAmountKrw | BigDecimal | 같은 값을 원화로 환산한 금액 |
+| lossAmountKrw | BigDecimal | 같은 값을 원화로 환산한 금액. `unrealizedLossAmountKrw` 와 `realizations[].lossAmountKrw` 의 합이다 |
+| unrealizedLossAmountKrw | BigDecimal | 아직 매도되지 않아 금액이 현재가를 따라 움직이는 몫 (원화) |
+| realizations | Object[] | 매도로 확정된 몫. 실현일마다 한 건이며, 부분 실현이 여러 날에 걸치면 여러 건이다 |
 
-같은 원칙의 `lossAmountKrw` 를 모든 거래에 걸쳐 합하면 `ruleImpacts[].totalLossAmount` 와 같다. 복기 그래프의 원칙 골라 보기는 이 값과 `occurredAt` 을 사용한다.
+#### violationDetails[].violatedRules[].realizations[]
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| realizedOn | LocalDate | 실현일 (매칭된 매도 체결일) |
+| lossAmountKrw | BigDecimal | 그날 확정된 위반 손실 (원화) |
+
+같은 원칙의 `lossAmountKrw` 를 모든 거래에 걸쳐 합하면 `ruleImpacts[].totalLossAmount` 와 같다. 복기 그래프의 원칙 골라 보기는 미실현분과 `occurredAt`, 실현분과 `realizedOn` 을 함께 사용한다.
 
 ### 에러 응답
 

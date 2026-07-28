@@ -19,7 +19,6 @@ public class RegretReport {
     private final int totalViolations;
     private final BigDecimal totalViolationLoss;
     private final BigDecimal actualAsset;
-    private final BigDecimal ruleFollowedAsset;
     private final LocalDate analysisStart;
     private final LocalDate analysisEnd;
     private final LocalDateTime createdAt;
@@ -35,17 +34,13 @@ public class RegretReport {
             List<ViolationDetail> violationDetails,
             LocalDate analysisStart,
             Clock clock) {
-        BigDecimal actualAsset = snapshot.getTotalAsset();
-        BigDecimal totalViolationLoss = sumLossAmounts(violationDetails);
-
         return RegretReport.builder()
                 .userId(userId)
                 .roundId(roundId)
                 .exchangeId(exchangeId)
                 .totalViolations(violationDetails.size())
-                .totalViolationLoss(totalViolationLoss)
-                .actualAsset(actualAsset)
-                .ruleFollowedAsset(actualAsset.add(totalViolationLoss))
+                .totalViolationLoss(sumLossAmounts(violationDetails))
+                .actualAsset(snapshot.getTotalAsset())
                 .analysisStart(analysisStart)
                 .analysisEnd(LocalDate.now(clock))
                 .createdAt(LocalDateTime.now(clock))
@@ -67,7 +62,6 @@ public class RegretReport {
             int totalViolations,
             BigDecimal totalViolationLoss,
             BigDecimal actualAsset,
-            BigDecimal ruleFollowedAsset,
             LocalDate analysisStart,
             LocalDate analysisEnd,
             LocalDateTime createdAt,
@@ -81,7 +75,6 @@ public class RegretReport {
                 .totalViolations(totalViolations)
                 .totalViolationLoss(totalViolationLoss)
                 .actualAsset(actualAsset)
-                .ruleFollowedAsset(ruleFollowedAsset)
                 .analysisStart(analysisStart)
                 .analysisEnd(analysisEnd)
                 .createdAt(createdAt)

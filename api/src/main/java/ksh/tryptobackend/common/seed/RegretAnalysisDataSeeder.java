@@ -74,7 +74,6 @@ class RegretAnalysisDataSeeder {
                 totalViolations,
                 missedProfit,
                 actualAsset,
-                actualAsset.add(missedProfit),
                 today.minusDays(30),
                 today,
                 now,
@@ -113,6 +112,7 @@ class RegretAnalysisDataSeeder {
                     ruleIds.get(i % ruleIds.size()),
                     coinId,
                     new BigDecimal((i + 1) * 30000),
+                    List.of(),
                     LocalDateTime.now().minusDays(i + 1)));
         }
         return details;

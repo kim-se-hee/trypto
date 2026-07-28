@@ -70,8 +70,8 @@ class GenerateRegretReportServiceTest {
     }
 
     @Test
-    @DisplayName("위반이 없으면 원칙 준수 시 자산은 실제 자산과 같다")
-    void generateReport_noViolations_ruleFollowedAssetEqualsActualAsset() {
+    @DisplayName("실제 자산은 최신 스냅샷의 총 자산을 그대로 담는다")
+    void generateReport_noViolations_actualAssetFromSnapshot() {
         when(portfolioQueryPort.findLatestSnapshot(ROUND_ID, EXCHANGE_ID)).thenReturn(Optional.of(snapshot()));
         when(tradingQueryPort.findViolatedOrders(ROUND_ID, EXCHANGE_ID, WALLET_ID))
                 .thenReturn(new ViolatedOrders(List.of()));
@@ -80,7 +80,7 @@ class GenerateRegretReportServiceTest {
                 generateRegretReportService.generateReport(COMMAND).orElseThrow();
 
         assertThat(report.getActualAsset()).isEqualByComparingTo(new BigDecimal("5200000"));
-        assertThat(report.getRuleFollowedAsset()).isEqualByComparingTo(report.getActualAsset());
+        assertThat(report.getTotalViolationLoss()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test

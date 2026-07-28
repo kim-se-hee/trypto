@@ -201,15 +201,14 @@ public class RegretChartStepDefinition {
             Long roundId, Long exchangeId, int totalViolations, BigDecimal violationLoss, BigDecimal actualAsset) {
         jdbcTemplate.update(
                 "INSERT INTO regret_report (user_id, round_id, exchange_id, total_violations,"
-                        + " total_violation_loss, actual_asset, rule_followed_asset, analysis_start,"
-                        + " analysis_end, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        + " total_violation_loss, actual_asset, analysis_start, analysis_end,"
+                        + " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 USER_ID,
                 roundId,
                 exchangeId,
                 totalViolations,
                 violationLoss,
                 actualAsset,
-                actualAsset.add(violationLoss),
                 DAY1,
                 DAY3,
                 LocalDateTime.now());

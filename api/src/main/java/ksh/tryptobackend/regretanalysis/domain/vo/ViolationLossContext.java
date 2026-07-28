@@ -1,6 +1,7 @@
 package ksh.tryptobackend.regretanalysis.domain.vo;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record ViolationLossContext(
@@ -10,5 +11,5 @@ public record ViolationLossContext(
         BigDecimal currentPrice,
         List<SoldPortion> soldPortions) {
 
-    public record SoldPortion(BigDecimal price, BigDecimal quantity) {}
+    public record SoldPortion(BigDecimal price, BigDecimal quantity, LocalDateTime soldAt) {}
 }

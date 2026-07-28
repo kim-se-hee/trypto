@@ -10,7 +10,7 @@ regretanalysis 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하
 소비 UseCase 를 `AnalysisRound`·`AnalysisRules`·`EmergencyCharge`·`AnalysisActiveRound` 로 번역한다.
 - `FindRoundInfoUseCase` — 라운드 정보 조회
 - `FindInvestmentRulesUseCase` — 투자 원칙 조회
-- `FindEmergencyFundingsUseCase` — BTC 홀드 벤치마크용 긴급 충전 내역(충전일·금액) 조회
+- `FindEmergencyFundingsUseCase` — 긴급 충전 내역(충전일·금액) 조회. BTC 홀드 벤치마크의 추가 매수와 준수 시 자산의 배수 갱신에 함께 쓴다
 - `FindActiveRoundsUseCase` — 복기 리포트 대상 활성 라운드 조회
 
 ### WalletQueryPort ← Wallet (`RegretAnalysisAclWalletQueryAdapter`)
@@ -30,7 +30,7 @@ regretanalysis 응용 서비스는 타 컨텍스트 UseCase 를 직접 주입하
 
 ### PortfolioQueryPort ← Portfolio (`RegretAnalysisAclPortfolioQueryAdapter`)
 소비 UseCase 를 `AssetTimeline`(`DailyAsset` 묶음)·`AssetSnapshot` 로 번역한다.
-- `FindSnapshotsUseCase` — 라운드 일별 원화 자산 합계(그래프용)와 거래소별 최신 스냅샷(배치용) 조회
+- `FindSnapshotsUseCase` — 라운드 일별 원화 자산 합계(그래프·리포트 요약의 배수 갱신용)와 거래소별 최신 스냅샷(배치용) 조회
 
 # 배치
 

@@ -6,6 +6,7 @@ import java.util.List;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.regretanalysis.domain.strategy.ViolationLossStrategy;
 import ksh.tryptobackend.regretanalysis.domain.vo.TradeSide;
+import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossBreakdown;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext;
 import ksh.tryptobackend.regretanalysis.domain.vo.ViolationLossContext.SoldPortion;
 import lombok.AccessLevel;
@@ -54,7 +55,7 @@ public class ViolatedOrder {
                 .build();
     }
 
-    public BigDecimal calculateLoss(BigDecimal currentPrice) {
+    public ViolationLossBreakdown calculateLoss(BigDecimal currentPrice) {
         ViolationLossContext context =
                 new ViolationLossContext(filledPrice, quantity, amount, currentPrice, soldPortions);
         return lossStrategy.calculateLoss(context);

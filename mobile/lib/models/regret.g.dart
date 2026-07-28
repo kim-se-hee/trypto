@@ -48,6 +48,11 @@ const _$RuleTypeEnumMap = {
   RuleType.unknown: 'UNKNOWN',
 };
 
+Realization _$RealizationFromJson(Map<String, dynamic> json) => Realization(
+  realizedOn: const LocalDateConverter().fromJson(json['realizedOn'] as String),
+  lossAmountKrw: (json['lossAmountKrw'] as num).toDouble(),
+);
+
 ViolatedRule _$ViolatedRuleFromJson(Map<String, dynamic> json) => ViolatedRule(
   ruleType: $enumDecode(
     _$RuleTypeEnumMap,
@@ -56,6 +61,11 @@ ViolatedRule _$ViolatedRuleFromJson(Map<String, dynamic> json) => ViolatedRule(
   ),
   lossAmount: (json['lossAmount'] as num).toDouble(),
   lossAmountKrw: (json['lossAmountKrw'] as num).toDouble(),
+  unrealizedLossAmountKrw: (json['unrealizedLossAmountKrw'] as num?)
+      ?.toDouble(),
+  realizations: (json['realizations'] as List<dynamic>?)
+      ?.map((e) => Realization.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 ViolationDetail _$ViolationDetailFromJson(Map<String, dynamic> json) =>
@@ -85,7 +95,18 @@ RegretChart _$RegretChartFromJson(Map<String, dynamic> json) => RegretChart(
   violationMarkers: (json['violationMarkers'] as List<dynamic>)
       .map((e) => ViolationMarker.fromJson(e as Map<String, dynamic>))
       .toList(),
+  emergencyCharges: (json['emergencyCharges'] as List<dynamic>?)
+      ?.map((e) => EmergencyCharge.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
+
+EmergencyCharge _$EmergencyChargeFromJson(Map<String, dynamic> json) =>
+    EmergencyCharge(
+      chargedDate: const LocalDateConverter().fromJson(
+        json['chargedDate'] as String,
+      ),
+      amount: (json['amount'] as num).toDouble(),
+    );
 
 AssetHistoryPoint _$AssetHistoryPointFromJson(Map<String, dynamic> json) =>
     AssetHistoryPoint(

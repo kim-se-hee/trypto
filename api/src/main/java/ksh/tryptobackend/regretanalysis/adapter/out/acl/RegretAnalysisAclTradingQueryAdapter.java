@@ -29,7 +29,7 @@ public class RegretAnalysisAclTradingQueryAdapter implements TradingQueryPort {
 
     private ViolatedOrder toViolatedOrder(ViolatedOrderResult result) {
         List<SoldPortion> soldPortions = result.soldPortions().stream()
-                .map(sp -> new SoldPortion(sp.filledPrice(), sp.quantity()))
+                .map(sp -> new SoldPortion(sp.filledPrice(), sp.quantity(), sp.filledAt()))
                 .toList();
 
         return ViolatedOrder.create(
