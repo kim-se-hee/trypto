@@ -63,6 +63,7 @@ class _RegretAssetChartState extends State<RegretAssetChart> {
       history,
       widget.enabledRules,
       widget.violations,
+      widget.chart.charges,
     );
     final btcHold = [for (final point in history) point.btcHoldAsset];
     final showSimulation = widget.enabledRules.isNotEmpty;

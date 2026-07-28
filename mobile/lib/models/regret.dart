@@ -89,6 +89,20 @@ class RuleImpact {
   final double? totalLossAmount;
 }
 
+/// 매도로 확정된 위반 손실 한 조각. 실현일 이후로는 금액이 아니라 배수로 곡선에 반영된다.
+@JsonSerializable(createToJson: false)
+class Realization {
+  const Realization({required this.realizedOn, required this.lossAmountKrw});
+
+  factory Realization.fromJson(Map<String, dynamic> json) =>
+      _$RealizationFromJson(json);
+
+  @LocalDateConverter()
+  final DateTime realizedOn;
+
+  final double lossAmountKrw;
+}
+
 /// 위반 거래가 어긴 원칙 하나와 그 원칙 몫의 위반 손실.
 @JsonSerializable(createToJson: false)
 class ViolatedRule {
@@ -96,6 +110,8 @@ class ViolatedRule {
     required this.ruleType,
     required this.lossAmount,
     required this.lossAmountKrw,
+    this.unrealizedLossAmountKrw,
+    this.realizations,
   });
 
   factory ViolatedRule.fromJson(Map<String, dynamic> json) =>
@@ -109,6 +125,17 @@ class ViolatedRule {
 
   /// 같은 값의 원화 환산액. 거래소가 섞이는 그래프 누적 계산은 이쪽을 쓴다.
   final double lossAmountKrw;
+
+  /// 아직 매도되지 않아 금액이 현재가를 따라 움직이는 몫(원화).
+  final double? unrealizedLossAmountKrw;
+
+  /// 매도로 확정된 몫(원화). 실현일마다 한 조각이다.
+  final List<Realization>? realizations;
+
+  /// 분해 값을 주지 않는 서버 응답은 전액이 아직 실현되지 않은 것으로 본다.
+  double get unrealizedKrw => unrealizedLossAmountKrw ?? lossAmountKrw;
+
+  List<Realization> get realizedPortions => realizations ?? const [];
 }
 
 /// 한 건은 주문 하나다. 한 주문이 여러 원칙을 어겼으면 [violatedRules] 에 나란히 담겨 온다.
@@ -163,6 +190,7 @@ class RegretChart {
     required this.totalDays,
     required this.assetHistory,
     required this.violationMarkers,
+    this.emergencyCharges,
   });
 
   factory RegretChart.fromJson(Map<String, dynamic> json) =>
@@ -175,6 +203,25 @@ class RegretChart {
 
   final List<AssetHistoryPoint> assetHistory;
   final List<ViolationMarker> violationMarkers;
+
+  /// 원칙 토글이 배수를 다시 굴릴 때 쓴다. 충전은 위반과 무관한 새 돈이라 그날의 배수를 되돌린다.
+  final List<EmergencyCharge>? emergencyCharges;
+
+  List<EmergencyCharge> get charges => emergencyCharges ?? const [];
+}
+
+/// 라운드에 새로 들어온 돈(긴급 충전). 충전일과 원화 금액만 있으면 배수를 되돌릴 수 있다.
+@JsonSerializable(createToJson: false)
+class EmergencyCharge {
+  const EmergencyCharge({required this.chargedDate, required this.amount});
+
+  factory EmergencyCharge.fromJson(Map<String, dynamic> json) =>
+      _$EmergencyChargeFromJson(json);
+
+  @LocalDateConverter()
+  final DateTime chargedDate;
+
+  final double amount;
 }
 
 /// 자산 곡선 3선. 시간대 변환을 하지 않는 `LocalDate` 다.
