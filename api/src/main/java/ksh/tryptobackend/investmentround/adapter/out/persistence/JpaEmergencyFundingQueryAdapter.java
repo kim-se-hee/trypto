@@ -3,6 +3,7 @@ package ksh.tryptobackend.investmentround.adapter.out.persistence;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.EmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.adapter.out.persistence.entity.QEmergencyFundingJpaEntity;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
@@ -15,6 +16,14 @@ import org.springframework.stereotype.Component;
 public class JpaEmergencyFundingQueryAdapter implements EmergencyFundingQueryPort {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Optional<EmergencyFunding> findById(Long fundingId) {
+        QEmergencyFundingJpaEntity e = QEmergencyFundingJpaEntity.emergencyFundingJpaEntity;
+        return Optional.ofNullable(
+                        queryFactory.selectFrom(e).where(e.id.eq(fundingId)).fetchOne())
+                .map(EmergencyFundingJpaEntity::toDomain);
+    }
 
     @Override
     public BigDecimal sumAmountByRoundId(Long roundId) {

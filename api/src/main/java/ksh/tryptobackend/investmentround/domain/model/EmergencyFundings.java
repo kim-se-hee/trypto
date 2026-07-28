@@ -1,6 +1,7 @@
 package ksh.tryptobackend.investmentround.domain.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class EmergencyFundings {
@@ -16,10 +17,13 @@ public class EmergencyFundings {
     }
 
     public Long latestId() {
+        return latest().id();
+    }
+
+    public EmergencyFunding latest() {
         return fundings.stream()
-                .map(EmergencyFunding::id)
-                .filter(id -> id != null)
-                .max(Long::compareTo)
+                .filter(funding -> funding.id() != null)
+                .max(Comparator.comparing(EmergencyFunding::id))
                 .orElseThrow(() -> new IllegalStateException("no persisted emergency funding to reference"));
     }
 

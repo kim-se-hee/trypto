@@ -15,6 +15,4 @@ public interface MarketDataQueryPort {
 
     /** 거래소 기축통화 → 원화 환산 시세. 원화 거래소는 항등 환산이다. */
     KrwConversionRate getKrwConversionRate(Long exchangeId);
-
-    Long getCashInflowExchangeId();
 }

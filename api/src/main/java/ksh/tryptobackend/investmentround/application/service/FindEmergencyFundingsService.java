@@ -1,6 +1,9 @@
 package ksh.tryptobackend.investmentround.application.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import ksh.tryptobackend.common.idempotency.IdempotencyKeyQueryPort;
 import ksh.tryptobackend.investmentround.application.port.in.FindEmergencyFundingsUseCase;
 import ksh.tryptobackend.investmentround.application.port.in.dto.result.EmergencyFundingResult;
 import ksh.tryptobackend.investmentround.application.port.out.EmergencyFundingQueryPort;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindEmergencyFundingsService implements FindEmergencyFundingsUseCase {
 
     private final EmergencyFundingQueryPort emergencyFundingQueryPort;
+    private final IdempotencyKeyQueryPort idempotencyKeyQueryPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -23,7 +27,21 @@ public class FindEmergencyFundingsService implements FindEmergencyFundingsUseCas
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<EmergencyFundingResult> findByIdempotencyKey(UUID idempotencyKey) {
+        return idempotencyKeyQueryPort
+                .findResourceId(idempotencyKey.toString())
+                .flatMap(emergencyFundingQueryPort::findById)
+                .map(this::toResult);
+    }
+
     private EmergencyFundingResult toResult(EmergencyFunding funding) {
-        return new EmergencyFundingResult(funding.id(), funding.exchangeId(), funding.amount(), funding.createdAt());
+        return new EmergencyFundingResult(
+                funding.id(),
+                funding.exchangeId(),
+                funding.amount(),
+                funding.krwConvertedAmount(),
+                funding.createdAt());
     }
 }

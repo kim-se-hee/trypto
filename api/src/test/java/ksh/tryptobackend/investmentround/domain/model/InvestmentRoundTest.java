@@ -9,6 +9,7 @@ import java.util.List;
 import ksh.tryptobackend.common.domain.vo.RuleType;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
+import ksh.tryptobackend.investmentround.domain.vo.KrwConversionRate;
 import ksh.tryptobackend.investmentround.domain.vo.RoundStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,7 @@ class InvestmentRoundTest {
         InvestmentRound round = InvestmentRound.start(
                 1L, 0L, new BigDecimal("1000"), new BigDecimal("500000"), List.of(), LocalDateTime.now());
 
-        round.chargeEmergencyFunding(1L, new BigDecimal("300000"), LocalDateTime.now());
+        round.chargeEmergencyFunding(1L, new BigDecimal("300000"), KrwConversionRate.identity(), LocalDateTime.now());
 
         assertThat(round.getEmergencyChargeCount()).isEqualTo(2);
         assertThat(round.getStatus()).isEqualTo(RoundStatus.ACTIVE);
@@ -115,7 +116,8 @@ class InvestmentRoundTest {
         InvestmentRound round =
                 InvestmentRound.start(1L, 0L, new BigDecimal("1000"), BigDecimal.ZERO, List.of(), LocalDateTime.now());
 
-        assertThatThrownBy(() -> round.chargeEmergencyFunding(1L, new BigDecimal("1"), LocalDateTime.now()))
+        assertThatThrownBy(() -> round.chargeEmergencyFunding(
+                        1L, new BigDecimal("1"), KrwConversionRate.identity(), LocalDateTime.now()))
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.EMERGENCY_FUNDING_DISABLED);
@@ -127,7 +129,8 @@ class InvestmentRoundTest {
         InvestmentRound round = InvestmentRound.start(
                 1L, 0L, new BigDecimal("1000"), new BigDecimal("100"), List.of(), LocalDateTime.now());
 
-        assertThatThrownBy(() -> round.chargeEmergencyFunding(1L, new BigDecimal("101"), LocalDateTime.now()))
+        assertThatThrownBy(() -> round.chargeEmergencyFunding(
+                        1L, new BigDecimal("101"), KrwConversionRate.identity(), LocalDateTime.now()))
                 .isInstanceOf(CustomException.class)
                 .extracting(ex -> ((CustomException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_EMERGENCY_FUNDING_AMOUNT);

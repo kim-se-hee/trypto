@@ -5,7 +5,6 @@ import java.util.List;
 import ksh.tryptobackend.common.exception.CustomException;
 import ksh.tryptobackend.common.exception.ErrorCode;
 import ksh.tryptobackend.investmentround.application.port.out.MarketDataQueryPort;
-import ksh.tryptobackend.investmentround.domain.vo.CashInflowExchange;
 import ksh.tryptobackend.investmentround.domain.vo.KrwConversionRate;
 import ksh.tryptobackend.investmentround.domain.vo.SeedAmountPolicy;
 import ksh.tryptobackend.investmentround.domain.vo.SeedFundingSpec;
@@ -55,13 +54,6 @@ public class InvestmentRoundAclMarketDataQueryAdapter implements MarketDataQuery
         return findExchangeDetailUseCase
                 .findExchangeDetail(exchangeId)
                 .map(this::toKrwConversionRate)
-                .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
-    }
-
-    @Override
-    public Long getCashInflowExchangeId() {
-        return findExchangeDetailUseCase
-                .findExchangeIdByName(CashInflowExchange.NAME)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXCHANGE_NOT_FOUND));
     }
 
