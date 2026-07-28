@@ -3,6 +3,7 @@ import { toFrontRuleType, type BackendRuleType } from "./mappers";
 import type { RuleType } from "@/lib/types/round";
 import type {
   AssetSnapshot,
+  EmergencyCharge,
   RegretSummary,
   RuleToggleItem,
   ViolationMarker,
@@ -19,10 +20,17 @@ interface BackendRuleImpact {
   totalLossAmount: number;
 }
 
+interface BackendRealization {
+  realizedOn: string;
+  lossAmountKrw: number;
+}
+
 interface BackendViolatedRule {
   ruleType: BackendRuleType;
   lossAmount: number;
   lossAmountKrw: number;
+  unrealizedLossAmountKrw: number;
+  realizations: BackendRealization[];
 }
 
 interface BackendViolationDetail {
@@ -63,6 +71,10 @@ interface BackendRegretChartResponse {
     snapshotDate: string;
     assetValue: number;
   }>;
+  emergencyCharges: Array<{
+    chargedDate: string;
+    amount: number;
+  }>;
 }
 
 // ── 프론트 변환 결과 타입 ──────────────────────────────
@@ -78,6 +90,8 @@ export interface RegretChartData {
   btcHoldValues: number[];
   markers: ViolationMarker[];
   totalDays: number;
+  /** 원칙 골라 보기가 배수를 다시 굴릴 때 필요하다. */
+  emergencyCharges: EmergencyCharge[];
 }
 
 // ── 단위 매핑 ──────────────────────────────────────────
@@ -143,6 +157,11 @@ export async function getRegretReport(
         ruleType: toFrontRuleType(rule.ruleType),
         lossAmount: Number(rule.lossAmount),
         lossAmountKrw: Number(rule.lossAmountKrw),
+        unrealizedLossAmountKrw: Number(rule.unrealizedLossAmountKrw),
+        realizations: (rule.realizations ?? []).map((realization) => ({
+          realizedOn: realization.realizedOn,
+          lossAmountKrw: Number(realization.lossAmountKrw),
+        })),
       })),
       totalLossAmount: Number(detail.totalLossAmount),
       totalLossAmountKrw: Number(detail.totalLossAmountKrw),
@@ -179,5 +198,10 @@ export async function getRegretChart(
     value: Number(m.assetValue),
   }));
 
-  return { snapshots, btcHoldValues, markers, totalDays };
+  const emergencyCharges: EmergencyCharge[] = (data.emergencyCharges ?? []).map((charge) => ({
+    chargedDate: charge.chargedDate,
+    amount: Number(charge.amount),
+  }));
+
+  return { snapshots, btcHoldValues, markers, totalDays, emergencyCharges };
 }

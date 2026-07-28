@@ -6,7 +6,7 @@ import { ViolationTradeList } from "@/components/regret/ViolationTradeList";
 import { NoRoundNotice } from "@/components/round/NoRoundNotice";
 import { computeSimulationLine } from "@/lib/types/regret";
 import type { RuleType } from "@/lib/types/round";
-import type { AssetSnapshot, RegretSummary, ViolationMarker, RuleToggleItem, BenchmarkItem, ViolationTrade } from "@/lib/types/regret";
+import type { AssetSnapshot, EmergencyCharge, RegretSummary, ViolationMarker, RuleToggleItem, BenchmarkItem, ViolationTrade } from "@/lib/types/regret";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { getRegretReport, getRegretChart } from "@/lib/api/regret-api";
@@ -41,6 +41,7 @@ export function RegretPage() {
     { id: "btc-hold", label: "BTC만 홀드한 나", color: "#f7931a", profitRate: 0 },
   ]);
   const [violationTrades, setViolationTrades] = useState<ViolationTrade[]>([]);
+  const [emergencyCharges, setEmergencyCharges] = useState<EmergencyCharge[]>([]);
 
   const loadRegretData = useCallback(async () => {
     if (!user || !activeRound) return;
@@ -61,6 +62,7 @@ export function RegretPage() {
       setBtcHoldValues(chartData.btcHoldValues);
       setMarkers(chartData.markers);
       setTotalDays(chartData.totalDays);
+      setEmergencyCharges(chartData.emergencyCharges);
     } catch (error) {
       console.error("Failed to load regret data", error);
       setLoadFailed(true);
@@ -74,8 +76,8 @@ export function RegretPage() {
   }, [loadRegretData]);
 
   const simulationLine = useMemo(
-    () => computeSimulationLine(snapshots, enabledRules, violationTrades),
-    [snapshots, enabledRules, violationTrades],
+    () => computeSimulationLine(snapshots, enabledRules, violationTrades, emergencyCharges),
+    [snapshots, enabledRules, violationTrades, emergencyCharges],
   );
 
   const toggleRule = (ruleType: RuleType) => {
