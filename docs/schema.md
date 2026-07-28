@@ -57,7 +57,8 @@ erDiagram
         id funding_id PK "주 식별자"
         id round_id FK "라운드 ID"
         id exchange_id FK "거래소 ID"
-        number amount "투입 금액"
+        number amount "투입 금액 (대상 거래소 기축통화 단위)"
+        number krw_converted_amount "투입 시점 원화 환산액"
         uuid idempotency_key UK "멱등 키 (round_id + idempotency_key 복합 유니크)"
         datetime created_at "투입 시각"
     }
