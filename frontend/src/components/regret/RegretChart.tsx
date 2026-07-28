@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { EstimateNotice } from "@/components/regret/EstimateNotice";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatCurrencyCompact, formatCurrencyShort } from "@/lib/formatters";
 import type { RegretSummary, AssetSnapshot, ViolationMarker } from "@/lib/types/regret";
@@ -129,7 +130,10 @@ export function RegretChart({
     <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
       {/* 상단 요약 */}
       <div className="mb-5">
-        <p className="text-xs font-medium text-muted-foreground">위반 손실</p>
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          위반 손실
+          <EstimateNotice />
+        </p>
         <p className={cn(
           "mt-1 font-mono text-3xl font-bold tabular-nums",
           summary.totalViolationLoss > 0 ? "text-negative" : "text-positive",
