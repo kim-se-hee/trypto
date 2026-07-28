@@ -21,7 +21,7 @@
   "seeds": [
     { "exchangeId": 1, "amount": 5000000 },
     { "exchangeId": 2, "amount": 3000000 },
-    { "exchangeId": 3, "amount": 100 }
+    { "exchangeId": 3, "amount": 2000 }
   ],
   "emergencyFundingLimit": 500000,
   "rules": [
@@ -34,6 +34,11 @@
 }
 ```
 
+### 원화 환산
+
+- `initialSeed` 는 원화 환산 총액이다. USDT 시드머니는 라운드 시작 시점의 빗썸 USDT 마켓 현재가로 환산해 합산하고, 이후 변하지 않는다.
+- 아래 예시는 USDT 시세 1,400원 기준: 5,000,000 + 3,000,000 + 2,000 × 1,400 = 10,800,000
+
 ### Response
 
 ```json
@@ -45,7 +50,7 @@
     "roundId": 1,
     "roundNumber": 1,
     "status": "ACTIVE",
-    "initialSeed": 8000100,
+    "initialSeed": 10800000,
     "emergencyFundingLimit": 500000,
     "emergencyChargeCount": 3,
     "rules": [
@@ -71,5 +76,7 @@
 |------|--------|------|
 | ACTIVE_ROUND_EXISTS | 409 | 이미 진행 중인 라운드 존재 |
 | INVALID_SEED_AMOUNT | 400 | 거래소별 시드머니 범위 초과 |
+| SEED_REQUIRED | 400 | 모든 거래소 시드머니가 0원 |
+| DUPLICATE_EXCHANGE | 400 | 같은 거래소 시드머니 중복 입력 |
 | INVALID_EMERGENCY_FUNDING_LIMIT | 400 | 긴급 자금 상한 초과 (최대 100만) |
 | INVALID_RULE_THRESHOLD | 400 | 원칙 설정값 유효성 위반 (비율 0 이하, 횟수 0 이하 등) |
