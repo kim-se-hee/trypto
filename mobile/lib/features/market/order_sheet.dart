@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,6 +20,13 @@ import 'market_controller.dart';
 import 'order_form.dart';
 import 'order_repository.dart';
 import 'order_target.dart';
+
+/// 주문 화면 전용 포맷. 공용 [formatPrice] 는 KRW 에서 소수 3자리라 1원 미만 코인의 지정가가
+/// 뭉개진다. 웹도 `OrderPanel.tsx` 안에 8자리 전용 포매터를 따로 둔 예외다.
+final NumberFormat _orderPrice = NumberFormat('#,##0.########', 'en_US');
+
+/// 주문 가능 수량은 웹과 같이 6자리다.
+final NumberFormat _orderQuantity = NumberFormat('#,##0.000000', 'en_US');
 
 /// 웹의 360px 고정 사이드바를 바텀시트로 옮긴 것(계획서 §4.6.1). 입력 3개 + 비율 버튼 + 안내가
 /// 세로로 길어 시트를 크게 연다.
@@ -90,9 +98,15 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
   bool _submitting = false;
   String? _availabilityError;
 
+  /// 프리필된 가격은 시세가 갱신되면 덮어쓰지만, 사용자가 만진 값은 그대로 둔다(웹 :253).
+  bool _priceTouched = false;
+
   @override
   void initState() {
     super.initState();
+    // 지정가 칸을 현재가로 미리 채운다(웹 :257-263). setState 없이 필드와 컨트롤러만 맞춘다.
+    _form = _form.withPrice(_restPrice, _ctx);
+    _sync(_priceInput, _amountText(_form.price));
     _loadAvailability();
   }
 
@@ -142,6 +156,8 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
         if (results[0].currentPrice > 0) _restPrice = results[0].currentPrice.dec;
         _loading = false;
       });
+      // 시트를 열 때 시세가 없었다면 조회 응답의 현재가로 한 번 채운다(웹 :266-269).
+      if (!_priceTouched) _apply(_form.withPrice(_currentPrice, _ctx));
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -171,20 +187,28 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
     );
   }
 
-  String _amountText(Decimal value) => value <= Decimal.zero
-      ? ''
-      : formatPrice(value.toDouble(), _ctx.baseCurrency);
+  String _amountText(Decimal value) =>
+      value <= Decimal.zero ? '' : _orderPrice.format(value.toDouble());
 
   String _quantityText(Decimal value) =>
       value <= Decimal.zero ? '' : value.toString();
 
+  /// 프리필된 가격은 세지 않는다 — 세면 시트를 열자마자 "주문 수량을 입력해 주세요." 가
+  /// 붉게 뜬다. 웹은 제출 전까지 아무 문구도 띄우지 않는다.
   bool get _touched =>
-      _form.price > Decimal.zero ||
+      _priceTouched ||
       _form.quantity > Decimal.zero ||
       _form.total > Decimal.zero;
 
-  void _reset() =>
-      _apply(OrderForm.empty(side: _form.side, orderType: _form.orderType));
+  void _reset() {
+    _priceTouched = false;
+    _apply(
+      OrderForm.empty(
+        side: _form.side,
+        orderType: _form.orderType,
+      ).withPrice(_currentPrice, _ctx),
+    );
+  }
 
   Future<void> _submit() async {
     final form = _form;
@@ -248,7 +272,13 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
                         SegmentItem(Side.sell, '매도'),
                       ],
                       value: _form.side,
-                      onChanged: (side) => _apply(_form.withSide(side)),
+                      // 탭을 바꾸면 세 입력이 비므로 가격도 현재가로 다시 채운다(웹 :257-263).
+                      onChanged: (side) {
+                        _priceTouched = false;
+                        _apply(
+                          _form.withSide(side).withPrice(_currentPrice, ctx),
+                        );
+                      },
                     ),
                     const SizedBox(height: TryptoSpacing.sm),
                     ExchangeSegment<OrderType>(
@@ -348,6 +378,14 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
     final theme = Theme.of(context);
     final buy = _form.side == Side.buy;
     final error = _availabilityError;
+    // 내림한 뒤에 포매터에 넣는다. 순서를 바꾸면 포매터가 반올림해 실잔고보다 커 보인다(웹 :629).
+    final floored = buy
+        ? _availableBuy.floor()
+        : _availableSell.floor(scale: kQuantityScale);
+    final available = buy
+        ? '${formatGrouped(floored.toDouble())} ${ctx.baseCurrency}'
+        : '${_orderQuantity.format(floored.toDouble())} '
+              '${widget.entry.symbol}';
 
     return Container(
       padding: const EdgeInsets.all(TryptoSpacing.md),
@@ -382,12 +420,7 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
               ),
             )
           else
-            NumericText(
-              buy
-                  ? ctx.amountLabel(_availableBuy)
-                  : '${formatQuantity(_availableSell.toDouble())} '
-                        '${widget.entry.symbol}',
-            ),
+            NumericText(available),
         ],
       ),
     );
@@ -397,7 +430,7 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
     // 시장가는 가격 칸이 현재가로 고정되고 비활성이다(사양서 §4.4.2).
     if (!_form.priceEditable) {
       return _FixedPriceField(
-        text: formatPrice(ctx.currentPrice.toDouble(), ctx.baseCurrency),
+        text: _orderPrice.format(ctx.currentPrice.toDouble()),
         suffix: ctx.baseCurrency,
       );
     }
@@ -406,19 +439,30 @@ class _OrderSheetState extends ConsumerState<OrderSheet> {
       label: '지정가',
       suffix: ctx.baseCurrency,
       controller: _priceInput,
-      onChanged: (text) =>
-          _apply(_form.withPrice(parseAmountInput(text), ctx), edited: OrderField.price),
+      onChanged: (text) {
+        _priceTouched = true;
+        _apply(
+          _form.withPrice(parseAmountInput(text), ctx),
+          edited: OrderField.price,
+        );
+      },
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton.outlined(
             icon: const Icon(LucideIcons.minus, size: 14),
-            onPressed: () => _apply(_form.stepPrice(-1, ctx)),
+            onPressed: () {
+              _priceTouched = true;
+              _apply(_form.stepPrice(-1, ctx));
+            },
           ),
           const SizedBox(width: TryptoSpacing.xs),
           IconButton.outlined(
             icon: const Icon(LucideIcons.plus, size: 14),
-            onPressed: () => _apply(_form.stepPrice(1, ctx)),
+            onPressed: () {
+              _priceTouched = true;
+              _apply(_form.stepPrice(1, ctx));
+            },
           ),
         ],
       ),
