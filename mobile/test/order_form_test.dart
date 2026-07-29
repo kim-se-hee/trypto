@@ -207,8 +207,20 @@ void main() {
           .withPrice(dec('95000000'), ctx())
           .withTotal(dec('100000'), ctx());
 
-      // 100,000 / 95,000,000 = 0.00105263… → 6자리 반올림
-      expect(form.quantity, dec('0.001053'));
+      // 100,000 / 95,000,000 = 0.00105263… → 6자리 내림
+      expect(form.quantity, dec('0.001052'));
+    });
+
+    test('총액으로 만든 수량은 언제나 총액 ÷ 가격 이하다', () {
+      final context = ctx();
+      final price = dec('133333333');
+      final total = dec('9995003');
+      final form = OrderForm.empty(
+        side: Side.buy,
+      ).withPrice(price, context).withTotal(total, context);
+
+      // 반올림하면 수량 × 가격이 총액을 넘어 실잔고보다 큰 주문이 나간다.
+      expect(form.quantity * price <= total, isTrue);
     });
 
     test('가격이 바뀌면 마지막으로 손댄 쪽을 기준으로 반대편을 다시 계산한다', () {
@@ -268,8 +280,18 @@ void main() {
         orderType: OrderType.market,
       ).applyRatio(100, ctx(sell: '1.23456789'));
 
-      // 수량은 6자리로 내림한다 — 올리면 보유 수량을 넘는다.
-      expect(form.quantity, dec('1.234567'));
+      // 잔고 자릿수(8)로 내림한다 — 표시 자릿수(6)로 자르면 전량 매도가 실잔고에 못 미친다.
+      expect(form.quantity, dec('1.23456789'));
+    });
+
+    test('지정가 매수 100% 는 수량을 내린 뒤에도 주문 가능 금액을 넘지 않는다', () {
+      final context = ctx();
+      final form = OrderForm.empty(side: Side.buy)
+          .withPrice(dec('133333333'), context)
+          .applyRatio(100, context);
+
+      // 수량을 반올림하면 총액이 잔고를 넘어 매수 버튼이 비활성으로 굳는다.
+      expect(form.validate(context), isNull);
     });
   });
 

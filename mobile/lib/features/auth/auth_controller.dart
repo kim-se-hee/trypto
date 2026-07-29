@@ -109,6 +109,11 @@ class AuthController extends Notifier<AuthState> {
         status: AuthStatus.authenticated,
         user: AuthUser(userId: response.userId, nickname: response.nickname),
       );
+    } on SocialLoginCanceled {
+      // 사용자가 마음을 바꾼 것은 실패가 아니다. 버튼만 되돌려 다시 시도할 수 있게 한다
+      // (웹도 인가 팝업이 그냥 닫히면 오류를 세우지 않는다). SocialLoginException 절보다
+      // 앞에 둔다 — 뒤에 두면 상속 관계가 생겼을 때 가려진다.
+      state = const AuthState.signedOut();
     } on SocialLoginException catch (error) {
       state = _failed(provider, error.message);
     } on ApiException catch (error) {

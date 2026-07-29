@@ -108,6 +108,29 @@ void main() {
       expect(panned.endIndexOf(60), 60);
     });
 
+    test('과거 캔들을 앞에 끼우면 앵커가 같이 밀려 보고 있던 구간이 그대로다', () {
+      final panned = viewport.withEnd(40, total);
+      expect(panned.startIndexOf(total), 8);
+
+      // 90개를 앞에 이어 붙였다. 전체는 190개가 되고 같은 봉이 같은 자리에 남는다.
+      final shifted = panned.prepended(90);
+      expect(shifted.endIndexOf(total + 90), 130);
+      expect(shifted.startIndexOf(total + 90), 98);
+      expect(shifted.followingLatest, isFalse);
+      expect(shifted.visibleCount, panned.visibleCount);
+    });
+
+    test('전체 개수가 늘면 그만큼 더 왼쪽으로 갈 수 있다', () {
+      // 최초 조회분(100개) 안에서는 표시 개수만큼만 남기고 더는 못 간다.
+      expect(viewport.withEnd(0, total).endIndexOf(total), 32);
+
+      // 과거를 당겨 와 190개가 되면 그 사이 구간으로 이동할 수 있다.
+      final panned = viewport.withEnd(50, total + 90);
+      expect(panned.endIndexOf(total + 90), 50);
+      expect(panned.startIndexOf(total + 90), 18);
+      expect(panned.followingLatest, isFalse);
+    });
+
     test('줌은 표시 개수를 [12, 전체] 로 가두고 앵커 비율을 유지한다', () {
       final zoomedIn = viewport.zoom(total: total, scale: 4, focusRatio: 0.5);
       expect(zoomedIn.visibleCount, 12);

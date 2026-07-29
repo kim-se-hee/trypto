@@ -80,7 +80,7 @@ void main() {
       expect(assets.every((asset) => !asset.isBase ? !asset.hasBalance : true), isTrue);
     });
 
-    test('코인은 평가액 내림차순이다', () {
+    test('코인은 상장 목록 순서를 그대로 둔다 — 표시 순서는 sortWalletAssets 가 정한다', () {
       final assets = buildWalletAssets(
         balances: _balances(const [
           CoinBalance(coinId: 1, available: 0.001, locked: 0), // 50,000
@@ -92,9 +92,9 @@ void main() {
 
       expect([for (final asset in assets) asset.symbol], [
         'KRW',
+        'BTC',
         'ETH',
         'XRP',
-        'BTC',
       ]);
     });
 
@@ -170,6 +170,91 @@ void main() {
 
     test('검색어가 없으면 전량을 돌려준다', () {
       expect(applyWalletFilter(assets, baseCurrency: 'KRW'), hasLength(4));
+    });
+  });
+
+  group('sortWalletAssets', () {
+    // 평가액과 수량의 순서가 서로 다르도록 짠 표다.
+    // KRW  가용 500,000 / 잠금 200,000 / 총 700,000
+    // BTC  가용  50,000 / 잠금 100,000 / 총 150,000
+    // ETH  가용 3,000,000 / 잠금 1,500,000 / 총 4,500,000
+    // XRP  가용  70,000 / 잠금 700,000 / 총 770,000
+    final assets = buildWalletAssets(
+      balances: _balances(
+        const [
+          CoinBalance(coinId: 1, available: 0.001, locked: 0.002),
+          CoinBalance(coinId: 2, available: 1, locked: 0.5),
+          CoinBalance(coinId: 3, available: 100, locked: 1000),
+        ],
+        available: 500000,
+        locked: 200000,
+      ),
+      coins: _coins,
+    );
+
+    List<String> symbolsOf(WalletSort sort) => [
+      for (final asset in sortWalletAssets(assets, sort)) asset.symbol,
+    ];
+
+    test('기본은 평가액 내림차순이고 기준통화도 함께 정렬된다', () {
+      expect(symbolsOf(const WalletSort()), ['ETH', 'XRP', 'KRW', 'BTC']);
+    });
+
+    test('이름 정렬은 코인명이 아니라 심볼 사전순이다', () {
+      expect(
+        symbolsOf(const WalletSort(key: WalletSortKey.name, descending: false)),
+        ['BTC', 'ETH', 'KRW', 'XRP'],
+      );
+    });
+
+    test('사용가능·잠금은 수량이 아니라 평가액 기준이다', () {
+      // 수량 순이었다면 둘 다 KRW·XRP·ETH·BTC 가 된다.
+      expect(symbolsOf(const WalletSort(key: WalletSortKey.available)), [
+        'ETH',
+        'KRW',
+        'XRP',
+        'BTC',
+      ]);
+      expect(symbolsOf(const WalletSort(key: WalletSortKey.locked)), [
+        'ETH',
+        'XRP',
+        'KRW',
+        'BTC',
+      ]);
+    });
+
+    test('오름차순은 내림차순을 뒤집은 것이다', () {
+      expect(
+        symbolsOf(const WalletSort(key: WalletSortKey.total, descending: false)),
+        ['BTC', 'KRW', 'XRP', 'ETH'],
+      );
+    });
+
+    test('원본 목록은 건드리지 않는다', () {
+      final before = [for (final asset in assets) asset.symbol];
+      sortWalletAssets(assets, const WalletSort(key: WalletSortKey.name));
+      expect([for (final asset in assets) asset.symbol], before);
+    });
+  });
+
+  group('WalletSort.sortBy', () {
+    test('같은 키를 다시 고르면 방향만 뒤집는다', () {
+      const sort = WalletSort();
+      final ascending = sort.sortBy(WalletSortKey.total);
+      expect(ascending.key, WalletSortKey.total);
+      expect(ascending.descending, isFalse);
+      expect(ascending.sortBy(WalletSortKey.total).descending, isTrue);
+    });
+
+    test('다른 키를 고르면 방향이 내림차순으로 돌아간다', () {
+      final ascendingName = const WalletSort()
+          .sortBy(WalletSortKey.name)
+          .sortBy(WalletSortKey.name);
+      expect(ascendingName.descending, isFalse);
+
+      final total = ascendingName.sortBy(WalletSortKey.total);
+      expect(total.key, WalletSortKey.total);
+      expect(total.descending, isTrue);
     });
   });
 

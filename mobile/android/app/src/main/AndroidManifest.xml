@@ -24,26 +24,12 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <!-- MainActivity 에는 커스텀 스킴 intent-filter 를 넣지 않는다.
-                 flutter_web_auth_2 의 CallbackActivity 와 콜백 인텐트를 이중 수신하면
-                 인가 코드가 두 번 교환된다(1회용이라 두 번째는 실패). -->
+            <!-- MainActivity 에는 커스텀 스킴 intent-filter 를 넣지 않는다. 두 제공자 모두 공식
+                 SDK 가 앱에서 직접 토큰을 돌려주므로 앱이 받아야 할 콜백 인텐트가 없다.
+                 카카오 SDK 의 콜백만 아래 AuthCodeCustomTabsActivity 가 받는다. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
-        <!-- 구글의 커스텀 스킴(trypto) 콜백은 flutter_web_auth_2 의 CallbackActivity 가 받는다.
-             스킴 값의 출처는 build.gradle.kts 의 authCallbackScheme placeholder 다.
-             카카오는 SDK 로 전환해 이 콜백을 쓰지 않는다(아래 AuthCodeHandlerActivity 가 받는다). -->
-        <activity
-            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
-            android:exported="true">
-            <intent-filter android:label="flutter_web_auth_2">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="${authCallbackScheme}"/>
             </intent-filter>
         </activity>
 

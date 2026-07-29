@@ -21,8 +21,10 @@ void main() {
     interval: CandleInterval.minute1,
   );
 
+  /// 봉 시각은 전부 UTC 다 — 절삭이 거래소 기준 시간대(업비트는 UTC)로 이뤄지고 결과도 UTC 로
+  /// 남는다. 로컬 시각을 섞으면 `DateTime.==` 가 `isUtc` 까지 보므로 봉이 갈라진다.
   DateTime at(int minute, [int second = 0]) =>
-      DateTime(2026, 7, 15, 10, minute, second);
+      DateTime.utc(2026, 7, 15, 10, minute, second);
 
   /// 10:00 ~ 11:29. 최초 표시 개수(1분봉 40개)보다 많아야 패닝할 여지가 생긴다.
   List<Candle> server() => [
@@ -164,6 +166,17 @@ void main() {
     expect(reconciled.startIndex, panned.startIndex);
   });
 
+  /// y축 라벨은 캔버스에 직접 그려지므로 위젯 트리에 남지 않는다. 표기 계약은 y축과 툴팁이
+  /// 함께 쓰는 이 함수에 고정한다(웹 `CandleChartPanel.formatAxisLabel`).
+  test('y축·툴팁 가격은 억·만 축약 없이 통화 기호를 붙인다', () {
+    expect(formatAxisLabel(163502000.0, 'KRW'), '₩163,502,000');
+    // 축약하면 사라지던 2천원 단위가 남는다.
+    expect(formatAxisLabel(2000.0, 'KRW'), '₩2,000');
+    // USDT 는 기호가 없고, 저가 코인의 소수점이 뭉개지지 않는다.
+    expect(formatAxisLabel(163.5, 'USDT'), '163.50');
+    expect(formatAxisLabel(0.0023, 'USDT'), '0.0023');
+  });
+
   testWidgets('재조회가 빈 배열을 주면 실시간 봉이 자리를 지킨다', (tester) async {
     await pumpChart(tester);
     store.ingest([tick(500, at(90, 5))]);
@@ -195,6 +208,7 @@ class _FakeCandleRepository implements CandleRepository {
     DateTime? cursor,
   }) async {
     calls++;
-    return normalizeCandles(candles, interval);
+    // 업비트는 봉 경계가 UTC 다.
+    return normalizeCandles(candles, interval, 0);
   }
 }

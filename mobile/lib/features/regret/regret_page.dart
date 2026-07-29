@@ -114,10 +114,20 @@ class _RegretPageState extends ConsumerState<RegretPage> {
     );
   }
 
-  Set<RuleType> _initialRules(RegretReport report) => {
-    for (final impact in report.ruleImpacts)
-      if (impact.ruleType != null) impact.ruleType!,
-  };
+  /// 배치 전 빈 리포트에는 규칙이 하나도 없다. 그대로 두면 시뮬레이션 라인이 사라지므로
+  /// 웹처럼 5종을 세워 둔다(웹 `RegretPage.tsx` 의 `enabledRules` 초기값).
+  Set<RuleType> _initialRules(RegretReport report) {
+    if (report.isEmpty) {
+      return {
+        for (final rule in RuleType.values)
+          if (rule != RuleType.unknown) rule,
+      };
+    }
+    return {
+      for (final impact in report.ruleImpacts)
+        if (impact.ruleType != null) impact.ruleType!,
+    };
+  }
 
   void _toggleRule(RuleType rule) {
     setState(() {
@@ -222,20 +232,22 @@ class _Content extends StatelessWidget {
                       btcEnabled: btcEnabled,
                       violations: report.violationDetails,
                     ),
-                    // 배치 전에는 규칙 임팩트도 비어 있다. 토글 행을 그리지 않는다.
-                    if (!report.isEmpty) ...[
-                      const SizedBox(height: TryptoSpacing.lg),
-                      Text('만약 규칙을 지켰다면', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: TryptoSpacing.sm),
-                      RuleChips(
-                        impacts: report.ruleImpacts,
-                        enabled: enabledRules,
-                        btcEnabled: btcEnabled,
-                        btcProfitRate: btcHoldProfitRate(chart.assetHistory),
-                        onToggleRule: onToggleRule,
-                        onToggleBtc: onToggleBtc,
-                      ),
-                    ],
+                    // 배치 전에는 규칙 임팩트가 비지만 BTC 홀드 곡선은 차트 데이터만으로
+                    // 그려지므로 토글 행 자체는 항상 남긴다. 제목만 벤치마크로 바꾼다.
+                    const SizedBox(height: TryptoSpacing.lg),
+                    Text(
+                      report.isEmpty ? '벤치마크' : '만약 규칙을 지켰다면',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: TryptoSpacing.sm),
+                    RuleChips(
+                      impacts: report.ruleImpacts,
+                      enabled: enabledRules,
+                      btcEnabled: btcEnabled,
+                      btcProfitRate: btcHoldProfitRate(chart.assetHistory),
+                      onToggleRule: onToggleRule,
+                      onToggleBtc: onToggleBtc,
+                    ),
                   ],
                 ),
               ),

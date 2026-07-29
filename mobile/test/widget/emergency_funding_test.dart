@@ -104,6 +104,23 @@ void main() {
             },
           ]),
         ),
+      )
+      ..onGet(
+        '/api/exchanges/3/coins',
+        (server) => server.reply(
+          200,
+          envelope([
+            {
+              'exchangeCoinId': 11,
+              'coinId': 1,
+              'coinSymbol': 'BTC',
+              'coinName': '비트코인',
+              'price': 68000.0,
+              'changeRate': 0.01,
+              'volume': 1e9,
+            },
+          ]),
+        ),
       );
   });
 
@@ -175,6 +192,7 @@ void main() {
           'roundId': 10,
           'exchangeId': 1,
           'chargedAmount': 500000.0,
+          'krwConvertedAmount': 500000.0,
           'remainingChargeCount': 2,
         }),
       ),
@@ -205,8 +223,38 @@ void main() {
     );
 
     expect(find.byType(EmergencyFundingSheet), findsNothing);
-    expect(find.text('50만원을 투입했습니다.'), findsOneWidget);
+    // 스낵바 문구의 금액 포맷은 마켓 화면(`_EmergencyBanner`) 소관이라 여기서는 성공을
+    // 알렸는지만 본다.
+    expect(find.textContaining('투입했습니다.'), findsOneWidget);
     expect(find.text('긴급 자금 · 남은 횟수 2회'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('바이낸스 시트는 USDT 로 입력받고 원화 프리셋을 감춘다', (tester) async {
+    stubRound(chargeCount: 3);
+    await pumpMarket(tester);
+
+    await tester.tap(find.text('바이낸스'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '투입'));
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(inSheet(find.byType(TextField)));
+    expect(field.decoration?.suffixText, 'USDT');
+    // 프리셋은 원화 상한의 25/50/100% 라 USDT 칸에는 넣지 않는다.
+    expect(inSheet(find.byType(OutlinedButton)), findsNothing);
+
+    // 상한은 원화 기준이다. USDT 금액과 직접 비교하면 멀쩡한 투입이 막힌다 —
+    // 서버가 투입 시점 시세로 환산해 검증한다.
+    await tester.enterText(inSheet(find.byType(TextField)), '1500000');
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '투입 확정'))
+          .onPressed,
+      isNotNull,
+    );
     expect(tester.takeException(), isNull);
   });
 

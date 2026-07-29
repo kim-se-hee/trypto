@@ -59,8 +59,10 @@ class FlashNotifier extends ValueNotifier<FlashDir?> {
   bool get isWatched => hasListeners;
 }
 
-/// 티커의 두 번째 소비자(캔들 차트)가 구현한다. 관찰자는 하나뿐이다 — 차트는 한 번에 하나만
-/// 열린다.
+/// 티커의 두 번째 소비자(캔들 차트)가 구현한다. 관찰자는 여러 개가 동시에 산다 — 코인 상세
+/// 차트가 살아 있는 채로 가로 풀스크린이 그 위에 올라오고, 풀스크린에서 주기를 바꾸면 폴더가
+/// 하나 더 생긴다. 슬롯이 하나면 나중 것이 앞 것을 덮고, 풀스크린을 닫는 순간 아무도 남지
+/// 않아 상세 차트의 실시간 갱신이 멈춘다.
 abstract class TickObserver {
   /// [TickerStore.ingest] 안에서 **매 틱** 동기 호출된다. 접기 전용이며 그리기를 하지 않는다.
   void onTick(Ticker tick);
@@ -77,7 +79,7 @@ class TickerStore {
   final Map<String, Ticker> _pending = {};
   final Map<String, int> _flashUntilMs = {};
 
-  TickObserver? _observer;
+  final List<TickObserver> _observers = [];
   bool _scheduled = false;
   int _frameId = 0;
   bool _active = true;
@@ -97,12 +99,14 @@ class TickerStore {
 
   void clearOrderDirty() => _orderDirty = false;
 
-  void setRawObserver(TickObserver observer) => _observer = observer;
-
-  /// 관찰자 교체 중에 옛 관찰자의 해제가 새 관찰자를 지우지 않게 한다.
-  void clearRawObserver(TickObserver observer) {
-    if (identical(_observer, observer)) _observer = null;
+  /// 같은 관찰자를 두 번 등록하지 않는다 — 그러면 한 체결이 두 번 접힌다.
+  void addRawObserver(TickObserver observer) {
+    if (_observers.contains(observer)) return;
+    _observers.add(observer);
   }
+
+  /// 자기 것만 뗀다. 옛 관찰자의 해제가 새 관찰자를 지우지 않는다.
+  void removeRawObserver(TickObserver observer) => _observers.remove(observer);
 
   /// 상세·전체화면 차트가 마켓을 덮는 동안 잡아 둔다. 마켓 페이지는 자기가 가려지면
   /// `setActive(false)` 를 부르지만, 그 화면들도 같은 스토어에서 티커를 받으므로 멈추면 안 된다.
@@ -152,7 +156,10 @@ class TickerStore {
     for (final tick in ticks) {
       // 상장 목록 밖 심볼은 버린다(사양서 §3.3.2-2).
       if (!_rows.containsKey(tick.symbol)) continue;
-      _observer?.onTick(tick);
+      // 인덱스 순회다 — 매 틱 도는 자리라 이터레이터 객체조차 만들지 않는다.
+      for (var i = 0; i < _observers.length; i++) {
+        _observers[i].onTick(tick);
+      }
       _pending[tick.symbol] = tick;
       accepted = true;
     }
@@ -211,7 +218,11 @@ class TickerStore {
       return true;
     });
 
-    _observer?.onFrame();
+    // 알림을 받은 관찰자가 그 자리에서 자기를 뗄 수 있다. 인덱스로 돌면 순회 중 변경이
+    // 예외로 번지지 않는다.
+    for (var i = 0; i < _observers.length; i++) {
+      _observers[i].onFrame();
+    }
 
     if (_flashUntilMs.isNotEmpty) _schedule(rescheduling: true);
   }
@@ -227,7 +238,7 @@ class TickerStore {
     _flashUntilMs.clear();
     _rows.clear();
     _flash.clear();
-    _observer = null;
+    _observers.clear();
   }
 }
 

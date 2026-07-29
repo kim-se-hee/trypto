@@ -17,18 +17,20 @@ dart run build_runner build --delete-conflicting-outputs   # models/*.g.dart
 flutter run \
   --dart-define=API_BASE_URL=http://10.0.2.2:8080 \
   --dart-define=WS_BASE_URL=ws://10.0.2.2:8080/ws \
-  --dart-define=KAKAO_CLIENT_ID=... \
-  --dart-define=GOOGLE_ANDROID_CLIENT_ID=... \
-  --dart-define=GOOGLE_IOS_CLIENT_ID=...
+  --dart-define=KAKAO_NATIVE_APP_KEY=... \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=...
 ```
 
 | 키 | 개발(에뮬레이터) | 운영 |
 |---|---|---|
 | `API_BASE_URL` | `http://10.0.2.2:8080` | `https://{도메인}` |
 | `WS_BASE_URL` | `ws://10.0.2.2:8080/ws` | `wss://{도메인}/ws` |
-| `KAKAO_CLIENT_ID` | 카카오 REST API 키 | 동일 |
-| `GOOGLE_ANDROID_CLIENT_ID` / `GOOGLE_IOS_CLIENT_ID` | 플랫폼별 OAuth 클라이언트 ID | 동일 |
-| `KAKAO_CALLBACK_SCHEME` / `GOOGLE_CALLBACK_SCHEME` | `trypto` (기본값) | 콘솔 정책에 따라 변경 |
+| `KAKAO_NATIVE_APP_KEY` | 카카오 네이티브 앱 키 (기본값 있음) | 동일 |
+| `GOOGLE_SERVER_CLIENT_ID` | 구글 웹 클라이언트 ID (기본값 있음) | 동일 |
+
+두 제공자 모두 공식 SDK 로 앱에서 직접 토큰을 받으므로 클라이언트 ID·콜백 스킴을 주입하지 않는다.
+카카오 네이티브 앱 키를 바꾸면 `AndroidManifest.xml` 과 `ios/Runner/Info.plist` 의
+`kakao{네이티브앱키}` 스킴도 함께 고쳐야 한다.
 
 로컬 백엔드는 `SESSION_COOKIE_SECURE=false` 여야 세션 쿠키가 저장·전송된다.
 
@@ -44,7 +46,7 @@ flutter build apk --debug
 
 ```
 lib/
-  core/      env · api(Dio + 인터셉터 3종) · auth(PKCE·세션) · realtime(STOMP·TickerStore)
+  core/      env · api(Dio + 인터셉터 3종) · auth(설정·세션) · realtime(STOMP·TickerStore)
              format · json · router(가드) · theme · widgets
   models/    서버 DTO 전량 (json_serializable)
   features/  auth · round · market · portfolio · wallet · ranking · regret · mypage

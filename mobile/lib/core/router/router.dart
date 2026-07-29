@@ -28,9 +28,9 @@ CandleInterval _intervalOf(String? wire) => CandleInterval.values.firstWhere(
   orElse: () => CandleInterval.day1,
 );
 
-/// 소셜 콜백 스킴은 라우터에 등록하지 않는다(계획서 §4.3.1). `flutter_web_auth_2` 가 콜백
-/// 인텐트를 자기 액티비티에서 소비해 `authenticate()` 의 반환값으로 준다. 라우터에도 스킴을
-/// 들이면 같은 인텐트가 두 경로로 들어와 인가 코드가 두 번 교환된다(1회용이라 두 번째는 실패).
+/// 소셜 콜백 스킴은 라우터에 등록하지 않는다(계획서 §4.3.1). 두 제공자 모두 공식 SDK 가 앱에서
+/// 직접 토큰을 돌려주므로 앱이 받아야 할 콜백 인텐트가 없다. 카카오 SDK 의 콜백은 SDK 자신의
+/// 액티비티가 소비한다(AndroidManifest 의 `AuthCodeCustomTabsActivity`).
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,

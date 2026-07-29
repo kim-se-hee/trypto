@@ -13,6 +13,7 @@ class Exchange {
     required this.baseCurrency,
     required this.feeRate,
     required this.candleCode,
+    this.candleTzOffsetMinutes = 0,
   });
 
   final int id;
@@ -28,6 +29,11 @@ class Exchange {
 
   /// 캔들 API 만 id 가 아니라 대문자 코드를 받는다.
   final String candleCode;
+
+  /// 캔들 봉 경계를 자르는 거래소 기준 시간대의 오프셋(분). 서버 `CandleQueryAdapter.candleZone`
+  /// 과 같다 — 빗썸만 KST(+540)이고 업비트·바이낸스는 UTC(0)다. 단말 로컬 시각으로 자르면
+  /// 서버 진행봉과 실시간 봉이 다른 자리에 떨어져 봉이 둘로 갈라진다.
+  final int candleTzOffsetMinutes;
 
   double get minOrderAmount => OrderPolicy.minAmount(baseCurrency);
 
@@ -49,6 +55,7 @@ class ExchangeIds {
       baseCurrency: 'KRW',
       feeRate: 0.0005,
       candleCode: 'UPBIT',
+      candleTzOffsetMinutes: 0,
     ),
     Exchange(
       id: bithumb,
@@ -57,6 +64,7 @@ class ExchangeIds {
       baseCurrency: 'KRW',
       feeRate: 0.0025,
       candleCode: 'BITHUMB',
+      candleTzOffsetMinutes: 9 * 60,
     ),
     Exchange(
       id: binance,
@@ -65,6 +73,7 @@ class ExchangeIds {
       baseCurrency: 'USDT',
       feeRate: 0.001,
       candleCode: 'BINANCE',
+      candleTzOffsetMinutes: 0,
     ),
   ];
 
@@ -83,5 +92,16 @@ class ExchangeIds {
       if (exchange.key == key) return exchange;
     }
     return all.first;
+  }
+
+  /// 캔들 API 코드로 봉 경계 오프셋(분)을 찾는다. 표에 없는 거래소는 UTC 로 본다(웹
+  /// `candleTzOffsetMinutes` 와 같다).
+  static int candleTzOffsetMinutes(String candleCode) {
+    for (final exchange in all) {
+      if (exchange.candleCode == candleCode) {
+        return exchange.candleTzOffsetMinutes;
+      }
+    }
+    return 0;
   }
 }

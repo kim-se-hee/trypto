@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/constants/exchanges.dart';
 import '../../core/format/formatters.dart';
 import '../../core/theme/theme.dart';
 import '../../core/widgets/app_snackbar.dart';
@@ -10,8 +11,6 @@ import '../../models/enums.dart';
 import '../auth/auth_controller.dart';
 import 'round_controller.dart';
 import 'round_rules.dart';
-
-enum _AmountField { seed, emergency }
 
 /// 2단계 스텝 + 하단 고정 CTA(계획서 §5.3). 검증은 **입력 단계에서** 한다 — 웹은 제출 시점에
 /// 서버 400·500 을 받고 그 메시지마저 버린다.
@@ -23,13 +22,28 @@ class RoundCreatePage extends ConsumerStatefulWidget {
 }
 
 class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
-  static const List<int> _seedPresets = [1000000, 5000000, 10000000, 50000000];
+  /// 프리셋은 기축통화별로 다르다. USDT 상한이 30,000 이라 원화 프리셋을 그대로 쓰면
+  /// 누르는 족족 범위 밖이 된다.
+  static const List<int> _krwSeedPresets = [
+    1000000,
+    5000000,
+    10000000,
+    50000000,
+  ];
+  static const List<int> _usdtSeedPresets = [1000, 5000, 10000, 30000];
   static const List<int> _emergencyPresets = [100000, 500000, 1000000];
 
+  static List<int> _seedPresetsOf(String baseCurrency) =>
+      baseCurrency == 'USDT' ? _usdtSeedPresets : _krwSeedPresets;
+
   int _step = 0;
-  int _seed = 0;
+
+  /// 거래소 id → 시드 금액. 시드는 거래소마다 그 거래소 기축통화로 따로 넣는다.
+  final Map<int, int> _seeds = {for (final e in ExchangeIds.all) e.id: 0};
   int _emergencyLimit = 0;
-  _AmountField _target = _AmountField.seed;
+
+  /// 키패드 입력이 들어갈 칸. 거래소 id 면 그 거래소 시드 카드, null 이면 긴급 자금 상한이다.
+  int? _target = ExchangeIds.upbit;
   bool _submitting = false;
 
   final Map<RuleType, int> _values = {
@@ -38,7 +52,7 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
   final Set<RuleType> _enabled = {};
 
   RoundDraft get _draft => RoundDraft(
-    seed: _seed,
+    seeds: _seeds,
     emergencyLimit: _emergencyLimit,
     rules: {for (final type in _enabled) type: _values[type]!},
   );
@@ -48,12 +62,13 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
 
   void _key(String key) {
     setState(() {
-      final current = _target == _AmountField.seed ? _seed : _emergencyLimit;
+      final target = _target;
+      final current = target == null ? _emergencyLimit : (_seeds[target] ?? 0);
       final next = key == '<' ? current ~/ 10 : _append(current, key);
-      if (_target == _AmountField.seed) {
-        _seed = next;
-      } else {
+      if (target == null) {
         _emergencyLimit = next;
+      } else {
+        _seeds[target] = next;
       }
     });
   }
@@ -137,34 +152,34 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
                 ),
               ),
               const SizedBox(height: TryptoSpacing.lg),
-              _AmountCard(
-                title: '시작 자금',
-                description: '모의투자에 사용할 초기 자본금',
-                amount: _seed,
-                presets: _seedPresets,
-                selected: _target == _AmountField.seed,
-                error: _seed > 0 ? _draft.seedError : null,
-                onSelect: () => setState(() => _target = _AmountField.seed),
-                onPreset: (value) => setState(() {
-                  _seed = value;
-                  _target = _AmountField.seed;
-                }),
+              Text('시작 자금', style: theme.textTheme.titleMedium),
+              const SizedBox(height: TryptoSpacing.xs),
+              Text(
+                '거래소별로 기축통화 시드머니를 설정합니다. 1개 거래소 이상 입력이 필요합니다.',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: TryptoSpacing.md),
+              for (final exchange in ExchangeIds.all) ...[
+                _buildSeedCard(exchange),
+                const SizedBox(height: TryptoSpacing.md),
+              ],
               _AmountCard(
                 title: '긴급 자금 투입 상한',
-                description: '1회당 최대 투입 금액',
+                description: '1회당 최대 투입 금액 (원화 기준)',
+                baseCurrency: 'KRW',
                 amount: _emergencyLimit,
                 presets: _emergencyPresets,
-                selected: _target == _AmountField.emergency,
+                selected: _target == null,
                 error: _emergencyLimit > 0 ? _draft.emergencyError : null,
                 note:
                     '라운드 진행 중 최대 ${EmergencyFundingPolicy.chargeCount}회까지 '
                     '긴급 자금을 투입할 수 있습니다',
-                onSelect: () => setState(() => _target = _AmountField.emergency),
+                onSelect: () => setState(() => _target = null),
                 onPreset: (value) => setState(() {
                   _emergencyLimit = value;
-                  _target = _AmountField.emergency;
+                  _target = null;
                 }),
               ),
             ],
@@ -172,6 +187,29 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
         ),
         _Keypad(onKey: _key),
       ],
+    );
+  }
+
+  /// 거래소 한 곳의 시드 카드. 금액·프리셋·오류 문구가 전부 그 거래소 기축통화 기준이다.
+  Widget _buildSeedCard(Exchange exchange) {
+    final amount = _seeds[exchange.id] ?? 0;
+
+    return _AmountCard(
+      title: exchange.name,
+      description: '${exchange.baseCurrency} 시드머니 · 0 은 배정하지 않음',
+      baseCurrency: exchange.baseCurrency,
+      amount: amount,
+      presets: _seedPresetsOf(exchange.baseCurrency),
+      selected: _target == exchange.id,
+      error: amount > 0 ? SeedPolicy.validate(exchange.id, amount) : null,
+      note: exchange.baseCurrency == 'USDT'
+          ? '${exchange.name} 시드는 라운드 시작 시점 시세로 원화 환산되어 시드 총액에 합산됩니다'
+          : null,
+      onSelect: () => setState(() => _target = exchange.id),
+      onPreset: (value) => setState(() {
+        _seeds[exchange.id] = value;
+        _target = exchange.id;
+      }),
     );
   }
 
@@ -278,6 +316,7 @@ class _AmountCard extends StatelessWidget {
   const _AmountCard({
     required this.title,
     required this.description,
+    required this.baseCurrency,
     required this.amount,
     required this.presets,
     required this.selected,
@@ -289,6 +328,10 @@ class _AmountCard extends StatelessWidget {
 
   final String title;
   final String description;
+
+  /// 금액 표기의 기준통화. USDT 카드에 원화 표기를 하면 사용자가 무엇을 넣는지 알 수 없다.
+  final String baseCurrency;
+
   final int amount;
   final List<int> presets;
   final bool selected;
@@ -301,6 +344,7 @@ class _AmountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final empty = amount == 0;
+    final isUsdt = baseCurrency == 'USDT';
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -328,14 +372,17 @@ class _AmountCard extends StatelessWidget {
             ),
             const SizedBox(height: TryptoSpacing.md),
             NumericText(
-              '₩${formatGrouped(amount)}',
+              isUsdt
+                  ? '${formatGrouped(amount)} USDT'
+                  : '₩${formatGrouped(amount)}',
               size: 28,
               weight: FontWeight.w700,
               color: empty
                   ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
                   : theme.colorScheme.onSurface,
             ),
-            if (!empty) ...[
+            // 원화 약어 보조 표시는 원화 칸에만 붙는다(웹과 같다).
+            if (!empty && !isUsdt) ...[
               const SizedBox(height: TryptoSpacing.xs),
               Text(
                 formatKRW(amount.toDouble()),
@@ -360,6 +407,7 @@ class _AmountCard extends StatelessWidget {
                   Expanded(
                     child: _PresetButton(
                       value: preset,
+                      baseCurrency: baseCurrency,
                       active: preset == amount,
                       onTap: () => onPreset(preset),
                     ),
@@ -389,11 +437,16 @@ class _AmountCard extends StatelessWidget {
 class _PresetButton extends StatelessWidget {
   const _PresetButton({
     required this.value,
+    required this.baseCurrency,
     required this.active,
     required this.onTap,
   });
 
   final int value;
+
+  /// 원화 축약(`3만`)을 USDT 프리셋에 쓰면 30,000 USDT 가 '3만' 으로 찍힌다.
+  final String baseCurrency;
+
   final bool active;
   final VoidCallback onTap;
 
@@ -413,7 +466,9 @@ class _PresetButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(TryptoRadius.md),
         ),
         child: Text(
-          formatKRWCompact(value.toDouble()),
+          baseCurrency == 'USDT'
+              ? formatGrouped(value)
+              : formatKRWCompact(value.toDouble()),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.labelMedium?.copyWith(

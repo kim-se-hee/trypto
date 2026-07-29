@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -18,41 +19,20 @@ class SocialLoginException implements Exception {
   String toString() => 'SocialLoginException($message)';
 }
 
-/// 콜백 URL 검증(사양서 §2.2.4). 인가 코드를 돌려주고, 실패는 사용자 문구를 담아 던진다.
-///
-/// state 검증은 **반드시 클라이언트가** 한다. 서버는 state 를 보지 않는다.
-String verifySocialCallback(
-  Uri callback, {
-  required SocialProvider provider,
-  required String? expectedState,
-  required String? codeVerifier,
-}) {
-  final params = callback.queryParameters;
+/// 사용자가 인가를 스스로 그만둔 경우. 실패가 아니므로 사용자 문구를 담지 않는다 — 웹은 인가
+/// 팝업이 그냥 닫히면 버튼만 되돌리고 오류를 세우지 않는다(`useSocialLogin` 의 팝업 감시).
+/// [SocialLoginException] 을 상속하지 않으므로 `catch (_)` 앞에서 따로 걸러야 한다.
+class SocialLoginCanceled implements Exception {
+  const SocialLoginCanceled();
 
-  final error = params['error'];
-  if (error != null && error.isNotEmpty) {
-    throw SocialLoginException('${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.');
-  }
-
-  final code = params['code'];
-  final state = params['state'];
-  if (code == null || code.isEmpty || state == null || state.isEmpty) {
-    throw const SocialLoginException('인가 정보가 올바르지 않습니다.');
-  }
-  if (expectedState == null || expectedState.isEmpty || state != expectedState) {
-    throw const SocialLoginException('보안 검증(state)에 실패했습니다. 다시 시도해주세요.');
-  }
-  if (codeVerifier == null || codeVerifier.isEmpty) {
-    throw const SocialLoginException('로그인 검증값이 없습니다. 다시 시도해주세요.');
-  }
-  return code;
+  @override
+  String toString() => 'SocialLoginCanceled()';
 }
 
-/// PKCE 비밀값 보관소(계획서 §4.3.3).
+/// 옛 브라우저 인가 코드 흐름이 남긴 PKCE 비밀값 청소기(계획서 §4.3.3).
 ///
-/// 저장은 하되 **읽지 않는다.** 인가 도중 OS 가 프로세스를 죽이면 `await` 도 함께 사라지므로
-/// 복구 경로를 만들지 않는다. 대신 교환 성공·실패 무관 즉시 삭제하고 부팅 시 무조건 삭제해
-/// 오염값이 남지 않게 닫는다.
+/// 두 제공자 모두 공식 SDK 로 전환해 **더는 아무것도 저장하지 않는다.** 다만 이전 버전에서
+/// 저장해 둔 값이 기기에 남아 있을 수 있으므로, 부팅 때 무조건 지워 오염값을 닫는다.
 class OAuthSecrets {
   OAuthSecrets({FlutterSecureStorage? storage})
     : _storage =
@@ -66,20 +46,6 @@ class OAuthSecrets {
   static const String _stateKey = 'oauth_state';
 
   final FlutterSecureStorage _storage;
-
-  Future<void> put({
-    required SocialProvider provider,
-    required String verifier,
-    required String state,
-  }) async {
-    try {
-      await _storage.write(key: _providerKey, value: provider.wire);
-      await _storage.write(key: _verifierKey, value: verifier);
-      await _storage.write(key: _stateKey, value: state);
-    } catch (_) {
-      // 저장 실패가 로그인을 막지 않는다. 진행 중인 인가는 메모리 값만으로 끝난다.
-    }
-  }
 
   Future<void> clear() async {
     try {
@@ -110,6 +76,11 @@ Future<String?> _authenticateWithGoogle() async {
   return account.authentication.idToken;
 }
 
+/// 구글 SDK 는 취소를 예외 코드로 구분해 알린다. 나머지 코드는 전부 실패로 다룬다.
+bool _isGoogleCanceled(Object error) =>
+    error is GoogleSignInException &&
+    error.code == GoogleSignInExceptionCode.canceled;
+
 /// 카카오 SDK 토큰 획득부. 테스트에서 SDK 를 대체할 수 있도록 함수로 받는다.
 typedef KakaoTokenProvider = Future<String> Function();
 
@@ -122,6 +93,13 @@ Future<String> _authenticateWithKakao() async {
       : await UserApi.instance.loginWithKakaoAccount();
   return token.accessToken;
 }
+
+/// 카카오는 취소를 두 갈래로 알린다 — 카카오계정 웹 로그인에서 동의를 거부하면 인가 오류
+/// (`access_denied`)로, 카카오톡 앱·커스텀 탭을 그냥 닫으면 네이티브 채널 오류(`CANCELED`)로 온다.
+bool _isKakaoCanceled(Object error) =>
+    (error is KakaoAuthException &&
+        error.error == AuthErrorCause.accessDenied) ||
+    (error is PlatformException && error.code == 'CANCELED');
 
 /// 소셜 인가. 제공자로 분기한다 — 둘 다 공식 SDK 로 앱에서 직접 토큰을 받는다. 카카오는 액세스
 /// 토큰을, 구글은 ID 토큰을 돌려준다. 구글도 SDK 인 이유는 안드로이드에서 커스텀 스킴 리다이렉트가
@@ -143,7 +121,8 @@ class SocialLoginService {
   };
 
   /// 카카오: SDK 가 앱에서 직접 액세스 토큰을 돌려준다. 취소·실패는 SDK 예외로 오므로
-  /// 크래시 대신 다시 시도할 수 있는 사용자 문구로 감싼다.
+  /// 크래시 대신 다시 시도할 수 있는 사용자 문구로 감싼다. 단 사용자가 스스로 그만둔 것은
+  /// 실패가 아니므로 [SocialLoginCanceled] 로 갈라 문구를 세우지 않는다.
   Future<LoginRequest> _authorizeKakao() async {
     const provider = SocialProvider.kakao;
     try {
@@ -152,9 +131,12 @@ class SocialLoginService {
         accessToken: accessToken,
         clientType: AuthConfig.clientType,
       );
+    } on SocialLoginCanceled {
+      rethrow;
     } on SocialLoginException {
       rethrow;
-    } catch (_) {
+    } catch (error) {
+      if (_isKakaoCanceled(error)) throw const SocialLoginCanceled();
       throw SocialLoginException(
         '${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.',
       );
@@ -163,6 +145,7 @@ class SocialLoginService {
 
   /// 구글: 공식 SDK 가 앱에서 직접 ID 토큰을 돌려준다. 취소·중단·실패는 SDK 예외
   /// (`GoogleSignInException`)로 오므로 크래시 대신 다시 시도할 수 있는 사용자 문구로 감싼다.
+  /// 그중 사용자가 계정 시트를 닫은 것(`canceled`)만 [SocialLoginCanceled] 로 갈라낸다.
   Future<LoginRequest> _authorizeGoogle() async {
     const provider = SocialProvider.google;
     if (!AuthConfig.isConfigured(provider)) {
@@ -181,9 +164,12 @@ class SocialLoginService {
         idToken: idToken,
         clientType: AuthConfig.clientType,
       );
+    } on SocialLoginCanceled {
+      rethrow;
     } on SocialLoginException {
       rethrow;
-    } catch (_) {
+    } catch (error) {
+      if (_isGoogleCanceled(error)) throw const SocialLoginCanceled();
       throw SocialLoginException(
         '${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.',
       );

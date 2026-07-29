@@ -47,12 +47,18 @@ class _CoinDetailPageState extends ConsumerState<CoinDetailPage> {
   void Function()? _cancelTickers;
   bool _bound = false;
 
+  /// `dispose` 는 `ref` 를 쓸 수 없다 — `State.dispose` 시점에는 이미 위젯이 해제되어 있어
+  /// riverpod 이 예외를 던지고, 그러면 `release()` 가 실행되지 않아 스토어가 영원히 멈추지
+  /// 않는다. 그래서 잡아 둔 스토어를 필드로 들고 있는다.
+  TickerStore? _store;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_bound) return;
     _bound = true;
     final store = ref.read(tickerStoreProvider);
+    _store = store;
     store.hold();
     final exchange = ExchangeIds.byKey(
       GoRouterState.of(context).uri.queryParameters['exchange'],
@@ -68,7 +74,7 @@ class _CoinDetailPageState extends ConsumerState<CoinDetailPage> {
   @override
   void dispose() {
     _cancelTickers?.call();
-    ref.read(tickerStoreProvider).release();
+    _store?.release();
     super.dispose();
   }
 

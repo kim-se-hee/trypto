@@ -220,6 +220,22 @@ void main() {
       .lastWhere((request) => request.path == '/api/orders' && request.method == 'POST')
       .data as Map<String, dynamic>;
 
+  testWidgets('시트를 열면 지정가 칸이 현재가로 채워지고 오류 문구가 뜨지 않는다', (tester) async {
+    stubHistory('FILLED', []);
+    await openDetail(tester);
+    await openSheet(tester, '매수');
+
+    // 웹은 코인·탭이 바뀔 때마다 가격 칸을 현재가로 미리 채운다(OrderPanel.tsx:257-263).
+    final fields = inSheet(find.byType(TextField));
+    expect(
+      tester.widget<TextField>(fields.at(0)).controller?.text,
+      '96,000,000',
+    );
+    // 프리필된 가격을 '손댄 것' 으로 세면 열자마자 붉은 문구가 뜬다.
+    expect(inSheet(find.text('주문 수량을 입력해 주세요.')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('시장가 매수 — 수량 칸이 사라지고 바디에 volume 이 없다', (tester) async {
     stubHistory('FILLED', []);
     await openDetail(tester);

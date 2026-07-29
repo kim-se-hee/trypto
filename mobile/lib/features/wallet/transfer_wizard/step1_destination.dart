@@ -10,21 +10,24 @@ import 'transfer_draft.dart';
 /// 웹의 단일 모달을 전체 화면 3단계 마법사로 바꾼다(사양서 §5.4.4) — 모바일에서는 숫자
 /// 키패드가 화면 절반을 덮어 모달 안에 셀렉트·입력·오류·버튼을 함께 두면 조작할 수 없다.
 ///
-/// 후보가 하나면 1단계를 건너뛰고 자동 선택한다.
+/// 고를 수 있는 후보 — 그 코인을 취급하는 거래소 — 가 하나면 1단계를 건너뛰고 자동 선택한다.
+/// 미상장 후보는 셀 수 없다. 하나뿐인 후보가 미상장이면 아예 열지 않는다.
 Future<TransferOutcome?> startTransfer(
   BuildContext context,
   TransferDraft draft,
 ) {
-  if (draft.destinations.isEmpty) return Future.value();
+  final reachable = [
+    for (final destination in draft.destinations)
+      if (destination.listed) destination,
+  ];
+  if (reachable.isEmpty) return Future.value();
 
   final navigator = Navigator.of(context, rootNavigator: true);
-  if (draft.destinations.length == 1) {
+  if (reachable.length == 1) {
     return navigator.push<TransferOutcome>(
       MaterialPageRoute(
-        builder: (context) => TransferAmountPage(
-          draft: draft,
-          destination: draft.destinations.single,
-        ),
+        builder: (context) =>
+            TransferAmountPage(draft: draft, destination: reachable.single),
       ),
     );
   }
@@ -71,21 +74,34 @@ class TransferDestinationPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: TryptoSpacing.lg),
+          // 미상장 거래소도 목록에 남기고 사유와 함께 죽인다(웹 TransferModal.tsx:143-151).
           for (final destination in draft.destinations) ...[
             Card(
               child: ListTile(
+                enabled: destination.listed,
                 title: Text(
                   destination.exchange.name,
-                  style: theme.textTheme.titleMedium,
-                ),
-                subtitle: Text(
-                  '${destination.exchange.baseCurrency} 마켓',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: destination.listed ? null : theme.disabledColor,
                   ),
                 ),
-                trailing: const Icon(LucideIcons.chevronRight, size: 16),
-                onTap: () => _select(context, destination),
+                subtitle: Text(
+                  destination.listed
+                      ? '${destination.exchange.baseCurrency} 마켓'
+                      : '${destination.exchange.baseCurrency} 마켓 · '
+                            '${draft.symbol} 미상장',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: destination.listed
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.disabledColor,
+                  ),
+                ),
+                trailing: destination.listed
+                    ? const Icon(LucideIcons.chevronRight, size: 16)
+                    : null,
+                onTap: destination.listed
+                    ? () => _select(context, destination)
+                    : null,
               ),
             ),
             const SizedBox(height: TryptoSpacing.sm),

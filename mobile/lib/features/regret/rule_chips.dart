@@ -9,7 +9,7 @@ import '../../models/regret.dart';
 import '../round/round_rules.dart';
 import 'regret_chart.dart';
 
-/// 규칙별 색(사양서 §6.3.3). 라벨·단위는 [ruleLabels]·[ruleUnits] 가 단일 출처다.
+/// 규칙별 색(사양서 §6.3.3). 라벨은 [ruleLabels], 단위는 아래 [regretRuleUnits] 가 단일 출처다.
 const Map<RuleType, Color> ruleColors = {
   RuleType.lossCut: Color(0xFFED4B9E),
   RuleType.profitTake: Color(0xFF31D0AA),
@@ -21,11 +21,24 @@ const Map<RuleType, Color> ruleColors = {
 Color ruleColor(BuildContext context, RuleType? rule) =>
     ruleColors[rule] ?? Theme.of(context).colorScheme.onSurfaceVariant;
 
-/// 임계값 표기 — `+10%`, `3회`. 서버 `thresholdUnit` 을 쓰지 않고 프론트 상수 표로 정한다(§6.3.3).
+/// 복기 전용 임계값 단위 표. 라운드 생성 화면의 [ruleUnits] 와 과매매 제한에서 갈린다 —
+/// 생성 화면은 하루 한도라는 뜻을 살려 `회/일` 이지만, 복기는 웹과 같이 `회` 로 적는다
+/// (웹 `regret-api.ts` 의 `RULE_THRESHOLD_UNIT`).
+const Map<RuleType, String> regretRuleUnits = {
+  RuleType.lossCut: '%',
+  RuleType.profitTake: '%',
+  RuleType.chaseBuyBan: '%',
+  RuleType.averagingDownLimit: '회',
+  RuleType.overtradingLimit: '회',
+  RuleType.unknown: '',
+};
+
+/// 임계값 표기 — `+10%`, `+3회`. 서버 `thresholdUnit` 을 쓰지 않고 프론트 상수 표로 정한다(§6.3.3).
+/// 부호는 단위를 가리지 않고 양수면 붙인다(웹 `MeVsMe.tsx`).
 String ruleThresholdLabel(RuleType? rule, double? value) {
   if (value == null || value == 0) return '';
-  final unit = ruleUnits[rule] ?? '';
-  final sign = value > 0 && unit == '%' ? '+' : '';
+  final unit = regretRuleUnits[rule] ?? '';
+  final sign = value > 0 ? '+' : '';
   final amount = value == value.roundToDouble()
       ? value.toInt().toString()
       : value.toString();
@@ -51,7 +64,7 @@ class RuleChips extends StatelessWidget {
   final Set<RuleType> enabled;
   final bool btcEnabled;
 
-  /// 웹은 이 값을 `0%` 로 하드코딩했다. 스냅샷이 모자라면 null 이다.
+  /// 첫 스냅샷 대비 마지막 스냅샷의 등락률. 스냅샷이 모자라면 null 이다.
   final double? btcProfitRate;
 
   final void Function(RuleType rule) onToggleRule;
@@ -61,51 +74,59 @@ class RuleChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (impacts.isEmpty) {
-      return Text(
-        '설정한 투자 원칙이 없습니다.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final impact in impacts) ...[
-            _RuleChip(
-              impact: impact,
-              selected:
-                  impact.ruleType != null && enabled.contains(impact.ruleType),
-              onTap: impact.ruleType == null
-                  ? null
-                  : () => onToggleRule(impact.ruleType!),
-              onLongPress: () => _showRuleDetail(context, impact),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 규칙이 없어도 벤치마크 칩은 남긴다. BTC 홀드 곡선은 리포트가 아니라 차트 데이터로
+        // 계산되므로 배치 전에도 그려지는데, 칩이 사라지면 끌 수단도 값을 읽을 수단도 없다.
+        if (impacts.isEmpty) ...[
+          Text(
+            '설정한 투자 원칙이 없습니다.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: TryptoSpacing.sm),
-          ],
-          FilterChip(
-            selected: btcEnabled,
-            onSelected: (_) => onToggleBtc(),
-            label: Text(
-              btcProfitRate == null
-                  ? 'BTC만 홀드한 나'
-                  : 'BTC만 홀드한 나 ${formatProfitPercent(btcProfitRate!)}',
-            ),
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: btcEnabled ? FontWeight.w700 : FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            side: BorderSide(
-              color: btcEnabled ? btcHoldColor : TryptoPalette.border,
-            ),
-            selectedColor: btcHoldColor.withValues(alpha: 0.12),
           ),
+          const SizedBox(height: TryptoSpacing.sm),
         ],
-      ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final impact in impacts) ...[
+                _RuleChip(
+                  impact: impact,
+                  selected:
+                      impact.ruleType != null &&
+                      enabled.contains(impact.ruleType),
+                  onTap: impact.ruleType == null
+                      ? null
+                      : () => onToggleRule(impact.ruleType!),
+                  onLongPress: () => _showRuleDetail(context, impact),
+                ),
+                const SizedBox(width: TryptoSpacing.sm),
+              ],
+              FilterChip(
+                selected: btcEnabled,
+                onSelected: (_) => onToggleBtc(),
+                label: Text(
+                  btcProfitRate == null
+                      ? 'BTC만 홀드한 나'
+                      : 'BTC만 홀드한 나 ${formatProfitPercent(btcProfitRate!)}',
+                ),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: btcEnabled ? FontWeight.w700 : FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+                side: BorderSide(
+                  color: btcEnabled ? btcHoldColor : TryptoPalette.border,
+                ),
+                selectedColor: btcHoldColor.withValues(alpha: 0.12),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -143,31 +164,30 @@ class _RuleChip extends StatelessWidget {
           children: [
             Text(ruleLabels[rule] ?? '알 수 없는 원칙'),
             // 위반 횟수만으로는 그 원칙이 얼마짜리였는지 알 수 없다. 금액을 함께 단다.
-            if (loss != null && loss != 0) ...[
+            // 0 도 '지켰다' 는 정보이므로 감추지 않는다.
+            if (loss != null) ...[
               const SizedBox(width: TryptoSpacing.xs),
               NumericText(
-                formatKRWCompact(loss),
+                formatCurrencyShort(loss, roundCurrency),
                 size: 11,
                 weight: FontWeight.w600,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
-            if (impact.violationCount > 0) ...[
-              const SizedBox(width: TryptoSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: colors.negative.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: NumericText(
-                  '${impact.violationCount}',
-                  size: 10,
-                  weight: FontWeight.w700,
-                  color: colors.negative,
-                ),
+            const SizedBox(width: TryptoSpacing.xs),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: colors.negative.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
               ),
-            ],
+              child: NumericText(
+                '${impact.violationCount}',
+                size: 10,
+                weight: FontWeight.w700,
+                color: colors.negative,
+              ),
+            ),
           ],
         ),
         labelStyle: theme.textTheme.labelMedium,
@@ -221,7 +241,10 @@ Future<void> _showRuleDetail(BuildContext context, RuleImpact impact) {
               ),
               // 이 원칙만 지켰다면 자산에 남았을 금액. 거래소를 합친 원화다.
               if (loss != null)
-                _DetailRow(label: '총 위반 손실', value: formatKRWCompact(loss)),
+                _DetailRow(
+                  label: '총 위반 손실',
+                  value: formatCurrencyShort(loss, roundCurrency),
+                ),
               const SizedBox(height: TryptoSpacing.sm),
               Text(
                 '칩을 눌러 이 원칙을 시뮬레이션에서 켜고 끌 수 있습니다.',

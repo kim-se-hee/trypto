@@ -111,7 +111,11 @@ class ViolationTile extends StatelessWidget {
                   Text(violation.coinSymbol, style: TryptoText.symbol),
                   const SizedBox(width: TryptoSpacing.sm),
                   Text(
-                    _monthDay.format(violation.occurredAt),
+                    // 차트 마커는 KST 날짜로 버킷을 만든다. 목록이 기기 시간대로 찍으면 같은
+                    // 위반이 마커와 하루 어긋난다.
+                    _monthDay.format(
+                      ServerTime.kstWallClock(violation.occurredAt),
+                    ),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -247,7 +251,10 @@ Future<void> _showViolationDetail(
               _DetailRow(label: '거래소', value: violation.exchangeName),
               _DetailRow(
                 label: '체결 시각',
-                value: ServerTime.formatDateTime(violation.occurredAt),
+                // 날짜로 자르면 `HH:mm` 이 늘 00:00 이 되므로 벽시계 그대로 옮긴다.
+                value: ServerTime.formatDateTime(
+                  ServerTime.kstWallClock(violation.occurredAt),
+                ),
               ),
               _DetailRow(
                 label: '주문 번호',

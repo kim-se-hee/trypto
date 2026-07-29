@@ -25,7 +25,8 @@ class StartRoundRequest {
   Map<String, dynamic> toJson() => _$StartRoundRequestToJson(this);
 }
 
-/// 0 은 '배정 안 함'. 0 초과면 국내 100만~5,000만, 해외 100~50,000 범위여야 한다.
+/// 거래소마다 그 거래소 기축통화로 넣는다. 0 은 '배정 안 함' 이고, 0 초과면 국내(KRW)
+/// 100만~5,000만, 해외(USDT) 1,000~30,000 범위여야 한다.
 @JsonSerializable(createFactory: false)
 class SeedRequest {
   const SeedRequest({required this.exchangeId, required this.amount});
@@ -244,6 +245,7 @@ class ChargeEmergencyFundingResponse {
     required this.roundId,
     required this.exchangeId,
     required this.chargedAmount,
+    required this.krwConvertedAmount,
     required this.remainingChargeCount,
   });
 
@@ -252,6 +254,13 @@ class ChargeEmergencyFundingResponse {
 
   final int roundId;
   final int exchangeId;
+
+  /// 요청한 그대로의 투입 금액. 기축통화 단위다(바이낸스면 USDT).
   final double chargedAmount;
+
+  /// 서버가 투입 시점 시세로 환산한 원화 금액. 상한 검증도 이 값으로 한다 —
+  /// 원화 거래소면 [chargedAmount] 와 같다.
+  final double krwConvertedAmount;
+
   final int remainingChargeCount;
 }

@@ -184,13 +184,7 @@ class _HoldingRow extends StatelessWidget {
                 style: TryptoText.symbol,
               ),
             ),
-            NumericText(
-              formatProfitPercent(holding.profitRate),
-              size: 12,
-              weight: FontWeight.w500,
-              color: context.profitColor(holding.profitRate),
-            ),
-            const SizedBox(width: TryptoSpacing.sm),
+            // 종목별 수익률은 공개하지 않는다 — 웹도 심볼과 비중만 보여준다(사양서 §6.2.7).
             NumericText('${(ratio * 100).toStringAsFixed(1)}%', size: 13),
           ],
         ),

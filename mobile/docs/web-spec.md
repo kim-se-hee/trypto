@@ -2,6 +2,18 @@
 
 본 문서는 기존 웹 프론트엔드(React + Vite)와 백엔드(Spring Boot)를 실측하여, Flutter 네이티브 모바일 앱으로 이식하기 위한 단일 기준 사양을 정의한다. REST 계약과 응답 봉투, 세션 쿠키 인증과 소셜 로그인(PKCE), STOMP 실시간 시세, 여섯 개 화면(마켓·포트폴리오·입출금·랭킹·투자 복기·로그인/라운드/마이페이지)의 동작 규칙, 디자인 토큰과 포매터 규칙, 그리고 서버 변경 필요 여부에 대한 판정을 담는다. 서술은 코드 실측에 근거하며, 웹 구현과 서버 계약이 어긋나는 지점은 **서버 계약을 기준으로** 정정하여 기술한다. 이식 착수 전 반드시 「이식 리스크와 결정 사항」을 먼저 확인한다.
 
+### 문서의 서열
+
+**현행 동작의 기준은 `frontend/` 의 웹 코드와 `api/` 의 서버 계약이다.** 본 문서와 `mobile/docs/plan.md` 는 그 위에서 내린 판단의 기록이며, 코드와 어긋나면 언제나 코드가 이긴다.
+
+| 문서 | 성격 | 읽는 법 |
+|---|---|---|
+| `frontend/` · `api/` 코드 | **단일 진실 공급원** | 현행 동작이 궁금하면 여기부터 본다 |
+| 본 문서(`web-spec.md`) | 2026-07-15 이식 착수 시점의 웹·서버 사양 **스냅샷** | 화면 규칙·계약의 배경을 확인할 때 본다. 이후 웹이 바뀐 지점은 갱신하되, 갱신 누락이 있을 수 있다 |
+| `plan.md` | 앱 **아키텍처 결정문** | "왜 그렇게 만들었는가" 를 확인할 때 본다. 사양 사실관계는 본 문서와 코드가 앞선다 |
+
+`plan.md` 는 자신을 확정 계획서로 선언하고 본 문서와 충돌하면 자기가 이긴다고 적고 있으나, 그 서열은 **아키텍처 결정에 한정**한다. 사실관계(웹 화면 문구·포맷·계약)는 본 문서가, 본 문서와 코드가 어긋나면 코드가 앞선다.
+
 ---
 
 ## 이식 리스크와 결정 사항
@@ -392,7 +404,7 @@ private static final String[] PUBLIC_PATTERNS = {
 | POST | `/api/rounds/{roundId}/end` | 필요 | path `roundId: long` | **없음(서버가 바디를 읽지 않음)** | `{ roundId, status, endedAt }` |
 | GET | `/api/rounds/active` | 필요 | — | — | `GetActiveRoundResponse` / 없으면 409 `ROUND_NOT_ACTIVE` |
 | GET | `/api/rounds/summary` | 필요 | — | — | `{ totalRoundCount: long }` |
-| POST | `/api/rounds/{roundId}/emergency-funding` | 필요 | path `roundId: long` | `{ exchangeId: long, amount: BigDecimal(>0), idempotencyKey: UUID }` | `{ roundId, exchangeId, chargedAmount, remainingChargeCount }` |
+| POST | `/api/rounds/{roundId}/emergency-funding` | 필요 | path `roundId: long` | `{ exchangeId: long, amount: BigDecimal(>0), idempotencyKey: UUID }` | `{ roundId, exchangeId, chargedAmount, krwConvertedAmount, remainingChargeCount }` |
 
 **StartRoundRequest** (`investmentround/adapter/in/dto/request/StartRoundRequest.java`)
 
@@ -402,7 +414,9 @@ private static final String[] PUBLIC_PATTERNS = {
 | `emergencyFundingLimit` | BigDecimal | `0 <= x <= 1,000,000` (`EmergencyFundingAllowance.java:10,14-15`) |
 | `rules` | `[{ ruleType: RuleType, thresholdValue: BigDecimal }]` | null 허용(빈 목록으로 처리). 타입 중복 금지(400 `DUPLICATE_RULE_TYPE`) |
 
-시드 금액 정책(`investmentround/domain/vo/SeedAmountPolicy.java:6-8,24-29`): 0 은 "배정 안 함"으로 허용되고, 0 초과일 때 국내(UPBIT·BITHUMB)는 1,000,000 ~ 50,000,000, 해외(BINANCE)는 100 ~ 50,000 범위여야 한다. 위반 시 400 `INVALID_SEED_AMOUNT`.
+시드 금액 정책(`investmentround/domain/vo/SeedAmountPolicy.java:11-13,25-37`): 0 은 "배정 안 함"으로 허용되고, 0 초과일 때 국내(UPBIT·BITHUMB, KRW)는 **1,000,000 ~ 50,000,000**, 해외(BINANCE, USDT)는 **1,000 ~ 30,000** 범위여야 한다. 위반 시 400 `INVALID_SEED_AMOUNT`. **금액 단위는 그 거래소의 기축통화** 다.
+
+`emergencyFundingLimit` 은 통화와 무관하게 **원화 기준**이며, USDT 지갑에 투입할 때 서버가 투입 시점 시세로 환산해 상한을 검증한다(§4.5).
 
 원칙 기준값(`investmentround/domain/model/Rule.java:45-55`): 비율형(`LOSS_CUT`, `PROFIT_TAKE`, `CHASE_BUY_BAN`)은 0 초과 실수, 횟수형(`AVERAGING_DOWN_LIMIT`, `OVERTRADING_LIMIT`)은 1 이상 **정수**여야 한다(소수부 존재 시 400 `INVALID_RULE_THRESHOLD`).
 
@@ -510,7 +524,7 @@ private static final String[] PUBLIC_PATTERNS = {
 | `totalViolations` | int | 사용 |
 | `totalViolationLoss`, `actualAsset`, `ruleFollowedAsset` | BigDecimal | 사용 |
 | `ruleImpacts[]` | `{ ruleId, ruleType: string, thresholdValue, thresholdUnit: string, violationCount: int, totalLossAmount }` | `ruleType`, `thresholdValue`, `violationCount`, `totalLossAmount` 사용 |
-| `violationDetails[]` | `{ violationDetailId, orderId, exchangeId, exchangeName, currency, coinSymbol, violatedRules: [{ ruleType, lossAmount, lossAmountKrw }], totalLossAmount, totalLossAmountKrw, occurredAt: LocalDateTime }` | 전부 사용 |
+| `violationDetails[]` | `{ violationDetailId, orderId, exchangeId, exchangeName, currency, coinSymbol, violatedRules: [{ ruleType, lossAmount, lossAmountKrw, unrealizedLossAmountKrw, realizations: [{ realizedOn: LocalDate, lossAmountKrw }] }], totalLossAmount, totalLossAmountKrw, occurredAt: LocalDateTime }` | 전부 사용. `lossAmountKrw`·`realizations` 는 시뮬레이션 곡선 계산에 쓴다(§6.3.4) |
 
 `ruleType` 은 **enum 이름 문자열**(`LOSS_CUT` 등)로 직렬화된다.
 
@@ -518,7 +532,7 @@ private static final String[] PUBLIC_PATTERNS = {
 
 `ruleImpacts[]` 는 거래소별 행을 원칙 기준으로 더한 결과라 행 식별자가 없다. 원칙은 `ruleId` 로 구분한다.
 
-**RegretChartResponse** (`RegretChartResponse.java`): `roundId, totalDays: int, assetHistory: [{ snapshotDate: yyyy-MM-dd, actualAsset, ruleFollowedAsset, btcHoldAsset }], violationMarkers: [{ snapshotDate, assetValue }]`. `totalDays` 는 첫 스냅샷과 마지막 스냅샷의 날짜 차이 + 1 이라 `assetHistory` 개수와 다를 수 있다.
+**RegretChartResponse** (`RegretChartResponse.java`): `roundId, totalDays: int, assetHistory: [{ snapshotDate: yyyy-MM-dd, actualAsset, ruleFollowedAsset, btcHoldAsset }], violationMarkers: [{ snapshotDate, assetValue }], emergencyCharges: [{ chargedDate: yyyy-MM-dd, amount }]`. `totalDays` 는 첫 스냅샷과 마지막 스냅샷의 날짜 차이 + 1 이라 `assetHistory` 개수와 다를 수 있다.
 
 리포트는 **야간 배치 산출물**이다. 배치 전에는 서버가 0으로 채운 빈 리포트를 200 으로 반환한다. 이때 합칠 리포트가 없어 `analysisStart`·`analysisEnd` 가 null 이며, 이것이 집계 전 판별식이 된다.
 
@@ -600,7 +614,7 @@ private static final String[] PUBLIC_PATTERNS = {
 | 9 | 주문 내역 `status` | 응답 항목에 `status` 가 있다고 가정하고, 요청 필터값으로 덮어씀 (`order-api.ts:98`) | `OrderHistoryResponse` 에 `status` 필드 자체가 없음 | 서버 응답 모델에서 `status` 제거. 화면에 상태 표시가 필요하면 필터 탭 값을 그대로 사용 |
 | 10 | 캔들 시각 필드 | `time ?? timestamp` 방어 (`candle-api.ts:98`) | `time` 만 존재 | `time` 만 파싱 |
 | 11 | `DELETE /api/users/me` | 호출부 없음 | 존재함(회원 탈퇴) | iOS 배포 시 마이페이지에 추가 (R11) |
-| 12 | 라운드 시드 배분 | 항상 업비트에 전액, 나머지 0 (`round-api.ts:107-111`) | `seeds` 배열로 거래소별 배분 지원 | 웹과 동일 동작을 원하면 그대로. 거래소별 배분 UI 를 넣으려면 서버는 이미 지원함 |
+| 12 | 라운드 시드 배분 | **해소됨.** 거래소마다 기축통화 시드를 입력받아 `seeds` 배열로 보낸다(§7.3.1, §7.3.3) | `seeds` 배열로 거래소별 배분 지원 | 이식 시점에는 업비트에 전액·나머지 0 이었다. 지금은 웹·서버가 같은 모양이므로 그대로 옮긴다 |
 | 13 | STOMP 사용자 큐 | `/user/{userId}/queue/events` 구독 + `walletId`/`coinId`/`side`/`price`/`fee` 기대 | Principal 미부착으로 **메시지 폐기**. 실제 페이로드는 `eventType`/`orderId`/`executedPrice`/`quantity`/`executedAt` | R3 참조. REST 재조회로 대체 |
 | 14 | 지갑 화면 코인 시세 | `currentPrice: 0` 하드코딩 (`WalletPage.tsx:103`) | `GET /api/exchanges/{id}/coins` 응답에 `price` 존재 | 그 값을 `currentPrice` 로 사용 |
 | 15 | 송금 상태 | `PENDING/PROCESSING/COMPLETED/FAILED/RETURNED/DELAYED` 6종 가정 | `SUCCESS` 단일값 | 단일값으로 모델링, 상태 필터 제거 |
@@ -822,6 +836,8 @@ isAuthLoading = true (초기값)
 ---
 
 ### 2.4 PKCE·state 의 모바일 대응
+
+> **현행 구현과의 차이.** 아래 §2.4 와 §2.6 은 앱이 브라우저 인가 코드 흐름을 쓴다는 전제로 쓰였으나, **실제 앱은 두 제공자 모두 공식 SDK 로 전환해 앱에서 직접 토큰을 받는다**(계획서 §4.3 머리말). 그에 따라 `flutter_web_auth_2`·`crypto` 의존성, PKCE 조립·콜백 URL 검증 코드, `trypto` 커스텀 스킴 등록은 저장소에서 제거했다. 두 절은 웹 사양 대조와 방안 비교의 기록으로 남긴다. **웹 프론트엔드(`frontend/`)는 지금도 브라우저 OAuth + PKCE 를 쓰므로 §2.2 의 웹 사양 서술은 그대로 유효하다.**
 
 웹의 `sessionStorage` 는 존재하지 않는다. 대신 **로그인 시작~콜백 수신까지 살아 있는 메모리 상태**로 충분하다. `flutter_web_auth_2` 는 인가 결과 URL 을 `await` 로 되돌려주므로, 팝업↔주 창 통신(BroadcastChannel)·팝업 판별·팝업 차단 폴백이 **모두 불필요**하다. 이식 시 다음이 통째로 삭제된다: `openSocialPopup`, `sendSocialPopup`, `publishSocialCallback`, `subscribeSocialCallback`, `OAUTH_POPUP_KEY`, bfcache 처리(`LoginPage.tsx:17-24`), 팝업 닫힘 폴링(`useSocialLogin.ts:73-87`). **`SocialCallbackPage` 에 해당하는 화면은 만들지 않는다** — 콜백은 화면이 아니라 인증 세션의 반환값이 된다.
 
@@ -1641,7 +1657,11 @@ Flutter 에서는 `ListView.builder` + `itemExtent: 68` 로 동일한 효과를 
 
 #### 4.2.8 주요 코인 카드
 
-`MarketOverviewCards.tsx` — 3열 그리드. 표시 대상은 `baseCurrency === "SOL"` 이면 `JUP/BONK/RAY`, 그 외에는 **`BTC/ETH/SOL`** 고정(`:22-23,38`). 현행 거래소 목록에 SOL 마켓이 없으므로 실제로는 항상 `BTC/ETH/SOL` 이다. 목록에 없는 심볼은 건너뛰고, 하나도 없으면 카드 영역을 통째로 렌더링하지 않는다. 각 카드는 심볼·이름·등락률 배지·현재가를 보여준다. 등락률은 `(changeRate*100).toFixed(2)` 에 양수면 `+` 를 붙인다.
+`MarketOverviewCards.tsx` — 3열 그리드. 표시 대상은 `baseCurrency === "SOL"` 이면 `JUP/BONK/RAY`, 그 외에는 **`BTC/ETH/SOL`** 고정(`:21-25`). 현행 거래소 목록에 SOL 마켓이 없으므로 실제로는 항상 `BTC/ETH/SOL` 이다. 목록에 없는 심볼은 건너뛰고, 하나도 없으면 카드 영역을 통째로 렌더링하지 않는다. 각 카드는 심볼·이름·등락률 배지·현재가를 보여준다.
+
+- **가격 포맷은 목록 행과 다르다.** 카드는 `formatCardPrice`(`:10-19`)를 쓴다 — SOL 은 `{소수 4자리 또는 4~8자리} SOL`, **USDT 는 `$` 를 붙이고 소수 정확히 2자리**, 그 외는 `₩{ko-KR 천단위}`. §8.5.7 의 `formatPrice` 는 기호를 붙이지 않으므로 목록 행의 USDT 가격에는 `$` 가 없지만, **카드에는 있다.**
+- 등락률은 `(changeRate*100).toFixed(2)` 에 양수면 `+` 를 붙이고, `changeRate === 0` 이면 muted 배지로 둔다.
+- **`currentPrice <= 0` 이면 등락률 배지와 가격을 함께 `-` 로 둔다.** 등락률만 `0.00%` 로 찍으면 실제로 0 인 코인과 구분되지 않는다.
 
 ---
 
@@ -1653,17 +1673,17 @@ Flutter 에서는 `ListView.builder` + `itemExtent: 68` 로 동일한 효과를 
 
 **① 서버 캔들 (REST)**
 
-`GET /api/candles?exchange={UPBIT|BITHUMB|BINANCE}&coin={심볼}&interval={간격}&limit={개수}` (`candle-api.ts:81-113`). 서버는 `limit` 을 1~200 으로 제한한다.
+`GET /api/candles?exchange={UPBIT|BITHUMB|BINANCE}&coin={심볼}&interval={간격}&limit={개수}&cursor={ISO-8601}` (`candle-api.ts:96-129`). 서버는 `limit` 을 1~200 으로 제한한다. `cursor` 는 과거 구간 페이징에만 쓴다(§4.3.11) — 커서를 주면 그보다 오래된 **확정봉만** 돌아오고 진행 중인 봉은 붙지 않는다.
 
-클라이언트 후처리(`:96-112`):
+클라이언트 후처리(`:110-129`):
 1. `time` 필드가 없으면 `timestamp` 필드를 쓴다(**서버는 `time` 만 내리므로 Flutter 는 `time` 만 파싱**).
 2. OHLC 를 숫자로 변환하고, 유한하지 않은 값이 하나라도 있는 캔들은 버린다.
-3. `time` 을 간격 단위로 **로컬 시간 기준 절삭**한다(`normalizeCandleTime` — §4.3.5.1).
+3. `time` 을 간격 단위로 **거래소 기준 시간대로 절삭**한다(`normalizeCandleTime` — §4.3.5.1). 절삭 오프셋은 `candleTzOffsetMinutes(exchange)` 가 정한다.
 4. 시간 오름차순 정렬한다.
 
 **② 실시간 체결가 (STOMP)**
 
-`/topic/tickers.{exchangeId}` 를 **차트가 열려 있는 동안** 구독한다(`CandleChartPanel.tsx:229-246`). 이를 위해 패널은 거래소 **코드**(`upbit`)와 별개로 거래소 **id**(`1`)를 함께 받는다 — `CandleChartPanel({exchangeKey, exchangeId, baseCurrency, coin})` (`MarketPage.tsx:214-219`).
+`/topic/tickers.{exchangeId}` 를 **차트가 열려 있는 동안** 구독한다(`CandleChartPanel.tsx:256-280`). 이를 위해 패널은 거래소 **코드**(`upbit`)와 별개로 거래소 **id**(`1`)를 함께 받는다 — `CandleChartPanel({exchangeKey, exchangeId, baseCurrency, coin})` (`MarketPage.tsx:214-219`).
 
 - 콜백이 받는 배열에서 **자기 심볼 하나만** 고르고 나머지는 버린다.
 - `price` 가 유한하지 않거나 `<= 0` 이면 그 틱을 버린다.
@@ -1673,9 +1693,9 @@ Flutter 에서는 `ListView.builder` + `itemExtent: 68` 로 동일한 효과를 
 
 차트 헤더의 현재가·등락률은 캔들이 아니라 **실시간 티커의 `coin.currentPrice` / `coin.changeRate`** 를 쓴다(`CandleChartPanel.tsx:559-572`). 즉 헤더는 부모(`MarketPage`)가 내려주는 티커 값을, 봉은 패널이 직접 구독한 티커를 쓴다.
 
-#### 4.3.2 지원 간격과 상수 (`CandleChartPanel.tsx:23-54`)
+#### 4.3.2 지원 간격과 상수 (`CandleChartPanel.tsx:24-58`)
 
-간격별 값 (`INTERVAL_OPTIONS` `:25-32`, `DEFAULT_VISIBLE_COUNT` `:34-41`)
+간격별 값 (`INTERVAL_OPTIONS` `:26-33`, `DEFAULT_VISIBLE_COUNT` `:35-42`)
 
 | 값 | 라벨 | 조회 개수(`candleCount` → `limit`) | 최초 표시 개수(`DEFAULT_VISIBLE_COUNT`) |
 |---|---|---|---|
@@ -1690,16 +1710,17 @@ Flutter 에서는 `ListView.builder` + `itemExtent: 68` 로 동일한 효과를 
 
 | 상수 | 값 | 의미 |
 |---|---|---|
-| 기본 간격 | `1d` | `useState<CandleInterval>("1d")` (`:169`) |
-| `MIN_VISIBLE_COUNT` | 12 | 줌인 하한. 표시 개수는 `[12, 전체 개수]` 로 가둔다 (`:43`) |
-| `LIVE_CANDLE_LIMIT` | **4** | 브라우저가 들고 있는 실시간 봉의 최대 개수. 초과분은 **앞에서** 버린다 (`:46`, §4.3.5.2) |
-| `RECONCILE_DELAY_MS` | **15,000** | 새 봉이 열린 뒤 서버 캔들을 다시 조회하기까지의 대기 시간 (`:47`, §4.3.6) |
-| `limit` 기본값 | 60 | `INTERVAL_OPTIONS` 에서 간격을 못 찾았을 때의 대비값 (`:198`) |
-| `CHART_WIDTH` × `CHART_HEIGHT` | 960 × 440 | SVG `viewBox` (`:48-49`) |
-| `PADDING` | `{top:20, right:124, bottom:42, left:20}` | 오른쪽 124px 은 y축 가격 라벨 자리 (`:50`) |
-| 툴팁 | 220 × 138, 오프셋 `(+10, +10)` | `TOOLTIP_WIDTH`/`TOOLTIP_HEIGHT`/`TOOLTIP_OFFSET_*` (`:51-54`) |
+| 기본 간격 | `1d` | `useState<CandleInterval>("1d")` (`:187`) |
+| `MIN_VISIBLE_COUNT` | 12 | 줌인 하한. 표시 개수는 `[12, 전체 개수]` 로 가둔다 (`:44`) |
+| `PREFETCH_THRESHOLD` | **8** | 보이는 구간의 왼쪽 끝이 이 개수만큼 남으면 과거 캔들을 미리 당겨 온다 (`:47`, §4.3.11) |
+| `LIVE_CANDLE_LIMIT` | **4** | 브라우저가 들고 있는 실시간 봉의 최대 개수. 초과분은 **앞에서** 버린다 (`:50`, §4.3.5.2) |
+| `RECONCILE_DELAY_MS` | **15,000** | 새 봉이 열린 뒤 서버 캔들을 다시 조회하기까지의 대기 시간 (`:51`, §4.3.6) |
+| `limit` 기본값 | 60 | `INTERVAL_OPTIONS` 에서 간격을 못 찾았을 때의 대비값 (`:229`) |
+| `CHART_WIDTH` × `CHART_HEIGHT` | 960 × 440 | SVG `viewBox` (`:52-53`) |
+| `PADDING` | `{top:20, right:124, bottom:42, left:20}` | 오른쪽 124px 은 y축 가격 라벨 자리 (`:54`) |
+| 툴팁 | 220 × 138, 오프셋 `(+10, +10)` | `TOOLTIP_WIDTH`/`TOOLTIP_HEIGHT`/`TOOLTIP_OFFSET_*` (`:55-58`) |
 
-`LIVE_CANDLE_LIMIT` 이 4인 근거(`:44-45` 주석): 봉이 닫혀도 서버 캔들은 InfluxDB 집계 주기(1분 + 오프셋 10초)만큼 늦게 나온다. 그동안 실시간 봉이 자리를 지켜야 하므로, 서버가 따라잡을 때까지 최근 몇 개를 들고 있는다.
+`LIVE_CANDLE_LIMIT` 이 4인 근거(`:48-49` 주석): 봉이 닫혀도 서버 캔들은 InfluxDB 집계 주기(1분 + 오프셋 10초)만큼 늦게 나온다. 그동안 실시간 봉이 자리를 지켜야 하므로, 서버가 따라잡을 때까지 최근 몇 개를 들고 있는다.
 
 코인·거래소·간격이 바뀌면 서버 캔들과 실시간 봉을 **모두** 폐기하고 다시 조회하며, 표시 구간을 기본값으로 되돌리고 호버 상태를 해제한다(§4.3.7).
 
@@ -1727,7 +1748,7 @@ getX(i)    = 20 + (i + 0.5) * slotWidth
 getY(p)    = 20 + (1 - (p - paddedMin) / (paddedMax - paddedMin)) * plotHeight
 ```
 
-- y축 눈금 4개: `paddedMax` 부터 `(paddedMax-paddedMin)/3` 씩 내려가며, 점선 격자(`4 6` 대시)와 우측 정렬 가격 라벨(13px).
+- y축 눈금 4개: `paddedMax` 부터 `(paddedMax-paddedMin)/3` 씩 내려가며, 점선 격자(`4 6` 대시)와 우측 정렬 가격 라벨(13px). 라벨은 `formatAxisLabel = getCurrencySymbol(base) + formatPrice(value, base)`(`:64-66`)이며 **억/만 축약을 하지 않는다** — 축약하면 2천원 단위가 사라지고 USDT 저가 코인에서는 눈금 네 개가 전부 같은 값으로 뭉개진다. 툴팁의 시·고·저·종도 같은 함수를 쓴다.
 - x축 눈금: `step = max(1, floor(보이는캔들수 / 4))` 마다, 그리고 마지막 캔들에 항상 하나. 라벨 포맷(`:66-96`)은 `1m`→`HH:mm`, `1h`/`4h`→`M/d HH시`, `1M`→`YY. M`, 그 외(`1d`,`1w`)→`M/d` (모두 `ko-KR` 로케일).
 - 캔들: 심지는 `high~low` 를 잇는 선(굵기 1.6, 둥근 끝), 몸통은 `min(openY,closeY)` 에서 시작하는 사각형(모서리 반경 2, **최소 높이 2px**). `close >= open` 이면 상승색(`--positive`), 아니면 하락색(`--negative`). 호버 중인 캔들만 불투명도 1, 나머지는 0.9.
 
@@ -1748,7 +1769,7 @@ getY(p)    = 20 + (1 - (p - paddedMin) / (paddedMax - paddedMin)) * plotHeight
 
 상태 표시: 로딩 중 `캔들 데이터를 불러오는 중...`, 그릴 캔들이 하나도 없으면 `캔들 데이터가 부족합니다`(높이 256px 영역). 캔들 API 실패는 조용히 삼키고 빈 상태를 유지한다(`:200-202`). 단 **서버 캔들이 0개여도 실시간 봉이 쌓이면 차트를 그린다** — 로딩 완료 시 표시 개수를 받아온 개수로 줄이지 않는 이유가 이것이다(`:214-215`).
 
-#### 4.3.5 실시간 갱신 — 합성 규칙 (`CandleChartPanel.tsx:109-160, 227-255`)
+#### 4.3.5 실시간 갱신 — 합성 규칙 (`CandleChartPanel.tsx:114-164, 254-296`)
 
 서버 캔들 배열(`candles`)과 실시간 봉 배열(`liveCandles`)은 **따로 보관**하고, 그릴 때 합친다. 실시간 봉이 서버 배열을 덮어쓰지 않으므로, 재조정(§4.3.6)으로 서버 값이 갱신되면 합성 결과가 저절로 정정된다.
 
@@ -1760,33 +1781,41 @@ mergedCandles = mergeLiveCandles(candles, liveCandles)   // 화면에 그리는 
 
 ##### 4.3.5.1 `normalizeCandleTime` — 체결 시각을 어느 봉에 떨어뜨리는가
 
-`candle-api.ts:30-66`. 서버 캔들의 `time` 과 티커의 `timestamp` **양쪽에 같은 함수를 적용**한다. 두 출처의 봉 시각이 문자열로 정확히 일치해야 합성이 성립하므로, 이 함수는 두 경로의 유일한 공통 기준이다.
+`candle-api.ts:29-74`. 서버 캔들의 `time` 과 티커의 `timestamp` **양쪽에 같은 함수를 적용**한다. 두 출처의 봉 시각이 문자열로 정확히 일치해야 합성이 성립하므로, 이 함수는 두 경로의 유일한 공통 기준이다.
+
+**절삭 기준 시간대는 거래소가 정한다.** 서버(`CandleQueryAdapter.candleZone`)가 봉을 자르는 시간대와 같아야 하며, 업비트·바이낸스는 UTC(오프셋 0), 빗썸은 KST(오프셋 +540분)다. 오프셋만큼 시각을 밀어 UTC 기준으로 자른 뒤 되돌리는 방식으로 구현한다.
 
 ```
-function normalizeCandleTime(time, interval) -> String:
-    d = 로컬 시간대의 날짜·시각으로 파싱(time)   # ★ UTC 가 아니라 단말 로컬 기준으로 절삭한다
-    if 파싱 실패: return time                    # 웹은 원문을 그대로 돌려준다
+EXCHANGE_CANDLE_TZ_OFFSET_MINUTES = { UPBIT: 0, BINANCE: 0, BITHUMB: 540 }
+candleTzOffsetMinutes(exchange) = 표에 없으면 0
 
-    d.millisecond = 0
-    switch interval:
-        "1m": d.second = 0                                     # 분 단위 (분은 건드리지 않는다)
-        "1h": d.minute = 0; d.second = 0
-        "4h": d.minute = 0; d.second = 0
-              d.hour = floor(d.hour / 4) * 4                   # 0,4,8,12,16,20 시로 내림
-        "1d": d.hour = d.minute = d.second = 0                 # 그날 자정
-        "1w": d.hour = d.minute = d.second = 0
-              diff = (d.weekday == 일요일) ? 6 : d.weekday - 1
-              d.day = d.day - diff                             # 그 주 월요일 자정
-        "1M": d.hour = d.minute = d.second = 0
-              d.day = 1                                        # 그 달 1일 자정
-    return d.toIsoUtcString()                                  # 비교·저장은 UTC ISO 문자열
+function normalizeCandleTime(time, interval, offsetMinutes) -> String:
+    d = 시각으로 파싱(time)
+    if 파싱 실패: return time                                  # 웹은 원문을 그대로 돌려준다
+
+    shifted = d + offsetMinutes분                              # 거래소 자정을 UTC 자정으로 옮긴다
+    shifted.millisecond = 0
+    switch interval:                                           # 이하 전부 UTC 필드 기준
+        "1m": shifted.second = 0                               # 분은 건드리지 않는다
+        "1h": shifted.minute = 0; shifted.second = 0
+        "4h": shifted.minute = 0; shifted.second = 0
+              shifted.hour = floor(shifted.hour / 4) * 4       # 0,4,8,12,16,20 시로 내림
+        "1d": shifted.hour = shifted.minute = shifted.second = 0
+        "1w": shifted.hour = shifted.minute = shifted.second = 0
+              diff = (shifted.weekday == 일요일) ? 6 : shifted.weekday - 1
+              shifted.day = shifted.day - diff                 # 그 주 월요일 자정
+        "1M": shifted.hour = shifted.minute = shifted.second = 0
+              shifted.day = 1                                  # 그 달 1일 자정
+    return (shifted - offsetMinutes분).toIsoUtcString()        # 비교·저장은 UTC ISO 문자열
 ```
 
-절삭은 **로컬 시간 기준**, 결과 표현은 **UTC ISO 문자열**이다. Flutter 이식 시 `DateTime.parse(...).toLocal()` 로 내린 뒤 절삭하고, `toUtc().toIso8601String()` 으로 되돌린다. 티커의 `timestamp` 는 epoch 밀리초이므로 `DateTime.fromMillisecondsSinceEpoch`(로컬)로 만든 뒤 같은 절삭을 적용한다.
+결과 표현은 **UTC ISO 문자열**이다. Flutter 이식 시 `toUtc()` 로 옮긴 값에 오프셋을 더해 절삭하고 다시 빼며, 결과는 항상 UTC 로 둔다 — Dart 의 `DateTime.==` 는 `isUtc` 까지 비교하므로 한쪽만 로컬이면 같은 봉이 서로 다른 값이 된다. 티커의 `timestamp` 는 epoch 밀리초이므로 `DateTime.fromMillisecondsSinceEpoch(..., isUtc: true)` 로 만든 뒤 같은 절삭을 적용한다.
+
+> **단말 로컬 시각으로 자르면 안 된다.** 이식 시점에는 로컬 기준으로 절삭했는데, 그러면 KST 단말에서 업비트 일봉이 서버 값과 9시간 어긋나 같은 구간의 봉이 둘로 갈라진다(서버가 준 진행봉과 실시간으로 접은 봉이 다른 자리에 떨어진다). 거래소 기준 시간대로 자르는 지금 규칙이 두 출처를 같은 자리에 모은다.
 
 ##### 4.3.5.2 `foldTick` — 진행 중인 봉 만들기
 
-`CandleChartPanel.tsx:110-130`. 체결 하나를 실시간 봉 배열에 접어 넣는다. 시가·고가·저가·종가가 각각 어떻게 정해지는지가 규칙의 전부다.
+`CandleChartPanel.tsx:114-134`. 체결 하나를 실시간 봉 배열에 접어 넣는다. 시가·고가·저가·종가가 각각 어떻게 정해지는지가 규칙의 전부다.
 
 ```
 function foldTick(liveCandles, bucketTime, price) -> CandleItem[]:
@@ -1824,7 +1853,7 @@ function foldTick(liveCandles, bucketTime, price) -> CandleItem[]:
 
 ##### 4.3.5.3 `mergeLiveCandles` — 서버 캔들 위에 실시간 봉을 얹기
 
-`CandleChartPanel.tsx:133-160`. **같은 구간을 서버도 갖고 있으면 서버 값이 기준**이고, 클라이언트는 그 위에 이후 체결만 얹는다.
+`CandleChartPanel.tsx:137-164`. **같은 구간을 서버도 갖고 있으면 서버 값이 기준**이고, 클라이언트는 그 위에 이후 체결만 얹는다.
 
 ```
 function mergeLiveCandles(candles, liveCandles) -> CandleItem[]:
@@ -1860,7 +1889,7 @@ function mergeLiveCandles(candles, liveCandles) -> CandleItem[]:
 - 서버 캔들이 **0개**여도 동작한다: `lastTime = -무한대` 이므로 모든 실시간 봉이 ③으로 들어간다.
 - 실시간 봉이 없으면 서버 배열을 **그대로**(같은 참조) 돌려준다.
 
-#### 4.3.6 재조정(reconcile) — 닫힌 봉을 서버 값으로 교체 (`CandleChartPanel.tsx:262-281`)
+#### 4.3.6 재조정(reconcile) — 닫힌 봉을 서버 값으로 교체 (`CandleChartPanel.tsx:298-317`)
 
 봉이 새로 열렸다는 것은 **직전 봉이 닫혔다**는 뜻이다. 서버는 InfluxDB 집계 주기만큼 늦게 그 봉을 확정하므로, 그 시점을 기다렸다가 다시 조회해 클라이언트가 만들어 둔 봉을 서버 값으로 바꾼다.
 
@@ -1874,7 +1903,8 @@ on openedBucket changed:
     타이머(RECONCILE_DELAY_MS = 15초) 예약:
         data = fetchCandles()                  # 같은 exchange/coin/interval/limit 로 재조회
         if data != null and data.isNotEmpty:
-            candles = data                     # 서버 캔들만 교체
+            # 통째로 갈아 끼우지 않는다 — 앞에 쌓아 둔 과거 구간(§4.3.11)이 사라진다.
+            candles = mergeReconciled(candles, data)   # 겹치는 최신 창만 서버 값으로 덮는다
         # liveCandles 는 비우지 않는다
         # 뷰포트(visibleCount / anchorEndIndex / followingLatest / 호버)도 건드리지 않는다
 ```
@@ -1884,7 +1914,7 @@ on openedBucket changed:
 - `liveCandles` 를 비우지 않는 이유: 재조회 결과가 그 봉을 포함하게 되면 `mergeLiveCandles` 의 규칙 ①(`live.time < lastTime` → 무시) 또는 ②(같은 시각 → 서버가 기준)가 낡은 실시간 봉을 자동으로 무해하게 만든다. 명시적으로 지울 필요가 없고, `LIVE_CANDLE_LIMIT = 4` 가 개수 상한을 준다.
 - 조회가 실패하거나 빈 배열이면 **아무것도 하지 않는다.** 실시간 봉이 계속 자리를 지킨다.
 
-#### 4.3.7 요청 키와 상태 폐기 (`CandleChartPanel.tsx:170-185, 206-250`)
+#### 4.3.7 요청 키와 상태 폐기 (`CandleChartPanel.tsx:186-284`)
 
 `requestKey = "{exchangeKey}:{coin.symbol}:{interval}"`.
 
@@ -1901,11 +1931,11 @@ loading     = (loaded.key != requestKey)
 ```
 
 - 코인·거래소·간격을 바꾼 직후에는 키가 어긋나므로 **이전 코인의 캔들과 실시간 봉이 한 프레임도 화면에 남지 않는다.** 이펙트에서 `setState(null)` 로 비우는 방식은 "비우는 렌더"와 "새 데이터가 오는 렌더" 사이에 이전 값이 노출되는 경합이 있어 쓰지 않는다.
-- `foldTick` 도 이 키를 확인한다. 키가 다르면 **빈 배열에서 다시 시작**한다(`:239-242`) — 이전 코인의 봉에 새 코인의 체결이 접히지 않는다.
-- 조회가 끝나면 `visibleCount = DEFAULT_VISIBLE_COUNT[interval]`, `anchorEndIndex = candles.length`, `followingLatest = true`, 호버 해제로 되돌린다(`:213-219`).
-- 데이터가 없는 구간에서는 **항상 같은 빈 배열 인스턴스**(`EMPTY_CANDLES` `:23`)를 돌려준다. 매번 새 배열을 만들면 합성 결과를 다시 계산하게 된다.
+- `foldTick` 도 이 키를 확인한다. 키가 다르면 **빈 배열에서 다시 시작**한다(`:273-275`) — 이전 코인의 봉에 새 코인의 체결이 접히지 않는다.
+- 조회가 끝나면 `visibleCount = DEFAULT_VISIBLE_COUNT[interval]`, `anchorEndIndex = candles.length`, `followingLatest = true`, 호버 해제로 되돌린다(`:238-248`). 과거 페이징의 잠금과 `hasMorePast` 도 이때 초기화한다(§4.3.11).
+- 데이터가 없는 구간에서는 **항상 같은 빈 배열 인스턴스**(`EMPTY_CANDLES` `:24`)를 돌려준다. 매번 새 배열을 만들면 합성 결과를 다시 계산하게 된다.
 
-#### 4.3.8 최신 봉 추종 (`CandleChartPanel.tsx:174-176, 257-260, 362-372`)
+#### 4.3.8 최신 봉 추종 (`CandleChartPanel.tsx:189-194, 286-327`)
 
 ```
 endIndex = followingLatest ? mergedCandles.length
@@ -1924,7 +1954,7 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 - 차트의 티커 구독은 **차트가 화면에 있는 동안만** 유지된다. `exchangeId`·`coin.symbol`·`interval`(=`requestKey`)이 바뀌면 해제 후 재구독한다(`:229-246`).
 - 웹은 **같은 토픽에 구독이 2개** 붙는다: 마켓 목록의 `useTickers`(`MarketPage.tsx:51-54`)와 차트 패널이 각각 `subscribeTickers(exchangeId, ...)` 를 호출하고, `websocket.ts:138-163` 은 같은 토픽을 합쳐 주지 않는다. 소켓은 하나지만 STOMP `SUBSCRIBE` 프레임이 둘이라 **같은 페이로드가 두 번 배달된다.**
 - 이는 웹의 구현 사정이며 **이식해야 할 동작이 아니다.** Flutter 는 토픽 구독을 하나만 유지하고 그 결과를 목록과 차트에 나눠 준다(계획서 §5.4). 서버 계약상 티커는 스냅샷 스트림이므로 소비자가 몇이든 결과는 같다.
-- 소켓이 없으면 `connect()` 를 호출한다(`:230-232`). 목록이 이미 연결해 둔 상태에서는 재사용된다.
+- 소켓이 없으면 `connect()` 를 호출한다(`:257-259`). 목록이 이미 연결해 둔 상태에서는 재사용된다.
 
 #### 4.3.10 거래량 필드가 없다는 사실의 영향
 
@@ -1933,6 +1963,36 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 1. **실시간 봉을 체결가 하나만으로 완전하게 만들 수 있다.** 거래량 칸이 있었다면 봉 구간의 체결 수량을 누적해야 하는데, 티커의 `quoteTurnover` 는 **24시간 누적 거래대금**이라 봉 단위로 환산할 수 없고, 서버가 폭주 시 메시지를 버리므로(`DiscardOldestPolicy`, §3.1.7) 델타 누산 자체가 불가능하다. 즉 거래량이 있었다면 실시간 봉은 **원리적으로 정확히 만들 수 없었다.**
 2. **서버 봉과 실시간 봉이 같은 필드 집합을 가진다.** 두 출처를 형 변환 없이 한 배열에 섞을 수 있고(§4.3.5.3), 재조정으로 통째 교체해도 표시가 달라지지 않는다.
 3. **거래량 서브차트가 없다.** 차트 영역은 가격 축 하나만 다루면 된다. y 스케일은 보이는 구간의 `low` 최솟값 / `high` 최댓값만으로 정해진다(§4.3.3).
+
+#### 4.3.11 과거 구간 페이징 (`CandleChartPanel.tsx:399-466`)
+
+최초 조회는 간격별 `candleCount` 개(§4.3.2)뿐이다. 그보다 더 과거로 넘기면 벽에 닿으므로, **보이는 구간의 왼쪽 끝이 `PREFETCH_THRESHOLD`(8) 개 안으로 들어오면 미리 다음 구간을 당겨 온다**(`:462-463`). 벽에 닿은 뒤에 조회하면 스와이프가 끊긴다.
+
+```
+on 뷰포트 변경(패닝·줌):
+    if (endIndex - visibleCount) <= PREFETCH_THRESHOLD: loadPast()
+
+loadPast():
+    if 조회 중이거나 더 이상 과거가 없으면: return
+    if 로드된 캔들이 없거나 요청 키가 어긋나면: return
+
+    oldest = 서버 캔들의 첫 봉
+    older  = findCandles({ 같은 exchange/coin/interval, limit: candleCount, cursor: oldest.time })
+
+    if 요청 키가 그 사이에 바뀌었으면: 결과를 버린다
+    fresh = older 중 oldest.time 보다 **엄격히 과거**인 것만
+    if fresh 가 비면: hasMorePast = false        # 끝에 다다랐다. 더는 조회하지 않는다
+
+    서버 캔들 = fresh + 서버 캔들
+    anchorEndIndex += fresh.length              # 앞에 끼워 넣은 만큼 기존 인덱스가 밀린다
+    드래그 중이면 드래그 기준 인덱스도 같은 만큼 민다
+    실패하면 아무것도 하지 않는다               # 다음 스와이프에서 다시 시도한다
+```
+
+- **커서 조회는 확정봉만 돌려준다.** 서버는 `cursor` 가 있으면 진행 중인 봉을 덧붙이지 않으므로, 과거 구간에 미완성 봉이 끼어들지 않는다.
+- **앞에 끼워 넣으면 인덱스가 전부 오른쪽으로 밀린다.** 앵커(`anchorEndIndex`)와 드래그 기준점을 같은 폭만큼 밀지 않으면 손끝과 화면이 어긋나며 보고 있던 구간이 튄다. 추종 여부(`followingLatest`)는 건드리지 않는다 — 추종 중이면 오른쪽 끝은 어차피 마지막 봉이다.
+- 조회가 도는 동안 잠금(`loadingPast`)을 걸어 같은 구간을 두 번 당겨 오지 않는다. 코인·거래소·간격이 바뀌면 잠금과 `hasMorePast` 를 초기화한다(`:246-247`).
+- 재조정(§4.3.6)은 최신 창만 다시 받아 온다. 응답으로 배열을 **통째로 갈아 끼우면 앞에 쌓아 둔 과거 구간이 사라지므로**, 겹치는 구간만 서버 값으로 덮고 앞쪽은 유지한다.
 
 ---
 
@@ -1974,27 +2034,35 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 
 #### 4.4.3 입력 규칙
 
-- 파싱: 콤마를 모두 제거한 뒤 숫자로 바꾸고, 유한수가 아니면 0으로 본다(`:61-64`).
-- 표시: 금액·총액은 소수 0자리, 수량은 소수 6자리로 `ko-KR` 천 단위 포맷(`:54-59`).
-- **가격 스텝 버튼**: `-` / `+` 각각 **±1,000** (`:597,604`). 기준값은 현재 입력값이며, 비어 있으면 현재가를 기준으로 한다. 0 미만으로 내려가지 않는다.
-- **수량↔총액 연동**(지정가에서만, `:224-274`):
+- 파싱: 콤마를 모두 제거한 뒤 숫자로 바꾸고, 유한수가 아니면 0으로 본다(`:81-85`).
+- 표시: 금액·총액은 소수 0자리(`formatNumber`), 수량은 소수 6자리로 `ko-KR` 천 단위 포맷. **가격만은 소수 8자리까지 남긴다**(`formatPrice`, `:61-63`) — 1원 미만 코인의 지정가가 뭉개지지 않게 하려는 예외이며, 이 파일 안에 §8.5 와 별개의 로컬 포매터로 정의되어 있다.
+- **수량은 언제나 내림(`floorTo`)이다**(`:65-79`). 잔고는 서버에서 소수 8자리 내림으로 관리되므로, 수량을 반올림으로 만들면 실잔고보다 큰 값이 제출되어 `INSUFFICIENT_BALANCE` 가 난다. 표시 자릿수를 지키면서 값을 부풀리지 않는 유일한 방법이 내림이다.
+- **지정가 칸은 현재가로 미리 채운다**(`:253-269`).
+  - 코인·주문 대상·탭(매수↔매도)이 바뀌면 가격을 현재가로 다시 채우고 수량·총액·오류를 비운다. 이때 "사용자가 만졌는가" 표식(`priceTouched`)도 함께 내린다.
+  - 사용자가 가격 입력이나 스텝 버튼을 건드리면 표식이 올라가고, 그 뒤로는 시세가 갱신돼도 입력값을 덮어쓰지 않는다.
+  - 전환 시점에 시세가 아직 없었다면(현재가 0) 칸을 비워 두고, **첫 시세가 도착할 때 한 번** 채운다.
+  - 프리필된 값은 "사용자가 입력했다" 로 세지 않는다. 세면 화면을 열자마자 수량 미입력 오류가 뜬다.
+- **가격 스텝 버튼**: `-` / `+` 각각 **±1,000** (`:648,655`). 기준값은 현재 입력값이며, 비어 있으면 현재가를 기준으로 한다. 0 미만으로 내려가지 않는다.
+- **수량↔총액 연동**(지정가에서만, `:272-312`):
   - `displayPrice` = 시장가면 현재가, 지정가면 입력 가격(>0) 또는 현재가.
   - 수량 입력 → `총액 = 수량 × displayPrice` (0자리)
-  - 총액 입력 → `수량 = 총액 ÷ displayPrice` (6자리)
-  - 가격 변경 → 마지막으로 손댄 쪽(`lastEdited`)을 기준으로 반대편을 다시 계산한다.
+  - 총액 입력 → `수량 = 총액 ÷ displayPrice` (**6자리 내림**)
+  - 가격 변경 → 수량이 들어 있으면 총액을 다시 계산한다.
   - **시장가에서는 연동하지 않는다.**
-- **비율 버튼 10 / 25 / 50 / 100%** (`:45, 276-295`):
-  - 매수: `총액 = availableBuy × ratio / 100`. 지정가면 수량도 함께 계산.
-  - 매도: `수량 = availableSell × ratio / 100` (6자리). 지정가면 총액도 함께 계산.
-- 코인·주문대상·탭이 바뀌면 가격/수량/총액/에러를 모두 비운다(`:217-222`).
+- **비율 버튼 10 / 25 / 50 / 100%** (`:44, 316-345`):
+  - 매수 100% 미만: `총액 = floor(availableBuy × ratio / 100)`.
+  - **매수 100%: `maxBuyAmount(availableBuy, feeRate, 기준통화 == "KRW")`** (`:89-97`). 서버는 `주문 금액 + 수수료` 를 잠그므로 잔고를 그대로 채우면 반드시 `INSUFFICIENT_BALANCE` 가 난다. KRW 는 서버가 수수료를 **정수 원으로 내림 절삭**하므로 `X + floor(X × 요율) <= 잔고` 를 만족하는 최대 정수 `X` 를 `floor(잔고 / (1 + 요율))` 에서 한 눈금씩 올려 찾고, USDT 는 수수료가 8자리 그대로라 나눗셈 내림으로 충분하다.
+  - 매도: `수량 = floor(availableSell × ratio / 100)` — 표시 자릿수(6)가 아니라 **잔고 자릿수(8)로 내린다.** 전량 매도가 실잔고와 정확히 일치해야 하기 때문이다.
+  - 지정가면 반대편 칸도 함께 계산한다.
 - `초기화` 버튼은 세 입력과 에러를 비운다.
 
 #### 4.4.4 주문 가능 금액
 
-`GET /api/orders/available` 을 BUY/SELL 각각 호출해 병렬로 받는다(`:142-163`).
+`GET /api/orders/available` 을 BUY/SELL 각각 호출해 병렬로 받는다(`:173-193`).
 
 - `availableBuy` = 기준통화 잔고(매수 가능 금액). 표시 단위는 `baseCurrency`, 소수 0자리.
 - `availableSell` = 해당 코인 보유 수량(매도 가능 수량). 표시 단위는 코인 심볼, 소수 6자리.
+- **표시는 내림한 뒤 포맷한다**(`formatFloored`, `:629`). 순서를 바꾸면 포매터가 반올림해 실잔고보다 커 보이고, 그 값을 그대로 입력한 사용자가 잔고 부족으로 거절당한다.
 - 서버는 지갑 소유자 검증 후 BUY 면 `quoteCoinId`, SELL 이면 `tradedCoinId` 의 **가용 잔고**(잠금분 제외)를 돌려준다.
 - 조회 실패 시 두 값을 0으로 두고 에러 문구를 붉게 표시한다.
 
@@ -2052,12 +2120,16 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 
 §3.4 를 참조한다. **현행 웹의 로컬 증분 로직(`OrderPanel.tsx:201-210`)은 실제로 작동하지 않으므로 이식하지 않는다.** REST 재조회로 확정 처리한다.
 
-#### 4.4.9 거래내역 탭 (`:429-546`)
+#### 4.4.9 거래내역 탭 (`:472-582`)
 
 - 필터: `체결`(status=FILLED) / `미체결`(status=PENDING). 기본 `체결`.
 - `GET /api/orders?walletId&exchangeCoinId&status&cursorOrderId&size=20`. 응답은 `{content, nextCursor, hasNext}`. `hasNext` 면 `더보기` 버튼으로 다음 커서를 이어 붙인다(리스트 누적). **모바일에서는 스크롤 끝 도달 시 자동 로드로 바꾼다.**
 - 탭 진입·필터 변경·주문 대상 변경 시 목록을 처음부터 다시 읽는다.
-- 항목 표시: 매수/매도 배지, 시장가/지정가, 상태 배지(체결/대기/취소/실패 — **서버 응답에 `status` 가 없으므로 요청 필터값을 그대로 쓴다**), 상대 시각(`방금 전`, `N분 전`, `N시간 전`, 24시간 이상은 `ko-KR` 절대 시각), 가격(`filledPrice ?? price ?? 0`)·수량(6자리)·금액.
+- 항목 표시: 매수/매도 배지, 시장가/지정가, 상태 배지(체결/대기/취소/실패 — **서버 응답에 `status` 가 없으므로 요청 필터값을 그대로 쓴다**), 상대 시각(`방금 전`, `N분 전`, `N시간 전`, 24시간 이상은 `ko-KR` 절대 시각), 그리고 아래 3칸.
+  - 가격 `filledPrice ?? price ?? 0` — **소수 8자리까지 남기는 로컬 `formatPrice`**(§4.4.3). §8.5.7 의 공용 포매터가 아니다. 1원 미만 코인의 체결가가 뭉개지지 않아야 한다.
+  - 수량 — 소수 6자리 고정.
+  - 금액 `orderAmount` — **축약 없이 천 단위 구분만** 넣는다(`formatNumber`).
+- **미체결(`PENDING`) 항목은 금액 칸을 빼고 2칸만 그린다**(`:541-543`). 부분 체결이 없으므로 아직 체결 금액이 존재하지 않는다.
 - `PENDING` 항목에는 `취소` 버튼. `POST /api/orders/{orderId}/cancel {walletId}` 성공 시 목록에서 해당 항목을 제거하고 주문 가능 금액을 다시 읽는다. 실패 시 에러 문구 표시.
 - 빈 목록: `체결 내역이 없습니다.` / `미체결 주문이 없습니다.`
 
@@ -2071,33 +2143,38 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 
 카드 본문:
 
-- 제목 `긴급 자금 투입`, 부제 `라운드 진행 중 최대 3회까지 가능합니다.`
+- 제목 `긴급 자금 투입`, 부제 `선택한 거래소의 기축통화 지갑에 들어갑니다. 라운드 진행 중 최대 3회까지 가능합니다.`
 - 뱃지: `canCharge` 면 `사용 가능`, 아니면 `사용 불가`.
-- `1회 상한` = `formatKRW(round.emergencyFundingLimit)`, `남은 횟수` = `{round.emergencyChargeCount}회`.
+- `1회 상한 (원화 기준)` = `formatKRW(round.emergencyFundingLimit)`, `남은 횟수` = `{round.emergencyChargeCount}회`.
 - `긴급 자금 투입하기` 버튼 → 다이얼로그. `canCharge` 가 아니면 비활성.
 
-**`canCharge = round.status === "ACTIVE" && round.emergencyChargeCount > 0`** (`:29`).
+**`canCharge = round.status === "ACTIVE" && round.emergencyChargeCount > 0`** (`:33`).
 
 다이얼로그:
 
-- 금액 입력은 숫자만 허용한다(`replace(/[^0-9]/g, "")`, `:121`). 표시는 `ko-KR` 천 단위.
-- 프리셋 3개: 상한의 25% / 50% / 100%, 각각 `Math.floor` (`:32-40`).
-- **유효 금액: `0 < amount <= round.emergencyFundingLimit`** (`:30`). 초과하면 `상한을 초과했습니다. {상한} 이하로 입력해주세요.` 를 붉게 표시하고 `투입 확정` 버튼을 비활성화한다.
-- 다이얼로그를 닫으면 입력 금액을 0으로 되돌린다.
+- **거래소 선택 버튼 3개**가 맨 위에 온다(거래소명 + 기축통화 라벨). 기본값은 목록의 첫 거래소이며, 거래소를 바꾸면 입력 금액을 0으로 되돌린다. 다이얼로그를 닫아도 거래소와 금액이 초기값으로 돌아간다.
+- 금액 입력은 숫자만 허용한다(`replace(/[^0-9]/g, "")`). 표시는 선택 거래소의 기축통화 단위다 — KRW 면 `₩{천단위}` 에 `formatKRW` 축약 보조 표시, USDT 면 `{천단위} USDT`(축약 보조 표시 없음).
+- 프리셋 3개(상한의 25% / 50% / 100%, 각각 `Math.floor`)는 **원화 거래소에서만** 노출한다. 상한이 원화 기준이라 USDT 금액에 그대로 곱할 수 없다.
+- **유효 금액**(`:35-38`):
+  - 원화 거래소 → `0 < amount <= round.emergencyFundingLimit`. 초과하면 `상한을 초과했습니다. {상한} 이하로 입력해주세요.` 를 붉게 표시하고 `투입 확정` 버튼을 비활성화한다.
+  - USDT 거래소 → `amount > 0` 만 본다. **상한 검증은 서버가 투입 시점 시세로 원화 환산해서 한다.** 클라이언트가 원화 상한과 USDT 금액을 직접 비교하면 멀쩡한 금액이 막힌다. 대신 `USDT 투입은 투입 시점 시세로 원화 환산되어 상한을 검증합니다. 환산액이 상한을 넘으면 거절됩니다.` 안내를 띄운다.
 
-확정 시(`RoundProvider.tsx:80-111`):
+확정 시(`RoundProvider.tsx` 의 `chargeEmergencyFunding`):
 
-1. 로컬 선검사: 라운드 존재, `status === "ACTIVE"`, `emergencyChargeCount > 0`, `0 < amount <= limit`. 하나라도 어긋나면 **네트워크 호출 없이 `false`** 를 반환한다.
-2. `POST /api/rounds/{roundId}/emergency-funding` 본문 `{exchangeId, amount, idempotencyKey}`. **`exchangeId` 는 현재 선택된 거래소의 id** 다(`MarketPage.tsx:239`). 즉 자금은 지금 보고 있는 거래소 지갑으로 들어간다.
+1. 로컬 선검사: 라운드 존재, `status === "ACTIVE"`, `emergencyChargeCount > 0`, 위 유효 금액 규칙. 하나라도 어긋나면 **네트워크 호출 없이 `false`** 를 반환한다.
+2. `POST /api/rounds/{roundId}/emergency-funding` 본문 `{exchangeId, amount, idempotencyKey}`. **`exchangeId` 는 다이얼로그에서 고른 거래소** 다. 금액 단위는 그 거래소의 기축통화이며, 자금은 해당 거래소의 기축통화 지갑으로 들어간다.
 3. `idempotencyKey` 는 **UUID v4 필수**(서버가 `java.util.UUID` 로 역직렬화 — 형식 위반 시 500).
 4. 성공하면 응답의 `remainingChargeCount` 로 `emergencyChargeCount` 를 갱신하고 다이얼로그를 닫는다. 서버는 중복 요청(같은 키)을 감지하면 재차감 없이 현재 잔여 횟수를 돌려준다 (`RoundController.java:84-97`).
 5. 실패하면 `false` 를 돌려주며 **다이얼로그는 열린 채로 남고 화면에는 아무 메시지도 뜨지 않는다**(콘솔 로그만). **Flutter 이식 시에는 스낵바 등 실패 안내를 반드시 넣는다.**
 
+> 이식 시점에는 거래소 선택이 없었고 `exchangeId` 는 마켓 화면에서 보고 있던 거래소였다. 시드가 거래소별 기축통화로 나뉘면서(§7.3.1) 긴급 자금도 어느 지갑에 넣을지 고르게 바뀌었다.
+
 서버 규칙(`investmentround/domain/vo/EmergencyFundingAllowance.java`):
 
-- 라운드 시작 시 상한은 **0 이상 1,000,000 이하**여야 한다(`INVALID_EMERGENCY_FUNDING_LIMIT`).
+- 라운드 시작 시 상한은 **0 이상 1,000,000 이하**여야 한다(`INVALID_EMERGENCY_FUNDING_LIMIT`). 단위는 원화다.
 - 기본 충전 횟수는 **3회**.
-- 충전 검증: 상한이 0이면 `EMERGENCY_FUNDING_DISABLED`, 남은 횟수가 0 이하면 `EMERGENCY_FUNDING_CHANCE_EXHAUSTED`, 금액이 0 이하이거나 상한 초과면 `INVALID_EMERGENCY_FUNDING_AMOUNT`.
+- 충전 검증: 상한이 0이면 `EMERGENCY_FUNDING_DISABLED`, 남은 횟수가 0 이하면 `EMERGENCY_FUNDING_CHANCE_EXHAUSTED`, 금액이 0 이하이거나 **원화 환산액이** 상한 초과면 `INVALID_EMERGENCY_FUNDING_AMOUNT`.
+- 응답의 `chargedAmount` 는 요청한 그대로(기축통화 단위), `krwConvertedAmount` 는 서버가 환산한 원화 금액이다. 원화 거래소면 둘이 같다.
 
 ---
 
@@ -2150,7 +2227,7 @@ visibleCandles    = mergedCandles[visibleStartIndex .. endIndex)
 | 항목 | 내용 | 근거 |
 |---|---|---|
 | 라우트 | `/portfolio`(투자내역), `/wallet`(입출금). 둘 다 `ProtectedRoute` 하위로 인증 필수 | `App.tsx:34-35` |
-| 거래소 선택 | 두 화면 모두 상단에 `ExchangeTabs`. 선택값은 URL 쿼리 `?exchange=<key>` 에 보존되며, 미지정 시 `activeRound.wallets[0]` 에 해당하는 거래소가 기본값 | `PortfolioPage.tsx:36,52-53`, `WalletPage.tsx:36,52-53` |
+| 거래소 선택 | 두 화면 모두 상단에 `ExchangeTabs`. **탭 목록은 거래소 상수 표가 아니라 `activeRound.wallets` 가 정한다** — 이 라운드가 지갑을 만들지 않은 거래소는 탭도 없고, 라운드가 없으면 탭이 비어 있다. 선택값은 URL 쿼리 `?exchange=<key>` 에 보존되며, 미지정 시 `wallets[0]` 에 해당하는 거래소가 기본값 | `PortfolioPage.tsx:40-53`, `WalletPage.tsx:40-53` |
 | walletId 해석 | 화면은 `exchangeId` 가 아니라 **walletId** 로 API를 호출한다. `activeRound.wallets.find(w => w.exchangeId === exchange.id).walletId` | `PortfolioPage.tsx:65-68`, `WalletPage.tsx:66-70` |
 | 인증 전송 | 프론트 코드 전체에 `Authorization` 헤더·`credentials` 옵션이 없다. 동일 출처 쿠키 세션 전제이며, 서버는 `@LoginUser` 로 userId 를 주입한다 | `client.ts:47-54` |
 
@@ -2344,7 +2421,8 @@ baseTotal     = baseCoin.available + baseCoin.locked
 
 - 헤더: 심볼(bold) + 한글명, 우측 X 닫기 버튼.
 - 잔고: `total = available + locked` 를 2xl bold 로. 코인이면 그 아래 `≈ formatCurrency(total × currentPrice, base)`.
-- **[출금] 버튼은 코인에만 노출**된다(`isBase === false` 조건, 54-64행). 기준통화(KRW/USDT)는 송금할 수 없다. **입금 버튼은 존재하지 않는다.**
+- **[출금] 버튼은 코인에만 노출**된다(`isBase === false` 조건). 기준통화(KRW/USDT)는 송금할 수 없다. **입금 버튼은 존재하지 않는다.**
+- 출금 버튼은 `canTransfer` 가 거짓이면 비활성(회색)이고 아래에 `다른 거래소에 상장되지 않아 출금할 수 없습니다.` 를 붙인다. `canTransfer` 는 **현재 거래소를 뺀 나머지 라운드 지갑 중 이 코인을 상장한 곳이 하나라도 있는가** 다(`WalletPage.tsx:155-164`). 보낼 곳이 하나도 없는 코인은 도착지가 전부 비활성화된 모달을 열게 두지 않는다.
 - "잔고 상세" 섹션: `사용 가능` 행, `잠금` 행(잠금 > 0이면 `"주문 대기"` 배지 + `chart-4` 색, 아니면 `"—"`).
 
 #### 5.2.6 TransferModal — 송금 (`TransferModal.tsx`)
@@ -2353,7 +2431,7 @@ baseTotal     = baseCoin.available + baseCoin.locked
 
 | 필드 | 위젯 | 규칙 |
 |---|---|---|
-| 도착 거래소 | Select(플레이스홀더 `"거래소 선택"`) | 후보 = 현재 라운드의 지갑 중 **현재 거래소를 제외한 전부**. 각 항목은 `{walletId, exchangeId(key), exchangeName}` (`WalletPage.tsx:133-148`) |
+| 도착 거래소 | Select(플레이스홀더 `"거래소 선택"`) | 후보 = 현재 라운드의 지갑 중 **현재 거래소를 제외한 전부**. 각 항목은 `{walletId, exchangeId(key), exchangeName, listed}` (`WalletPage.tsx:133-152`). `listed` 가 거짓이면 항목은 **지우지 않고 비활성화**하고 옆에 `{심볼} 미상장` 을 적는다 — 왜 보낼 수 없는지가 화면에 남아야 한다 |
 | 출금 수량 | number 입력(스피너 숨김, `step="any"`, `min=0`) + [최대] 버튼 | [최대] → 입력값을 `coin.available.toString()` 로 채운다(`:63-65`) |
 | 보조 문구 | `"가용: {formatDisplay(coin.available)} {coin.coinSymbol}"` | 기준통화면 `toLocaleString`, 코인이면 `formatQuantity` |
 
@@ -2368,7 +2446,14 @@ else if (amount > coin.available) → "가용 잔고를 초과합니다."
 
 - 오류 메시지는 **한 번이라도 제출을 시도한 뒤(`submitted === true`)에만** 표시된다. → **Flutter 는 입력 즉시 실시간 검증한다.**
 - 제출 버튼은 항상 활성(제출 중일 때만 `disabled`). 검증 실패 시 요청을 보내지 않고 오류 문구만 켠다.
-- `coin.coinId === null`(기준통화)이면 요청하지 않고 조용히 반환한다(72행).
+- `coin.coinId === null`(기준통화)이면 요청하지 않고 조용히 반환한다.
+- **고른 도착지가 `listed === false` 면 요청하지 않는다**(`:79-80`). 비활성 항목이라 정상 경로로는 고를 수 없지만, 마지막 방어선을 둔다.
+
+**상장 여부(`listed`) 판정 — `RoundProvider.isCoinListed(exchangeId, coinId)`**
+
+라운드가 정해지면 그 라운드의 지갑이 걸친 거래소마다 `GET /api/exchanges/{id}/coins` 를 한 번씩 받아 `거래소 id → 상장 coinId 집합` 맵을 만들어 둔다. 상장 목록은 세션 중 바뀌지 않으므로 라운드당 1회면 충분하다. **아직 목록이 도착하지 않은 거래소는 키가 없고, 그때는 '미상장' 으로 본다.**
+
+이 선제 차단이 없으면 도착 거래소가 취급하지 않는 코인을 보낼 때 서버가 `COIN_NOT_LISTED_ON_EXCHANGE` 로 거절한다. 그 응답을 받으면 `{도착 거래소명}에는 {심볼}이(가) 상장되어 있지 않습니다.` 를, 그 밖의 실패는 아래의 고정 문구를 표시한다.
 
 확인 절차 — **웹에는 별도 확인 단계가 없다.** `[출금하기]` 한 번으로 곧바로 API를 호출한다(`:67-93`).
 
@@ -2388,7 +2473,7 @@ POST /api/transfers
 - 서버는 송금을 **동기·즉시 완료** 처리한다. `status` 는 항상 `SUCCESS` 이고 `completedAt = createdAt` 이다.
 - 멱등: 같은 `idempotencyKey` 재요청은 기존 `transferId` 를 `SUCCESS` 로 되돌려준다. 따라서 **네트워크 재시도 시 키를 재생성하지 말고 동일 키를 그대로 보내야 한다.**
 - 성공: `onSuccess()` → `loadWalletData()` 전체 재조회, 이어서 모달 닫기. 웹에는 성공 토스트가 없다.
-- 실패: 웹은 서버 메시지를 무시하고 고정 문구 `"송금에 실패했습니다."` 만 붉게 표시한다(88-90행). → **Flutter 는 서버 `message` 를 매핑해 보여준다**(§5.4.4).
+- 실패: `COIN_NOT_LISTED_ON_EXCHANGE` 만 거래소명·심볼을 넣은 문구로 갈라내고, 나머지는 고정 문구 `"송금에 실패했습니다."` 를 붉게 표시한다. → **Flutter 는 나머지 서버 `message` 도 매핑해 보여준다**(§5.4.4).
 - 제출 중: 버튼 라벨이 `"출금 중..."` 으로 바뀌고 비활성화된다.
 - 모달을 닫으면 `selectedDestination`, `amountStr`, `submitted` 는 초기화되지만 `error` 는 초기화되지 않는다(95-102행 — 다음에 열 때 이전 오류 문구가 남는 결함).
 
@@ -2641,24 +2726,19 @@ function asRatio(value: number): number { return value > 1 ? value / 100 : value
 
 핵심 산출물은 세 가지다.
 
-1. **놓친 수익(`missedProfit`)** = 모든 위반의 `loss_amount` 합계(음수면 0으로 절사) — `RegretReport.sumLossAmounts`(`sum.max(BigDecimal.ZERO)`).
+1. **위반 손실(`totalViolationLoss`)** = 모든 위반의 `loss_amount` 합계. **양수가 손해**이며 음수(어긴 쪽이 이득이었던 경우)를 0으로 보정하지 않는다(§1.6.8). 화면은 부호에 따라 색과 문구를 바꾼다(§6.4.4).
 2. **규칙 준수 자산 곡선(`ruleFollowedAsset`)** = `실제 자산(d) + 그날까지의 누적 위반 손실(d)` — `CumulativeLossTimeline.calculateRuleFollowedAsset`.
 3. **BTC 홀드 벤치마크(`btcHoldAsset`)** = 시드머니를 시작일에 전부 BTC 로 매수해 보유했을 때의 일별 평가액 — `BtcBenchmark.calculate`.
 
 #### 6.3.2 조회 대상 결정과 API
 
-`roundId` 와 `exchangeId` 는 `RoundContext.activeRound` 에서 얻는다. **웹은 활성 라운드의 첫 번째 지갑만 본다**(`RegretPage.tsx:49-53`).
-
-```ts
-const firstWallet = activeRound.wallets[0];   // { walletId, exchangeId }
-if (!firstWallet) return;                     // 요청 자체를 하지 않음
-```
+**복기는 라운드 단위다.** `roundId` 만 있으면 되고 거래소를 가려 조회하지 않는다(§1.6.8) — 서버가 라운드에 속한 거래소를 모두 합쳐 내린다. 활성 라운드가 없으면 요청 자체를 보내지 않는다.
 
 두 요청(`/regret`, `/regret/chart`)은 `Promise.all` 로 동시에 나간다. 계약은 §1.6.8 참조.
 
 프론트는 서버의 `totalDays` 를 쓰지 않고 `assetHistory.length` 로 재계산한다. 또한 마커의 `type` 은 **항상 `"loss"` 로 고정**된다 — `"gain"` 분기는 코드에만 존재하고 실제로 도달하지 않는다.
 
-**Flutter 개선 제안**: 거래소 선택기를 추가해 `activeRound.wallets` 의 모든 거래소를 볼 수 있게 하고, 응답의 `exchangeName`·`currency` 를 표기해 통화 단위(KRW/USDT) 혼동을 막는다. `analysisStart~analysisEnd` 를 "분석 구간"으로, `totalLossAmount` 를 규칙별 누적 손실로 노출하면 웹보다 정보량을 늘릴 수 있다.
+**표기 지침**: 요약·규칙별 손실·자산 곡선은 전부 원화이므로 통화 표기를 붙이지 않는다. 거래소 기축통화는 위반 거래 한 건 한 건에만 남으므로, 그 자리에서 `exchangeName`·`currency` 를 함께 보여 통화 단위(KRW/USDT) 혼동을 막는다. `analysisStart~analysisEnd` 를 "분석 구간"으로 노출하면 웹보다 정보량을 늘릴 수 있다.
 
 #### 6.3.3 RuleType 매핑 (필수 이식 대상)
 
@@ -2680,19 +2760,46 @@ MeVsMe 는 **규칙 체크박스 토글 패널**이다. 토글은 화면 로컬 
 
 토글이 바꾸는 것은 **차트의 시뮬레이션 라인 하나뿐**이다. 상단 3-stat 카드(실제 / 규칙 준수 시 / 위반)는 서버 `summary` 를 그대로 보여주므로 토글과 무관하다.
 
-시뮬레이션 계산식(`lib/types/regret.ts:72-94`):
+시뮬레이션 계산식(`lib/types/regret.ts:127-196` 의 `computeSimulationLine`). **켜 둔 규칙이 실제로 유발한 위반 손실만 골라 그날의 실제 자산에 얹는다.** 서버가 전체 규칙 곡선(`ruleFollowedAsset`)을 만드는 방식과 같은 계산이므로, 규칙을 전부 켜면 두 곡선이 모든 지점에서 일치한다. 서버 재계산은 일어나지 않는다.
 
-```ts
-RULE_IMPACT_WEIGHTS = {           // 합계 1.0
-  STOP_LOSS: 0.30, NO_CHASE_BUY: 0.25, TAKE_PROFIT: 0.20,
-  OVERTRADE_LIMIT: 0.15, AVERAGING_LIMIT: 0.10,
-};
+```
+입력: 스냅샷 배열, 켜진 규칙 집합, 위반 거래 배열, 긴급 충전 배열
 
-totalWeight = Σ RULE_IMPACT_WEIGHTS[켜진 규칙]
-simulation[i] = Math.round( actual[i] + (ruleFollowed[i] - actual[i]) * totalWeight )
+# ① 켜진 규칙 몫만 골라 날짜순으로 세 줄을 만든다 (금액은 전부 원화 환산액)
+occurredLosses = 위반 거래마다 { date: occurredAt 의 날짜, amount: 켜진 규칙들의 lossAmountKrw 합 }
+realizations   = 켜진 규칙의 realizations 를 펼친 { date: realizedOn, amount: lossAmountKrw }
+charges        = 긴급 충전 { date: chargedDate, amount }
+
+occurred = realized = 0; multiplier = 1
+
+for 스냅샷 in 날짜 오름차순:
+    # 그래프 시작일 이전에 발생한 위반·실현도 첫 점에서 한꺼번에 반영된다
+    occurred     += 그날까지의 occurredLosses 합
+    realizedToday = 그날까지의 realizations 합(아직 안 더한 몫)
+    chargedToday  = 그날까지의 charges 합(아직 안 더한 몫)
+    realized     += realizedToday
+
+    multiplier = nextMultiplier(multiplier, 스냅샷.actual, chargedToday, realizedToday)
+    simulation = round( (스냅샷.actual + occurred - realized) * multiplier )
+
+nextMultiplier(m, totalAsset, charged, realized):
+    if totalAsset <= 0 or (charged == 0 and realized == 0): return m   # 그대로
+    return max(0, (m * (totalAsset - charged + realized) + charged) / totalAsset)
 ```
 
-즉 실제 곡선과 규칙 준수 곡선 사이를 **가중치 합만큼 선형 보간**한 근사값이며, 전부 켜면 `totalWeight = 1.0` 이 되어 서버의 `ruleFollowedAsset` 과 정확히 일치한다. 서버 재계산은 일어나지 않는다. **Flutter 도 동일 상수·동일 반올림(`round`)으로 이식해야 웹과 값이 일치한다.**
+- **미실현 몫은 금액으로, 실현 몫은 배수로 반영한다.** 아직 매도되지 않은 손실은 그대로 더하지만, 매도로 확정된 몫은 실현일의 자산 대비 비율(배수)로 환산해 곱한다. 실현된 돈은 지갑에 섞여 이후 투자와 함께 굴러가므로, 확정 금액을 계속 빼면 시장이 이미 가져간 금액을 한 번 더 빼는 **이중 차감**이 된다.
+- **긴급 충전은 위반과 무관한 새 돈**이라 그날의 배수를 1 쪽으로 되돌린다. 자산은 음수가 될 수 없으므로 배수의 하한은 0 이다.
+- 규칙 조합이 바뀌면 배수도 **처음부터 다시 굴린다.** 중간 상태를 캐시할 수 없다.
+- **Flutter 도 동일 누적식·동일 반올림(`round`)으로 이식해야 웹과 값이 일치한다.**
+
+> 이식 시점에는 `RULE_IMPACT_WEIGHTS`(합계 1.0)로 실제 곡선과 규칙 준수 곡선 사이를 **선형 보간**하는 근사식이었다. 지금은 위반 손실을 직접 누적하므로 그 상수는 존재하지 않는다.
+
+이 계산에 필요한 응답 필드는 §1.6.8 의 표에 더해 다음이 있다.
+
+| 위치 | 필드 |
+|---|---|
+| `violationDetails[].violatedRules[]` | `lossAmountKrw`(원화 환산 손실), `unrealizedLossAmountKrw`, `realizations: [{ realizedOn: yyyy-MM-dd, lossAmountKrw }]` |
+| `RegretChartResponse` | `emergencyCharges: [{ chargedDate: yyyy-MM-dd, amount }]` |
 
 MeVsMe 행 구성(`MeVsMe.tsx:60-106`):
 
@@ -2701,17 +2808,27 @@ MeVsMe 행 구성(`MeVsMe.tsx:60-106`):
 | 체크박스 | 활성 시 `positive` 색 채움 + 체크 아이콘, 비활성 시 행 전체 opacity 40% |
 | 아이콘 | 규칙 색상 12% 배경 위 규칙 아이콘 |
 | 라벨 | 규칙 한국어 라벨 |
-| 임계값 | `thresholdValue > 0` 이면 `+` 접두 → 예: `+10%`, `3회` (규칙 색상으로 표기) |
+| 임계값 | `thresholdValue > 0` 이면 `+` 접두 → 예: `+10%`, `+3회` (규칙 색상으로 표기). **단위를 가리지 않고 붙인다** — `회` 에도 `+` 가 온다 |
+| 규칙별 손실 | 라벨 아래 한 줄. `formatCurrencyShort(Math.abs(totalLossAmount), "KRW")` 이며 값이 음수면 앞에 `-` 를 붙인다. **0 도 감추지 않는다**("지켰다"는 정보다). 규칙별 손실은 거래소를 합친 값이라 언제나 원화다 |
 | 위반 배지 | `위반 {violationCount}` (negative 12% 배경) |
 
-`ruleToggles` 가 비면 "설정한 투자 원칙이 없습니다." 를 표시한다.
+`ruleToggles` 가 비면 "설정한 투자 원칙이 없습니다." 를 표시한다. **이때도 벤치마크 섹션은 남긴다** — BTC 홀드 곡선은 복기 리포트가 아니라 차트 데이터로 계산되므로 배치 전에도 그려지는데, 벤치마크가 사라지면 그 선을 끄거나 값을 읽을 수단이 없어진다.
 
-벤치마크 섹션은 현재 **하드코딩 1건**이다: `{ id: "btc-hold", label: "BTC만 홀드한 나", color: "#f7931a", profitRate: 0 }` (`RegretPage.tsx:41-43`). 따라서 웹에서 이 항목의 수익률은 항상 `+0%` 로 표시되며(값이 서버와 연결되어 있지 않다), 체크박스는 차트의 BTC 라인 표시 여부만 토글한다. **Flutter 이식 시에는 `btcHoldValues` 의 첫 값과 마지막 값으로 수익률을 직접 계산해 채운다: `(last / first - 1) * 100`.**
+벤치마크 섹션은 항목 1건(`{ id: "btc-hold", label: "BTC만 홀드한 나", color: "#f7931a" }`)이며, 체크박스가 차트의 BTC 라인 표시 여부를 토글한다. **수익률은 `btcHoldValues` 로 계산한다**(`regret.ts` 의 `btcHoldProfitRate`).
+
+```
+btcHoldProfitRate(values):
+    if values.length < 2:  return null       # 스냅샷이 모자라면 표기하지 않는다
+    if values[0] == 0:     return null
+    return (values.last / values.first - 1) * 100
+```
+
+> 이식 시점에는 `profitRate: 0` 이 하드코딩되어 있어 이 항목이 항상 `+0%` 로 보였다. 지금은 위 식으로 채우며, `null` 이면 수익률 없이 라벨만 보여준다.
 
 #### 6.3.5 규칙 위반 거래 목록 — ViolationTradeList
 
 - 헤더: 경고 삼각형 + "규칙 위반 거래", 우측에 필터 탭.
-- 필터: `전체 {n}` / `손실 {n}` / `수익 {n}`. 판정 기준은 `LOSS: profitLoss < 0`, `PROFIT: profitLoss >= 0` (`:51-61`). 즉 **`profitLoss == 0` 은 수익으로 분류된다.**
+- 필터: `전체 {n}` / `손실 {n}` / `수익 {n}`. 판정 기준은 `totalLossAmount` 이며 **위반 손실은 양수가 손해**다 — `LOSS: totalLossAmount > 0`, `PROFIT: totalLossAmount <= 0` (`:20, 43-47`). 즉 **0 은 수익으로 분류된다**(원칙을 어긴 쪽이 이득도 손해도 아니었던 거래).
 - 행 구성(`:101-152`): `coinSymbol`(굵게) · `date`(`M/D`) · [감정 배지] · 위반 규칙 태그 N개(아이콘 + 라벨, 규칙 색 8% 배경) · 우측 끝 손익(`profitLoss >= 0` 이면 `+` 접두, `toLocaleString("ko-KR")`, 손실이면 negative 색).
 - 정렬은 적용하지 않는다 → **서버 반환 순서 그대로**. 서버는 주문 단위 위반(같은 `orderId` 로 그룹핑, 위반 규칙을 배열로 합침)을 먼저, 모니터링 위반(`orderId == null`)을 뒤에 붙인다.
 - 필터 결과가 비면 "해당 조건의 위반 거래가 없습니다."
@@ -2741,13 +2858,9 @@ fl_chart 대응: `LineChart(minY: yMin, maxY: yMax, minX: 0, maxX: (n-1))`, 각 
 
 #### 6.4.2 축 라벨
 
-Y축 라벨 포맷(`formatKRWShort`, `:16-26`):
+Y축 라벨 포맷은 **§8.5.12 `formatCurrencyShort(value, "KRW")`** 다. 이식 시점의 로컬 `formatKRWShort` 가 공용 포매터로 흡수되었다. 호버 툴팁의 실제/시뮬레이션/BTC 홀드 값도 같은 함수를 쓴다.
 
-```
-|v| >= 1억  → "{억}억{만}만"  (만 단위가 0이면 "{억}억")
-|v| >= 1만  → "{round(v/10000)}만"
-그 외        → toLocaleString("ko-KR")
-```
+라운드 전체를 합친 그래프라 거래소 기축통화가 섞이므로, **서버가 원화로 환산해 내려주고 화면도 원화로만 표기한다**(`CHART_CURRENCY = "KRW"`).
 
 X축 라벨 간격(`getTickInterval`, `regret.ts:104-110`):
 
@@ -2787,8 +2900,8 @@ class RegretChartData {
 
 #### 6.4.4 상단 요약과 범례
 
-- 최상단: 라벨 "놓친 수익", 값 `missedProfit.toLocaleString("ko-KR")` + `KRW`, 30px 굵게 negative 색.
-- 3-stat 카드: `실제 자산 {actualAsset}` / `규칙 준수 시 {ruleFollowedAsset}` / `위반 {totalViolations}건`. 앞의 두 값은 기축통화 금액이며 천 단위 구분 기호를 붙여 출력한다. 원칙 준수 시 자산이 실제 자산보다 크면 positive 색으로 강조한다.
+- 최상단: 라벨 "위반 손실", 값 `formatCurrency(Math.abs(totalViolationLoss), "KRW")`(§8.5.3), 30px 굵게. **위반 손실은 양수가 손해**이므로 양수면 negative 색, 음수면 앞에 `-` 를 붙이고 positive 색이다. 바로 아래 한 줄 해설이 부호에 따라 갈린다 — 위반 0건이면 `원칙을 어긴 거래가 없습니다.`, 양수면 `원칙만 지켰다면 {금액} 더 벌었습니다.`, 음수면 `원칙을 어긴 게 오히려 {금액} 이득이었습니다.`
+- 3-stat 카드: `실제 자산 {actualAsset}` / `규칙 준수 시 {ruleFollowedAsset}` / `위반 {totalViolations}건`. 앞의 두 값은 `formatCurrencyCompact`(§8.5.4)로 원화 천 단위 표기다. 원칙 준수 시 자산이 실제 자산보다 크면 positive 색으로 강조한다.
 - 범례: 실제(실선) / 규칙 준수 시뮬레이션(점선, 활성 시) / BTC 홀드(활성 시) / 위반 지점(점).
 
 #### 6.4.5 인터랙션(웹)
@@ -2836,12 +2949,12 @@ class RegretChartData {
 2. **차트 상호작용**: 마우스 호버가 없으므로 **드래그 크로스헤어**(`LineTouchData(handleBuiltInTouches: true)`)로 대체하고, 툴팁은 차트 위 오버레이 대신 **차트 하단 고정 값 패널**(날짜 · 실제 · 시뮬레이션 · BTC 홀드 · 위반 여부)로 내린다.
 3. **가로 전체화면 보기**: 차트 우상단에 확대 아이콘을 두고, 탭하면 가로 모드 전체화면 차트를 연다. 기간이 30일을 넘어가면 X 라벨이 뭉치므로 실효가 크다.
 4. **규칙 토글을 차트 바로 아래 칩으로**: MeVsMe 의 세로 체크박스 리스트를 가로 스크롤 `FilterChip` 행(규칙 색 + 라벨 + 위반 수 배지)으로 압축하고, 임계값과 위반 상세는 칩 롱프레스 시 바텀시트로 보여준다. 토글 시 차트 라인은 기본 애니메이션(250ms)으로 부드럽게 전환한다.
-5. **"놓친 수익" 히어로**: 최상단에 큰 숫자 + 한 줄 해설("규칙을 지켰다면 이만큼 더 벌었습니다")을 두고, 3-stat 은 그 아래 3분할 타일로 유지한다. 스크롤 시 축약된 값을 앱바에 고정 노출한다.
-6. **BTC 홀드 벤치마크 수익률 채우기**: 하드코딩된 `0%` 대신 `btcHoldValues` 의 시작/끝 값으로 `(last/first - 1) * 100` 을 계산해 표기한다.
+5. **"위반 손실" 히어로**: 최상단에 큰 숫자 + 부호에 따라 갈리는 한 줄 해설(§6.4.4)을 두고, 3-stat 은 그 아래 3분할 타일로 유지한다. 스크롤 시 축약된 값을 앱바에 고정 노출한다.
+6. **BTC 홀드 벤치마크는 규칙이 없어도 남긴다**: 수익률은 `btcHoldValues` 의 시작/끝 값으로 계산한다(§6.3.4). 배치 전이라 규칙 임팩트가 비어도 BTC 홀드 곡선은 차트 데이터만으로 그려지므로, 벤치마크 칩을 감추면 그 선을 끌 수단이 사라진다.
 7. **위반 거래 목록**: 필터는 `SegmentedButton`(전체/손실/수익 + 건수), 목록은 `ListView.builder`. 한 행에 규칙 태그가 여러 개면 가로가 부족하므로 **2행 레이아웃**(1행: 코인 · 날짜 · 손익 / 2행: 규칙 태그 가로 스크롤)으로 바꾼다. 행 탭 시 상세 바텀시트(체결 시각 `occurredAt`, `orderId`, 위반 규칙별 설명)를 띄운다.
 8. **집계 전 안내**: 차트 자리에는 "아직 집계된 자산 추이가 없습니다" 대신 배치 주기까지 안내한다("복기 리포트는 매일 밤 집계됩니다. 내일 다시 확인해 주세요."). 스켈레톤은 쓰지 않는다(빈 상태를 로딩으로 오인시키기 때문).
 9. **에러 복구 경로 추가**: 웹의 `loadFailed` 는 재시도 수단이 없다. 모바일에서는 "다시 시도" 버튼과 당겨서 새로고침을 모두 제공한다.
-10. **고지 문구 유지**: 하단 `* 모의투자 데이터입니다. 규칙 준수 시 수익률은 시뮬레이션 결과입니다.` 는 시뮬레이션 근사(가중치 보간)를 사용자에게 알리는 유일한 장치이므로 반드시 이식한다.
+10. **고지 문구 유지**: 하단 `* 모의투자 데이터입니다. 규칙 준수 시 수익률은 시뮬레이션 결과입니다.` 는 규칙 준수 곡선이 실측이 아니라 재구성한 값임을 사용자에게 알리는 유일한 장치이므로 반드시 이식한다.
 
 ---
 
@@ -2855,13 +2968,15 @@ class RegretChartData {
 
 | 요소 | 내용 | 근거 |
 |---|---|---|
-| 로고 | `Activity` 아이콘(9×9, 라운드 사각형 primary 배경) + "Trypto" 텍스트 | `:31-36` |
-| 서브카피 | "큰 돈 잃을 걱정 없이 해보는 실전 리허설" | `:37-39` |
-| 카카오 버튼 | 배경 `#FEE500`, 글자 `#191600`, 높이 48px, 아이콘 `MessageCircle`. 라벨 "카카오로 로그인" / 진행 중 "카카오로 로그인 중…" | `:45-53` |
-| 구글 버튼 | 흰 배경 + 테두리, 글자 `#1f1f1f`, 높이 48px, 4색 구글 SVG. 라벨 "구글로 로그인" / 진행 중 "구글로 로그인 중…" | `:54-79` |
-| 버튼 비활성 조건 | 해당 제공자 설정 미완(`!isSocialConfigured`) 또는 다른 제공자가 진행 중(`pendingProvider !== null`) | `:48, 57` |
-| 설정 누락 안내 | **개발 모드에서만** 노출. "카카오·구글 로그인 설정(.env.local)이 필요합니다." | `:80-85` |
-| 오류 배너 | `error` 문자열을 destructive 배경 박스로 표시 | `:87-91` |
+| 로고 | `favicon.png`(9×9, 라운드 사각형) + **소문자** "trypto" 텍스트(2xl, extrabold) | `:30-33` |
+| 서브카피 | **"기록으로 배우는 코인 모의투자"** | `:34-36` |
+| 카카오 버튼 | 배경 `#FEE500`, 글자 `#191600`, 높이 48px, 말풍선 SVG(인라인, `MessageCircle` 아이콘이 아니다). 라벨 "카카오로 로그인" / 진행 중 "카카오로 로그인 중…" | `:41-52` |
+| 구글 버튼 | 흰 배경 + 테두리, 글자 `#1f1f1f`, 높이 48px, 4색 구글 SVG. 라벨 "구글로 로그인" / 진행 중 "구글로 로그인 중…" | `:53-78` |
+| 버튼 비활성 조건 | 해당 제공자 설정 미완(`!isSocialConfigured`) 또는 다른 제공자가 진행 중(`pendingProvider !== null`) | `:44, 56` |
+| 설정 누락 안내 | **개발 모드에서만** 노출. "카카오·구글 로그인 설정(.env.local)이 필요합니다." | `:79-84` |
+| 오류 배너 | `error` 문자열을 destructive 배경 박스로 표시 | `:86-90` |
+
+**사용자가 스스로 그만둔 것은 오류가 아니다.** 인가 팝업이 그냥 닫히면 웹은 500ms 폴링으로 감지해 버튼만 되돌리고 오류 배너를 세우지 않는다(§2.2.5). 이식 시에도 "취소" 와 "실패" 를 갈라 취소에는 문구를 띄우지 않는다.
 
 로그인 흐름(PKCE)의 상세는 §2.2 를, 모바일 대응은 §2.4 를 참조한다.
 
@@ -2882,23 +2997,35 @@ class RegretChartData {
 
 #### 7.3.1 자금 설정 (`SeedMoneyCard.tsx`)
 
-두 개의 독립 카드로 구성된다.
+두 개의 독립 카드로 구성된다. **시드머니 카드는 거래소마다 한 칸씩**, 그 거래소의 기축통화로 입력받는다.
 
 | 항목 | 시작 자금(시드머니) | 긴급 자금 투입 상한 |
 |---|---|---|
-| 아이콘/설명 | `Wallet`, "모의투자에 사용할 초기 자본금" | `ShieldPlus`, "1회당 최대 투입 금액" |
-| 상단 표시 | `₩{천단위 구분}` 대형 모노 폰트, 0이면 `₩0` 을 흐리게 | 동일 |
-| 보조 표시 | 값>0 일 때 `formatKRW` 축약(예: `1,000만원`) | 동일 |
-| 입력 | 텍스트 입력, `inputMode=numeric`. 숫자 이외 문자는 `replace(/[^0-9]/g, "")` 로 제거, 빈 값이면 0 (`:67-77, 113-123`) | 동일 |
-| 프리셋 | 100만 / 500만 / 1,000만 / 5,000만 (`:7-12`) | 10만 / 50만 / 100만 (`:14-18`) |
-| 부가 안내 | 없음 | "라운드 진행 중 최대 3회까지 긴급 자금을 투입할 수 있습니다" (`:131-135`) |
+| 제목/설명 | "시작 자금" / "거래소별로 기축통화 시드머니를 설정합니다. 1개 거래소 이상 입력이 필요합니다." | "긴급 자금 투입 상한" / "1회당 최대 투입 금액 (원화 기준)" |
+| 구성 | 거래소별 소카드 3장. 각 카드 머리에 거래소명과 기축통화 배지(`KRW`/`USDT`) | 단일 입력 |
+| 상단 표시 | KRW 이면 `₩{천단위 구분}`, USDT 이면 `{천단위 구분} USDT`. 대형 모노 폰트, 0이면 흐리게 | `₩{천단위 구분}`, 0이면 `₩0` 을 흐리게 |
+| 보조 표시 | **KRW 거래소에서만** 값>0 일 때 `formatKRW` 축약(예: `1,000만원`) | 값>0 일 때 `formatKRW` 축약 |
+| 입력 | 텍스트 입력, `inputMode=numeric`, 플레이스홀더 `"직접 입력 (0 = 미입력)"`. 숫자 이외 문자는 `replace(/[^0-9]/g, "")` 로 제거, 빈 값이면 0 | 플레이스홀더 `"직접 입력"`, 나머지 동일 |
+| 프리셋 | KRW: 100만 / 500만 / 1,000만 / 5,000만 (`:7-12`), USDT: 1,000 / 5,000 / 10,000 / 30,000 (`:14-19`) | 10만 / 50만 / 100만 (`:21-25`) |
+| 부가 안내 | "바이낸스 시드는 라운드 시작 시점 시세로 원화 환산되어 시드 총액에 합산됩니다" | "라운드 진행 중 최대 3회까지 긴급 자금을 투입할 수 있습니다" |
 
 프리셋 버튼(`PresetButtons.tsx`)은 현재 값과 정확히 일치할 때 활성(그라디언트 `primary → #9A6AFF`) 스타일로 바뀐다. 프리셋은 토글이 아니라 **값 덮어쓰기**다.
 
-**입력 범위에 대한 서버 제약(웹에는 클라이언트 검증이 없음)**
+**클라이언트 검증 — `seedAmountError(baseCurrency, amount)`** (`:27-39`)
+
+```
+if amount == 0: null                       # 0 은 '이 거래소엔 시드를 넣지 않음'
+SEED_LIMITS = { KRW: {min: 1,000,000, max: 50,000,000}, USDT: {min: 1,000, max: 30,000} }
+범위 안이면 null, 벗어나면
+  USDT → "1,000 ~ 30,000 USDT 범위로 입력해주세요"
+  그 외 → "100만원 ~ 5,000만원 범위로 입력해주세요"
+```
+
+오류는 해당 거래소 소카드 아래에 즉시 붉게 표시된다. 서버 정책(§1.6.4)과 같은 범위이며, 이식 시점과 달리 **웹도 시드 범위를 선제 검증한다.**
+
+**나머지 입력 범위에 대한 서버 제약**
 
 - 긴급 자금 상한은 백엔드에서 `0 ≤ limit ≤ 1,000,000` 이며 초과 시 `INVALID_EMERGENCY_FUNDING_LIMIT`(400). 웹은 100만 원 초과 입력을 막지 않아 제출 시점에 실패한다. **Flutter 는 입력 단계에서 1,000,000 상한을 강제할 것.**
-- 시드머니는 백엔드 `@DecimalMin("0")` 만 있고 상한이 없다. 단 거래소별 시드 범위 정책(§1.6.4)이 별도로 적용된다.
 - 긴급 충전 횟수는 서버가 항상 3회로 시작한다.
 
 #### 7.3.2 투자 규칙 전체 목록 (`components/round/rules.ts`)
@@ -2925,22 +3052,27 @@ class RegretChartData {
 
 #### 7.3.3 제출 규칙
 
-- 제출 가능 조건: `seed > 0 && emergencyLimit > 0 && 활성 규칙 ≥ 1` (`RoundCreatePage.tsx:38`).
-- 불충족 시 버튼 비활성 + "시드머니, 긴급 자금 상한, 투자 원칙 1개 이상 설정이 필요합니다."
+- 제출 가능 조건: **거래소 중 하나 이상 시드 > 0** && **모든 거래소의 시드가 범위 검증을 통과** && `emergencyLimit > 0` && `활성 규칙 ≥ 1` (`RoundCreatePage.tsx:38-45`).
+- 불충족 시 버튼 비활성 + "시드머니(1개 거래소 이상), 긴급 자금 상한, 투자 원칙 1개 이상 설정이 필요합니다."
 - 제출 중 라벨은 "생성 중...", 기본 라벨은 `Rocket` 아이콘 + "라운드 시작하기".
 - 실패 시(예외를 `createRound` 가 삼키고 `null` 반환) "라운드 생성에 실패했습니다. 입력값을 다시 확인해 주세요." 를 표시한다. **서버의 구체적 오류 메시지는 웹에서 버려진다.** → **Flutter 는 서버 오류 코드별 메시지를 노출한다**(`ACTIVE_ROUND_EXISTS` → "이미 진행 중인 라운드가 있습니다", `INVALID_EMERGENCY_FUNDING_LIMIT` → "긴급 자금 상한은 100만원 이하여야 합니다").
 - 성공 시 `/market` 으로 `replace` 이동.
 
-요청 바디는 시드를 거래소별 배열로 펼쳐 보낸다 — 업비트(1)에 전액, 빗썸(2)·바이낸스(3)에 0 (`round-api.ts:104-118`).
+요청 바디는 시드를 **거래소별로 그 거래소의 기축통화 금액 그대로** 펼쳐 보낸다(`round-api.ts:110-124`). 화면에서는 0 인 거래소를 걸러 넘기지만, 매퍼가 **거래소 상수 표 전체를 다시 훑어 빠진 거래소를 0 으로 채운다** — 서버는 이 목록에 실린 거래소에만 지갑을 만들므로, 빠뜨리면 송금받을 지갑이 없어 그 거래소를 아예 쓸 수 없다.
 
 ```
 POST /api/rounds
 {
-  "seeds": [ {"exchangeId":1,"amount":10000000}, {"exchangeId":2,"amount":0}, {"exchangeId":3,"amount":0} ],
+  "seeds": [ {"exchangeId":1,"amount":10000000},   // 업비트 KRW
+             {"exchangeId":2,"amount":0},          // 빗썸 KRW — 배정 안 함
+             {"exchangeId":3,"amount":5000} ],     // 바이낸스 USDT
   "emergencyFundingLimit": 1000000,
   "rules": [ {"ruleType":"CHASE_BUY_BAN","thresholdValue":15} ]
 }
 ```
+
+- **`amount` 의 단위는 거래소 기축통화** 다. 바이낸스 시드는 라운드 시작 시점 시세로 원화 환산되어 `initialSeed` 총액에 합산된다.
+- 이식 시점에는 시드머니 입력이 하나뿐이라 업비트(1)에 전액, 빗썸(2)·바이낸스(3)에 0 을 보냈다. **그 전제로 구현하면 국내·해외를 섞어 쓰는 라운드를 만들 수 없다.**
 
 (웹은 바디에 `userId` 도 넣으나 서버는 `@LoginUser` 세션에서 사용자 ID 를 얻으므로 무시된다. 보내지 않는다.)
 
@@ -3326,13 +3458,21 @@ Tailwind 기본 4px 단위 스케일을 그대로 쓴다(`gap-1`=4px, `gap-1.5`=
 
 ### 8.5 formatters.ts → Dart 이식 규칙
 
-원본: `frontend/src/lib/formatters.ts` (전체 118줄). **모든 페이지가 이 파일의 함수만 사용한다.**
+원본: `frontend/src/lib/formatters.ts` (전체 123줄). **거의 모든 화면이 이 파일의 함수만 사용한다.** 자기 파일 안에 로컬 포매터를 따로 둔 예외가 셋 있다.
+
+| 위치 | 로컬 포매터 | 사유 |
+|---|---|---|
+| 마이페이지 (§7.5.2) | `formatKRW` — `toLocaleString("ko-KR") + "원"` | 라운드 카드 금액을 축약하지 않는다 |
+| 주문 패널 (§4.4.3) | `formatPrice`(소수 8자리), `formatNumber`, `formatFloored` | 1원 미만 코인의 지정가·체결가가 뭉개지면 안 되고, 수량은 항상 내림이어야 한다 |
+| 주요 코인 카드 (§4.2.8) | `formatCardPrice` | 목록 행과 달리 USDT 에 `$` 를 붙인다 |
+
+> **개정 이력**: 이식 시점 이후 원화 표기 규칙이 한 차례 바뀌었다. `formatCurrency`·`formatCurrencyCompact` 의 억/만 축약이 사라져 원 단위 전액을 찍고(§8.5.3, §8.5.4), 축약이 필요한 자리는 신설 `formatCurrencyShort`(§8.5.12)가 맡는다. `formatKRWCompact`(§8.5.2)는 웹에서 삭제되었다. `formatKRW` 의 억·만 자리올림 결함도 함께 고쳐졌다(§8.5.1).
 
 #### 8.5.0 공통 전제
 
 - JS `toLocaleString("ko-KR")` 과 `toLocaleString("en-US")` 는 이 프로젝트가 쓰는 숫자 범위에서 **천단위 구분자 `,`, 소수점 `.` 로 동일**하다. 따라서 Dart 에서는 로케일을 구분할 필요 없이 `NumberFormat` 패턴만 맞추면 된다.
 - **옵션을 주지 않은 `toLocaleString`** 의 기본값은 `minimumFractionDigits: 0, maximumFractionDigits: 3` 이다. → Dart 패턴 `#,##0.###`
-- JS `Math.round` 는 half-up(+∞ 방향)이나, 이 파일은 **항상 `Math.abs()` 를 거친 양수에만** 적용하므로 Dart 의 `.round()` 와 결과가 완전히 일치한다.
+- JS `Math.round` 는 half-up(+∞ 방향)이고 Dart 의 `.round()` 는 0 에서 먼 쪽으로 올린다. `Math.abs()` 를 거친 양수에만 적용하는 자리(§8.5.1, §8.5.12)에서는 두 결과가 같지만, **부호 있는 원본 값에 그대로 적용하는 자리(§8.5.3, §8.5.4)에서는 `-12.5` 같은 음수 절반값에서 갈린다.** 그 자리에는 `(value + 0.5).floor()` 로 JS 규칙을 재현한 별도 헬퍼를 쓴다.
 - JS `toFixed(n)` ↔ Dart `toStringAsFixed(n)` 은 동일 동작이다.
 
 권장 Dart 포매터 상수:
@@ -3346,13 +3486,16 @@ final _f2to4  = NumberFormat('#,##0.00##');     // 소수 2~4
 final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 ```
 
-#### 8.5.1 `formatKRW(value)` — 원화, 단위 포함 (카드·요약용) `formatters.ts:8-19`
+#### 8.5.1 `formatKRW(value)` — 원화 약어, 단위 포함 `formatters.ts:9-19`
+
+**만원 미만을 반올림하므로 잔고·자산 표시에 쓰지 않는다.** 라운드 설정값(시드머니·긴급 자금 상한)과 안내 문구 전용이다(`:6-7` 주석).
+
+만 단위로 **먼저** 반올림한 뒤 억·만을 가른다. 이 순서가 아래의 자리올림 결함을 없앤다.
 
 | 조건 (`abs = value.abs()`) | 규칙 |
 |---|---|
-| `abs >= 1억` | `억 = (abs / 1e8).floor()`, `만 = ((abs % 1e8) / 1e4).round()`. `만 > 0` 이면 `"{부호}{억}억 {만:천단위}만원"`, `만 == 0` 이면 `"{부호}{억}억원"` |
-| `abs >= 1만` | `"{부호}{(abs/1e4).round():천단위}만원"` |
-| 그 외 | `"{부호}{abs.round():천단위}원"` |
+| `abs < 1만` | `"{부호}{abs.round():천단위}원"` |
+| 그 외 | `만 = (abs / 1e4).round()`, `억 = 만 ~/ 10000`, `나머지 = 만 % 10000`. `억 == 0` 이면 `"{부호}{만:천단위}만원"`, `나머지 > 0` 이면 `"{부호}{억}억 {나머지:천단위}만원"`, 아니면 `"{부호}{억}억원"` |
 
 부호는 `value < 0` 일 때 `"-"`, 아니면 `""`.
 
@@ -3364,14 +3507,17 @@ final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 | `10000` | `1만원` |
 | `15000` | `2만원` ← `1.5` 를 반올림하므로 2 |
 | `12345678` | `1,235만원` |
-| `99999999` | `10,000만원` ← 1억 미만이라 만원 분기 |
+| `99999999` | `1억원` ← 만 자리가 10,000 으로 반올림되어 1억으로 올라간다 |
 | `100000000` | `1억원` |
 | `123456789` | `1억 2,346만원` |
-| `999999999` | `9억 10,000만원` ← 만 자리가 10,000 으로 반올림되는 실제 동작. **그대로 재현할 것** |
+| `199999900` | `2억원` ← `1억 10,000만원` 이 나오면 안 된다 |
+| `999999999` | `10억원` |
 | `1000000000` | `10억원` |
 | `-50000` | `-5만원` |
 
-#### 8.5.2 `formatKRWCompact(value)` — 원화, 단위 없음 (테이블용) `formatters.ts:23-34`
+> 이식 시점에는 억을 먼저 자르고 나머지를 만으로 반올림해 `999999999 → "9억 10,000만원"` 처럼 만 자리가 10,000 이 되는 결함이 있었다. 지금은 위 순서로 고쳐졌으므로 **옛 출력을 재현하지 않는다.**
+
+#### 8.5.2 `formatKRWCompact(value)` — 원화 약어, 단위 없음 (**웹에서 삭제됨**)
 
 `formatKRW` 와 동일하되 접미사가 `억원`/`만원` → `억`/`만` 이고, **1만 미만 분기만 다르다**: `value.toLocaleString("ko-KR")` 즉 **부호 있는 원본 값을 반올림 없이** 소수 0~3자리로 출력한다.
 
@@ -3385,33 +3531,43 @@ final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 | `123456789` | `1억 2,346만` |
 | `100000000` | `1억` |
 
-#### 8.5.3 `formatCurrency(value, baseCurrency)` — 통화별, 단위 포함 `formatters.ts:38-43`
+**이 함수는 현행 웹에 없다.** 축약이 필요한 자리는 전부 `formatCurrencyShort`(§8.5.12)로 옮겨졌다. 앱은 남은 호출부를 이관할 때까지 과도적으로 유지하며, 이관이 끝나면 제거한다.
+
+#### 8.5.3 `formatCurrency(value, baseCurrency)` — 통화별 금액, 단위 포함 `formatters.ts:23-28`
 
 - `baseCurrency == "USDT"` → `"$" + value.toLocaleString("en-US", {min:2, max:2})` — **소수 정확히 2자리**
-- **그 외 전부**(`KRW`, `SOL` 포함) → `formatKRW(value)`
+- **그 외 전부**(`KRW`, `SOL` 포함) → `Math.round(value).toLocaleString("ko-KR") + "원"` — **축약하지 않고 원 단위 전액**을 찍는다
 
 | 입력 | 출력 |
 |---|---|
 | `(1234.5, "USDT")` | `$1,234.50` |
 | `(0, "USDT")` | `$0.00` |
 | `(-12.345, "USDT")` | `$-12.35` ← **달러 기호 뒤에 마이너스**가 온다. 템플릿이 `` `$${...}` `` 이기 때문. 그대로 재현할 것 |
-| `(123456789, "KRW")` | `1억 2,346만원` |
-| `(123456789, "SOL")` | `1억 2,346만원` ← SOL 도 원화 분기로 떨어진다 |
+| `(123456789, "KRW")` | `123,456,789원` |
+| `(123456789, "SOL")` | `123,456,789원` ← SOL 도 원화 분기로 떨어진다 |
 
-#### 8.5.4 `formatCurrencyCompact(value, baseCurrency)` `formatters.ts:47-52`
+> 이식 시점에는 원화 분기가 `formatKRW` 를 불러 `1억 2,346만원` 으로 축약했다. 잔고·평가금액을 만원 단위로 뭉개면 실제 값과 어긋나 보이므로 축약을 걷어냈다. 폭이 좁아 축약이 필요한 자리는 `formatCurrencyShort`(§8.5.12)를 쓴다.
 
-`USDT` 이면 8.5.3 과 동일(`$` + 소수 2자리), 그 외에는 `formatKRWCompact(value)`.
+#### 8.5.4 `formatCurrencyCompact(value, baseCurrency)` `formatters.ts:32-37`
 
-#### 8.5.5 `formatFiatEstimate(value, baseCurrency)` `formatters.ts:56-58`
+`USDT` 이면 8.5.3 과 동일(`$` + 소수 2자리), 그 외에는 `Math.round(value).toLocaleString("ko-KR")` — 8.5.3 에서 `원` 만 뺀 값이다.
+
+| 입력 | 출력 |
+|---|---|
+| `(1234.5, "USDT")` | `$1,234.50` |
+| `(123456789, "KRW")` | `123,456,789` |
+| `(1234, "KRW")` | `1,234` |
+
+#### 8.5.5 `formatFiatEstimate(value, baseCurrency)` `formatters.ts:60-62`
 
 `"≈ " + formatCurrency(value, baseCurrency)` — `≈`(U+2248) 다음에 **공백 하나**.
 
 | 입력 | 출력 |
 |---|---|
 | `(1234.5, "USDT")` | `≈ $1,234.50` |
-| `(52340000, "KRW")` | `≈ 5,234만원` |
+| `(52340000, "KRW")` | `≈ 52,340,000원` |
 
-#### 8.5.6 `formatQuantity(quantity)` — 코인 수량 `formatters.ts:62-67`
+#### 8.5.6 `formatQuantity(quantity)` — 코인 수량 `formatters.ts:66-71`
 
 로케일 `en-US`. 조건은 **원본 값**(절댓값 아님) 기준이다.
 
@@ -3433,7 +3589,7 @@ final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 | `0` | `0.0000` |
 | `-5` | `-5.0000` ← 음수는 마지막 분기로 떨어진다 |
 
-#### 8.5.7 `formatPrice(price, baseCurrency)` — 가격 (**통화 기호 미포함**) `formatters.ts:71-83`
+#### 8.5.7 `formatPrice(price, baseCurrency)` — 가격 (**통화 기호 미포함**) `formatters.ts:75-87`
 
 | baseCurrency | 조건 | 규칙 |
 |---|---|---|
@@ -3461,7 +3617,7 @@ final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 >
 > Dart `toExponential(2)` 대응: `p.toStringAsExponential(2)` 는 `1.00e-5` 를 반환하여 JS 와 동일하다.
 
-#### 8.5.8 `formatVolume(volume, baseCurrency)` — 거래대금 `formatters.ts:87-95`
+#### 8.5.8 `formatVolume(volume, baseCurrency)` — 거래대금 `formatters.ts:91-99`
 
 억/만 축약을 **하지 않는다**. 소수는 전부 기본값(0~3자리).
 
@@ -3477,7 +3633,7 @@ final _f4to8  = NumberFormat('#,##0.0000####'); // 소수 4~8
 | `(1234567.891, "USDT")` | `$1,234,567.891` |
 | `(1234.5, "SOL")` | `◎1,234.5` |
 
-#### 8.5.9 `formatChangeRate(rate)` — 변동률 `formatters.ts:99-103`
+#### 8.5.9 `formatChangeRate(rate)` — 변동률 `formatters.ts:103-107`
 
 입력은 **비율**(0.0234 = 2.34%)이다.
 
@@ -3497,7 +3653,7 @@ return "${sign}${percent.toStringAsFixed(2)}%"
 
 > 천단위 구분자가 없다(`toFixed` 사용). `+1234.56%` 처럼 나온다.
 
-#### 8.5.10 `getCurrencySymbol(baseCurrency)` `formatters.ts:107-111`
+#### 8.5.10 `getCurrencySymbol(baseCurrency)` `formatters.ts:111-115`
 
 | 입력 | 출력 |
 |---|---|
@@ -3505,9 +3661,34 @@ return "${sign}${percent.toStringAsFixed(2)}%"
 | `"SOL"` | `◎` (U+25CE) |
 | **그 외 전부(`USDT` 포함)** | `""` (빈 문자열) |
 
-#### 8.5.11 `SMALL_AMOUNT_THRESHOLD` `formatters.ts:115-118`
+#### 8.5.11 `SMALL_AMOUNT_THRESHOLD` `formatters.ts:119-122`
 
 소액 자산 필터 기준값. `{ KRW: 1000, USDT: 1 }`. 조회 시 **키가 없으면 기본값 1** 을 쓴다.
+
+#### 8.5.12 `formatCurrencyShort(value, baseCurrency)` — 통화별 약어 `formatters.ts:41-56`
+
+이식 시점 이후 신설되었다. **차트 축·툴팁처럼 폭이 좁은 자리 전용**이며, 복기 그래프의 Y축 라벨·호버 값(§6.4.2)과 규칙별 손실 금액(§6.3.4)이 이 함수를 쓴다. 번호가 뒤에 붙은 것은 기존 절 번호를 흔들지 않기 위해서다 — 성격상 §8.5.4 옆에 놓고 읽는다.
+
+| baseCurrency | 조건 (`abs = value.abs()`) | 규칙 |
+|---|---|---|
+| `USDT` | `abs >= 1,000,000` | `"{부호}${(abs/1e6).toFixed(1)}M"` |
+| `USDT` | `abs >= 10,000` | `"{부호}${(abs/1e3).toFixed(1)}K"` |
+| `USDT` | 그 외 | `"{부호}$" + abs.toLocaleString("en-US", {max:2})` — 소수 0~2자리 |
+| 그 외(`KRW`) | `abs < 1만` | `"{부호}{abs.round():천단위}"` |
+| 그 외(`KRW`) | 그 외 | §8.5.1 과 같은 만 단위 선반올림. 단위는 `억`/`만`, **억과 만 사이에 공백이 없다** |
+
+`formatCurrency`(§8.5.3)와 두 가지가 다르다. ① 억과 만 사이에 공백이 없다. ② USDT 는 **부호가 `$` 앞**에 온다(`-$1.2M`) — `formatCurrency` 는 기호 뒤였다(`$-12.35`).
+
+| 입력 | 출력 |
+|---|---|
+| `(99999999, "KRW")` | `1억` |
+| `(123456789, "KRW")` | `1억2,346만` ← 공백 없음 |
+| `(8500.5, "KRW")` | `8,501` ← 1만 미만은 반올림한 정수만 |
+| `(-1234567, "KRW")` | `-123만` |
+| `(1234567, "USDT")` | `$1.2M` |
+| `(12345, "USDT")` | `$12.3K` |
+| `(-1234567, "USDT")` | `-$1.2M` |
+| `(12.345, "USDT")` | `$12.35` |
 
 ---
 

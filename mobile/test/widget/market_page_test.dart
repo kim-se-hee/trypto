@@ -120,7 +120,9 @@ void main() {
       );
   });
 
-  Future<void> pumpMarket(WidgetTester tester) async {
+  /// 부팅(인증 복구 → 라운드 조회 → /market)까지만 돌린다. 목록 응답을 늦추거나 실패시키는
+  /// 테스트는 `pumpAndSettle` 을 쓸 수 없어 이 지점에서 멈춰야 한다.
+  Future<void> boot(WidgetTester tester) async {
     await store.save('session-id');
     await tester.pumpWidget(
       ProviderScope(
@@ -134,10 +136,14 @@ void main() {
       ),
     );
 
-    // 부팅(인증 복구 → 라운드 조회 → /market).
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
+  }
+
+  Future<void> pumpMarket(WidgetTester tester) async {
+    await boot(tester);
+
     // 600행 응답은 50KB 를 넘어 dio 가 **백그라운드 아이솔레이트**에서 디코딩한다. fake async
     // 로는 완료되지 않으므로 실제 비동기 구간을 열어 준다. (프로덕션에서는 이 오프로딩 덕에
     // 목록 디코딩이 UI 스레드를 멈추지 않는다.)
@@ -170,9 +176,89 @@ void main() {
     await tester.enterText(find.byType(CoinSearchField), 'XRP');
     await tester.pumpAndSettle();
 
-    // 현재가·전일대비(가격 0) + 거래대금(0) = 3칸.
+    // 현재가·전일대비(가격 0) + 거래대금(0) = 3칸. 주요 코인 카드(BTC/ETH/SOL)는 모두
+    // 시세가 있어 `-` 를 내지 않는다.
     expect(renderedSymbols(tester), ['XRP']);
     expect(find.text('-'), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('시세를 받지 못한 코인은 주요 코인 카드에서도 가격·등락률이 - 다', (tester) async {
+    // 나중에 등록한 경로가 이긴다. BTC 만 시세가 빈 짧은 목록으로 바꾼다.
+    adapter.onGet(
+      '/api/exchanges/1/coins',
+      (server) => server.reply(
+        200,
+        envelope([
+          coin(1, 'BTC', '비트코인', price: 0, changeRate: 0, volume: 0),
+          coin(
+            2,
+            'ETH',
+            '이더리움',
+            price: 5300000,
+            changeRate: -0.004,
+            volume: 5e11,
+          ),
+        ]),
+      ),
+    );
+
+    await boot(tester);
+    await tester.pumpAndSettle();
+
+    // BTC 카드(가격·등락률 2칸) + BTC 행(현재가·전일대비·거래대금 3칸) = 5칸.
+    // 등락률을 0.00% 로 찍으면 실제로 0 인 코인과 구분되지 않는다.
+    expect(renderedSymbols(tester), ['ETH', 'BTC']);
+    expect(find.text('-'), findsNWidgets(5));
+    expect(find.text('0.00%'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('목록을 불러오는 동안에도 필터 칩은 남는다', (tester) async {
+    adapter.onGet(
+      '/api/exchanges/1/coins',
+      (server) => server.reply(
+        200,
+        envelope(<Object>[]),
+        delay: const Duration(seconds: 3),
+      ),
+    );
+
+    await boot(tester);
+    // 로딩 인디케이터가 계속 도므로 `pumpAndSettle` 을 쓸 수 없다. 라우트 전환 애니메이션이
+    // 끝날 만큼만 흘려보낸다.
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(MarketPage), findsOneWidget);
+    expect(find.byType(CoinRow), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.widgetWithText(ChoiceChip, '하락'), findsOneWidget);
+
+    // 대기 중인 타이머를 남기면 테스트가 실패한다.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('목록 조회가 실패해도 필터 칩은 남는다', (tester) async {
+    adapter.onGet(
+      '/api/exchanges/1/coins',
+      (server) => server.reply(500, {
+        'status': 500,
+        'code': 'INTERNAL_SERVER_ERROR',
+        'message': '일시적인 오류입니다.',
+        'data': null,
+      }),
+    );
+
+    await boot(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MarketPage), findsOneWidget);
+    expect(find.byType(CoinRow), findsNothing);
+    expect(find.text('일시적인 오류입니다.'), findsOneWidget);
+    expect(find.text('다시 시도'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '하락'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

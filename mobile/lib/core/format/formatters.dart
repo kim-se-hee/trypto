@@ -10,60 +10,88 @@ const String _locale = 'en_US';
 /// 프레임당 수백 µs 를 그냥 버린다(계획서 §4.2.5-9). 최상위에 한 번만 만든다.
 final NumberFormat _grp = NumberFormat('#,##0.###', _locale); // 소수 0~3 (기본)
 final NumberFormat _int0 = NumberFormat('#,##0', _locale); // 소수 0
+final NumberFormat _upto2 = NumberFormat('#,##0.##', _locale); // 소수 0~2
 final NumberFormat _fix2 = NumberFormat('#,##0.00', _locale); // 소수 정확히 2
 final NumberFormat _fix4 = NumberFormat('#,##0.0000', _locale); // 소수 정확히 4
 final NumberFormat _f2to4 = NumberFormat('#,##0.00##', _locale); // 소수 2~4
 final NumberFormat _f4to8 = NumberFormat('#,##0.0000####', _locale); // 소수 4~8
 
-const double _eok = 100000000;
 const double _man = 10000;
 
-/// 원화, 단위 포함 (카드·요약용). §8.5.1
+/// JS `Math.round` 는 0.5 를 항상 +∞ 방향으로 올리고 Dart `round()` 는 0 에서 먼 쪽으로 올린다.
+/// 음수 절반값(-12.5)에서 갈리므로 웹 쪽 규칙을 그대로 재현한다.
+int _jsRound(double value) => (value + 0.5).floor();
+
+/// 원화 약어, 단위 포함. 만원 미만을 반올림하므로 잔고·자산 표시에는 쓰지 않는다 —
+/// 라운드 설정값·안내 문구 전용이다. §8.5.1
 String formatKRW(double value) {
   final abs = value.abs();
   final sign = value < 0 ? '-' : '';
-  if (abs >= _eok) {
-    final eok = (abs / _eok).floor();
-    final man = ((abs % _eok) / _man).round();
-    if (man > 0) return '$sign$eok억 ${_int0.format(man)}만원';
-    return '$sign$eok억원';
-  }
-  if (abs >= _man) return '$sign${_int0.format((abs / _man).round())}만원';
-  return '$sign${_int0.format(abs.round())}원';
+  if (abs < _man) return '$sign${_int0.format(abs.round())}원';
+  final man = (abs / _man).round();
+  final eok = man ~/ 10000;
+  final rest = man % 10000;
+  if (eok == 0) return '$sign${_int0.format(man)}만원';
+  if (rest > 0) return '$sign$eok억 ${_int0.format(rest)}만원';
+  return '$sign$eok억원';
 }
 
-/// 원화, 단위 없음 (테이블용). §8.5.2
+/// 원화 약어, 단위 없음. §8.5.2
 ///
 /// 1만 미만에서만 [formatKRW] 와 갈린다 — 부호 있는 원본 값을 반올림 없이 그대로 찍는다.
+///
+/// 웹에서는 03a5c791 로 삭제되었다. 축약이 필요한 자리는 [formatCurrencyShort] 를 쓰고,
+/// 남은 호출부가 이관되면 제거한다.
 String formatKRWCompact(double value) {
   final abs = value.abs();
   final sign = value < 0 ? '-' : '';
-  if (abs >= _eok) {
-    final eok = (abs / _eok).floor();
-    final man = ((abs % _eok) / _man).round();
-    if (man > 0) return '$sign$eok억 ${_int0.format(man)}만';
-    return '$sign$eok억';
-  }
-  if (abs >= _man) return '$sign${_int0.format((abs / _man).round())}만';
-  return _grp.format(value);
+  if (abs < _man) return _grp.format(value);
+  final man = (abs / _man).round();
+  final eok = man ~/ 10000;
+  final rest = man % 10000;
+  if (eok == 0) return '$sign${_int0.format(man)}만';
+  if (rest > 0) return '$sign$eok억 ${_int0.format(rest)}만';
+  return '$sign$eok억';
 }
 
-/// 천단위 구분만 넣은 정수 표기(웹 `toLocaleString`). 축약하면 안 되는 자리 —
-/// 라운드 생성 금액 입력, 마이페이지 라운드 카드 — 에서 쓴다.
-String formatGrouped(num value) => _int0.format(value);
+/// 천단위 구분만 넣은 표기(웹 `toLocaleString('ko-KR')`). 축약하면 안 되는 자리 —
+/// 라운드 생성 금액 입력, 마이페이지 라운드 카드, 지갑 기준통화 잔고 — 에서 쓴다.
+/// 웹 기본값과 같이 소수는 3자리까지 남긴다.
+String formatGrouped(num value) => _grp.format(value);
 
-/// 통화별 금액, 단위 포함. §8.5.3
+/// 통화별 금액, 단위 포함. 원화는 축약 없이 원 단위 전액을 찍는다. §8.5.3
 ///
 /// USDT 는 템플릿이 `$${값}` 이라 음수에서 기호 뒤에 마이너스가 온다(`$-12.35`). 웹 동작 그대로다.
 String formatCurrency(double value, String baseCurrency) {
   if (baseCurrency == 'USDT') return '\$${_fix2.format(value)}';
-  return formatKRW(value);
+  return '${_int0.format(_jsRound(value))}원';
 }
 
 /// 통화별 금액, 단위 없음. §8.5.4
 String formatCurrencyCompact(double value, String baseCurrency) {
   if (baseCurrency == 'USDT') return '\$${_fix2.format(value)}';
-  return formatKRWCompact(value);
+  return _int0.format(_jsRound(value));
+}
+
+/// 차트 축·툴팁처럼 폭이 좁은 자리 전용 축약.
+///
+/// [formatCurrency] 와 두 가지가 다르다 — 억과 만 사이에 공백이 없고, USDT 는 부호가
+/// `$` 앞에 온다(`-$1.2M`).
+String formatCurrencyShort(double value, String baseCurrency) {
+  final abs = value.abs();
+  final sign = value < 0 ? '-' : '';
+  if (baseCurrency == 'USDT') {
+    if (abs >= 1000000) return '$sign\$${(abs / 1000000).toStringAsFixed(1)}M';
+    if (abs >= 10000) return '$sign\$${(abs / 1000).toStringAsFixed(1)}K';
+    return '$sign\$${_upto2.format(abs)}';
+  }
+  if (abs < _man) return '$sign${_int0.format(abs.round())}';
+  final man = (abs / _man).round();
+  final eok = man ~/ 10000;
+  final rest = man % 10000;
+  if (eok == 0) return '$sign${_int0.format(man)}만';
+  if (rest > 0) return '$sign$eok억${_int0.format(rest)}만';
+  return '$sign$eok억';
 }
 
 /// 법정통화 환산 표시. §8.5.5

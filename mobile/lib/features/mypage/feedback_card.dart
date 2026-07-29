@@ -46,15 +46,20 @@ class _FeedbackCardState extends ConsumerState<FeedbackCard> {
       await ref.read(feedbackRepositoryProvider).sendFeedback(content);
       if (!mounted) return;
       _controller.clear();
-      setState(() {
-        _sending = false;
-        _length = 0;
-      });
+      setState(() => _length = 0);
       showAppSnackbar(context, '피드백이 접수되었습니다. 소중한 의견 감사합니다.');
     } on ApiException catch (error) {
       if (!mounted) return;
-      setState(() => _sending = false);
       showAppSnackbar(context, error.userMessage, isError: true);
+    } catch (_) {
+      // 웹은 `catch` 하나로 모든 예외를 삼키고 대체 문구를 띄운다(FeedbackCard.tsx:28-29).
+      // 여기가 없으면 ApiException 이 아닌 예외는 화면 밖으로 새어 나가 사용자는 실패를
+      // 알 방법이 없다 — 실패를 조용히 넘기지 않는다(R9).
+      if (!mounted) return;
+      showAppSnackbar(context, '피드백 전송에 실패했습니다.', isError: true);
+    } finally {
+      // 어떤 예외가 나도 버튼을 되살린다. 여기가 없으면 '보내는 중...' 으로 영영 굳는다.
+      if (mounted) setState(() => _sending = false);
     }
   }
 

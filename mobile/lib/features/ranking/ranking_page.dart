@@ -97,7 +97,9 @@ class _RankingPageState extends ConsumerState<RankingPage> {
     if (!_scroll.hasClients) return;
     _stickyVisible.value = _myRanking != null && _scroll.offset > _myCardExtent;
 
-    if (!_hasNext || _loadingMore || _loading) return;
+    // 더보기가 한 번 실패하면 자동으로 다시 쏘지 않는다. 웹은 사용자가 버튼을 눌러야만
+    // 재시도한다 — 이 조건이 없으면 목록 끝에 머무는 스크롤마다 같은 요청이 되풀이된다.
+    if (!_hasNext || _loadingMore || _loading || _moreError != null) return;
     if (_scroll.position.pixels < _scroll.position.maxScrollExtent - 200) return;
     _loadMore();
   }

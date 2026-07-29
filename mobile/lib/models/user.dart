@@ -7,35 +7,22 @@ part 'user.g.dart';
 
 /// `POST /api/auth/{provider}/login`
 ///
-/// 제공자별로 바디가 갈린다(확정 와이어 계약). 카카오는 앱이 공식 SDK 로 받은 액세스 토큰을
-/// 보내고(`{accessToken, clientType}`), 구글/웹은 기존 인가 코드 흐름을 그대로 쓴다
-/// (`{code, codeVerifier, clientType}`). 두 흐름은 상호배타이므로 named 생성자로 나눈다.
+/// 앱은 두 제공자 모두 공식 SDK 가 받은 토큰을 같은 채널(`accessToken`)로 보낸다
+/// (`{accessToken, clientType}`). 서버가 받는 인가 코드 흐름(`{code, codeVerifier}`)은
+/// 웹 전용이라 앱 모델에 두지 않는다 — 웹은 `frontend/src/lib/auth/social.ts` 가 쓴다.
 ///
-/// [clientType] 은 서버가 플랫폼별 제공자 자격증명을 고르는 값이다(구글의 Android·iOS 클라이언트
-/// ID 가 별개다). `includeIfNull: false` 라 해당 흐름에 없는 필드는 바디에서 통째로 빠진다.
+/// [clientType] 은 서버가 플랫폼별 제공자 자격증명을 고르는 값이다.
+/// `includeIfNull: false` 라 값이 없는 필드는 바디에서 통째로 빠진다.
 @JsonSerializable(createFactory: false, includeIfNull: false)
 class LoginRequest {
-  /// 웹: 인가 코드 + PKCE 검증값. 앱은 안드로이드에서 커스텀 스킴이 막혀 이 흐름을 쓰지 않는다.
-  const LoginRequest.google({
-    required this.code,
-    required this.codeVerifier,
-    this.clientType,
-  }) : accessToken = null;
-
   /// 카카오: 공식 SDK 가 앱에서 받은 액세스 토큰.
-  const LoginRequest.kakao({required this.accessToken, this.clientType})
-    : code = null,
-      codeVerifier = null;
+  const LoginRequest.kakao({required this.accessToken, this.clientType});
 
   /// 구글(앱): 공식 SDK(google_sign_in)가 받은 ID 토큰. 카카오와 같은 토큰 채널(`accessToken`)로
   /// 보낸다 — 서버는 이 값을 tokeninfo 로 검증해 신원을 확인한다.
   const LoginRequest.googleToken({required String idToken, this.clientType})
-    : accessToken = idToken,
-      code = null,
-      codeVerifier = null;
+    : accessToken = idToken;
 
-  final String? code;
-  final String? codeVerifier;
   final String? accessToken;
   final ClientType? clientType;
 

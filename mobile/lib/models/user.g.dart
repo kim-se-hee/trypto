@@ -8,8 +8,6 @@ part of 'user.dart';
 
 Map<String, dynamic> _$LoginRequestToJson(LoginRequest instance) =>
     <String, dynamic>{
-      'code': ?instance.code,
-      'codeVerifier': ?instance.codeVerifier,
       'accessToken': ?instance.accessToken,
       'clientType': ?_$ClientTypeEnumMap[instance.clientType],
     };

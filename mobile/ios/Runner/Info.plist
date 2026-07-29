@@ -29,11 +29,11 @@
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
 			<string>com.trypto.mobile</string>
-			<!-- OAuth 콜백 스킴의 iOS 단일 출처. lib/core/env.dart 의 기본값과 같아야 한다.
-			     제공자별로 스킴이 갈리면 아래 배열에 문자열을 추가한다. -->
+			<!-- 카카오 로그인 SDK 가 인가 결과를 되받는 콜백 스킴. `kakao{네이티브앱키}` 형식이며
+			     lib/core/env.dart 의 kakaoNativeAppKey 기본값과 같아야 한다.
+			     구글은 공식 SDK 가 앱에서 직접 ID 토큰을 돌려주므로 콜백 스킴이 필요 없다. -->
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>trypto</string>
 				<string>kakaodf7305f4a85506b955eafc916218ca7b</string>
 			</array>
 		</dict>

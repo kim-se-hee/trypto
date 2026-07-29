@@ -148,7 +148,7 @@ void main() {
 
   testWidgets('관찰자는 매 틱 동기 호출되고 그리기 알림은 프레임당 1회다', (tester) async {
     final observer = _RecordingObserver();
-    store.setRawObserver(observer);
+    store.addRawObserver(observer);
 
     store.ingest([
       tick('BTC', price: 100, timestamp: 1),
@@ -166,11 +166,40 @@ void main() {
     await tester.pump();
     expect(observer.frames, 1);
 
-    store.clearRawObserver(observer);
+    store.removeRawObserver(observer);
     store.ingest([tick('BTC', price: 500, timestamp: 5)]);
     await tester.pump();
     expect(observer.ticks.length, 4);
     expect(observer.frames, 1);
+  });
+
+  /// 코인 상세 차트가 살아 있는 채로 가로 풀스크린이 올라오고, 풀스크린에서 주기를 바꾸면
+  /// 폴더가 셋까지 늘어난다. 슬롯이 하나면 나중 것이 앞 것을 덮어 상세 차트가 멈춘다.
+  testWidgets('관찰자 여럿이 동시에 틱을 받고 하나를 떼도 나머지는 살아 있다', (tester) async {
+    final detail = _RecordingObserver();
+    final fullscreen = _RecordingObserver();
+    store.addRawObserver(detail);
+    store.addRawObserver(fullscreen);
+    // 같은 관찰자를 두 번 등록해도 한 체결이 두 번 접히지 않는다.
+    store.addRawObserver(detail);
+
+    store.ingest([tick('BTC', price: 100, timestamp: 1)]);
+    await tester.pump();
+
+    expect(detail.ticks.map((t) => t.price).toList(), [100]);
+    expect(fullscreen.ticks.map((t) => t.price).toList(), [100]);
+    expect(detail.frames, 1);
+    expect(fullscreen.frames, 1);
+
+    // 풀스크린을 닫아도 상세 차트는 계속 받는다.
+    store.removeRawObserver(fullscreen);
+    store.ingest([tick('BTC', price: 130, timestamp: 2)]);
+    await tester.pump();
+
+    expect(detail.ticks.map((t) => t.price).toList(), [100, 130]);
+    expect(fullscreen.ticks, hasLength(1));
+    expect(detail.frames, 2);
+    expect(fullscreen.frames, 1);
   });
 
   testWidgets('관찰자를 등록하지 않으면 목록 경로는 그대로다', (tester) async {

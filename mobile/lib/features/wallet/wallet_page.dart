@@ -39,6 +39,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
   String _query = '';
   bool _hideSmall = false;
   bool _hidden = false;
+  WalletSort _sort = const WalletSort();
 
   @override
   void dispose() {
@@ -52,13 +53,42 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     context.go('${Routes.wallet}?exchange=${exchange.key}');
   }
 
+  /// 거래소 탭은 이 라운드가 실제로 만든 지갑만 보여준다(웹 WalletPage.tsx:40-53).
+  /// 표에 없는 거래소(서버가 새 거래소를 추가한 경우)는 그릴 이름이 없어 건너뛴다.
+  List<Exchange> _exchangeTabs(ActiveRound? round) => [
+    if (round != null)
+      for (final wallet in round.wallets)
+        if (ExchangeIds.byId(wallet.exchangeId) case final exchange?) exchange,
+  ];
+
+  /// 쿼리의 `exchange` 가 지갑 목록에 없으면 첫 지갑 거래소로 떨어뜨린다. 지갑이 하나도
+  /// 없을 때만 전역 기본값(업비트)을 쓴다.
+  Exchange _selectedExchange(List<Exchange> tabs, String? key) {
+    for (final exchange in tabs) {
+      if (exchange.key == key) return exchange;
+    }
+    return tabs.isNotEmpty ? tabs.first : ExchangeIds.byKey(key);
+  }
+
   /// 도착 후보 = 이 라운드의 지갑 중 현재 거래소를 뺀 전부(사양서 §5.2.6).
-  List<TransferDestination> _destinations(ActiveRound round, Exchange current) {
+  /// 그 코인을 취급하지 않는 거래소도 목록에 남기고 `listed: false` 로 표시한다.
+  List<TransferDestination> _destinations(
+    ActiveRound round,
+    Exchange current,
+    Map<int, Set<int>> listed,
+    int? coinId,
+  ) {
     return [
       for (final wallet in round.wallets)
         if (wallet.exchangeId != current.id)
           if (ExchangeIds.byId(wallet.exchangeId) case final exchange?)
-            TransferDestination(walletId: wallet.walletId, exchange: exchange),
+            TransferDestination(
+              walletId: wallet.walletId,
+              exchange: exchange,
+              listed:
+                  coinId != null &&
+                  (listed[wallet.exchangeId]?.contains(coinId) ?? false),
+            ),
     ];
   }
 
@@ -68,13 +98,14 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     Exchange exchange,
     int walletId,
     ActiveRound round,
+    Map<int, Set<int>> listed,
   ) async {
     final outcome = await showAssetDetailSheet(
       context,
       asset: asset,
       exchange: exchange,
       walletId: walletId,
-      destinations: _destinations(round, exchange),
+      destinations: _destinations(round, exchange, listed, asset.coinId),
       transfers: snapshot.recentTransfers,
     );
     if (outcome == null || !mounted) return;
@@ -101,12 +132,17 @@ class _WalletPageState extends ConsumerState<WalletPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final exchange = ExchangeIds.byKey(
-      GoRouterState.of(context).uri.queryParameters['exchange'],
-    );
     final round = ref.watch(
       roundControllerProvider.select((state) => state.activeRound),
     );
+    final tabs = _exchangeTabs(round);
+    final exchange = _selectedExchange(
+      tabs,
+      GoRouterState.of(context).uri.queryParameters['exchange'],
+    );
+    // 도착 후보 판정에 쓸 거래소별 상장 목록. 출금을 누른 시점에 조회를 시작하면 후보가
+    // 전부 '미상장' 으로 보이므로 화면에 들어오면서 함께 받아 둔다.
+    final listed = ref.watch(listedCoinIdsProvider);
     final walletId = round?.walletIdOf(exchange.id);
 
     return Scaffold(
@@ -133,16 +169,17 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             ),
             child: Column(
               children: [
-                ExchangeSegment<int>(
-                  items: [
-                    for (final item in ExchangeIds.all)
-                      SegmentItem(item.id, item.name),
-                  ],
-                  value: exchange.id,
-                  onChanged: (id) =>
-                      _switchExchange(ExchangeIds.byId(id) ?? exchange),
-                ),
-                const SizedBox(height: TryptoSpacing.sm),
+                if (tabs.isNotEmpty) ...[
+                  ExchangeSegment<int>(
+                    items: [
+                      for (final item in tabs) SegmentItem(item.id, item.name),
+                    ],
+                    value: exchange.id,
+                    onChanged: (id) =>
+                        _switchExchange(ExchangeIds.byId(id) ?? exchange),
+                  ),
+                  const SizedBox(height: TryptoSpacing.sm),
+                ],
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -155,13 +192,18 @@ class _WalletPageState extends ConsumerState<WalletPage> {
               ],
             ),
           ),
-          Expanded(child: _body(exchange, round, walletId)),
+          Expanded(child: _body(exchange, round, walletId, listed)),
         ],
       ),
     );
   }
 
-  Widget _body(Exchange exchange, ActiveRound? round, int? walletId) {
+  Widget _body(
+    Exchange exchange,
+    ActiveRound? round,
+    int? walletId,
+    Map<int, Set<int>> listed,
+  ) {
     if (round == null) {
       return const NoRoundNotice(message: '진행 중인 라운드가 없어 지갑이 비어 있습니다.');
     }
@@ -178,11 +220,15 @@ class _WalletPageState extends ConsumerState<WalletPage> {
       value: ref.watch(walletSnapshotProvider(key)),
       onRetry: () => ref.invalidate(walletSnapshotProvider(key)),
       builder: (snapshot) {
-        final assets = applyWalletFilter(
-          snapshot.assets,
-          query: _query,
-          hideSmall: _hideSmall,
-          baseCurrency: snapshot.baseCurrency,
+        // 기준통화 행도 함께 정렬된다 — 큰 코인을 들고 있으면 첫 줄이 아닐 수 있다.
+        final assets = sortWalletAssets(
+          applyWalletFilter(
+            snapshot.assets,
+            query: _query,
+            hideSmall: _hideSmall,
+            baseCurrency: snapshot.baseCurrency,
+          ),
+          _sort,
         );
 
         return Column(
@@ -222,6 +268,12 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                         onSelected: (selected) =>
                             setState(() => _hideSmall = selected),
                       ),
+                      const SizedBox(width: TryptoSpacing.xs),
+                      _SortMenu(
+                        sort: _sort,
+                        onSort: (sortKey) =>
+                            setState(() => _sort = _sort.sortBy(sortKey)),
+                      ),
                     ],
                   ),
                 ],
@@ -253,6 +305,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                             exchange,
                             walletId,
                             round,
+                            listed,
                           ),
                         ),
                       ),
@@ -261,6 +314,50 @@ class _WalletPageState extends ConsumerState<WalletPage> {
           ],
         );
       },
+    );
+  }
+}
+
+/// 정렬 컨트롤. 마켓 목록의 `_ListControls` 와 같은 모양이다 — 같은 키를 다시 고르면 방향이
+/// 뒤집힌다.
+class _SortMenu extends StatelessWidget {
+  const _SortMenu({required this.sort, required this.onSort});
+
+  final WalletSort sort;
+  final ValueChanged<WalletSortKey> onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final arrow = sort.descending
+        ? LucideIcons.arrowDown
+        : LucideIcons.arrowUp;
+
+    return PopupMenuButton<WalletSortKey>(
+      tooltip: '정렬',
+      position: PopupMenuPosition.under,
+      onSelected: onSort,
+      itemBuilder: (context) => [
+        for (final key in WalletSortKey.values)
+          PopupMenuItem(
+            value: key,
+            child: Row(
+              children: [
+                Text(key.label),
+                const Spacer(),
+                if (sort.key == key)
+                  Icon(arrow, size: 14, color: theme.colorScheme.primary),
+              ],
+            ),
+          ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(sort.key.label, style: theme.textTheme.labelMedium),
+          Icon(arrow, size: 14),
+        ],
+      ),
     );
   }
 }

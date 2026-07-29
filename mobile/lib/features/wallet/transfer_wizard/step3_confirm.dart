@@ -68,7 +68,16 @@ class _TransferConfirmPageState extends ConsumerState<TransferConfirmPage> {
       if (!mounted) return;
       setState(() => _submitting = false);
       // 웹은 서버 메시지를 버리고 "송금에 실패했습니다." 한 줄만 붉게 띄운다(R9).
-      showAppSnackbar(context, transferErrorMessage(error), isError: true);
+      // 미상장 코인만 예외로, 도착 거래소명과 심볼을 넣은 문맥 문구를 낸다.
+      showAppSnackbar(
+        context,
+        transferErrorMessage(
+          error,
+          exchangeName: widget.destination.exchange.name,
+          symbol: draft.symbol,
+        ),
+        isError: true,
+      );
     }
   }
 

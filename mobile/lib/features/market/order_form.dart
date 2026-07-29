@@ -10,6 +10,9 @@ import 'order_target.dart';
 /// 수량 표시·연동 자릿수(사양서 §4.4.3). 서버는 8자리까지 받지만 웹과 같은 6자리로 맞춘다.
 const int kQuantityScale = 6;
 
+/// 서버 잔고 자릿수. 전량 매도가 실잔고와 정확히 일치하도록 제출 시에만 쓴다.
+const int kBalanceScale = 8;
+
 /// 가격 스텝 버튼의 증감폭(§4.4.3).
 final Decimal kPriceStep = Decimal.fromInt(1000);
 
@@ -42,17 +45,37 @@ class OrderContext {
   /// KRW 는 정수, USDT 는 소수 2자리다. 웹은 통화와 무관하게 0자리로 뭉갠다.
   int get amountScale => baseCurrency == 'USDT' ? 2 : 0;
 
+  /// 서버가 수수료를 절삭하는 기축통화 자릿수(`OrderAmountPolicy.quoteScale`) — KRW 는 정수 원,
+  /// USDT 는 8자리다. 총액 표시 자릿수인 [amountScale] 과 값이 다르다.
+  int get feeScale => baseCurrency == 'USDT' ? 8 : 0;
+
   Decimal get feeRate => exchange.feeRate.dec;
 
   Decimal get minOrderAmount => exchange.minOrderAmount.dec;
 
   Decimal? get maxOrderAmount => exchange.maxOrderAmount?.dec;
 
-  /// 매수 차감액은 `총액 × (1 + feeRate)` 다(사양서 §4.4.5). 수수료까지 내고 살 수 있는
+  /// 서버가 잠그는 수수료(`OrderMode.reservedDebit`). 기축통화 자릿수로 **내림 절삭**한다 —
+  /// 반올림하면 서버보다 크게 잡혀 1원 차이로 매수가 막힌다.
+  Decimal feeOn(Decimal amount) => (amount * feeRate).floor(scale: feeScale);
+
+  /// 매수 차감액은 `총액 + 절삭된 수수료` 다(사양서 §4.4.5). 수수료까지 내고 살 수 있는
   /// 최대 총액이며, 100% 비율 버튼의 상한이다.
-  Decimal get maxSpend => (availableBuy / (Decimal.one + feeRate)).toDecimal(
-    scaleOnInfinitePrecision: amountScale + 8,
-  );
+  ///
+  /// 나눗셈 결과는 수수료 절삭분만큼 늘 조금 모자라므로 웹 `maxBuyAmount` 처럼 한 눈금씩
+  /// 올려 되찾는다. 되찾는 폭이 1~2 눈금이라 상한을 5회로 둔다.
+  Decimal get maxSpend {
+    final step = Decimal.parse('1e-$amountScale');
+    var best = (availableBuy / (Decimal.one + feeRate))
+        .toDecimal(scaleOnInfinitePrecision: amountScale + 8)
+        .floor(scale: amountScale);
+    for (var i = 0; i < 5; i++) {
+      final next = best + step;
+      if (next + feeOn(next) > availableBuy) break;
+      best = next;
+    }
+    return best;
+  }
 
   String amountLabel(Decimal value) =>
       '${formatPrice(value.toDouble(), baseCurrency)} $baseCurrency';
@@ -172,18 +195,20 @@ class OrderForm {
   /// 매수는 총액을, 매도는 수량을 채운다(§4.4.3).
   ///
   /// 매수 100% 에서 잔고를 그대로 채우면 수수료가 총액 **위에** 더 붙으므로 서버가 반드시
-  /// `INSUFFICIENT_BALANCE` 를 낸다(웹의 결함). 살 수 있는 최대치로 가둔다 — 10/25/50% 에서는
-  /// 이 상한에 닿지 않으므로 식은 웹과 같다.
+  /// `INSUFFICIENT_BALANCE` 를 낸다. 살 수 있는 최대치로 가둔다 — 10/25/50% 에서는 이 상한에
+  /// 닿지 않으므로 식은 웹 `handleRatioClick` 과 같다.
   OrderForm applyRatio(int percent, OrderContext ctx) {
     final ratio = (Decimal.fromInt(percent) / Decimal.fromInt(100)).toDecimal();
 
     if (side == Side.buy) {
       final raw = ctx.availableBuy * ratio;
-      final capped = raw < ctx.maxSpend ? raw : ctx.maxSpend;
+      final cap = ctx.maxSpend;
+      final capped = raw < cap ? raw : cap;
       return withTotal(capped.floor(scale: ctx.amountScale), ctx);
     }
+    // 전량 매도가 실잔고와 정확히 일치해야 하므로 표시 자릿수(6)가 아닌 잔고 자릿수(8)로 내린다.
     final raw = ctx.availableSell * ratio;
-    return withQuantity(raw.floor(scale: kQuantityScale), ctx);
+    return withQuantity(raw.floor(scale: kBalanceScale), ctx);
   }
 
   /// 서버가 정산 기준으로 삼는 주문 금액. 수수료·최소 주문 검증과 예상 수수료가 이 값을 쓴다.
@@ -193,8 +218,7 @@ class OrderForm {
   }
 
   /// 표시용 예상 수수료. 실제 수수료는 서버가 체결가로 계산한다(§4.4.5).
-  Decimal feeOf(OrderContext ctx) =>
-      (amountOf(ctx) * ctx.feeRate).round(scale: ctx.amountScale);
+  Decimal feeOf(OrderContext ctx) => ctx.feeOn(amountOf(ctx));
 
   /// 첫 실패 사유. null 이면 제출할 수 있다.
   ///
@@ -215,11 +239,11 @@ class OrderForm {
     }
 
     if (side == Side.buy) {
-      // 반올림하지 않고 정확히 비교한다. 100% 비율 버튼이 만든 총액이 이 검사에 걸리면 안 된다.
-      final required = amount * (Decimal.one + ctx.feeRate);
+      // 서버와 같은 식으로 비교한다. 100% 비율 버튼이 만든 총액이 이 검사에 걸리면 안 된다.
+      final required = amount + ctx.feeOn(amount);
       if (required > ctx.availableBuy) {
         return '주문 가능 금액을 초과했습니다. '
-            '수수료를 포함해 ${ctx.amountLabel(required.round(scale: ctx.amountScale))} 가 필요합니다.';
+            '수수료를 포함해 ${ctx.amountLabel(required)} 가 필요합니다.';
       }
       return null;
     }
@@ -254,11 +278,12 @@ class OrderForm {
   static Decimal _amountOf(Decimal quantity, Decimal price, OrderContext ctx) =>
       (quantity * price).round(scale: ctx.amountScale);
 
+  /// 반올림하면 `수량 × 가격` 이 총액을 넘어 실잔고보다 큰 값이 제출된다. 항상 내린다.
   static Decimal _quantityOf(Decimal total, Decimal price) {
     if (price <= Decimal.zero) return Decimal.zero;
     return (total / price)
         .toDecimal(scaleOnInfinitePrecision: kQuantityScale + 2)
-        .round(scale: kQuantityScale);
+        .floor(scale: kQuantityScale);
   }
 }
 
