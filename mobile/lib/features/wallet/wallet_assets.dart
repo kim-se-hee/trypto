@@ -6,6 +6,7 @@ import '../../models/cursor_page.dart';
 import '../../models/transfer.dart';
 import '../../models/wallet.dart';
 import '../market/market_controller.dart';
+import '../round/round_controller.dart';
 import 'transfer_repository.dart';
 import 'wallet_repository.dart';
 
@@ -45,7 +46,8 @@ class WalletAsset {
 }
 
 /// 잔고 + 상장 코인 전량. 잔고가 없는 코인도 0 으로 포함한다(사양서 §5.2.2-3).
-/// 기준통화가 맨 앞, 이어서 평가액 내림차순이다.
+/// 기준통화가 맨 앞이다 — 요약 카드가 [WalletSnapshot.baseAsset] 로 읽는다.
+/// 화면에 보이는 순서는 [sortWalletAssets] 가 정한다. 기준통화도 함께 정렬된다.
 List<WalletAsset> buildWalletAssets({
   required WalletBalances balances,
   required List<CoinEntry> coins,
@@ -55,22 +57,6 @@ List<WalletAsset> buildWalletAssets({
   };
   final base = balances.baseCurrencySymbol;
   final baseName = base == 'KRW' ? '원화' : base;
-
-  final assets = [
-    for (final entry in coins)
-      WalletAsset(
-        coinId: entry.coin.coinId,
-        symbol: entry.symbol,
-        name: entry.name,
-        index: entry.index,
-        available: byCoinId[entry.coin.coinId]?.available ?? 0,
-        locked: byCoinId[entry.coin.coinId]?.locked ?? 0,
-        currentPrice: entry.price,
-      ),
-  ]..sort((a, b) {
-    final byValue = b.totalValue.compareTo(a.totalValue);
-    return byValue != 0 ? byValue : a.symbol.compareTo(b.symbol);
-  });
 
   return [
     WalletAsset(
@@ -82,9 +68,65 @@ List<WalletAsset> buildWalletAssets({
       locked: balances.baseCurrencyLocked,
       currentPrice: 1,
     ),
-    ...assets,
+    for (final entry in coins)
+      WalletAsset(
+        coinId: entry.coin.coinId,
+        symbol: entry.symbol,
+        name: entry.name,
+        index: entry.index,
+        available: byCoinId[entry.coin.coinId]?.available ?? 0,
+        locked: byCoinId[entry.coin.coinId]?.locked ?? 0,
+        currentPrice: entry.price,
+      ),
   ];
 }
+
+/// 보유 자산 목록의 정렬 기준. 웹 표의 네 열과 같다(WalletAssetTable.tsx:95-100).
+enum WalletSortKey {
+  name('코인'),
+  total('보유수량'),
+  available('사용가능'),
+  locked('잠금');
+
+  const WalletSortKey(this.label);
+
+  final String label;
+}
+
+/// 정렬 상태. 같은 키를 다시 고르면 방향을 뒤집고, 다른 키를 고르면 그 키로 바꾸며 방향을
+/// 내림차순으로 되돌린다(웹 useSort.ts:34-41). 기본은 평가액 내림차순이다.
+class WalletSort {
+  const WalletSort({
+    this.key = WalletSortKey.total,
+    this.descending = true,
+  });
+
+  final WalletSortKey key;
+  final bool descending;
+
+  WalletSort sortBy(WalletSortKey next) =>
+      WalletSort(key: next, descending: next == key ? !descending : true);
+}
+
+/// 웹 WalletAssetTable 의 4키 비교식(:69-81). `available`·`locked` 는 **수량이 아니라
+/// 평가액**이다 — 값이 큰 코인의 잠금 1개가 잔코인 1,000개보다 위에 온다.
+List<WalletAsset> sortWalletAssets(List<WalletAsset> assets, WalletSort sort) {
+  final sign = sort.descending ? -1 : 1;
+  return [...assets]..sort((a, b) => sign * _compareAssets(a, b, sort.key));
+}
+
+int _compareAssets(WalletAsset a, WalletAsset b, WalletSortKey key) =>
+    switch (key) {
+      // 코인명이 아니라 심볼 사전순이다.
+      WalletSortKey.name => a.symbol.compareTo(b.symbol),
+      WalletSortKey.total => a.totalValue.compareTo(b.totalValue),
+      WalletSortKey.available => (a.available * a.currentPrice).compareTo(
+        b.available * b.currentPrice,
+      ),
+      WalletSortKey.locked => (a.locked * a.currentPrice).compareTo(
+        b.locked * b.currentPrice,
+      ),
+    };
 
 /// 검색(심볼·한글명) + 소액 제외(KRW 1,000 / USDT 1 미만). 기준통화 행도 같은 규칙을 받는다.
 List<WalletAsset> applyWalletFilter(
@@ -151,3 +193,25 @@ final walletSnapshotProvider = FutureProvider.family<WalletSnapshot, WalletKey>(
     );
   },
 );
+
+/// 라운드 지갑이 걸쳐 있는 거래소들의 상장 코인 집합(거래소 → coinId). 도착 거래소가 취급하지
+/// 않는 코인은 서버가 `COIN_NOT_LISTED_ON_EXCHANGE` 로 막으므로 후보 단계에서 걸러낸다
+/// (웹 RoundProvider `isCoinListed`).
+///
+/// 아직 목록이 오지 않은 거래소는 키가 없다 — 웹과 같이 '미상장' 으로 본다. 카탈로그는
+/// `marketCoinsProvider` 가 거래소별로 캐시하고 있어 지갑 화면이 다시 내려받지 않는다.
+final listedCoinIdsProvider = Provider<Map<int, Set<int>>>((ref) {
+  final round = ref.watch(
+    roundControllerProvider.select((state) => state.activeRound),
+  );
+  if (round == null) return const <int, Set<int>>{};
+
+  return <int, Set<int>>{
+    for (final wallet in round.wallets)
+      if (ref.watch(marketCoinsProvider(wallet.exchangeId)).valueOrNull
+          case final coins?)
+        wallet.exchangeId: <int>{
+          for (final entry in coins) entry.coin.coinId,
+        },
+  };
+});

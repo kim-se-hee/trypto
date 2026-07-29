@@ -54,9 +54,29 @@ class AssetDetailSheet extends StatelessWidget {
   /// 최근 송금 20건. 여기서 이 코인 것만 골라 보여준다 — 서버에 코인 필터가 없다.
   final List<TransferHistoryItem> transfers;
 
+  /// 이 코인을 취급하는 도착 후보가 하나라도 있어야 보낼 수 있다(웹 WalletPage.tsx:154-163).
+  bool get _hasListedDestination =>
+      destinations.any((destination) => destination.listed);
+
+  /// 출금이 막힌 이유. 웹은 버튼을 열어 두고 모달 검증(TransferModal.tsx:60-63)이 사유를
+  /// 알려주지만, 모바일은 버튼을 죽이는 대신 아래에 사유를 적는다.
+  String? get _withdrawBlockedReason {
+    if (!_hasListedDestination) return '다른 거래소에 상장되지 않아 출금할 수 없습니다.';
+    if (asset.available <= 0) {
+      return asset.locked > 0
+          ? '주문에 잠긴 잔고만 있어 출금할 수 없습니다.'
+          : '출금할 잔고가 없습니다.';
+    }
+    return null;
+  }
+
   Future<void> _withdraw(BuildContext context) async {
-    if (destinations.isEmpty) {
-      showAppSnackbar(context, '보낼 수 있는 다른 거래소 지갑이 없습니다.', isError: true);
+    if (!_hasListedDestination) {
+      showAppSnackbar(
+        context,
+        '${asset.symbol}을(를) 취급하는 다른 거래소가 없어 출금할 수 없습니다.',
+        isError: true,
+      );
       return;
     }
 
@@ -145,17 +165,28 @@ class AssetDetailSheet extends StatelessWidget {
           const SizedBox(height: TryptoSpacing.lg),
           // 출금은 코인만 가능하다. 기준통화(KRW/USDT)는 송금할 수 없고, 입금 버튼은 웹에도
           // 서버에도 없다(사양서 §5.2.5).
-          if (!asset.isBase)
+          if (!asset.isBase) ...[
             SizedBox(
               width: double.infinity,
               height: 44,
               child: FilledButton(
-                onPressed: asset.available > 0
+                onPressed: _withdrawBlockedReason == null
                     ? () => _withdraw(context)
                     : null,
                 child: const Text('출금'),
               ),
             ),
+            if (_withdrawBlockedReason case final reason?) ...[
+              const SizedBox(height: TryptoSpacing.sm),
+              Text(
+                reason,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
           const SizedBox(height: TryptoSpacing.xl),
           Text('잔고 상세', style: theme.textTheme.titleMedium),
           const SizedBox(height: TryptoSpacing.sm),

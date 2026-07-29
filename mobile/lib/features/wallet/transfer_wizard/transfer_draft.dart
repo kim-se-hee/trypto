@@ -5,11 +5,21 @@ import '../../../core/constants/exchanges.dart';
 import '../../../core/json/decimal_x.dart';
 
 /// 도착 후보. 라운드가 가진 지갑 중 현재 거래소를 제외한 전부다(사양서 §5.2.6).
+/// 그 코인을 취급하지 않는 거래소도 목록에서 지우지 않고 사유와 함께 비활성화한다 —
+/// 왜 보낼 수 없는지가 화면에 남는다(웹 WalletPage.tsx:133-152).
 class TransferDestination {
-  const TransferDestination({required this.walletId, required this.exchange});
+  const TransferDestination({
+    required this.walletId,
+    required this.exchange,
+    required this.listed,
+  });
 
   final int walletId;
   final Exchange exchange;
+
+  /// 이 거래소가 해당 코인을 취급하는가. 취급하지 않으면 고를 수 없다 — 서버가
+  /// `COIN_NOT_LISTED_ON_EXCHANGE` 로 막는다.
+  final bool listed;
 }
 
 /// 마법사 3단계가 공유하는 입력값. 코인만 송금할 수 있다 — 기준통화는 `coinId` 가 없다.
@@ -74,5 +84,22 @@ const Map<String, String> _kTransferErrors = {
   'WALLET_ACCESS_DENIED': '접근 권한이 없는 지갑입니다.',
 };
 
-String transferErrorMessage(ApiException error) =>
-    _kTransferErrors[error.code] ?? error.userMessage;
+/// 도착 거래소가 코인을 취급하지 않을 때의 400. 후보 단계에서 이미 걸러내므로 여기까지
+/// 오지 않는 것이 정상이다 — 방어선이다.
+const String _kCoinNotListed = 'COIN_NOT_LISTED_ON_EXCHANGE';
+
+/// [exchangeName]·[symbol] 을 주면 웹과 같은 문맥 문구를 만든다(웹 TransferModal.tsx:94-96).
+/// 모르는 자리에서는 거래소·심볼 없는 같은 뜻의 문장으로 떨어진다.
+String transferErrorMessage(
+  ApiException error, {
+  String? exchangeName,
+  String? symbol,
+}) {
+  if (error.code == _kCoinNotListed) {
+    if (exchangeName != null && symbol != null) {
+      return '$exchangeName에는 $symbol이(가) 상장되어 있지 않습니다.';
+    }
+    return '도착 거래소에 상장되지 않은 코인입니다.';
+  }
+  return _kTransferErrors[error.code] ?? error.userMessage;
+}
