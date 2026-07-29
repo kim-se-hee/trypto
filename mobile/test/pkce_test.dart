@@ -34,8 +34,9 @@ void main() {
   });
 
   group('AuthConfig', () {
-    // 카카오는 SDK 로 전환해 브라우저 인가 코드 흐름을 쓰지 않는다. redirectUri·authorizeUrl 은
-    // 구글 전용이다.
+    // 두 제공자 모두 공식 SDK 로 전환해 앱에서 직접 토큰을 받는다(social_login.dart). 따라서
+    // redirectUri·authorizeUrl 은 현재 로그인 경로에서 호출되지 않으며, 아래 두 시험은 남아 있는
+    // 브라우저 인가 코드 흐름 조립 규칙만 고정한다.
     test('구글 redirect URI 는 서버 설정값과 같은 문자열을 만든다', () {
       expect(
         AuthConfig.redirectUri(SocialProvider.google),
@@ -70,10 +71,27 @@ void main() {
       expect(AuthConfig.missingDefines(SocialProvider.kakao), isEmpty);
     });
 
-    test('구글은 clientId 가 비면 버튼을 살리지 않는다', () {
-      // --dart-define 이 없는 테스트 환경에서 구글은 미설정이다.
-      expect(AuthConfig.isConfigured(SocialProvider.google), isFalse);
-      expect(AuthConfig.missingDefines(SocialProvider.google), isNotEmpty);
+    test('구글도 serverClientId 기본값만으로 버튼이 살아 있다', () {
+      // 구글 역시 SDK 로 동작하며, SDK 가 요구하는 값은 serverClientId(웹 클라이언트 ID) 하나다.
+      // 클라이언트 ID 는 비밀이 아니어서 Env 에 기본값을 두므로(env.dart), --dart-define 이 없는
+      // 테스트 환경에서도 설정 완료다. 안드로이드·iOS 클라이언트 ID 와 콜백 스킴은 브라우저 인가
+      // 코드 흐름에만 쓰이며 버튼 활성 판정에서 빠졌다.
+      expect(AuthConfig.isConfigured(SocialProvider.google), isTrue);
+      expect(AuthConfig.missingDefines(SocialProvider.google), isEmpty);
+    });
+
+    test('버튼 활성 판정과 누락 키 목록은 언제나 같은 조건에서 갈린다', () {
+      // 로그인 화면은 isConfigured 로 버튼을 잠그고 missingDefines 로 그 사유를 보여준다
+      // (login_page.dart). 둘이 어긋나면 사유 없이 잠긴 버튼이나, 잠기지 않았는데 미설정 문구만
+      // 뜨는 화면이 나온다. Env 값은 컴파일 타임 상수라 테스트에서 비울 수 없으므로 설정이 빠진
+      // 상황을 직접 만드는 대신, 두 판정이 같은 조건을 보고 있는지를 지킨다.
+      for (final provider in SocialProvider.values) {
+        expect(
+          AuthConfig.isConfigured(provider),
+          AuthConfig.missingDefines(provider).isEmpty,
+          reason: '${provider.wire}: 버튼 활성 판정과 누락 키 목록이 어긋난다',
+        );
+      }
     });
   });
 }
