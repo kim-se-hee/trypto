@@ -181,6 +181,18 @@ class _MarketPageState extends ConsumerState<MarketPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: TryptoSpacing.sm),
+                // 컨트롤 줄은 `AsyncView` 바깥이다. 로딩·오류에서도 필터 칩이 남아야 웹과
+                // 같다 — 웹의 필터 칩은 목록 상자가 아니라 상단 컨트롤 줄에 있다
+                // (`MarketPage.tsx` 의 Controls 묶음은 `loading` 분기 밖이다).
+                // 칩과 정렬을 두 줄로 나누면 그만큼 목록이 짧아진다. 폰에서는 "나머지 전부
+                // 코인 리스트"(계획서 §5.4)가 우선이므로 한 줄에 함께 둔다.
+                _ListControls(
+                  view: _view,
+                  onFilter: (filter) =>
+                      setState(() => _view = _view.withFilter(filter)),
+                  onSort: (key) => setState(() => _view = _view.sortBy(key)),
+                ),
               ],
             ),
           ),
@@ -192,9 +204,6 @@ class _MarketPageState extends ConsumerState<MarketPage> {
                 coins: data,
                 view: _view,
                 exchange: exchange,
-                onFilter: (filter) =>
-                    setState(() => _view = _view.withFilter(filter)),
-                onSort: (key) => setState(() => _view = _view.sortBy(key)),
                 onRefresh: () =>
                     ref.refresh(marketCoinsProvider(exchange.id).future),
               ),
@@ -211,16 +220,12 @@ class _CoinList extends ConsumerStatefulWidget {
     required this.coins,
     required this.view,
     required this.exchange,
-    required this.onFilter,
-    required this.onSort,
     required this.onRefresh,
   });
 
   final List<CoinEntry> coins;
   final MarketView view;
   final Exchange exchange;
-  final ValueChanged<MarketFilter> onFilter;
-  final ValueChanged<MarketSortKey> onSort;
   final Future<void> Function() onRefresh;
 
   @override
@@ -288,23 +293,28 @@ class _CoinListState extends ConsumerState<_CoinList> {
           store: _store,
           baseCurrency: widget.exchange.baseCurrency,
         ),
-        _ListControls(
-          view: widget.view,
-          onFilter: widget.onFilter,
-          onSort: widget.onSort,
-        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: widget.onRefresh,
             child: _rows.isEmpty
-                ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      EmptyView(
-                        icon: LucideIcons.search,
-                        message: '검색 결과가 없습니다.',
-                      ),
-                    ],
+                // 빈 상태 문구는 남은 높이 **한가운데**에 둔다. 고정 여백으로 밀어내면
+                // 목록 영역이 낮은 기기에서 문구가 통째로 화면 밖으로 나간다. 웹도
+                // 문구를 192px 영역의 정중앙에 둔다(`CoinTable.tsx:172-175`).
+                ? LayoutBuilder(
+                    builder: (context, constraints) => ListView(
+                      // 목록이 비어도 당겨서 새로고침은 살아 있어야 한다. 내용이 뷰포트를
+                      // 넘지 않으면 기본 물리 엔진은 오버스크롤을 만들지 않는다.
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: constraints.maxHeight,
+                          child: const EmptyView(
+                            icon: LucideIcons.search,
+                            message: '검색 결과가 없습니다.',
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : ListView.builder(
                     controller: _scroll,
@@ -340,6 +350,7 @@ class _CoinListState extends ConsumerState<_CoinList> {
   }
 }
 
+/// 상승·하락 칩과 정렬 메뉴 한 줄. 목록과 함께 사라지면 안 되므로 `AsyncView` 바깥에 둔다.
 class _ListControls extends StatelessWidget {
   const _ListControls({
     required this.view,
@@ -355,70 +366,62 @@ class _ListControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        TryptoSpacing.screen,
-        TryptoSpacing.sm,
-        TryptoSpacing.sm,
-        TryptoSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          for (final filter in MarketFilter.values) ...[
-            ChoiceChip(
-              label: Text(filter.label),
-              selected: view.filter == filter,
-              labelStyle: TextStyle(
-                fontSize: 12,
-                fontWeight:
-                    view.filter == filter ? FontWeight.w700 : FontWeight.w600,
-                color: view.filter == filter
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
-              ),
-              onSelected: (_) => onFilter(filter),
+    return Row(
+      children: [
+        for (final filter in MarketFilter.values) ...[
+          ChoiceChip(
+            label: Text(filter.label),
+            selected: view.filter == filter,
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: view.filter == filter
+                  ? FontWeight.w700
+                  : FontWeight.w600,
+              color: view.filter == filter
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface,
             ),
-            const SizedBox(width: TryptoSpacing.xs),
-          ],
-          const Spacer(),
-          PopupMenuButton<MarketSortKey>(
-            tooltip: '정렬',
-            position: PopupMenuPosition.under,
-            onSelected: onSort,
-            itemBuilder: (context) => [
-              for (final key in MarketSortKey.values)
-                PopupMenuItem(
-                  value: key,
-                  child: Row(
-                    children: [
-                      Text(key.label),
-                      const Spacer(),
-                      if (view.sortKey == key)
-                        Icon(
-                          view.descending
-                              ? LucideIcons.arrowDown
-                              : LucideIcons.arrowUp,
-                          size: 14,
-                          color: theme.colorScheme.primary,
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(view.sortKey.label, style: theme.textTheme.labelMedium),
-                Icon(
-                  view.descending ? LucideIcons.arrowDown : LucideIcons.arrowUp,
-                  size: 14,
-                ),
-                const SizedBox(width: TryptoSpacing.xs),
-              ],
-            ),
+            onSelected: (_) => onFilter(filter),
           ),
+          const SizedBox(width: TryptoSpacing.xs),
         ],
-      ),
+        const Spacer(),
+        PopupMenuButton<MarketSortKey>(
+          tooltip: '정렬',
+          position: PopupMenuPosition.under,
+          onSelected: onSort,
+          itemBuilder: (context) => [
+            for (final key in MarketSortKey.values)
+              PopupMenuItem(
+                value: key,
+                child: Row(
+                  children: [
+                    Text(key.label),
+                    const Spacer(),
+                    if (view.sortKey == key)
+                      Icon(
+                        view.descending
+                            ? LucideIcons.arrowDown
+                            : LucideIcons.arrowUp,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                  ],
+                ),
+              ),
+          ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(view.sortKey.label, style: theme.textTheme.labelMedium),
+              Icon(
+                view.descending ? LucideIcons.arrowDown : LucideIcons.arrowUp,
+                size: 14,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -438,7 +441,11 @@ class _EmergencyBanner extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     final charged = await showEmergencyFundingSheet(context, exchange: exchange);
     if (charged == null || !context.mounted) return;
-    showAppSnackbar(context, '${formatKRW(charged.toDouble())}을 투입했습니다.');
+    // 투입은 거래소 기축통화로 들어간다 — 바이낸스 투입을 원화로 알리면 안 된다.
+    showAppSnackbar(
+      context,
+      '${formatCurrency(charged.toDouble(), exchange.baseCurrency)}을 투입했습니다.',
+    );
   }
 
   @override

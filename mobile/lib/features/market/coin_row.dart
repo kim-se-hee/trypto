@@ -13,7 +13,12 @@ const double kCoinRowHeight = 68;
 
 /// 우측 숫자 묶음의 고정 폭. 가격 문자열의 폭이 바뀌어도 이 경계에서 리레이아웃이 멈춘다 —
 /// tight 제약을 받은 `RenderBox` 가 relayout boundary 가 된다(계획서 §4.2.5-4).
-const double _kNumericWidth = 160;
+///
+/// 거래대금을 축약 없이 전액으로 찍으므로(웹과 같다) 조 단위 열세 자리까지 들어갈 자리를 준다.
+const double _kNumericWidth = 200;
+
+/// 거래대금 칸의 고정 폭. `900,000,000,000` 열다섯 글자가 12px 모노에서 약 108px 다.
+const double _kVolumeWidth = 116;
 
 /// 행 3분할(계획서 §4.2.5-3).
 ///
@@ -199,14 +204,11 @@ class CoinNumbers extends StatelessWidget {
             ),
             const SizedBox(width: TryptoSpacing.sm),
             SizedBox(
-              width: 80,
+              width: _kVolumeWidth,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: NumericText(
-                  // 거래대금은 모바일 폭에 맞춰 억·만으로 축약한다(KRW). USDT 는 그대로다.
-                  volume <= 0
-                      ? '-'
-                      : formatCurrencyCompact(volume, baseCurrency),
+                  volume <= 0 ? '-' : formatVolume(volume, baseCurrency),
                   size: 12,
                   weight: FontWeight.w500,
                   color: theme.colorScheme.onSurfaceVariant,
