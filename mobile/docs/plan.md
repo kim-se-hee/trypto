@@ -67,7 +67,7 @@ mobile/
     app.dart                         # MaterialApp.router (themeMode: light 고정)
 
     core/
-      env.dart                       # --dart-define 주입값 (API_BASE_URL, WS_BASE_URL, *_CLIENT_ID)
+      env.dart                       # --dart-define 주입값 (API_BASE_URL, WS_BASE_URL, KAKAO_NATIVE_APP_KEY, GOOGLE_SERVER_CLIENT_ID)
       constants/
         exchanges.dart               # ExchangeIds — 1/2/3, 기준통화, 수수료율, 최소주문금액 (R7 단일 출처)
         order_policy.dart            # KRW 5,000~1,000,000,000 / USDT 5~무제한
@@ -79,8 +79,7 @@ mobile/
         api_exception.dart
         query.dart                   # null/빈 문자열 파라미터 제거 헬퍼
       auth/
-        auth_config.dart             # 제공자별 authUrl · clientId · redirectUri · callbackScheme (단일 출처)
-        pkce.dart                    # verifier 43자 / challenge S256 / state 22자
+        auth_config.dart             # 제공자별 clientType · 표시 라벨 · 설정 완비 판정 (단일 출처)
         session_store.dart           # flutter_secure_storage + 동기 메모리 캐시
       json/
         converters.dart              # KstDateTimeConverter / InstantConverter / LocalDateConverter
@@ -162,6 +161,8 @@ mobile/
 ---
 
 ## 3. pubspec.yaml
+
+> **현행 구현과의 차이.** 아래 목록과 §3 의 두 표는 브라우저 인가 코드 + PKCE 흐름을 전제로 작성되었다. 두 제공자를 공식 SDK 로 전환하면서 `flutter_web_auth_2` 와 `crypto` 는 의존성에서 제거했고, 대신 `kakao_flutter_sdk_user` 와 `google_sign_in` 을 쓴다(§4.3 머리말). 따라서 "각 패키지의 채택 사유" 표의 `flutter_web_auth_2`·`crypto` 항목과 "도입하지 않는 것" 의 `kakao_flutter_sdk_user`·`app_links`/`uni_links` 항목은 현행 의존성과 어긋나며, 채택 판단의 기록으로만 남긴다. 실제 의존성은 `mobile/pubspec.yaml` 이 단일 출처다.
 
 ```yaml
 name: trypto
@@ -589,7 +590,7 @@ ListView.builder(
 
 ### 4.3 인증 흐름 (딥링크 콜백)
 
-> **현행 구현과의 차이.** 아래 §4.3.2~§4.3.4 는 브라우저 인가 코드 + PKCE 흐름을 전제로 쓰였으나, **실제 앱은 두 제공자 모두 공식 SDK 로 전환해 앱에서 직접 토큰을 받는다** — 카카오는 액세스 토큰, 구글은 ID 토큰을 `POST /api/auth/{provider}/login` 의 토큰 채널로 보낸다. 안드로이드가 앱 사칭 위험을 이유로 커스텀 스킴 리다이렉트를 폐지해 브라우저 인가 코드 흐름을 쓸 수 없기 때문이다. 그 결과 `AuthConfig.redirectUri`·`authorizeUrl` 과 PKCE 비밀값 보관소는 **현재 로그인 경로에서 호출되지 않는다.** 아래 절은 그 조립 규칙과 콜백을 라우터에 들이지 않는 결정의 근거로 남긴다.
+> **현행 구현과의 차이.** 아래 §4.3.2~§4.3.4 는 브라우저 인가 코드 + PKCE 흐름을 전제로 쓰였으나, **실제 앱은 두 제공자 모두 공식 SDK 로 전환해 앱에서 직접 토큰을 받는다** — 카카오는 액세스 토큰, 구글은 ID 토큰을 `POST /api/auth/{provider}/login` 의 토큰 채널로 보낸다. 안드로이드가 앱 사칭 위험을 이유로 커스텀 스킴 리다이렉트를 폐지해 브라우저 인가 코드 흐름을 쓸 수 없기 때문이다. 그 결과 `AuthConfig.redirectUri`·`authorizeUrl`·`callbackScheme`·`clientId`, `Pkce` 클래스, 콜백 URL 검증기, `flutter_web_auth_2`·`crypto` 의존성, `trypto` 커스텀 스킴 등록은 **아무도 호출하지 않는 죽은 코드가 되어 저장소에서 제거했다.** 아래 절은 그 설계의 근거 기록이며, 등장하는 심볼과 `--dart-define` 키는 더 이상 코드에 없다. 살아남은 것은 §4.3.1 의 결정(콜백을 라우터에 들이지 않는다)뿐이다 — SDK 전환 후에도 앱이 받아야 할 콜백 인텐트가 없으므로 결론은 같다.
 
 #### 4.3.1 콜백을 라우터에 들이지 않는다
 
@@ -1178,6 +1179,8 @@ _folder.openedBucket.addListener(() {
 
 ## 8. Android / iOS 플랫폼 설정
 
+> **현행 구현과의 차이 — 아래 §8.1·§8.2 의 예시를 그대로 적용하면 빌드가 깨진다.** 두 예시는 브라우저 인가 코드 흐름을 전제로 작성되었으나, 공식 SDK 전환에 따라 `flutter_web_auth_2` 의존성과 `com.linusu.flutter_web_auth_2.CallbackActivity` 액티비티 블록, 이를 채우던 `manifestPlaceholders["authCallbackScheme"]`, `Info.plist` 의 `trypto` 커스텀 스킴을 모두 제거했다(§4.3 머리말). 지금 남아 있는 커스텀 스킴 등록은 카카오 SDK 가 인가 결과를 되받는 경로 하나뿐이다 — `AndroidManifest.xml` 의 `com.kakao.sdk.flutter.AuthCodeCustomTabsActivity`(스킴 `kakao{네이티브앱키}`, host `oauth`)와 `Info.plist` 의 같은 스킴이다. 아래 블록을 되살리면 존재하지 않는 클래스를 가리키는 exported 액티비티와 미해결 placeholder 가 생긴다.
+
 ### 8.1 Android
 
 `android/app/build.gradle`
@@ -1257,10 +1260,12 @@ const AndroidOptions(encryptedSharedPreferences: true)
 |---|---|---|
 | `API_BASE_URL` | `http://10.0.2.2:8080` | `https://{도메인}` |
 | `WS_BASE_URL` | `ws://10.0.2.2:8080/ws` | `wss://{도메인}/ws` |
-| `KAKAO_CLIENT_ID` | (REST API 키) | 동일 |
-| `GOOGLE_ANDROID_CLIENT_ID` | (Android 클라이언트 ID) | 동일 |
-| `GOOGLE_IOS_CLIENT_ID` | (iOS 클라이언트 ID) | 동일 |
-| `KAKAO_CALLBACK_SCHEME` / `GOOGLE_CALLBACK_SCHEME` | `trypto` | 콘솔 결과에 따라 변경 가능(§10) |
+| `KAKAO_NATIVE_APP_KEY` | (카카오 네이티브 앱 키. 기본값 있음) | 동일 |
+| `GOOGLE_SERVER_CLIENT_ID` | (구글 웹 클라이언트 ID. 기본값 있음) | 동일 |
+
+두 제공자 모두 공식 SDK 로 전환해 클라이언트 ID·콜백 스킴 주입 키는 쓰지 않는다(§4.3 머리말). SDK 가
+요구하는 값은 카카오 네이티브 앱 키와 구글 serverClientId 둘뿐이며, 클라이언트 ID 는 비밀이 아니므로
+둘 다 `Env` 에 기본값을 둔다.
 
 로컬 백엔드는 **`SESSION_COOKIE_SECURE=false`** 여야 쿠키가 저장·전송된다(R2 부수 조건).
 
@@ -1269,6 +1274,8 @@ const AndroidOptions(encryptedSharedPreferences: true)
 ## 9. 미해결 항목과 사람이 해줘야 할 일
 
 **아래 1~4 는 구현 5단계(인증) 착수 전에 반드시 닫아야 한다.** 여기가 뚫리지 않으면 나머지 8개 화면은 의미가 없다(라운드·지갑·주문이 전부 세션 뒤에 있다). 코드로 확인할 수 없는 외부 콘솔 정책이므로 사람이 직접 확인해야 한다.
+
+> **1·3·4·5 는 공식 SDK 전환으로 닫혔다.** 커스텀 스킴 등록 가부(1·3)와 redirect URI 문자열 대조(5)는 브라우저 인가 코드 흐름의 전제였는데 그 흐름을 쓰지 않으므로 성립하지 않으며, 표에 적힌 `Env.*CallbackScheme`·`AuthConfig.redirectUri`·`CallbackActivity` 는 코드에서 제거했다. 4 의 `client_secret` 분기도 앱이 인가 코드를 보내지 않아 불필요하다(웹 흐름은 서버에서 그대로 유지된다). 남은 것은 2(서버가 `clientType` 으로 플랫폼별 자격증명을 고르는가)와 6~8 이며, 특히 **iOS 구글 로그인은 콘솔·네이티브 설정이 아직 미완이다** — `GIDClientID` 키와 역방향 클라이언트 ID URL 스킴이 `Info.plist` 에 없다.
 
 | # | 항목 | 확인·조치 내용 | 실패 시 파급 |
 |---|---|---|---|

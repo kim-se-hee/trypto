@@ -837,6 +837,8 @@ isAuthLoading = true (초기값)
 
 ### 2.4 PKCE·state 의 모바일 대응
 
+> **현행 구현과의 차이.** 아래 §2.4 와 §2.6 은 앱이 브라우저 인가 코드 흐름을 쓴다는 전제로 쓰였으나, **실제 앱은 두 제공자 모두 공식 SDK 로 전환해 앱에서 직접 토큰을 받는다**(계획서 §4.3 머리말). 그에 따라 `flutter_web_auth_2`·`crypto` 의존성, PKCE 조립·콜백 URL 검증 코드, `trypto` 커스텀 스킴 등록은 저장소에서 제거했다. 두 절은 웹 사양 대조와 방안 비교의 기록으로 남긴다. **웹 프론트엔드(`frontend/`)는 지금도 브라우저 OAuth + PKCE 를 쓰므로 §2.2 의 웹 사양 서술은 그대로 유효하다.**
+
 웹의 `sessionStorage` 는 존재하지 않는다. 대신 **로그인 시작~콜백 수신까지 살아 있는 메모리 상태**로 충분하다. `flutter_web_auth_2` 는 인가 결과 URL 을 `await` 로 되돌려주므로, 팝업↔주 창 통신(BroadcastChannel)·팝업 판별·팝업 차단 폴백이 **모두 불필요**하다. 이식 시 다음이 통째로 삭제된다: `openSocialPopup`, `sendSocialPopup`, `publishSocialCallback`, `subscribeSocialCallback`, `OAUTH_POPUP_KEY`, bfcache 처리(`LoginPage.tsx:17-24`), 팝업 닫힘 폴링(`useSocialLogin.ts:73-87`). **`SocialCallbackPage` 에 해당하는 화면은 만들지 않는다** — 콜백은 화면이 아니라 인증 세션의 반환값이 된다.
 
 **PKCE·state 검증 로직(§2.2.1, §2.2.3)은 규격 그대로 유지한다.**
