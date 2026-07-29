@@ -30,17 +30,17 @@
 
 ```json
 {
-  "exchange":    "UPBIT",
-  "displayName": "BTC",
-  "tradePrice":  "152340000",
-  "tickAt":      "2025-12-31T23:59:00.123"
+  "exchange":   "UPBIT",
+  "symbol":     "BTC",
+  "tradePrice": "152340000",
+  "tickAt":     "2025-12-31T23:59:00.123"
 }
 ```
 
 | 필드 | 약속 |
 |------|------|
 | `exchange` | `UPBIT` / `BITHUMB` / `BINANCE` |
-| `displayName` | 코인 표기명 (예: `BTC`). 거래소·코인 키로 사용 |
+| `symbol` | 코인 심볼 (예: `BTC`). `coin.symbol` 과 대조해 `exchange_coin` 을 해석하는 키. 표시명(`exchange_coin.display_name`)은 거래소마다 한글일 수 있고 동기화로 바뀌므로 키로 쓰지 않는다. 옛 WAL 기록 호환을 위해 엔진은 `displayName` 이름으로 들어온 값도 같은 뜻으로 받는다 |
 | `tradePrice` | quote 통화 단위 가격 |
 | `tickAt` | ISO-8601 LocalDateTime. **collector JVM 로컬 타임존** |
 
