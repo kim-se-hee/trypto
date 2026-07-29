@@ -29,41 +29,10 @@ class SocialLoginCanceled implements Exception {
   String toString() => 'SocialLoginCanceled()';
 }
 
-/// 콜백 URL 검증(사양서 §2.2.4). 인가 코드를 돌려주고, 실패는 사용자 문구를 담아 던진다.
+/// 옛 브라우저 인가 코드 흐름이 남긴 PKCE 비밀값 청소기(계획서 §4.3.3).
 ///
-/// state 검증은 **반드시 클라이언트가** 한다. 서버는 state 를 보지 않는다.
-String verifySocialCallback(
-  Uri callback, {
-  required SocialProvider provider,
-  required String? expectedState,
-  required String? codeVerifier,
-}) {
-  final params = callback.queryParameters;
-
-  final error = params['error'];
-  if (error != null && error.isNotEmpty) {
-    throw SocialLoginException('${AuthConfig.label(provider)} 로그인이 취소되었거나 실패했습니다.');
-  }
-
-  final code = params['code'];
-  final state = params['state'];
-  if (code == null || code.isEmpty || state == null || state.isEmpty) {
-    throw const SocialLoginException('인가 정보가 올바르지 않습니다.');
-  }
-  if (expectedState == null || expectedState.isEmpty || state != expectedState) {
-    throw const SocialLoginException('보안 검증(state)에 실패했습니다. 다시 시도해주세요.');
-  }
-  if (codeVerifier == null || codeVerifier.isEmpty) {
-    throw const SocialLoginException('로그인 검증값이 없습니다. 다시 시도해주세요.');
-  }
-  return code;
-}
-
-/// PKCE 비밀값 보관소(계획서 §4.3.3).
-///
-/// 저장은 하되 **읽지 않는다.** 인가 도중 OS 가 프로세스를 죽이면 `await` 도 함께 사라지므로
-/// 복구 경로를 만들지 않는다. 대신 교환 성공·실패 무관 즉시 삭제하고 부팅 시 무조건 삭제해
-/// 오염값이 남지 않게 닫는다.
+/// 두 제공자 모두 공식 SDK 로 전환해 **더는 아무것도 저장하지 않는다.** 다만 이전 버전에서
+/// 저장해 둔 값이 기기에 남아 있을 수 있으므로, 부팅 때 무조건 지워 오염값을 닫는다.
 class OAuthSecrets {
   OAuthSecrets({FlutterSecureStorage? storage})
     : _storage =
@@ -77,20 +46,6 @@ class OAuthSecrets {
   static const String _stateKey = 'oauth_state';
 
   final FlutterSecureStorage _storage;
-
-  Future<void> put({
-    required SocialProvider provider,
-    required String verifier,
-    required String state,
-  }) async {
-    try {
-      await _storage.write(key: _providerKey, value: provider.wire);
-      await _storage.write(key: _verifierKey, value: verifier);
-      await _storage.write(key: _stateKey, value: state);
-    } catch (_) {
-      // 저장 실패가 로그인을 막지 않는다. 진행 중인 인가는 메모리 값만으로 끝난다.
-    }
-  }
 
   Future<void> clear() async {
     try {
