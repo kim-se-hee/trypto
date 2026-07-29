@@ -30,7 +30,7 @@ public class EngineInboxPublisher {
         try {
             Map<String, Object> payload = Map.of(
                     "exchange", ticker.exchange(),
-                    "displayName", ticker.base(),
+                    "symbol", ticker.base(),
                     "tradePrice", ticker.lastPrice(),
                     "tickAt",
                             LocalDateTime.ofInstant(Instant.ofEpochMilli(ticker.tsMs()), ZoneId.systemDefault())
