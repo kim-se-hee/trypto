@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/constants/exchanges.dart';
 import '../../core/realtime/ticker_store.dart';
 import '../../models/candle.dart';
 import '../../models/enums.dart';
@@ -16,6 +17,10 @@ const Duration kReconcileDelay = Duration(milliseconds: 15000);
 
 /// 줌인 하한. 표시 개수는 `[12, 전체]` 로 가둔다.
 const int kMinVisibleCount = 12;
+
+/// 보이는 구간의 왼쪽 끝이 이 개수만큼 남았을 때 미리 과거 캔들을 당겨 온다. 벽에 닿기 전에
+/// 채워 두어야 스와이프가 끊기지 않는다(웹 `PREFETCH_THRESHOLD`).
+const int kPrefetchThreshold = 8;
 
 class CandleIntervalSpec {
   const CandleIntervalSpec({
@@ -89,6 +94,9 @@ class CandleRequest {
 
   int get visibleCount => spec.visibleCount;
 
+  /// 봉 경계를 자르는 거래소 기준 시간대의 오프셋(분). 빗썸만 KST(+540)다.
+  int get tzOffsetMinutes => ExchangeIds.candleTzOffsetMinutes(exchangeCode);
+
   @override
   bool operator ==(Object other) =>
       other is CandleRequest &&
@@ -103,31 +111,67 @@ class CandleRequest {
 /// 체결 시각을 어느 봉에 떨어뜨릴지 정한다(사양서 §4.3.5.1).
 ///
 /// **서버 캔들의 `time` 과 티커의 `timestamp` 양쪽에 같은 함수를 적용한다.** 두 출처의 봉
-/// 시각이 정확히 일치해야 합성이 성립하므로 이 함수가 유일한 공통 기준이다. 절삭은 **단말
-/// 로컬 시간** 기준이다.
-DateTime normalizeCandleTime(DateTime time, CandleInterval interval) {
-  final t = time.toLocal();
-  return switch (interval) {
-    CandleInterval.minute1 => DateTime(t.year, t.month, t.day, t.hour, t.minute),
-    CandleInterval.hour1 => DateTime(t.year, t.month, t.day, t.hour),
+/// 시각이 정확히 일치해야 합성이 성립하므로 이 함수가 유일한 공통 기준이다.
+///
+/// 절삭은 **거래소 기준 시간대**다([offsetMinutes] — 빗썸만 KST 540, 업비트·바이낸스는
+/// UTC 0). 서버 `CandleQueryAdapter.candleZone` 과 같은 규칙이며, 단말 로컬 시각으로 자르면
+/// KST 단말에서 업비트 일봉이 9시간 어긋나 유령 봉이 하나 더 생긴다.
+///
+/// 결과는 **항상 UTC** 다. Dart 의 `DateTime.==` 는 `isUtc` 까지 비교하므로 서버 캔들·틱·
+/// 합성 비교가 전부 UTC 로 통일되어야 봉이 갈라지지 않는다. `toLocal()` 은 표시 시점에만
+/// 부른다.
+DateTime normalizeCandleTime(
+  DateTime time,
+  CandleInterval interval,
+  int offsetMinutes,
+) {
+  final offset = Duration(minutes: offsetMinutes);
+  final t = time.toUtc().add(offset);
+  final bucket = switch (interval) {
+    CandleInterval.minute1 => DateTime.utc(
+      t.year,
+      t.month,
+      t.day,
+      t.hour,
+      t.minute,
+    ),
+    CandleInterval.hour1 => DateTime.utc(t.year, t.month, t.day, t.hour),
     // 0, 4, 8, 12, 16, 20 시로 내림.
-    CandleInterval.hour4 => DateTime(t.year, t.month, t.day, (t.hour ~/ 4) * 4),
-    CandleInterval.day1 => DateTime(t.year, t.month, t.day),
+    CandleInterval.hour4 => DateTime.utc(
+      t.year,
+      t.month,
+      t.day,
+      (t.hour ~/ 4) * 4,
+    ),
+    CandleInterval.day1 => DateTime.utc(t.year, t.month, t.day),
     // 그 주 월요일 자정. Dart 의 weekday 는 월=1 … 일=7 이다.
-    CandleInterval.week1 => DateTime(t.year, t.month, t.day - (t.weekday - 1)),
-    CandleInterval.month1 => DateTime(t.year, t.month),
+    CandleInterval.week1 => DateTime.utc(
+      t.year,
+      t.month,
+      t.day - (t.weekday - 1),
+    ),
+    CandleInterval.month1 => DateTime.utc(t.year, t.month),
   };
+  return bucket.subtract(offset);
 }
 
-DateTime normalizeTickTime(int epochMs, CandleInterval interval) =>
-    normalizeCandleTime(
-      DateTime.fromMillisecondsSinceEpoch(epochMs),
-      interval,
-    );
+DateTime normalizeTickTime(
+  int epochMs,
+  CandleInterval interval,
+  int offsetMinutes,
+) => normalizeCandleTime(
+  DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true),
+  interval,
+  offsetMinutes,
+);
 
 /// 서버 캔들 후처리(사양서 §4.3.1 ①). 유한하지 않은 값이 하나라도 있으면 버리고, 봉 시각을
 /// 간격 단위로 절삭한 뒤 시간 오름차순으로 정렬한다.
-List<Candle> normalizeCandles(List<Candle> candles, CandleInterval interval) {
+List<Candle> normalizeCandles(
+  List<Candle> candles,
+  CandleInterval interval,
+  int offsetMinutes,
+) {
   final result = [
     for (final candle in candles)
       if (candle.open.isFinite &&
@@ -135,7 +179,7 @@ List<Candle> normalizeCandles(List<Candle> candles, CandleInterval interval) {
           candle.low.isFinite &&
           candle.close.isFinite)
         Candle(
-          time: normalizeCandleTime(candle.time, interval),
+          time: normalizeCandleTime(candle.time, interval, offsetMinutes),
           open: candle.open,
           high: candle.high,
           low: candle.low,
@@ -144,6 +188,19 @@ List<Candle> normalizeCandles(List<Candle> candles, CandleInterval interval) {
   ];
   result.sort((a, b) => a.time.compareTo(b.time));
   return result;
+}
+
+/// 재조회로 받은 최신 창([fresh])을 기존 배열에 덮되, 그보다 오래된 과거 구간은 그대로
+/// 남긴다(웹 `mergeReconciled`). 통째로 갈아끼우면 과거 페이징으로 앞에 쌓아 둔 봉이 봉 마감
+/// 재조회 때 사라진다.
+List<Candle> mergeReconciled(List<Candle> existing, List<Candle> fresh) {
+  if (fresh.isEmpty) return existing;
+  final start = fresh.first.time;
+  return [
+    for (final candle in existing)
+      if (candle.time.isBefore(start)) candle,
+    ...fresh,
+  ];
 }
 
 /// 가변 객체다. 같은 봉 안에서는 필드만 고쳐 쓴다 — 틱마다 배열을 새로 만들지 않는다.
@@ -172,9 +229,13 @@ class LiveCandle {
 /// 안의 체결이 사라져 봉의 고가·저가가 실제보다 얕아진다. 그리기 알림은 [onFrame] 에서만
 /// 낸다 — 접기 빈도와 그리기 빈도를 분리한다.
 class LiveCandleFolder implements TickObserver {
-  LiveCandleFolder(this.request);
+  LiveCandleFolder(this.request)
+    : _tzOffsetMinutes = request.tzOffsetMinutes;
 
   final CandleRequest request;
+
+  /// 매 틱 도는 자리라 거래소 표를 다시 훑지 않는다.
+  final int _tzOffsetMinutes;
 
   /// 최대 [kLiveCandleLimit] 개. 시간 오름차순.
   final List<LiveCandle> live = [];
@@ -193,7 +254,11 @@ class LiveCandleFolder implements TickObserver {
     if (tick.symbol != request.symbol) return;
     if (!tick.price.isFinite || tick.price <= 0) return;
 
-    final bucket = normalizeTickTime(tick.timestamp, request.interval);
+    final bucket = normalizeTickTime(
+      tick.timestamp,
+      request.interval,
+      _tzOffsetMinutes,
+    );
     final opened = live.isEmpty ? null : live.last;
 
     // ① 같은 봉 → 제자리 갱신. 할당 0. open 은 건드리지 않는다.

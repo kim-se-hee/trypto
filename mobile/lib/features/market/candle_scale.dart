@@ -7,11 +7,12 @@ import '../../models/candle.dart';
 import 'live_candles.dart';
 
 /// 오른쪽은 y축 가격 라벨 자리다. 웹의 124px 은 960px 캔버스 기준이며 모바일 폭에서는 화면의
-/// 1/3 을 먹는다.
+/// 1/3 을 먹는다. 다만 라벨이 억/만 축약을 하지 않으므로(`formatAxisLabel`) `₩163,502,000`
+/// 13글자가 들어갈 폭은 있어야 한다 — 10px 고정폭 숫자 기준 약 78px 이다.
 const EdgeInsets kChartPadding = EdgeInsets.only(
   left: 20,
   top: 16,
-  right: 60,
+  right: 84,
   bottom: 22,
 );
 
@@ -130,6 +131,15 @@ class CandleViewport {
       followingLatest: bounded >= total,
     );
   }
+
+  /// 과거 캔들 [count] 개를 앞에 끼워 넣었다. 기존 인덱스가 전부 오른쪽으로 밀리므로 앵커도
+  /// 같은 만큼 밀어야 보고 있던 구간이 그대로 남는다. 추종 여부는 건드리지 않는다 —
+  /// 추종 중이면 오른쪽 끝은 어차피 마지막 봉이다.
+  CandleViewport prepended(int count) => CandleViewport(
+    visibleCount: visibleCount,
+    anchorEndIndex: anchorEndIndex + count,
+    followingLatest: followingLatest,
+  );
 
   /// 앵커가 화면에서 차지하던 비율을 유지한 채 확대·축소한다. [scale] > 1 이면 확대(표시
   /// 개수 감소)다. [focusRatio] 는 플롯 폭 안에서의 손가락 위치 비율이다.

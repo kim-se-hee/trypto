@@ -14,8 +14,10 @@ void main() {
     interval: CandleInterval.minute1,
   );
 
+  /// 봉 시각은 전부 UTC 다. Dart 의 `DateTime.==` 는 `isUtc` 까지 비교하므로 로컬 시각을
+  /// 섞으면 서버 봉과 실시간 봉이 같은 구간인데도 다른 봉으로 갈라진다.
   DateTime at(int hour, int minute, [int second = 0]) =>
-      DateTime(2026, 7, 15, hour, minute, second);
+      DateTime.utc(2026, 7, 15, hour, minute, second);
 
   Ticker tick(double price, DateTime time, {String symbol = 'BTC'}) => Ticker(
     coinId: 1,
@@ -35,57 +37,136 @@ void main() {
   ) => Candle(time: time, open: open, high: high, low: low, close: close);
 
   group('normalizeCandleTime', () {
-    final sample = DateTime(2026, 7, 15, 13, 47, 31, 456);
+    /// 업비트·바이낸스는 UTC(0), 빗썸만 KST(+540)다.
+    const utc = 0;
+    const kst = 9 * 60;
+
+    final sample = DateTime.utc(2026, 7, 15, 13, 47, 31, 456);
 
     test('간격별로 봉 시각을 절삭한다', () {
       expect(
-        normalizeCandleTime(sample, CandleInterval.minute1),
-        DateTime(2026, 7, 15, 13, 47),
+        normalizeCandleTime(sample, CandleInterval.minute1, utc),
+        DateTime.utc(2026, 7, 15, 13, 47),
       );
       expect(
-        normalizeCandleTime(sample, CandleInterval.hour1),
-        DateTime(2026, 7, 15, 13),
+        normalizeCandleTime(sample, CandleInterval.hour1, utc),
+        DateTime.utc(2026, 7, 15, 13),
       );
       // 0, 4, 8, 12, 16, 20 시로 내림.
       expect(
-        normalizeCandleTime(sample, CandleInterval.hour4),
-        DateTime(2026, 7, 15, 12),
+        normalizeCandleTime(sample, CandleInterval.hour4, utc),
+        DateTime.utc(2026, 7, 15, 12),
       );
       expect(
-        normalizeCandleTime(sample, CandleInterval.day1),
-        DateTime(2026, 7, 15),
+        normalizeCandleTime(sample, CandleInterval.day1, utc),
+        DateTime.utc(2026, 7, 15),
       );
       expect(
-        normalizeCandleTime(sample, CandleInterval.month1),
-        DateTime(2026, 7),
+        normalizeCandleTime(sample, CandleInterval.month1, utc),
+        DateTime.utc(2026, 7),
       );
     });
 
     test('주봉은 그 주 월요일 자정이다', () {
       // 2026-07-15 는 수요일이다.
       expect(
-        normalizeCandleTime(sample, CandleInterval.week1),
-        DateTime(2026, 7, 13),
+        normalizeCandleTime(sample, CandleInterval.week1, utc),
+        DateTime.utc(2026, 7, 13),
       );
       // 일요일은 6일을 되돌려 같은 주 월요일로 간다.
       expect(
-        normalizeCandleTime(DateTime(2026, 7, 19, 23), CandleInterval.week1),
-        DateTime(2026, 7, 13),
+        normalizeCandleTime(
+          DateTime.utc(2026, 7, 19, 23),
+          CandleInterval.week1,
+          utc,
+        ),
+        DateTime.utc(2026, 7, 13),
       );
       // 월을 넘겨도 성립한다(2026-08-02 는 일요일).
       expect(
-        normalizeCandleTime(DateTime(2026, 8, 2, 5), CandleInterval.week1),
-        DateTime(2026, 7, 27),
+        normalizeCandleTime(
+          DateTime.utc(2026, 8, 2, 5),
+          CandleInterval.week1,
+          utc,
+        ),
+        DateTime.utc(2026, 7, 27),
       );
     });
 
     test('서버 캔들의 UTC time 과 티커의 epoch millis 가 같은 봉으로 떨어진다', () {
-      final server = DateTime(2026, 7, 15, 13, 47).toUtc();
-      final ticked = DateTime(2026, 7, 15, 13, 47, 59).millisecondsSinceEpoch;
+      final server = DateTime.utc(2026, 7, 15, 13, 47);
+      final ticked = DateTime.utc(2026, 7, 15, 13, 47, 59)
+          .millisecondsSinceEpoch;
 
       expect(
-        normalizeCandleTime(server, CandleInterval.minute1),
-        normalizeTickTime(ticked, CandleInterval.minute1),
+        normalizeCandleTime(server, CandleInterval.minute1, utc),
+        normalizeTickTime(ticked, CandleInterval.minute1, utc),
+      );
+    });
+
+    test('업비트 일봉은 UTC 자정으로 자른다 — 09:00 KST 틱이 서버 진행봉과 같은 봉이다', () {
+      // 서버가 내려주는 2026-07-29 일봉의 time.
+      final bucket = DateTime.utc(2026, 7, 29);
+      // 09:00:01 KST = 00:00:01 UTC. 단말 로컬로 자르면 07-29 로 떨어져 서버와 어긋난다.
+      final ticked = DateTime.utc(2026, 7, 29, 0, 0, 1).millisecondsSinceEpoch;
+
+      expect(normalizeCandleTime(bucket, CandleInterval.day1, utc), bucket);
+      expect(normalizeTickTime(ticked, CandleInterval.day1, utc), bucket);
+
+      // 08:59 KST(= 전날 23:59 UTC)는 아직 전날 봉이다.
+      expect(
+        normalizeTickTime(
+          DateTime.utc(2026, 7, 28, 23, 59).millisecondsSinceEpoch,
+          CandleInterval.day1,
+          utc,
+        ),
+        DateTime.utc(2026, 7, 28),
+      );
+    });
+
+    test('빗썸 일봉은 KST 자정으로 자른다', () {
+      // 2026-07-29 00:00 KST = 2026-07-28T15:00Z.
+      final bucket = DateTime.utc(2026, 7, 28, 15);
+
+      expect(normalizeCandleTime(bucket, CandleInterval.day1, kst), bucket);
+      // 같은 날 정오 KST(03:00Z)도 같은 봉이다.
+      expect(
+        normalizeCandleTime(
+          DateTime.utc(2026, 7, 29, 3),
+          CandleInterval.day1,
+          kst,
+        ),
+        bucket,
+      );
+      // 1분 전(23:59 KST)은 전날 봉이다.
+      expect(
+        normalizeCandleTime(
+          DateTime.utc(2026, 7, 28, 14, 59),
+          CandleInterval.day1,
+          kst,
+        ),
+        DateTime.utc(2026, 7, 27, 15),
+      );
+    });
+
+    test('4시간봉도 거래소 기준 시간대에서 0·4·8·12·16·20 시로 내림한다', () {
+      // 업비트: 05:30Z → 04:00Z.
+      expect(
+        normalizeCandleTime(
+          DateTime.utc(2026, 7, 29, 5, 30),
+          CandleInterval.hour4,
+          utc,
+        ),
+        DateTime.utc(2026, 7, 29, 4),
+      );
+      // 빗썸: 14:30Z = 23:30 KST → 20:00 KST = 11:00Z.
+      expect(
+        normalizeCandleTime(
+          DateTime.utc(2026, 7, 29, 14, 30),
+          CandleInterval.hour4,
+          kst,
+        ),
+        DateTime.utc(2026, 7, 29, 11),
       );
     });
   });
@@ -236,14 +317,50 @@ void main() {
   group('normalizeCandles', () {
     test('유한하지 않은 캔들을 버리고 봉 시각을 절삭해 오름차순 정렬한다', () {
       final result = normalizeCandles([
-        candle(DateTime(2026, 7, 15, 10, 1, 40), 105, 115, 100, 108),
-        candle(DateTime(2026, 7, 15, 10, 0, 20), 100, 110, 90, 105),
-        candle(DateTime(2026, 7, 15, 10, 2), 108, double.infinity, 100, 110),
-      ], CandleInterval.minute1);
+        candle(DateTime.utc(2026, 7, 15, 10, 1, 40), 105, 115, 100, 108),
+        candle(DateTime.utc(2026, 7, 15, 10, 0, 20), 100, 110, 90, 105),
+        candle(
+          DateTime.utc(2026, 7, 15, 10, 2),
+          108,
+          double.infinity,
+          100,
+          110,
+        ),
+      ], CandleInterval.minute1, 0);
 
       expect(result, hasLength(2));
       expect(result.first.time, at(10, 0));
       expect(result.last.time, at(10, 1));
+    });
+  });
+
+  group('mergeReconciled', () {
+    test('최신 창만 서버 값으로 덮고 앞에 쌓아 둔 과거 구간은 남긴다', () {
+      final existing = [
+        candle(at(9, 58), 1, 1, 1, 1),
+        candle(at(9, 59), 2, 2, 2, 2),
+        candle(at(10, 0), 3, 3, 3, 3),
+      ];
+      final fresh = [
+        candle(at(10, 0), 30, 30, 30, 30),
+        candle(at(10, 1), 40, 40, 40, 40),
+      ];
+
+      final merged = mergeReconciled(existing, fresh);
+
+      expect(merged.map((c) => c.time).toList(), [
+        at(9, 58),
+        at(9, 59),
+        at(10, 0),
+        at(10, 1),
+      ]);
+      // 겹치는 구간은 서버 값이 이긴다.
+      expect(merged[2].close, 30);
+    });
+
+    test('빈 응답은 기존 배열을 그대로 둔다', () {
+      final existing = [candle(at(10, 0), 3, 3, 3, 3)];
+      expect(identical(mergeReconciled(existing, const []), existing), isTrue);
     });
   });
 
@@ -265,7 +382,7 @@ void main() {
     addTearDown(store.dispose);
 
     final folder = LiveCandleFolder(request);
-    store.setRawObserver(folder);
+    store.addRawObserver(folder);
 
     final bucket = at(10, 0);
     for (final price in [100.0, 130.0, 90.0, 110.0]) {

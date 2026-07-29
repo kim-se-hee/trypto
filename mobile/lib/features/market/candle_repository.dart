@@ -59,5 +59,29 @@ final candlesProvider = FutureProvider.autoDispose
             interval: request.interval,
             limit: request.limit,
           );
-      return normalizeCandles(candles, request.interval);
+      return normalizeCandles(
+        candles,
+        request.interval,
+        request.tzOffsetMinutes,
+      );
     });
+
+/// 과거 구간 조회. [cursor] 보다 오래된 **확정봉만** 돌아온다 — 서버는 커서가 있으면 진행봉을
+/// 덧붙이지 않는다(`FindCandlesService`).
+///
+/// [candlesProvider] 와 달리 Riverpod 그래프를 타지 않는다. 같은 키로 커서만 바꿔 여러 번
+/// 부르므로 캐시할 것이 없다.
+Future<List<Candle>> findPastCandles(
+  CandleRepository repository,
+  CandleRequest request,
+  DateTime cursor,
+) async {
+  final candles = await repository.getCandles(
+    exchange: request.exchangeCode,
+    coin: request.symbol,
+    interval: request.interval,
+    limit: request.limit,
+    cursor: cursor,
+  );
+  return normalizeCandles(candles, request.interval, request.tzOffsetMinutes);
+}

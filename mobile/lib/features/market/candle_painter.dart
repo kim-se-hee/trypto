@@ -9,6 +9,13 @@ import '../../models/candle.dart';
 import '../../models/enums.dart';
 import 'candle_scale.dart';
 
+/// y축 가격 라벨과 툴팁 시/고/저/종의 표기(웹 `formatAxisLabel`).
+///
+/// 억/만으로 줄이지 않는다 — 축약하면 2천원 단위가 사라지고, USDT 저가 코인에서는 눈금 네 개가
+/// 전부 같은 값으로 뭉개진다. 기호 방향은 통화마다 다르다(KRW `₩` 접두, USDT 는 없음).
+String formatAxisLabel(double value, String baseCurrency) =>
+    '${getCurrencySymbol(baseCurrency)}${formatPrice(value, baseCurrency)}';
+
 /// 페인터가 쓰는 색·서체. `BuildContext` 는 페인트 시점에 없다.
 @immutable
 class CandleChartTheme {
@@ -109,13 +116,15 @@ class CandlePainter extends CustomPainter {
         gap: 6,
       );
       final label = _text(
-        formatCurrencyCompact(price, theme.baseCurrency),
+        formatAxisLabel(price, theme.baseCurrency),
         theme.label,
       );
-      label.paint(
-        canvas,
-        Offset(size.width - kChartPadding.right + 6, y - label.height / 2),
+      // 축약을 하지 않으므로 라벨이 축 폭을 넘길 수 있다. 넘치면 캔버스 오른쪽 끝에 붙인다.
+      final x = math.min(
+        size.width - kChartPadding.right + 6,
+        size.width - label.width,
       );
+      label.paint(canvas, Offset(x, y - label.height / 2));
     }
   }
 
@@ -173,7 +182,9 @@ class CandlePainter extends CustomPainter {
     }
   }
 
-  String _timeLabel(DateTime time) {
+  /// 봉 시각은 UTC 로 들고 다닌다. 로컬 변환은 여기서만 한다.
+  String _timeLabel(DateTime bucket) {
+    final time = bucket.toLocal();
     String two(int value) => value.toString().padLeft(2, '0');
     return switch (interval) {
       CandleInterval.minute1 => '${two(time.hour)}:${two(time.minute)}',
