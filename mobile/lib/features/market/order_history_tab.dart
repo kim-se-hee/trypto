@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_exception.dart';
@@ -19,6 +20,13 @@ import 'order_repository.dart';
 import 'order_target.dart';
 
 const int _kPageSize = 20;
+
+/// 주문 화면 전용 포맷. 공용 [formatPrice] 는 KRW 에서 소수 3자리라 1원 미만 코인의 체결가가
+/// 뭉개진다. 웹도 `OrderPanel.tsx` 안에 8자리 전용 포매터를 따로 둔 예외다.
+final NumberFormat _orderPrice = NumberFormat('#,##0.########', 'en_US');
+
+/// 거래내역 수량은 웹과 같이 6자리 고정이다.
+final NumberFormat _orderQuantity = NumberFormat('#,##0.000000', 'en_US');
 
 /// 코인 상세의 두 번째 하단 탭(계획서 §4.6.1). 바텀시트 안에 커서 무한 스크롤 목록을 넣으면
 /// 시트 드래그와 목록 스크롤 제스처가 충돌하므로 주문 시트에서 분리했다.
@@ -334,19 +342,23 @@ class _OrderTile extends StatelessWidget {
                   label: '가격',
                   value:
                       '${getCurrencySymbol(baseCurrency)}'
-                      '${formatPrice(price, baseCurrency)}',
+                      '${_orderPrice.format(price)}',
                 ),
               ),
               Expanded(
                 child: _Cell(
                   label: '수량',
-                  value: '${formatQuantity(item.quantity)} $symbol',
+                  value: '${_orderQuantity.format(item.quantity)} $symbol',
                 ),
               ),
               Expanded(
                 child: _Cell(
                   label: '금액',
-                  value: formatCurrencyCompact(amount, baseCurrency),
+                  // 원화는 축약 없이 전액을 찍는다(웹 :562 `formatNumber(item.orderAmount)`).
+                  value: baseCurrency == 'KRW'
+                      ? '${getCurrencySymbol(baseCurrency)}'
+                            '${formatGrouped(amount)}'
+                      : formatCurrencyCompact(amount, baseCurrency),
                 ),
               ),
               if (onCancel != null)
