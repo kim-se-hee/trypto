@@ -140,7 +140,7 @@ public class WalRecovery {
             }
             case "TickReceived" -> {
                 TickReceivedEvent t = mapper.treeToValue(rec.event(), TickReceivedEvent.class);
-                Long ecId = resolver.resolve(t.exchange(), t.displayName());
+                Long ecId = resolver.resolve(t.exchange(), t.symbol());
                 if (ecId == null) return;
                 OrderBook book = registry.bookOf(new TradingPair(ecId));
                 List<OrderDetail> triggered = book.sweep(t.tradePrice());

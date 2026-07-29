@@ -138,7 +138,7 @@ public class EngineThread {
     }
 
     private void onTick(TickReceivedEvent e) {
-        Long exchangeCoinId = exchangeCoinResolver.resolve(e.exchange(), e.displayName());
+        Long exchangeCoinId = exchangeCoinResolver.resolve(e.exchange(), e.symbol());
         if (exchangeCoinId == null) {
             return;
         }
