@@ -45,6 +45,12 @@ class MypagePage extends StatelessWidget {
   }
 }
 
+/// 가입일·라운드 시작일처럼 **날짜만** 쓰는 자리. 서버가 보낸 KST 벽시계 날짜로 잘라야
+/// 웹(`toLocaleDateString('ko-KR')`)과 같은 날짜가 뜬다 — 기기 시간대로 찍으면 UTC-8 기기에서
+/// 하루 어긋난다.
+String _koreanDate(DateTime at) =>
+    ServerTime.formatKoreanDate(ServerTime.kstDate(at));
+
 class _ProfileCard extends ConsumerWidget {
   const _ProfileCard();
 
@@ -104,7 +110,7 @@ class _ProfileCard extends ConsumerWidget {
                 // 조회가 실패해도 화면을 무너뜨리지 않는다. 웹과 같이 `-` 로 떨어진다.
                 NumericText(
                   profile.maybeWhen(
-                    data: (data) => ServerTime.formatKoreanDate(data.createdAt),
+                    data: (data) => _koreanDate(data.createdAt),
                     orElse: () => '-',
                   ),
                   size: 13,
@@ -172,7 +178,7 @@ class _RoundCard extends ConsumerWidget {
             ),
             const SizedBox(height: TryptoSpacing.xs),
             Text(
-              '시작일 ${ServerTime.formatKoreanDate(round.startedAt)}',
+              '시작일 ${_koreanDate(round.startedAt)}',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

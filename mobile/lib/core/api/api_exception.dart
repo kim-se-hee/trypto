@@ -91,5 +91,9 @@ Future<T> apiCall<T>(Future<T> Function() request) async {
     return await request();
   } on DioException catch (error, stackTrace) {
     Error.throwWithStackTrace((error.error ?? error).asApiException, stackTrace);
+  } catch (error, stackTrace) {
+    // 응답 본문을 DTO 로 캐스팅하다 나는 `TypeError` 처럼 Dio 를 거치지 않는 예외도 여기서 좁힌다.
+    // 이게 없으면 `on ApiException` 만 잡는 화면이 예외를 놓쳐 로딩 상태로 굳는다.
+    Error.throwWithStackTrace(error.asApiException, stackTrace);
   }
 }

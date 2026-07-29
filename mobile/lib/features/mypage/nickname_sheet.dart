@@ -80,6 +80,7 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
       _saving = true;
       _error = null;
     });
+    var closed = false;
     try {
       final response = await ref
           .read(userRepositoryProvider)
@@ -90,13 +91,15 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
       ref.invalidate(userProfileProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
+      closed = true;
     } on ApiException catch (error) {
       if (!mounted) return;
       // 시트 안에서 알린다. 시트 뒤로 스낵바를 던지면 가려서 보이지 않는다.
-      setState(() {
-        _saving = false;
-        _error = error.userMessage;
-      });
+      setState(() => _error = error.userMessage);
+    } finally {
+      // 어떤 예외가 나도 버튼을 되살린다. 이미 닫힌 시트는 되돌릴 필요가 없다 —
+      // 닫히는 동안 '저장 중...' 이 '저장' 으로 깜빡인다.
+      if (mounted && !closed) setState(() => _saving = false);
     }
   }
 
