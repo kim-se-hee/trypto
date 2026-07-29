@@ -61,6 +61,41 @@ void main() {
     });
   });
 
+  group('ServerTime.kstWallClock — 시·분을 남긴 KST 벽시계', () {
+    test('UTC 01:30 은 KST 10:30 으로 읽힌다', () {
+      final kst = ServerTime.kstWallClock(DateTime.utc(2026, 7, 15, 1, 30));
+      expect((kst.year, kst.month, kst.day), (2026, 7, 15));
+      expect((kst.hour, kst.minute), (10, 30));
+    });
+
+    test('자정을 넘겨 다음 날로 넘어간다', () {
+      final kst = ServerTime.kstWallClock(DateTime.utc(2026, 7, 14, 23, 0));
+      expect((kst.year, kst.month, kst.day), (2026, 7, 15));
+      expect(kst.hour, 8);
+    });
+
+    test('kstDate 와 날짜가 같고 시각만 더 남는다', () {
+      final at = ServerTime.parseKst('2026-07-15T00:30:00');
+      final wall = ServerTime.kstWallClock(at);
+      final date = ServerTime.kstDate(at);
+      expect(
+        (wall.year, wall.month, wall.day),
+        (date.year, date.month, date.day),
+      );
+      expect((wall.hour, wall.minute), (0, 30));
+      expect(date.hour, 0);
+    });
+
+    test('formatDateTime 이 서버가 남긴 시각 그대로 찍는다', () {
+      expect(
+        ServerTime.formatDateTime(
+          ServerTime.kstWallClock(ServerTime.parseKst('2026-07-15T09:05:00')),
+        ),
+        '2026.07.15 09:05',
+      );
+    });
+  });
+
   group('ServerTime 포맷', () {
     test('formatLocalDate → yyyy-MM-dd', () {
       expect(ServerTime.formatLocalDate(DateTime(2026, 7, 5)), '2026-07-05');

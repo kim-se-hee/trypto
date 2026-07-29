@@ -109,7 +109,7 @@ class _RegretAssetChartState extends State<RegretAssetChart> {
                     getTitlesWidget: (value, meta) => Padding(
                       padding: const EdgeInsets.only(right: TryptoSpacing.xs),
                       child: NumericText(
-                        formatCurrencyCompact(value, currency),
+                        formatCurrencyShort(value, currency),
                         size: 10,
                         weight: FontWeight.w500,
                         color: theme.colorScheme.onSurfaceVariant,
@@ -353,7 +353,7 @@ class _ValuePanel extends StatelessWidget {
               Expanded(
                 child: _ValueCell(
                   label: '실제',
-                  value: formatCurrencyCompact(actual, currency),
+                  value: formatCurrencyShort(actual, currency),
                   color: theme.colorScheme.primary,
                 ),
               ),
@@ -361,7 +361,7 @@ class _ValuePanel extends StatelessWidget {
                 Expanded(
                   child: _ValueCell(
                     label: '규칙 준수',
-                    value: formatCurrencyCompact(simulation, currency),
+                    value: formatCurrencyShort(simulation, currency),
                     color: colors.negative,
                   ),
                 ),
@@ -369,7 +369,7 @@ class _ValuePanel extends StatelessWidget {
                 Expanded(
                   child: _ValueCell(
                     label: 'BTC 홀드',
-                    value: formatCurrencyCompact(btcHold, currency),
+                    value: formatCurrencyShort(btcHold, currency),
                     color: btcHoldColor,
                   ),
                 ),

@@ -20,10 +20,15 @@ class ServerTime {
   /// LocalDate(`2026-07-15`) → 시간대 변환 없는 그 날짜.
   static DateTime parseLocalDate(String raw) => DateTime.parse(raw);
 
+  /// 시각을 서버 기준(KST) 벽시계로 옮긴다. 시·분이 남으므로 날짜만이 아니라 시각까지
+  /// 보여주는 자리(체결 시각 등)에서 쓴다. 기기 시간대가 KST 가 아니어도 서버가 남긴 시각
+  /// 그대로 읽힌다.
+  static DateTime kstWallClock(DateTime at) => at.toUtc().add(kstOffset);
+
   /// 시각을 서버 기준(KST) 날짜로 자른다. 기기 시간대가 KST 가 아니어도 서버가 `LocalDate` 로
   /// 남긴 날짜(스냅샷 날짜 등)와 어긋나지 않는다.
   static DateTime kstDate(DateTime at) {
-    final kst = at.toUtc().add(kstOffset);
+    final kst = kstWallClock(at);
     return DateTime(kst.year, kst.month, kst.day);
   }
 
