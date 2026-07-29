@@ -14,6 +14,7 @@ import '../../core/widgets/exchange_segment.dart';
 import '../../core/widgets/mypage_button.dart';
 import '../../core/widgets/no_round_notice.dart';
 import '../../core/widgets/numeric_text.dart';
+import '../../models/round.dart';
 import '../round/round_controller.dart';
 import 'donut_painter.dart';
 import 'holding_card.dart';
@@ -21,9 +22,10 @@ import 'portfolio_repository.dart';
 import 'portfolio_summary.dart';
 
 /// 선택 거래소는 라우트 쿼리(`/portfolio?exchange=upbit`)에 둔다 — 마켓과 같은 규칙이다.
+/// 탭 목록은 이 라운드가 자금을 배정한 지갑이 정한다.
 ///
-/// 이 화면은 스스로 갱신되지 않는다(사양서 §5.1.2 — 폴링·WS 없음). 당김 새로고침이 유일한
-/// 수동 갱신 경로이므로 반드시 있어야 한다.
+/// 이 화면은 스스로 갱신되지 않는다(사양서 §5.1.2 — 폴링·WS 없음). 탭 재활성·거래소 전환·
+/// 포그라운드 복귀에서 보유 스냅샷을 다시 받고, 당김 새로고침이 마지막 수동 경로다.
 class PortfolioPage extends ConsumerStatefulWidget {
   const PortfolioPage({super.key});
 
@@ -34,6 +36,97 @@ class PortfolioPage extends ConsumerStatefulWidget {
 class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   HoldingSortKey _sortKey = HoldingSortKey.evalAmount;
   bool _descending = true;
+
+  late final AppLifecycleListener _lifecycle;
+  int? _walletId;
+  bool _visible = false;
+  bool _primed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _onResume);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // go_router 의 `indexedStack` 셸은 선택되지 않은 브랜치를 `TickerMode(enabled: false)` 로
+    // 감싼다. 탭이 숨어 있는 동안 체결된 주문은 이 화면 캐시에 들어오지 않는다.
+    _sync(_currentWalletId(), TickerMode.valuesOf(context).enabled);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  /// `portfolioProvider` 는 autoDispose 가 아니고 셸이 이 화면을 살려 둔다. 탭 재활성·거래소
+  /// 전환에서 무효화하지 않으면 매수 체결 이전 스냅샷이 그대로 남는다.
+  void _sync(int? walletId, bool visible) {
+    if (_walletId == walletId && _visible == visible) return;
+    // 첫 진입은 provider 가 알아서 조회한다. 그 뒤의 전환만 다시 받는다.
+    final refetch = _primed && visible;
+    _walletId = walletId;
+    _visible = visible;
+    _primed = true;
+    if (refetch && walletId != null) _refetch(walletId);
+  }
+
+  /// 포그라운드 복귀 — 백그라운드 동안 지연 체결된 지정가 주문을 들인다(계획서 §4.2.2).
+  void _onResume() {
+    if (!_visible) return;
+    final walletId = _currentWalletId();
+    if (walletId == null) return;
+    _refetch(walletId);
+  }
+
+  void _refetch(int walletId) {
+    // provider 무효화는 프레임 밖에서 한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(portfolioProvider(walletId));
+    });
+  }
+
+  /// 지금 보고 있는 지갑. 라운드와 라우트 쿼리에서 매번 다시 구한다.
+  int? _currentWalletId() {
+    final round = ref.read(roundControllerProvider).activeRound;
+    final exchange = _selected(
+      _tabs(round),
+      GoRouterState.of(context).uri.queryParameters['exchange'],
+    );
+    return round?.walletIdOf(exchange.id);
+  }
+
+  /// 거래소 탭은 이 라운드의 지갑 목록이 정한다 — 자금을 배정하지 않은 거래소는 탭도 없다.
+  /// 상수 표에 없는 `exchangeId` 는 이름·키를 id 문자열로 떨어뜨려서라도 탭을 낸다.
+  List<Exchange> _tabs(ActiveRound? round) {
+    if (round == null) return const [];
+    return [
+      for (final wallet in round.wallets)
+        ExchangeIds.byId(wallet.exchangeId) ??
+            Exchange(
+              id: wallet.exchangeId,
+              key: '${wallet.exchangeId}',
+              name: '${wallet.exchangeId}',
+              baseCurrency: '',
+              feeRate: 0,
+              candleCode: '',
+            ),
+    ];
+  }
+
+  /// 쿼리에 실린 거래소를 고른다. 쿼리가 없으면 지갑 목록의 첫 거래소가 기본값이다 —
+  /// 업비트 지갑이 없는 라운드에서 빈 화면으로 시작하지 않는다. 지갑이 없는 거래소를
+  /// 직접 지정한 경우는 그대로 두고 본문의 '지갑이 없습니다' 안내로 넘긴다.
+  Exchange _selected(List<Exchange> tabs, String? key) {
+    for (final tab in tabs) {
+      if (tab.key == key) return tab;
+    }
+    if (key == null && tabs.isNotEmpty) return tabs.first;
+    return ExchangeIds.byKey(key);
+  }
 
   Future<void> _openSortSheet() async {
     final selected = await showModalBottomSheet<HoldingSortKey>(
@@ -52,11 +145,13 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final exchange = ExchangeIds.byKey(
-      GoRouterState.of(context).uri.queryParameters['exchange'],
-    );
     final round = ref.watch(
       roundControllerProvider.select((state) => state.activeRound),
+    );
+    final tabs = _tabs(round);
+    final exchange = _selected(
+      tabs,
+      GoRouterState.of(context).uri.queryParameters['exchange'],
     );
     final walletId = round?.walletIdOf(exchange.id);
 
@@ -76,16 +171,13 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
             ),
             child: Column(
               children: [
-                ExchangeSegment<int>(
+                ExchangeSegment<String>(
                   items: [
-                    for (final item in ExchangeIds.all)
-                      SegmentItem(item.id, item.name),
+                    for (final tab in tabs) SegmentItem(tab.key, tab.name),
                   ],
-                  value: exchange.id,
-                  onChanged: (id) => context.go(
-                    '${Routes.portfolio}?exchange='
-                    '${(ExchangeIds.byId(id) ?? exchange).key}',
-                  ),
+                  value: exchange.key,
+                  onChanged: (key) =>
+                      context.go('${Routes.portfolio}?exchange=$key'),
                 ),
                 const SizedBox(height: TryptoSpacing.sm),
                 Align(
@@ -323,19 +415,13 @@ class _SummaryCard extends StatelessWidget {
                 Expanded(
                   child: _SummaryCell(
                     label: '총매수',
-                    value: formatCurrencyCompact(
-                      summary.totalBuy.toDouble(),
-                      base,
-                    ),
+                    value: formatCurrency(summary.totalBuy.toDouble(), base),
                   ),
                 ),
                 Expanded(
                   child: _SummaryCell(
                     label: '총평가',
-                    value: formatCurrencyCompact(
-                      summary.totalEval.toDouble(),
-                      base,
-                    ),
+                    value: formatCurrency(summary.totalEval.toDouble(), base),
                   ),
                 ),
               ],
@@ -348,7 +434,7 @@ class _SummaryCard extends StatelessWidget {
                     label: '평가손익',
                     value:
                         '${profitLoss > 0 ? '+' : ''}'
-                        '${formatCurrencyCompact(profitLoss, base)}',
+                        '${formatCurrency(profitLoss, base)}',
                     color: context.profitColor(profitLoss),
                   ),
                 ),
