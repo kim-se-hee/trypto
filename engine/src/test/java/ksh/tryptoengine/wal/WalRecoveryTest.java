@@ -46,7 +46,7 @@ class WalRecoveryTest {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         fakeResolver = new ExchangeCoinResolver(null) {
             @Override
-            public Long resolve(String exchange, String displayName) {
+            public Long resolve(String exchange, String symbol) {
                 return 1L;
             }
         };
@@ -257,9 +257,8 @@ class WalRecoveryTest {
         return new OrderCanceledEvent(id, exchangeCoinId);
     }
 
-    private TickReceivedEvent tick(String exchange, String displayName, String price) {
-        return new TickReceivedEvent(
-                exchange, displayName, new BigDecimal(price), LocalDateTime.of(2026, 1, 1, 1, 0, 0));
+    private TickReceivedEvent tick(String exchange, String symbol, String price) {
+        return new TickReceivedEvent(exchange, symbol, new BigDecimal(price), LocalDateTime.of(2026, 1, 1, 1, 0, 0));
     }
 
     private OrderDetail detail(long id, Side side, TradingPair pair, String price, String qty) {
