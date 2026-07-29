@@ -61,7 +61,7 @@ class LoginPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: TryptoSpacing.md),
                     Text(
-                      '큰 돈 잃을 걱정 없이 해보는 실전 리허설',
+                      '기록으로 배우는 코인 모의투자',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -79,7 +79,7 @@ class LoginPage extends ConsumerWidget {
                     ],
                     _SocialButton(
                       provider: SocialProvider.kakao,
-                      label: '카카오로 시작하기',
+                      label: '카카오로 로그인',
                       background: _kakaoYellow,
                       foreground: _kakaoBrown,
                       icon: const Icon(
@@ -92,7 +92,7 @@ class LoginPage extends ConsumerWidget {
                     const SizedBox(height: TryptoSpacing.md),
                     _SocialButton(
                       provider: SocialProvider.google,
-                      label: '구글로 시작하기',
+                      label: '구글로 로그인',
                       background: theme.colorScheme.surface,
                       foreground: theme.colorScheme.onSurface,
                       border: TryptoPalette.border,
