@@ -133,5 +133,6 @@ ChargeEmergencyFundingResponse _$ChargeEmergencyFundingResponseFromJson(
   roundId: (json['roundId'] as num).toInt(),
   exchangeId: (json['exchangeId'] as num).toInt(),
   chargedAmount: (json['chargedAmount'] as num).toDouble(),
+  krwConvertedAmount: (json['krwConvertedAmount'] as num).toDouble(),
   remainingChargeCount: (json['remainingChargeCount'] as num).toInt(),
 );

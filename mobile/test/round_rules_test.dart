@@ -9,10 +9,10 @@ import 'package:trypto/models/enums.dart';
 /// 입력 단계에서 잡는지 고정한다.
 void main() {
   RoundDraft draft({
-    int seed = 10000000,
+    Map<int, int> seeds = const {ExchangeIds.upbit: 10000000},
     int emergencyLimit = 500000,
     Map<RuleType, int> rules = const {RuleType.chaseBuyBan: 15},
-  }) => RoundDraft(seed: seed, emergencyLimit: emergencyLimit, rules: rules);
+  }) => RoundDraft(seeds: seeds, emergencyLimit: emergencyLimit, rules: rules);
 
   group('시드머니 범위 (국내 100만 ~ 5,000만)', () {
     test('0 은 배정 안 함이라 범위 검사를 건너뛴다', () {
@@ -30,12 +30,13 @@ void main() {
     });
   });
 
-  group('시드머니 범위 (해외 100 ~ 50,000)', () {
+  group('시드머니 범위 (해외 1,000 ~ 30,000)', () {
+    /// 서버 `SeedAmountPolicy.USDT_SEED(1000, 30000)` 와 같은 범위여야 한다.
     test('바이낸스는 USDT 기준 범위를 쓴다', () {
-      expect(SeedPolicy.validate(ExchangeIds.binance, 100), isNull);
-      expect(SeedPolicy.validate(ExchangeIds.binance, 50000), isNull);
-      expect(SeedPolicy.validate(ExchangeIds.binance, 99), isNotNull);
-      expect(SeedPolicy.validate(ExchangeIds.binance, 50001), isNotNull);
+      expect(SeedPolicy.validate(ExchangeIds.binance, 1000), isNull);
+      expect(SeedPolicy.validate(ExchangeIds.binance, 30000), isNull);
+      expect(SeedPolicy.validate(ExchangeIds.binance, 999), isNotNull);
+      expect(SeedPolicy.validate(ExchangeIds.binance, 30001), isNotNull);
     });
 
     test('국내 판별은 기준통화로 한다', () {
@@ -62,23 +63,49 @@ void main() {
   group('긴급 자금 투입 금액 (0 < amount <= limit)', () {
     test('상한을 넘으면 입력 단계에서 막는다', () {
       expect(
-        EmergencyFundingPolicy.validateCharge(1000001, 1000000),
+        EmergencyFundingPolicy.validateCharge(1000001, 1000000, 'KRW'),
         '상한을 초과했습니다. 1,000,000원 이하로 입력해주세요.',
       );
     });
 
     test('상한값과 0 초과 경계는 통과한다', () {
-      expect(EmergencyFundingPolicy.validateCharge(1000000, 1000000), isNull);
-      expect(EmergencyFundingPolicy.validateCharge(1, 1000000), isNull);
+      expect(
+        EmergencyFundingPolicy.validateCharge(1000000, 1000000, 'KRW'),
+        isNull,
+      );
+      expect(EmergencyFundingPolicy.validateCharge(1, 1000000, 'KRW'), isNull);
     });
 
     test('0 이하는 막는다', () {
-      expect(EmergencyFundingPolicy.validateCharge(0, 1000000), isNotNull);
-      expect(EmergencyFundingPolicy.validateCharge(-1, 1000000), isNotNull);
+      expect(EmergencyFundingPolicy.validateCharge(0, 1000000, 'KRW'), isNotNull);
+      expect(
+        EmergencyFundingPolicy.validateCharge(-1, 1000000, 'KRW'),
+        isNotNull,
+      );
     });
 
     test('상한이 0 인 라운드는 긴급 자금을 쓸 수 없다', () {
-      expect(EmergencyFundingPolicy.validateCharge(1000, 0), isNotNull);
+      expect(EmergencyFundingPolicy.validateCharge(1000, 0, 'KRW'), isNotNull);
+    });
+
+    /// 상한은 원화 기준이다. USDT 투입은 서버가 투입 시점 시세로 환산해 검증하므로
+    /// 여기서 원화 상한과 직접 비교하면 멀쩡한 금액이 막힌다.
+    test('USDT 투입은 원화 상한과 비교하지 않는다', () {
+      expect(
+        EmergencyFundingPolicy.validateCharge(5000, 1000000, 'USDT'),
+        isNull,
+      );
+      expect(
+        EmergencyFundingPolicy.validateCharge(1000001, 1000000, 'USDT'),
+        isNull,
+      );
+    });
+
+    test('USDT 라도 0 이하는 막는다', () {
+      expect(
+        EmergencyFundingPolicy.validateCharge(0, 1000000, 'USDT'),
+        isNotNull,
+      );
     });
 
     test('프리셋은 상한의 25 / 50 / 100% 를 내림한 값이다', () {
@@ -87,18 +114,43 @@ void main() {
     });
   });
 
-  group('제출 조건 — seed > 0 && emergencyLimit > 0 && 활성 규칙 >= 1', () {
+  group('제출 조건 — 시드 1곳 이상 && emergencyLimit > 0 && 활성 규칙 >= 1', () {
     test('셋을 모두 채우면 제출할 수 있다', () {
       expect(draft().canSubmit, isTrue);
     });
 
-    test('시드머니가 없으면 막는다', () {
-      expect(draft(seed: 0).canSubmit, isFalse);
-      expect(draft(seed: 0).seedError, '시드머니를 입력해 주세요.');
+    test('세 거래소가 모두 0 이면 막는다', () {
+      final none = draft(seeds: const {});
+      expect(none.canSubmit, isFalse);
+      expect(none.seedError, '시드머니를 한 곳 이상 입력해 주세요.');
+
+      final zeros = draft(
+        seeds: const {
+          ExchangeIds.upbit: 0,
+          ExchangeIds.bithumb: 0,
+          ExchangeIds.binance: 0,
+        },
+      );
+      expect(zeros.canSubmit, isFalse);
+      expect(zeros.seedError, '시드머니를 한 곳 이상 입력해 주세요.');
+    });
+
+    test('빗썸 한 곳만 채워도 제출할 수 있다', () {
+      expect(
+        draft(seeds: const {ExchangeIds.bithumb: 3000000}).canSubmit,
+        isTrue,
+      );
+    });
+
+    test('바이낸스만 500 USDT 면 범위 밖이라 막는다', () {
+      expect(draft(seeds: const {ExchangeIds.binance: 500}).canSubmit, isFalse);
     });
 
     test('시드머니가 범위 밖이면 막는다', () {
-      expect(draft(seed: 60000000).canSubmit, isFalse);
+      expect(
+        draft(seeds: const {ExchangeIds.upbit: 60000000}).canSubmit,
+        isFalse,
+      );
     });
 
     test('긴급 자금 상한이 100만원을 넘으면 막는다', () {
@@ -119,14 +171,31 @@ void main() {
         jsonDecode(jsonEncode(draft.toRequest().toJson()))
             as Map<String, dynamic>;
 
-    test('시드는 거래소 3개로 펼치고 업비트에 전액을 싣는다', () {
-      final json = body(draft(seed: 10000000));
+    /// 0 인 거래소를 빠뜨리면 서버가 그 거래소 지갑을 만들지 않아 송금조차 못 받는다.
+    test('시드는 거래소 3개로 펼치고 0 인 곳도 함께 싣는다', () {
+      final json = body(draft(seeds: const {ExchangeIds.bithumb: 3000000}));
       expect(json['seeds'], [
-        {'exchangeId': ExchangeIds.upbit, 'amount': 10000000.0},
-        {'exchangeId': ExchangeIds.bithumb, 'amount': 0.0},
+        {'exchangeId': ExchangeIds.upbit, 'amount': 0.0},
+        {'exchangeId': ExchangeIds.bithumb, 'amount': 3000000.0},
         {'exchangeId': ExchangeIds.binance, 'amount': 0.0},
       ]);
       expect(json['emergencyFundingLimit'], 500000.0);
+    });
+
+    test('거래소마다 그 거래소 기축통화 금액을 그대로 싣는다', () {
+      final json = body(
+        draft(
+          seeds: const {
+            ExchangeIds.upbit: 10000000,
+            ExchangeIds.binance: 5000,
+          },
+        ),
+      );
+      expect(json['seeds'], [
+        {'exchangeId': ExchangeIds.upbit, 'amount': 10000000.0},
+        {'exchangeId': ExchangeIds.bithumb, 'amount': 0.0},
+        {'exchangeId': ExchangeIds.binance, 'amount': 5000.0},
+      ]);
     });
 
     test('userId 를 보내지 않는다', () {

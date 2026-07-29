@@ -91,9 +91,18 @@ class _EmergencyFundingSheetState extends ConsumerState<EmergencyFundingSheet> {
     );
     if (round == null) return const SizedBox.shrink();
 
+    final currency = widget.exchange.baseCurrency;
+    final isUsdt = currency == 'USDT';
     final limit = round.emergencyFundingLimit.toInt();
-    final error = EmergencyFundingPolicy.validateCharge(_amount, limit);
+    final error = EmergencyFundingPolicy.validateCharge(
+      _amount,
+      limit,
+      currency,
+    );
     final exhausted = round.emergencyChargeCount <= 0;
+    final amountHint = isUsdt
+        ? formatCurrency(_amount.toDouble(), currency)
+        : formatKRW(_amount.toDouble());
 
     // 시트가 자체 ScaffoldMessenger 를 갖는다. 바깥 Scaffold 의 스낵바는 시트 뒤로 가려진다.
     return ScaffoldMessenger(
@@ -117,9 +126,9 @@ class _EmergencyFundingSheetState extends ConsumerState<EmergencyFundingSheet> {
                 Text('긴급 자금 투입', style: theme.textTheme.titleLarge),
                 const SizedBox(height: TryptoSpacing.xs),
                 Text(
-                  '${widget.exchange.name} 지갑으로 들어갑니다. '
+                  '${widget.exchange.name} $currency 지갑으로 들어갑니다. '
                   '남은 횟수 ${round.emergencyChargeCount}회 · '
-                  '1회 상한 ${formatKRW(round.emergencyFundingLimit)}',
+                  '1회 상한 ${formatKRW(round.emergencyFundingLimit)}(원화 기준)',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -135,28 +144,39 @@ class _EmergencyFundingSheetState extends ConsumerState<EmergencyFundingSheet> {
                   onChanged: (text) => setState(
                     () => _amount = int.tryParse(text.replaceAll(',', '')) ?? 0,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: '0',
-                    suffixText: '원',
+                    suffixText: isUsdt ? 'USDT' : '원',
                   ),
                 ),
                 const SizedBox(height: TryptoSpacing.sm),
-                Row(
-                  children: [
-                    for (final preset in EmergencyFundingPolicy.presets(limit))
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            right: TryptoSpacing.xs,
-                          ),
-                          child: OutlinedButton(
-                            onPressed: () => _setAmount(preset),
-                            child: Text(formatKRWCompact(preset.toDouble())),
+                // 프리셋은 원화 상한의 25/50/100% 라 USDT 칸에 놓으면 원화 금액을 USDT 로
+                // 입력하게 된다. 대신 환산 검증 안내를 보여준다.
+                if (isUsdt)
+                  Text(
+                    'USDT 투입은 투입 시점 시세로 원화 환산되어 상한을 검증합니다. '
+                    '환산액이 상한을 넘으면 거절됩니다.',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      for (final preset in EmergencyFundingPolicy.presets(limit))
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: TryptoSpacing.xs,
+                            ),
+                            child: OutlinedButton(
+                              onPressed: () => _setAmount(preset),
+                              child: Text(formatKRWCompact(preset.toDouble())),
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
+                    ],
+                  ),
                 const SizedBox(height: TryptoSpacing.sm),
                 SizedBox(
                   height: 20,
@@ -168,7 +188,7 @@ class _EmergencyFundingSheetState extends ConsumerState<EmergencyFundingSheet> {
                           ),
                         )
                       : NumericText(
-                          _amount > 0 ? formatKRW(_amount.toDouble()) : '',
+                          _amount > 0 ? amountHint : '',
                           size: 12,
                           weight: FontWeight.w500,
                           color: theme.colorScheme.onSurfaceVariant,

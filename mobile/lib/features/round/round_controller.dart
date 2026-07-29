@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../core/constants/exchanges.dart';
 import '../../models/enums.dart';
 import '../../models/round.dart';
 import '../auth/auth_controller.dart';
@@ -92,9 +93,13 @@ class RoundController extends Notifier<RoundState> {
     if (round.emergencyChargeCount <= 0) {
       return '긴급 자금 투입 횟수를 모두 사용했습니다.';
     }
+    // 상한은 원화 기준이라 통화를 알아야 검사할 수 있다(USDT 는 서버가 환산해 검증한다).
+    final baseCurrency = ExchangeIds.byId(exchangeId)?.baseCurrency;
+    if (baseCurrency == null) return '알 수 없는 거래소입니다.';
     final invalid = EmergencyFundingPolicy.validateCharge(
       amount,
       round.emergencyFundingLimit.toInt(),
+      baseCurrency,
     );
     if (invalid != null) return invalid;
 

@@ -94,11 +94,8 @@ const Map<RuleType, String> ruleUnits = {
 abstract final class SeedPolicy {
   static const int domesticMin = 1000000;
   static const int domesticMax = 50000000;
-  static const int foreignMin = 100;
-  static const int foreignMax = 50000;
-
-  /// 시드머니를 몰아 주는 지갑. 웹과 같이 업비트에 전액, 나머지 거래소에 0 을 보낸다(§7.3.3).
-  static const int seedExchangeId = ExchangeIds.upbit;
+  static const int foreignMin = 1000;
+  static const int foreignMax = 30000;
 
   static bool isDomestic(int exchangeId) =>
       ExchangeIds.byId(exchangeId)?.baseCurrency != 'USDT';
@@ -113,7 +110,7 @@ abstract final class SeedPolicy {
       return null;
     }
     if (amount < foreignMin || amount > foreignMax) {
-      return '시드머니는 100 USDT 이상 50,000 USDT 이하여야 합니다.';
+      return '시드머니는 1,000 USDT 이상 30,000 USDT 이하여야 합니다.';
     }
     return null;
   }
@@ -132,9 +129,13 @@ abstract final class EmergencyFundingPolicy {
 
   /// 투입 금액 검증 — `0 < amount <= limit`(§4.5). **입력 단계에서** 막는다. 웹은 제출 시점에
   /// `INVALID_EMERGENCY_FUNDING_AMOUNT` 를 받고도 화면에 아무 표시를 하지 않는다.
-  static String? validateCharge(int amount, int limit) {
+  ///
+  /// 상한은 **원화 기준**이라 USDT 투입에는 걸지 않는다 — 서버가 투입 시점 시세로 환산해
+  /// 검증하므로 여기서 원화 상한과 직접 비교하면 멀쩡한 금액이 막힌다.
+  static String? validateCharge(int amount, int limit, String baseCurrency) {
     if (limit <= 0) return '이 라운드는 긴급 자금을 쓸 수 없습니다.';
     if (amount <= 0) return '투입 금액을 입력해 주세요.';
+    if (baseCurrency == 'USDT') return null;
     if (amount > limit) {
       return '상한을 초과했습니다. ${formatGrouped(limit)}원 이하로 입력해주세요.';
     }
@@ -151,18 +152,25 @@ abstract final class EmergencyFundingPolicy {
 /// **구조적으로** 없다 — 중복을 보내면 서버가 400 이 아니라 500 을 낸다(R8-2).
 class RoundDraft {
   const RoundDraft({
-    required this.seed,
+    required this.seeds,
     required this.emergencyLimit,
     required this.rules,
   });
 
-  final int seed;
+  /// 거래소 id → 그 거래소 기축통화로 넣을 시드 금액. 0(또는 빠진 키)은 '배정 안 함' 이다.
+  final Map<int, int> seeds;
   final int emergencyLimit;
   final Map<RuleType, int> rules;
 
   String? get seedError {
-    if (seed <= 0) return '시드머니를 입력해 주세요.';
-    return SeedPolicy.validate(SeedPolicy.seedExchangeId, seed);
+    if (!seeds.values.any((amount) => amount > 0)) {
+      return '시드머니를 한 곳 이상 입력해 주세요.';
+    }
+    for (final exchange in ExchangeIds.all) {
+      final invalid = SeedPolicy.validate(exchange.id, seeds[exchange.id] ?? 0);
+      if (invalid != null) return invalid;
+    }
+    return null;
   }
 
   String? get emergencyError => EmergencyFundingPolicy.validate(emergencyLimit);
@@ -173,15 +181,15 @@ class RoundDraft {
   bool get canSubmit =>
       seedError == null && emergencyError == null && rulesError == null;
 
+  /// 시드가 0 인 거래소도 반드시 함께 싣는다 — 서버는 이 목록에 실린 거래소에만 지갑을
+  /// 만든다. 빠뜨리면 송금받을 지갑이 없어 그 거래소를 아예 못 쓴다.
   StartRoundRequest toRequest() {
     return StartRoundRequest(
       seeds: [
         for (final exchange in ExchangeIds.all)
           SeedRequest(
             exchangeId: exchange.id,
-            amount: exchange.id == SeedPolicy.seedExchangeId
-                ? seed.toDouble()
-                : 0,
+            amount: (seeds[exchange.id] ?? 0).toDouble(),
           ),
       ],
       emergencyFundingLimit: emergencyLimit.toDouble(),
