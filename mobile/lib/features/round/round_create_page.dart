@@ -196,15 +196,11 @@ class _RoundCreatePageState extends ConsumerState<RoundCreatePage> {
 
     return _AmountCard(
       title: exchange.name,
-      description: '${exchange.baseCurrency} 시드머니 · 0 은 배정하지 않음',
       baseCurrency: exchange.baseCurrency,
       amount: amount,
       presets: _seedPresetsOf(exchange.baseCurrency),
       selected: _target == exchange.id,
       error: amount > 0 ? SeedPolicy.validate(exchange.id, amount) : null,
-      note: exchange.baseCurrency == 'USDT'
-          ? '${exchange.name} 시드는 라운드 시작 시점 시세로 원화 환산되어 시드 총액에 합산됩니다'
-          : null,
       onSelect: () => setState(() => _target = exchange.id),
       onPreset: (value) => setState(() {
         _seeds[exchange.id] = value;
@@ -315,19 +311,21 @@ class _StepBar extends StatelessWidget {
 class _AmountCard extends StatelessWidget {
   const _AmountCard({
     required this.title,
-    required this.description,
     required this.baseCurrency,
     required this.amount,
     required this.presets,
     required this.selected,
     required this.onSelect,
     required this.onPreset,
+    this.description,
     this.error,
     this.note,
   });
 
   final String title;
-  final String description;
+
+  /// 카드 제목 아래 보조 설명. 시드 카드처럼 제목만으로 충분한 곳은 넣지 않는다.
+  final String? description;
 
   /// 금액 표기의 기준통화. USDT 카드에 원화 표기를 하면 사용자가 무엇을 넣는지 알 수 없다.
   final String baseCurrency;
@@ -363,13 +361,15 @@ class _AmountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: TryptoSpacing.xs),
-            Text(
-              description,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            if (description != null) ...[
+              const SizedBox(height: TryptoSpacing.xs),
+              Text(
+                description!,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: TryptoSpacing.md),
             NumericText(
               isUsdt
