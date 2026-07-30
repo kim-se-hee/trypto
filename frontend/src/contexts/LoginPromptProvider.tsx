@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { LoginPromptDialog } from "@/components/auth/LoginPromptDialog";
-import { useAuth } from "@/contexts/AuthContext";
 import { LoginPromptContext } from "./LoginPromptContext";
 
 const DEFAULT_REASON = "이 기능은 로그인한 뒤에 이용할 수 있습니다.";
@@ -12,17 +11,11 @@ const DEFAULT_REASON = "이 기능은 로그인한 뒤에 이용할 수 있습�
  * 화면이 통째로 바뀌면 로그인은 넘어야 할 벽이 되지만, 모달이면 하려던 일에 딸린 한 단계로 남는다.
  */
 export function LoginPromptProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
   const [reason, setReason] = useState<string | null>(null);
 
   const promptLogin = useCallback((next?: string) => {
     setReason(next ?? DEFAULT_REASON);
   }, []);
-
-  // 로그인에 성공하면 인증 상태가 바뀐다. 물어볼 것이 없어졌으므로 모달은 스스로 물러난다.
-  useEffect(() => {
-    if (isAuthenticated) setReason(null);
-  }, [isAuthenticated]);
 
   const value = useMemo(() => ({ promptLogin }), [promptLogin]);
 

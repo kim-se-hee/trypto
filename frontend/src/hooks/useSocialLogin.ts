@@ -24,6 +24,11 @@ export interface SocialLogin {
   start: (provider: SocialProvider) => void;
 }
 
+export interface UseSocialLoginOptions {
+  /** 로그인에 성공한 직후. 인증 상태는 이미 바뀐 뒤다. */
+  onSuccess?: () => void;
+}
+
 /**
  * 소셜 로그인 진행 상태.
  *
@@ -32,13 +37,19 @@ export interface SocialLogin {
  * 로그인 화면은 PublicRoute 가 내보내고, 로그인 유도 모달은 스스로 닫힌다.
  * 팝업이 차단되면 주 창을 통째로 제공자에게 보내는 예전 방식으로 물러선다.
  */
-export function useSocialLogin(): SocialLogin {
+export function useSocialLogin({ onSuccess }: UseSocialLoginOptions = {}): SocialLogin {
   const { loginWithSocial } = useAuth();
   const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(null);
   const [error, setError] = useState("");
   const popupRef = useRef<Window | null>(null);
   // 팝업이 결과를 넘기고 닫힌 것인지, 사용자가 그냥 닫은 것인지 가른다.
   const answeredRef = useRef(false);
+
+  // 성공 처리는 구독을 다시 맺지 않으려고 ref 로 들고 있는다. 갱신은 렌더가 끝난 뒤에 한다.
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
   const finish = useCallback(
     async (message: SocialCallbackMessage) => {
@@ -64,6 +75,7 @@ export function useSocialLogin(): SocialLogin {
         // pendingProvider 는 비우지 않는다. 인증 상태가 바뀌면 곧 이 화면이 사라지므로,
         // 그 사이에 버튼이 다시 눌리지 않게 잠가둔 채로 둔다.
         loginWithSocial({ userId: login.userId, nickname: login.nickname });
+        onSuccessRef.current?.();
       } catch (e: unknown) {
         setError(isApiClientError(e) ? e.message : "로그인 처리 중 오류가 발생했습니다.");
         setPendingProvider(null);

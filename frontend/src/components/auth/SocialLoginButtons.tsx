@@ -9,8 +9,8 @@ const IS_DEV = import.meta.env.DEV;
  * 로그인 화면과 로그인 유도 모달이 같은 버튼을 쓴다. 인가는 팝업이 다녀오고 주 창은 제자리에
  * 남으므로, 이 묶음을 어디에 놓든 로그인을 마친 사용자는 보던 자리에 그대로 있게 된다.
  */
-export function SocialLoginButtons() {
-  const { pendingProvider, error, start } = useSocialLogin();
+export function SocialLoginButtons({ onSuccess }: { onSuccess?: () => void }) {
+  const { pendingProvider, error, start } = useSocialLogin({ onSuccess });
 
   const kakaoReady = isSocialConfigured("kakao");
   const googleReady = isSocialConfigured("google");
