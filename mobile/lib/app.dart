@@ -32,7 +32,7 @@ class TryptoApp extends ConsumerWidget {
     });
 
     return MaterialApp.router(
-      title: 'Trypto',
+      title: 'trypto',
       debugShowCheckedModeBanner: false,
       // 다크 테마 토큰이 존재하지 않는다. 라이트 고정.
       themeMode: ThemeMode.light,
