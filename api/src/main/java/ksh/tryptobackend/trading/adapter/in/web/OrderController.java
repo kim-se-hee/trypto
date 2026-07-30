@@ -53,7 +53,7 @@ public class OrderController {
                     .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
             order = getOrderUseCase.getById(orderId);
         }
-        String message = order.isMarketOrder() ? "주문이 체결되었습니다." : "주문이 등록되었습니다.";
+        String message = order.isFilled() ? "주문이 체결되었습니다." : "주문이 등록되었습니다.";
         return ApiResponseDto.created(message, PlaceOrderResponse.from(order));
     }
 
