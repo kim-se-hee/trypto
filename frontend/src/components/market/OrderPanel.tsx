@@ -28,6 +28,8 @@ interface OrderPanelProps {
   orderTargetIds: OrderTargetIds | null;
   orderTargetFailure: OrderTargetFailure | null;
   orderFilledEvent: UserEvent | null;
+  /** 비로그인 상태에서 주문을 누른 순간. 값을 다 채워 둔 채로 로그인만 물어본다. */
+  onRequireLogin: () => void;
 }
 
 const ORDER_TABS: { key: OrderTab; label: string }[] = [
@@ -133,6 +135,7 @@ export function OrderPanel({
   orderTargetIds,
   orderTargetFailure,
   orderFilledEvent,
+  onRequireLogin,
 }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState<OrderTab>("buy");
   const [historyFilter, setHistoryFilter] = useState<"filled" | "pending">("filled");
@@ -410,6 +413,8 @@ export function OrderPanel({
   }
 
   const mappedUnavailable = !orderTargetIds;
+  // 로그인만 하면 풀리는 막힘이다. 다른 막힘과 달리 주문 버튼을 살려 두고, 누르면 로그인을 묻는다.
+  const needsLogin = orderTargetFailure === "UNAUTHENTICATED";
 
   return (
     // 좁은 화면에서는 주문 패널이 목록 아래에 이어 붙는다. 그 자리에서 붙잡아 두면 스크롤을 가로막는다.
@@ -426,6 +431,21 @@ export function OrderPanel({
               </p>
             </div>
           </div>
+
+          {needsLogin && (
+            <div className="mt-4 rounded-xl border border-primary/25 bg-primary/[0.06] px-3 py-3 text-xs">
+              <p className="text-muted-foreground">
+                시세는 진짜, 돈은 가짜입니다. 로그인하면 바로 주문할 수 있습니다.
+              </p>
+              <button
+                type="button"
+                onClick={onRequireLogin}
+                className="mt-2 font-semibold text-primary underline underline-offset-2"
+              >
+                로그인하고 주문하기
+              </button>
+            </div>
+          )}
 
           {mappedUnavailable && orderTargetFailure === "NO_ROUND" && (
             <div className="mt-4 rounded-xl border border-warning/30 bg-warning/10 px-3 py-3 text-xs text-warning-foreground">
@@ -577,7 +597,11 @@ export function OrderPanel({
 
               {!historyLoading && historyItems.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border/70 bg-secondary/30 px-4 py-6 text-center text-sm text-muted-foreground">
-                  {historyFilter === "filled" ? "체결 내역이 없습니다." : "미체결 주문이 없습니다."}
+                  {needsLogin
+                    ? "로그인하면 내 거래 내역이 여기에 쌓입니다."
+                    : historyFilter === "filled"
+                      ? "체결 내역이 없습니다."
+                      : "미체결 주문이 없습니다."}
                 </div>
               )}
 
@@ -734,8 +758,8 @@ export function OrderPanel({
                     "h-11 rounded-xl text-sm font-semibold",
                     isBuy ? "bg-primary text-primary-foreground" : "bg-destructive text-white",
                   )}
-                  onClick={() => void handleSubmitOrder()}
-                  disabled={isSubmitting || mappedUnavailable}
+                  onClick={() => (needsLogin ? onRequireLogin() : void handleSubmitOrder())}
+                  disabled={isSubmitting || (mappedUnavailable && !needsLogin)}
                 >
                   {isSubmitting ? "요청 중..." : isBuy ? "매수" : "매도"}
                 </Button>

@@ -6,7 +6,9 @@ export interface OrderTargetIds {
   exchangeCoinId: number;
 }
 
-export type OrderTargetFailure = "NO_ROUND" | "COIN_UNLISTED" | "LOOKUP_FAILED";
+// UNAUTHENTICATED 는 이 파일이 아니라 화면이 정한다. 로그인하지 않으면 지갑도 없어 해석은
+// NO_ROUND 로 떨어지는데, 로그인부터 해야 하는 것과 라운드를 시작해야 하는 것은 안내가 다르다.
+export type OrderTargetFailure = "UNAUTHENTICATED" | "NO_ROUND" | "COIN_UNLISTED" | "LOOKUP_FAILED";
 
 export type OrderTargetResult =
   | { ok: true; ids: OrderTargetIds }
