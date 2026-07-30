@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { RoundCreateHeader } from "@/components/round/RoundCreateHeader";
-import { SeedMoneyCard, seedAmountError } from "@/components/round/SeedMoneyCard";
+import { SeedMoneyCard } from "@/components/round/SeedMoneyCard";
+import { seedAmountError } from "@/components/round/seed-policy";
 import { InvestmentRulesSection } from "@/components/round/InvestmentRulesSection";
 import {
   getDefaultRules,

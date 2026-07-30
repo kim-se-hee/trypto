@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { PresetButtons } from "./PresetButtons";
+import { seedAmountError } from "./seed-policy";
 import { formatKRW } from "@/lib/formatters";
 import { EXCHANGES } from "@/lib/types/coins";
 import { cn } from "@/lib/utils";
@@ -23,21 +24,6 @@ const EMERGENCY_PRESETS = [
   { label: "50만", value: 500_000 },
   { label: "100만", value: 1_000_000 },
 ];
-
-export const SEED_LIMITS: Record<string, { min: number; max: number }> = {
-  KRW: { min: 1_000_000, max: 50_000_000 },
-  USDT: { min: 1_000, max: 30_000 },
-};
-
-// 0원은 "이 거래소엔 시드를 넣지 않음"이라 유효하다. 넣는 경우에만 통화별 한도를 검사한다.
-export function seedAmountError(baseCurrency: string, amount: number): string | null {
-  if (amount === 0) return null;
-  const limit = SEED_LIMITS[baseCurrency];
-  if (amount >= limit.min && amount <= limit.max) return null;
-  return baseCurrency === "USDT"
-    ? "1,000 ~ 30,000 USDT 범위로 입력해주세요"
-    : "100만원 ~ 5,000만원 범위로 입력해주세요";
-}
 
 interface SeedMoneyCardProps {
   seeds: Record<number, number>;
