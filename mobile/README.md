@@ -42,6 +42,48 @@ flutter test             # 순수 로직 · 인터셉터 계약 · 티커 성능
 flutter build apk --debug
 ```
 
+## 릴리스 빌드
+
+**운영 배포는 반드시 아래 한 줄로 한다.** `--dart-define-from-file` 을 빠뜨리면 `Env` 의 기본값인
+`http://10.0.2.2:8080`(에뮬레이터 전용 주소)이 그대로 박혀 실기기에서 서버에 붙지 못한다.
+
+```bash
+flutter build apk --release --dart-define-from-file=env/prod.json
+```
+
+산출물은 `build/app/outputs/flutter-apk/app-release.apk` 이며, 랜딩의 다운로드 버튼이 가리키는
+GitHub 릴리스에 `trypto-android.apk` 로 올린다.
+
+### 서명
+
+`android/key.properties.example` 을 `android/key.properties` 로 복사해 채운다. 이 파일과
+키스토어는 `.gitignore` 에 있어 저장소에 들어가지 않는다. 없으면 릴리스 빌드가 실패한다 —
+디버그 키로 조용히 서명되지 않도록 일부러 막아 두었다.
+
+**키스토어를 잃으면 이미 설치된 앱에 업데이트를 올릴 수 없다.** APK 를 직접 배포하므로 Play 앱
+서명 같은 복구 수단이 없다. 키 파일과 비밀번호를 서로 다른 곳에 백업한다.
+
+서명 키를 바꾸면 제공자 콘솔에 등록한 지문도 함께 바꿔야 로그인이 동작한다.
+
+```bash
+# 구글 콘솔에 등록할 SHA-1
+keytool -list -v -keystore <키스토어> -alias trypto
+
+# 카카오 콘솔에 등록할 키 해시
+keytool -exportcert -alias trypto -keystore <키스토어> | openssl sha1 -binary | openssl base64
+```
+
+### 배포 전 확인
+
+APK 에 박힌 서버 주소는 빌드 산출물에서 직접 확인할 수 있다.
+
+```bash
+unzip -o -q -j build/app/outputs/flutter-apk/app-release.apk lib/arm64-v8a/libapp.so -d /tmp/apkchk
+grep -a -o -E '(https?|wss?)://[a-zA-Z0-9._:/-]{3,60}' /tmp/apkchk/libapp.so | sort -u
+```
+
+`10.0.2.2` 가 보이면 운영값 주입에 실패한 것이다.
+
 ## 구조
 
 ```

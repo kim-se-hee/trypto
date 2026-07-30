@@ -1,0 +1,11 @@
+# 이 파일을 같은 디렉토리에 `key.properties` 로 복사해 값을 채운다.
+# key.properties 는 .gitignore 에 있어 저장소에 올라가지 않는다 — 그대로 두어야 한다.
+#
+# storeFile 경로는 슬래시(/)로 쓴다. 역슬래시는 이 형식에서 특수문자로 해석된다.
+# 키스토어 파일과 비밀번호는 서로 다른 곳에 백업한다. 잃으면 이미 설치된 앱에
+# 업데이트를 영원히 올릴 수 없다(APK 직배포라 Play 앱 서명 같은 복구 수단이 없다).
+
+storePassword=
+keyPassword=
+keyAlias=trypto
+storeFile=C:/Users/saree98/keystore/trypto-upload.jks
