@@ -52,12 +52,12 @@ export function ViolationTradeList({ trades }: ViolationTradeListProps) {
   }, [byExchange]);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
       {/* 헤더 */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold">규칙 위반 거래</h2>
 
-        <div className="flex gap-1.5 rounded-lg bg-secondary/60 p-1">
+        <div className="flex gap-1.5 self-start rounded-lg bg-secondary/60 p-1">
           {FILTER_TABS.map((tab) => {
             const count =
               tab.key === "ALL" ? counts.all : tab.key === "LOSS" ? counts.loss : counts.profit;
@@ -108,9 +108,10 @@ export function ViolationTradeList({ trades }: ViolationTradeListProps) {
           return (
             <div
               key={trade.id}
-              className="flex flex-col gap-2 rounded-xl border border-border/40 px-4 py-3 transition-colors hover:bg-primary/[0.02]"
+              className="flex flex-col gap-2 rounded-xl border border-border/40 px-3 py-3 transition-colors hover:bg-primary/[0.02] sm:px-4"
             >
-              <div className="flex items-center gap-3">
+              {/* 좁은 화면에서는 배지가 여러 개 붙어 한 줄을 넘긴다. 넘치면 다음 줄로 내린다. */}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 sm:gap-3">
                 <span className="text-sm font-bold">{trade.coinSymbol}</span>
                 <span className="text-xs text-muted-foreground">{trade.date}</span>
 
