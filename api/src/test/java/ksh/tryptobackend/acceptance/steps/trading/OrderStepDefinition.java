@@ -233,6 +233,13 @@ public class OrderStepDefinition {
         });
     }
 
+    @Then("체결가는 {long}원이다")
+    public void 체결가는_원이다(long price) {
+        apiClient.getLastResponse().expectBody().jsonPath("$.data.filledPrice").value(filledPrice -> {
+            assertThat(new BigDecimal(filledPrice.toString())).isEqualByComparingTo(new BigDecimal(price));
+        });
+    }
+
     @Then("에러 코드는 {string}이다")
     public void 에러_코드는_이다(String code) {
         apiClient.getLastResponse().expectBody().jsonPath("$.code").isEqualTo(code);
@@ -318,9 +325,19 @@ public class OrderStepDefinition {
         assertThat(lockedBalance(KRW_COIN_ID)).isGreaterThan(new BigDecimal(locked));
     }
 
+    @Then("지갑의 BTC 잠금 잔고는 {long}개이다")
+    public void 지갑의_BTC_잠금_잔고는_개이다(long locked) {
+        assertThat(lockedBalance(BTC_COIN_ID)).isEqualByComparingTo(new BigDecimal(locked));
+    }
+
     @Then("지갑의 BTC 사용 가능 잔고는 {long}보다 크다")
     public void 지갑의_BTC_사용_가능_잔고는_보다_크다(long available) {
         assertThat(availableBalance(BTC_COIN_ID)).isGreaterThan(new BigDecimal(available));
+    }
+
+    @Then("지갑의 KRW 사용 가능 잔고는 {long}보다 크다")
+    public void 지갑의_KRW_사용_가능_잔고는_보다_크다(long available) {
+        assertThat(availableBalance(KRW_COIN_ID)).isGreaterThan(new BigDecimal(available));
     }
 
     private BigDecimal lockedBalance(Long coinId) {
