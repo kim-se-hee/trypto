@@ -11,10 +11,14 @@ import { OrderPanel } from "@/components/market/OrderPanel";
 import { EmergencyFundingCard } from "@/components/round/EmergencyFundingCard";
 import { useRound } from "@/contexts/RoundContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLoginPrompt } from "@/contexts/LoginPromptContext";
 import { EXCHANGES } from "@/lib/types/coins";
-import { cn } from "@/lib/utils";
 import { isChosungQuery, toChosung, toJamo } from "@/lib/hangul";
-import { resolveOrderTargetIds, type OrderTargetResult } from "@/lib/api/id-mapping";
+import {
+  resolveOrderTargetIds,
+  type OrderTargetFailure,
+  type OrderTargetResult,
+} from "@/lib/api/id-mapping";
 import { useExchangeCoins } from "@/hooks/useExchangeCoins";
 import { useTickers } from "@/hooks/useTickers";
 import { useUserEvents } from "@/hooks/useUserEvents";
@@ -25,7 +29,8 @@ import type { FilterType } from "@/components/market/FilterChips";
 
 export function MarketPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { promptLogin } = useLoginPrompt();
   const { activeRound, chargeEmergencyFunding, getWalletId } = useRound();
 
   const [orderFilledEvent, setOrderFilledEvent] = useState<UserEvent | null>(null);
@@ -147,7 +152,13 @@ export function MarketPage() {
 
   const orderTarget = resolved?.target === orderTargetKey ? resolved.result : null;
   const orderTargetIds = orderTarget?.ok ? orderTarget.ids : null;
-  const orderTargetFailure = orderTarget && !orderTarget.ok ? orderTarget.reason : null;
+  // 로그인하지 않았으면 지갑이 없어 해석은 NO_ROUND 로 떨어진다. 라운드를 시작하라고 안내할 자리가
+  // 아니라 로그인을 물어볼 자리이므로 여기서 가른다.
+  const orderTargetFailure: OrderTargetFailure | null = !isAuthenticated
+    ? "UNAUTHENTICATED"
+    : orderTarget && !orderTarget.ok
+      ? orderTarget.reason
+      : null;
 
   const handleExchangeChange = (key: string) => {
     setSearchParams({ exchange: key });
@@ -203,13 +214,7 @@ export function MarketPage() {
             코인 목록을 불러오는 중...
           </div>
         ) : (
-          <div
-            className={cn(
-              "animate-enter-delay-3 mt-6 grid grid-cols-1 gap-6",
-              // 라운드가 없으면 옆 칸에 띄울 것이 없다. 빈 열을 남기지 않고 차트와 목록이 폭을 다 쓰게 한다.
-              activeRound && "lg:grid-cols-[minmax(0,1fr)_360px]",
-            )}
-          >
+          <div className="animate-enter-delay-3 mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-5">
               {selectedCoin && (
                 <CandleChartPanel
@@ -233,27 +238,29 @@ export function MarketPage() {
               />
             </div>
 
-            {/* Side panel */}
-            {activeRound && (
-              <div className="space-y-5">
+            {/* Side panel — 주문 패널은 로그인이나 라운드가 없어도 자리를 지킨다.
+                빈 화면보다, 값이 채워진 패널을 두고 무엇이 더 필요한지 그 자리에서 알리는 편이 낫다 */}
+            <div className="space-y-5">
+              {activeRound && (
                 <EmergencyFundingCard
                   round={activeRound}
                   onCharge={chargeEmergencyFunding}
                 />
-                {selectedCoin && (
-                  <OrderPanel
-                    baseCurrency={exchange.baseCurrency}
-                    coinSymbol={selectedCoin.symbol}
-                    coinName={selectedCoin.name}
-                    currentPrice={selectedCoin.currentPrice}
-                    feeRate={0.0005}
-                    orderTargetIds={orderTargetIds}
-                    orderTargetFailure={orderTargetFailure}
-                    orderFilledEvent={orderFilledEvent}
-                  />
-                )}
-              </div>
-            )}
+              )}
+              {selectedCoin && (
+                <OrderPanel
+                  baseCurrency={exchange.baseCurrency}
+                  coinSymbol={selectedCoin.symbol}
+                  coinName={selectedCoin.name}
+                  currentPrice={selectedCoin.currentPrice}
+                  feeRate={0.0005}
+                  orderTargetIds={orderTargetIds}
+                  orderTargetFailure={orderTargetFailure}
+                  orderFilledEvent={orderFilledEvent}
+                  onRequireLogin={promptLogin}
+                />
+              )}
+            </div>
           </div>
         )}
 

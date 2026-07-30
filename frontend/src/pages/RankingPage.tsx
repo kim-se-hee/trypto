@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLoginPrompt } from "@/contexts/LoginPromptContext";
 import {
   getMyRanking,
   getRankerPortfolio,
@@ -113,7 +114,8 @@ function StatsPlaceholder() {
 }
 
 export function RankingPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { promptLogin } = useLoginPrompt();
   const [searchParams, setSearchParams] = useSearchParams();
   const periodParam = searchParams.get("period");
   const period: RankingPeriod =
@@ -228,6 +230,13 @@ export function RankingPage() {
   }
 
   function handleToggleRow(entry: RankingItem) {
+    // 순위는 누구나 보지만 남의 포트폴리오는 로그인해야 열린다. 서버가 401 로 막는 자리라
+    // 펼쳐 놓고 오류를 보여주는 대신, 펼치기 전에 로그인을 묻는다.
+    if (!isAuthenticated) {
+      promptLogin();
+      return;
+    }
+
     const nextExpanded = expandedUserId === entry.userId ? null : entry.userId;
     setExpandedUserId(nextExpanded);
 
@@ -290,7 +299,16 @@ export function RankingPage() {
             <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-2xl bg-card p-4 shadow-card">
                 <p className="mb-3 text-xs font-semibold text-muted-foreground">내 랭킹</p>
-                {myRanking ? (
+                {!isAuthenticated ? (
+                  <div>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      로그인하면 이 목록에 내 이름도 오릅니다.
+                    </p>
+                    <Button variant="outline" className="mt-3 w-full" onClick={promptLogin}>
+                      로그인하고 순위 확인하기
+                    </Button>
+                  </div>
+                ) : myRanking ? (
                   <div>
                     <div className="flex items-center gap-3">
                       <RankBadge rank={myRanking.rank} />

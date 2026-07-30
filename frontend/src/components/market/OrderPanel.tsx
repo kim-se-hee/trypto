@@ -28,6 +28,8 @@ interface OrderPanelProps {
   orderTargetIds: OrderTargetIds | null;
   orderTargetFailure: OrderTargetFailure | null;
   orderFilledEvent: UserEvent | null;
+  /** 비로그인 상태에서 주문을 누른 순간. 값을 다 채워 둔 채로 로그인만 물어본다. */
+  onRequireLogin: () => void;
 }
 
 const ORDER_TABS: { key: OrderTab; label: string }[] = [
@@ -133,6 +135,7 @@ export function OrderPanel({
   orderTargetIds,
   orderTargetFailure,
   orderFilledEvent,
+  onRequireLogin,
 }: OrderPanelProps) {
   const [activeTab, setActiveTab] = useState<OrderTab>("buy");
   const [historyFilter, setHistoryFilter] = useState<"filled" | "pending">("filled");
@@ -410,6 +413,8 @@ export function OrderPanel({
   }
 
   const mappedUnavailable = !orderTargetIds;
+  // 로그인만 하면 풀리는 막힘이다. 다른 막힘과 달리 주문 버튼을 살려 두고, 누르면 로그인을 묻는다.
+  const needsLogin = orderTargetFailure === "UNAUTHENTICATED";
 
   return (
     // 좁은 화면에서는 주문 패널이 목록 아래에 이어 붙는다. 그 자리에서 붙잡아 두면 스크롤을 가로막는다.
@@ -577,7 +582,11 @@ export function OrderPanel({
 
               {!historyLoading && historyItems.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border/70 bg-secondary/30 px-4 py-6 text-center text-sm text-muted-foreground">
-                  {historyFilter === "filled" ? "체결 내역이 없습니다." : "미체결 주문이 없습니다."}
+                  {needsLogin
+                    ? "로그인하면 내 거래 내역이 여기에 쌓입니다."
+                    : historyFilter === "filled"
+                      ? "체결 내역이 없습니다."
+                      : "미체결 주문이 없습니다."}
                 </div>
               )}
 
@@ -716,30 +725,41 @@ export function OrderPanel({
                 <p className="mt-2 text-xs font-medium text-destructive">{submitError}</p>
               )}
 
-              <div className="mt-5 grid grid-cols-2 gap-2">
+              {/* 로그인 전에는 초기화·주문 버튼을 내지 않는다. 눌러도 되지 않는 버튼을 늘어놓는 대신
+                  지금 할 수 있는 한 가지만 남긴다 */}
+              {needsLogin ? (
                 <Button
-                  variant="outline"
-                  className="h-11 rounded-xl text-sm font-semibold"
-                  onClick={() => {
-                    setPrice("");
-                    setQuantity("");
-                    setAmount("");
-                    setSubmitError("");
-                  }}
+                  className="mt-5 h-11 w-full rounded-xl text-sm font-semibold"
+                  onClick={onRequireLogin}
                 >
-                  초기화
+                  로그인하고 주문하기
                 </Button>
-                <Button
-                  className={cn(
-                    "h-11 rounded-xl text-sm font-semibold",
-                    isBuy ? "bg-primary text-primary-foreground" : "bg-destructive text-white",
-                  )}
-                  onClick={() => void handleSubmitOrder()}
-                  disabled={isSubmitting || mappedUnavailable}
-                >
-                  {isSubmitting ? "요청 중..." : isBuy ? "매수" : "매도"}
-                </Button>
-              </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-11 rounded-xl text-sm font-semibold"
+                    onClick={() => {
+                      setPrice("");
+                      setQuantity("");
+                      setAmount("");
+                      setSubmitError("");
+                    }}
+                  >
+                    초기화
+                  </Button>
+                  <Button
+                    className={cn(
+                      "h-11 rounded-xl text-sm font-semibold",
+                      isBuy ? "bg-primary text-primary-foreground" : "bg-destructive text-white",
+                    )}
+                    onClick={() => void handleSubmitOrder()}
+                    disabled={isSubmitting || mappedUnavailable}
+                  >
+                    {isSubmitting ? "요청 중..." : isBuy ? "매수" : "매도"}
+                  </Button>
+                </div>
+              )}
             </>
           )}
       </div>

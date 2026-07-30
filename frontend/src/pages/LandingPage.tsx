@@ -45,7 +45,9 @@ const REGRET_STEPS = [
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
 
-  const ctaTo = isAuthenticated ? "/market" : "/login";
+  // 로그인 여부와 무관하게 마켓으로 보낸다. 처음 온 사람에게 로그인 화면부터 들이밀면
+  // 무엇을 주는 곳인지 보기도 전에 판단해야 한다. 시세를 먼저 보여주고, 주문할 때 묻는다.
+  const ctaTo = "/market";
   const ctaLabel = isAuthenticated ? "이어서 투자하기" : "지금 날려보기";
 
   return (

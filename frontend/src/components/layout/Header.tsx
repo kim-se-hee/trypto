@@ -1,31 +1,78 @@
-import { useState } from "react";
-import { Menu, X, LogOut } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Menu, X, LogOut, Lock } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLoginPrompt } from "@/contexts/LoginPromptContext";
 import { useRound } from "@/contexts/RoundContext";
 
-const navItems = [
+interface NavItem {
+  path: string;
+  label: string;
+  /** 내 데이터를 담는 탭. 로그인 전에는 잠긴 상태로 낸다. */
+  requiresAuth?: boolean;
+}
+
+const navItems: NavItem[] = [
   { path: "/market", label: "마켓" },
-  { path: "/portfolio", label: "포트폴리오" },
-  { path: "/wallet", label: "입출금" },
+  { path: "/portfolio", label: "포트폴리오", requiresAuth: true },
+  { path: "/wallet", label: "입출금", requiresAuth: true },
   { path: "/ranking", label: "랭킹" },
-  { path: "/regret", label: "투자 복기" },
+  { path: "/regret", label: "투자 복기", requiresAuth: true },
 ];
 
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { promptLogin } = useLoginPrompt();
   const { hasActiveRound, isRoundLoading } = useRound();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const showRoundStart = !isRoundLoading && !hasActiveRound;
+  const showRoundStart = isAuthenticated && !isRoundLoading && !hasActiveRound;
 
   // 로그아웃 후에는 랜딩으로 보낸다. 순서가 중요하다 — 먼저 공개 라우트(/)로 옮긴 뒤 세션을 비운다.
   // 반대로 하면 user 가 비는 순간 보호 라우트가 /login 으로 리다이렉트해 이 이동을 덮어쓴다.
   const handleLogout = async () => {
     navigate("/", { replace: true });
     await logout();
+  };
+
+  // 잠긴 탭은 링크가 아니라 버튼으로 낸다. 링크로 보내면 보호 라우트가 /login 으로 튕겨
+  // 보던 시세가 사라지지만, 버튼이면 화면은 그대로 두고 모달만 띄울 수 있다.
+  const renderNavItem = (item: NavItem, className: string, onNavigate?: () => void): ReactNode => {
+    const isActive = location.pathname === item.path;
+    const locked = item.requiresAuth === true && !isAuthenticated;
+
+    if (locked) {
+      return (
+        <button
+          key={item.path}
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            promptLogin();
+          }}
+          className={cn(className, "flex w-full items-center gap-1.5 sm:w-auto")}
+        >
+          {item.label}
+          <Lock className="h-3 w-3 opacity-50" />
+        </button>
+      );
+    }
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        onClick={onNavigate}
+        className={cn(
+          className,
+          isActive && "bg-foreground/[0.06] font-semibold text-foreground",
+        )}
+      >
+        {item.label}
+      </Link>
+    );
   };
 
   return (
@@ -38,23 +85,12 @@ export function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 text-sm sm:flex">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors",
-                  isActive
-                    ? "bg-foreground/[0.06] font-semibold text-foreground"
-                    : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {navItems.map((item) =>
+            renderNavItem(
+              item,
+              "rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground",
+            ),
+          )}
         </nav>
 
         {/* Desktop user info */}
@@ -67,21 +103,32 @@ export function Header() {
               라운드 시작
             </Link>
           )}
-          {user && (
-            <Link
-              to="/mypage"
-              className="text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          {isAuthenticated ? (
+            <>
+              {user && (
+                <Link
+                  to="/mypage"
+                  className="text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {user.nickname}
+                </Link>
+              )}
+              <button
+                onClick={() => void handleLogout()}
+                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>로그아웃</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={promptLogin}
+              className="rounded-lg bg-primary px-3 py-1.5 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              {user.nickname}
-            </Link>
+              로그인
+            </button>
           )}
-          <button
-            onClick={() => void handleLogout()}
-            className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>로그아웃</span>
-          </button>
         </div>
 
         {/* Mobile hamburger */}
@@ -97,24 +144,13 @@ export function Header() {
       {/* Mobile nav dropdown */}
       {mobileOpen && (
         <nav className="border-t border-border/40 bg-background px-4 pb-3 pt-2 sm:hidden">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-foreground/[0.06] text-foreground"
-                    : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {navItems.map((item) =>
+            renderNavItem(
+              item,
+              "block rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground",
+              () => setMobileOpen(false),
+            ),
+          )}
 
           {showRoundStart && (
             <Link
@@ -126,26 +162,40 @@ export function Header() {
             </Link>
           )}
 
-          <div className="mt-2 flex items-center justify-between border-t border-border/40 px-3 pt-3">
-            {user && (
-              <Link
-                to="/mypage"
-                onClick={() => setMobileOpen(false)}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          <div className="mt-2 border-t border-border/40 pt-3">
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between px-3">
+                {user && (
+                  <Link
+                    to="/mypage"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {user.nickname}
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    void handleLogout();
+                  }}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>로그아웃</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  promptLogin();
+                }}
+                className="block w-full rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground"
               >
-                {user.nickname}
-              </Link>
+                로그인
+              </button>
             )}
-            <button
-              onClick={() => {
-                setMobileOpen(false);
-                void handleLogout();
-              }}
-              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>로그아웃</span>
-            </button>
           </div>
         </nav>
       )}

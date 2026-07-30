@@ -24,20 +24,32 @@ export interface SocialLogin {
   start: (provider: SocialProvider) => void;
 }
 
+export interface UseSocialLoginOptions {
+  /** 로그인에 성공한 직후. 인증 상태는 이미 바뀐 뒤다. */
+  onSuccess?: () => void;
+}
+
 /**
  * 소셜 로그인 진행 상태.
  *
  * 인가는 팝업에 맡기고 주 창은 제자리에 남는다. 팝업이 code 를 넘겨주면 주 창이 state 를 대조하고
- * 백엔드와 교환한다. 로그인에 성공하면 인증 상태가 바뀌므로 화면 이동은 PublicRoute 가 맡는다.
+ * 백엔드와 교환한다. 이 훅은 인증 상태만 바꾼다. 그 뒤에 무엇을 할지는 부르는 쪽이 정한다 —
+ * 로그인 화면은 PublicRoute 가 내보내고, 로그인 유도 모달은 스스로 닫힌다.
  * 팝업이 차단되면 주 창을 통째로 제공자에게 보내는 예전 방식으로 물러선다.
  */
-export function useSocialLogin(): SocialLogin {
+export function useSocialLogin({ onSuccess }: UseSocialLoginOptions = {}): SocialLogin {
   const { loginWithSocial } = useAuth();
   const [pendingProvider, setPendingProvider] = useState<SocialProvider | null>(null);
   const [error, setError] = useState("");
   const popupRef = useRef<Window | null>(null);
   // 팝업이 결과를 넘기고 닫힌 것인지, 사용자가 그냥 닫은 것인지 가른다.
   const answeredRef = useRef(false);
+
+  // 성공 처리는 구독을 다시 맺지 않으려고 ref 로 들고 있는다. 갱신은 렌더가 끝난 뒤에 한다.
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
   const finish = useCallback(
     async (message: SocialCallbackMessage) => {
@@ -63,6 +75,7 @@ export function useSocialLogin(): SocialLogin {
         // pendingProvider 는 비우지 않는다. 인증 상태가 바뀌면 곧 이 화면이 사라지므로,
         // 그 사이에 버튼이 다시 눌리지 않게 잠가둔 채로 둔다.
         loginWithSocial({ userId: login.userId, nickname: login.nickname });
+        onSuccessRef.current?.();
       } catch (e: unknown) {
         setError(isApiClientError(e) ? e.message : "로그인 처리 중 오류가 발생했습니다.");
         setPendingProvider(null);
@@ -92,6 +105,18 @@ export function useSocialLogin(): SocialLogin {
 
   // 로그인을 마치거나 화면을 떠날 때 열어둔 팝업을 남기지 않는다.
   useEffect(() => () => popupRef.current?.close(), []);
+
+  // 팝업이 차단되어 주 창이 제공자를 다녀오는 경우에만 해당한다. 그렇게 떠난 화면이 뒤로 가기로
+  // 되살아나면(bfcache) "로그인 중…"에 멈춘 버튼과 로그인 여부를 모르는 인증 상태를 그대로 들고
+  // 온다. 새로 부팅시켜 둘 다 다시 정하게 한다. 팝업으로 로그인하면 이 화면은 떠나지 않는다.
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) window.location.reload();
+    }
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const start = useCallback((provider: SocialProvider) => {
     setError("");
