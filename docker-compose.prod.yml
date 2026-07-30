@@ -92,6 +92,9 @@ services:
     networks:
       - trypto-net
     environment:
+      # 컨테이너 기본 시간대는 UTC 다. LocalDateTime 시각 필드는 오프셋 없이 내려가므로
+      # JVM 기본 시간대를 KST 로 맞춰야 클라이언트가 읽는 서버 로컬시각 규약과 일치한다.
+      TZ: Asia/Seoul
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -125,6 +128,7 @@ services:
     networks:
       - trypto-net
     environment:
+      TZ: Asia/Seoul
       MYSQL_HOST: ${MYSQL_HOST:?MYSQL_HOST 를 .env 에 넣어야 한다}
       MYSQL_PORT: "${MYSQL_PORT:-3306}"
       MYSQL_DATABASE: ${MYSQL_DATABASE:-trypto}
@@ -188,6 +192,7 @@ services:
     volumes:
       - engine-wal:/wal
     environment:
+      TZ: Asia/Seoul
       MYSQL_HOST: ${MYSQL_HOST:?MYSQL_HOST 를 .env 에 넣어야 한다}
       MYSQL_PORT: "${MYSQL_PORT:-3306}"
       MYSQL_DATABASE: ${MYSQL_DATABASE:-trypto}
