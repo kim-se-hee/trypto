@@ -75,7 +75,20 @@ candle_1d  → candle_1M (매 1개월, 1일 시작)
 | `candle_1w` | `candle_1d` | 1주 | 동일 | `offset: 4d`로 월요일 시작 |
 | `candle_1M` | `candle_1d` | 1개월 | 동일 | calendar duration |
 
-Task 정의는 `influxdb/init-tasks.sh`에 있으며, Docker 초기 setup 시 자동 생성된다.
+Task 정의는 `influxdb/init-tasks.sh`에 있으며, Docker 초기 setup 시 자동 생성된다. 이미 생성된 Task 는 재배포로 갱신되지 않으므로, 정의를 바꾸면 살아 있는 InfluxDB 의 Task 도 따로 갱신해야 한다.
+
+**시간대별 경계와 실행 시각** — 4시간봉 이상은 경계가 거래소 시간대에 따라 갈려 Task 를 둘로 나눈다. 업비트·바이낸스는 UTC 자정, 빗썸은 00:00 KST(=15:00 UTC)가 경계다.
+
+빗썸 쪽은 `option location` 으로 윈도우 경계만 KST 로 옮겨서는 부족하다. **location 은 실행 시각까지 옮겨주지 않기 때문에** `every` 주기로 두면 UTC 기준으로 실행되어 경계와 어긋나고, 조회 구간 안에 경계가 들어오지 않는 순간 앞이 잘린 윈도우가 엉뚱한 시각(구간 시작점)에 기록된다. 그래서 실행 시각을 cron 으로 경계에 맞춘다.
+
+| Task | 실행 시각(UTC) | 경계 |
+|------|----------------|------|
+| `candle_4h_kst` | `0 3,7,11,15,19,23 * * *` | 00·04·08·12·16·20시 KST |
+| `candle_1d_kst` | `0 15 * * *` | 00시 KST |
+| `candle_1w_kst` | `0 15 * * 0` | 월요일 00시 KST |
+| `candle_1M_kst` | `every: 1mo` 유지 | 매월 1일 00시 KST |
+
+월봉 경계는 매월 말일이라 cron 으로 표현되지 않는다. 대신 조회 구간이 32일로 넉넉해 항상 경계가 걸린 온전한 윈도우가 잡히므로 주기 실행을 그대로 둔다.
 
 **실행 순서** — Task 간 offset 체인으로 이전 단계의 write 완료를 보장한다.
 
