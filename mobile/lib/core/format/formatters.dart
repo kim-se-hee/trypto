@@ -116,7 +116,7 @@ String formatPrice(double price, String baseCurrency) {
   if (baseCurrency == 'USDT') {
     if (price >= 100) return _fix2.format(price);
     if (price >= 1) return _f2to4.format(price);
-    return _fix4.format(price);
+    return _f4to8.format(price);
   }
   return _grp.format(price);
 }
