@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- trypto 기준색. 로고 원본(trypto-logo/README.txt)의 #0DA6AC 와 같은 값이다. -->
+    <color name="ic_launcher_background">#0DA6AC</color>
+</resources>

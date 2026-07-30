@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/widgets/app_logo.dart';
+
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
@@ -10,8 +12,10 @@ class SplashPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            AppLogo(size: 48),
+            SizedBox(height: 16),
             Text(
-              'Trypto',
+              'trypto',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,

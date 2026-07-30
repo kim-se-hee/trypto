@@ -57,6 +57,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # 로고는 웹과 같은 종이비행기 심벌이다. 원본은 SVG 이며 2.0x/3.0x 변형까지 함께 번들해
+  # 고밀도 화면에서 뭉개지지 않게 한다.
+  assets:
+    - assets/images/
+
   # 폰트 파일은 assets/fonts/README.md 의 출처에서 받아 번들한다(OFL/Apache 라이선스).
   # Pretendard 는 본문·UI, NotoSansKR ExtraBold 는 큰 강조 숫자, RobotoMono 는 시세 숫자에 쓴다.
   fonts:
