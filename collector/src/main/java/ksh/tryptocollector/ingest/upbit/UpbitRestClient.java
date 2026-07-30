@@ -1,5 +1,6 @@
 package ksh.tryptocollector.ingest.upbit;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import ksh.tryptocollector.model.Candle;
@@ -11,6 +12,10 @@ import org.springframework.web.client.RestClient;
 
 @Component
 public class UpbitRestClient {
+    // 마켓 코드를 쿼리스트링에 싣는 구조라 상장 종목이 늘면 URI 길이 한도(4KB)를 넘겨 414 가 난다.
+    // 빗썸이 473개에서 이미 한도를 초과했으므로 같은 방식으로 나눠서 요청한다.
+    private static final int TICKER_BATCH_SIZE = 100;
+
     private final RestClient restClient;
     private final String restUrl;
     private final String tickerUrl;
@@ -43,16 +48,12 @@ public class UpbitRestClient {
     }
 
     public List<UpbitTickerResponse> fetchKrwTickers(List<String> marketCodes) {
-        String markets = String.join(",", marketCodes);
-        UpbitTickerResponse[] responses = restClient
-                .get()
-                .uri(tickerUrl + "?markets=" + markets)
-                .retrieve()
-                .body(UpbitTickerResponse[].class);
-        if (responses == null) {
-            return List.of();
+        List<UpbitTickerResponse> tickers = new ArrayList<>();
+        for (int from = 0; from < marketCodes.size(); from += TICKER_BATCH_SIZE) {
+            int to = Math.min(from + TICKER_BATCH_SIZE, marketCodes.size());
+            tickers.addAll(fetchTickerBatch(marketCodes.subList(from, to)));
         }
-        return Arrays.asList(responses);
+        return tickers;
     }
 
     public List<Candle> fetchCandles(String candlePath, String base, String toIso, int count) {
@@ -75,5 +76,18 @@ public class UpbitRestClient {
                         r.lowPrice(),
                         r.tradePrice()))
                 .toList();
+    }
+
+    private List<UpbitTickerResponse> fetchTickerBatch(List<String> marketCodes) {
+        String markets = String.join(",", marketCodes);
+        UpbitTickerResponse[] responses = restClient
+                .get()
+                .uri(tickerUrl + "?markets=" + markets)
+                .retrieve()
+                .body(UpbitTickerResponse[].class);
+        if (responses == null) {
+            return List.of();
+        }
+        return Arrays.asList(responses);
     }
 }
