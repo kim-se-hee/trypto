@@ -1,7 +1,7 @@
 name: trypto
 description: Trypto 코인 모의투자 모바일 앱
 publish_to: none
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   # json_serializable 이 includeIfNull: false 필드에 null-aware element(`?instance.x`) 를
