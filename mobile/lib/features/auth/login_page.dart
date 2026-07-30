@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/auth/auth_config.dart';
 import '../../core/theme/theme.dart';
 import '../../core/theme/trypto_colors.dart';
+import '../../core/widgets/app_logo.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../models/enums.dart';
 import 'auth_controller.dart';
@@ -50,13 +51,9 @@ class LoginPage extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          LucideIcons.activity,
-                          size: 30,
-                          color: theme.colorScheme.primary,
-                        ),
+                        const AppLogo(size: 36),
                         const SizedBox(width: TryptoSpacing.sm),
-                        Text('Trypto', style: theme.textTheme.headlineMedium),
+                        Text('trypto', style: theme.textTheme.headlineMedium),
                       ],
                     ),
                     const SizedBox(height: TryptoSpacing.md),

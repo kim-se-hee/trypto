@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/auth/auth_config.dart';
 import '../../core/theme/theme.dart';
+import '../../core/widgets/app_logo.dart';
 import '../../models/enums.dart';
 
 /// 인가 코드를 세션으로 교환하는 동안의 전체 차단 오버레이(계획서 §5.1).
@@ -23,11 +23,7 @@ class ExchangingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                LucideIcons.activity,
-                size: 28,
-                color: theme.colorScheme.primary,
-              ),
+              const AppLogo(size: 36),
               const SizedBox(height: TryptoSpacing.lg),
               const SizedBox(
                 width: 24,
