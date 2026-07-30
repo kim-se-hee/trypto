@@ -81,7 +81,7 @@ export function formatPrice(price: number, baseCurrency: string): string {
   if (baseCurrency === "USDT") {
     if (price >= 100) return price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (price >= 1) return price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-    return price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    return price.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 8 });
   }
   return price.toLocaleString("ko-KR");
 }
