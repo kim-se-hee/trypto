@@ -5,6 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInView } from "@/hooks/useInView";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FeatureCarousel } from "@/components/landing/FeatureCarousel";
+import {
+  AndroidDownloadButton,
+  AndroidInstallGuide,
+} from "@/components/landing/AndroidDownload";
 
 const ENTER_CLASS = [
   "animate-enter",
@@ -61,13 +65,19 @@ export function LandingPage() {
               진짜 시세, 가짜 돈. 잃는 건 없습니다.
             </p>
 
-            <div className="animate-enter-delay-3 mt-9 flex justify-center">
-              <Link
-                to={ctaTo}
-                className="flex h-14 items-center rounded-full bg-primary px-8 text-base font-extrabold text-primary-foreground shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:scale-[0.98]"
-              >
-                {ctaLabel}
-              </Link>
+            <div className="animate-enter-delay-3 mt-9 flex flex-col items-center gap-5">
+              {/* 웹이 주 동선, 앱은 보조 선택지로 나란히 둔다 */}
+              <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row">
+                <Link
+                  to={ctaTo}
+                  className="flex h-14 items-center justify-center rounded-full bg-primary px-8 text-base font-extrabold text-primary-foreground shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl active:scale-[0.98]"
+                >
+                  {ctaLabel}
+                </Link>
+                <AndroidDownloadButton className="justify-center" />
+              </div>
+
+              <AndroidInstallGuide />
             </div>
           </div>
         </section>
@@ -125,12 +135,15 @@ export function LandingPage() {
               <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/80">
                 그래서 연습장을 하나 만들었습니다.
               </p>
-              <Link
-                to={ctaTo}
-                className="mt-8 inline-flex h-13 items-center rounded-full bg-white px-8 text-[15px] font-extrabold text-primary shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-xl active:scale-[0.98]"
-              >
-                미리 대비하기
-              </Link>
+              <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  to={ctaTo}
+                  className="flex h-13 items-center justify-center rounded-full bg-white px-8 text-[15px] font-extrabold text-primary shadow-lg transition-all duration-150 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-xl active:scale-[0.98]"
+                >
+                  미리 대비하기
+                </Link>
+                <AndroidDownloadButton tone="primary" className="h-13 justify-center text-[15px]" />
+              </div>
             </div>
           </Reveal>
         </section>
