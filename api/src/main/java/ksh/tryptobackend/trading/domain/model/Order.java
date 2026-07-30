@@ -63,7 +63,7 @@ public class Order extends AggregateRoot {
                 .build();
 
         order.registerEvent(OrderPlacedEvent.of(order, marketInfo, holdingSnapshot));
-        if (order.isMarketOrder()) {
+        if (order.fillableAt(marketInfo.currentPrice())) {
             order.fill(marketInfo.currentPrice(), marketInfo.tradingPair().quoteScale(), now);
             order.registerEvent(OrderFilledEvent.of(order, marketInfo));
         }
@@ -139,6 +139,15 @@ public class Order extends AggregateRoot {
 
     public boolean isMarketOrder() {
         return mode.orderType() == OrderType.MARKET;
+    }
+
+    public boolean isFilled() {
+        return this.status == OrderStatus.FILLED;
+    }
+
+    /** 시장가는 항상, 지정가는 지정가 조건이 현재가로 충족될 때 즉시 체결된다. */
+    public boolean fillableAt(Price executionPrice) {
+        return mode.canFillAt(limitPrice, executionPrice);
     }
 
     public boolean awaitsMatching() {
