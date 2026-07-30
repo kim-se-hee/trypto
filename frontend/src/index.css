@@ -97,11 +97,27 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* 가로 방향 전환 시 사파리가 글자를 임의로 키우지 않게 한다. */
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-weight: 400;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.01em;
+    /* 표·차트가 제 상자 안에서 가로로 스크롤한다. 페이지 자체가 옆으로 밀리는 것은 막는다. */
+    overflow-x: hidden;
+  }
+
+  /* iOS 사파리는 16px 미만 입력칸에 포커스가 가면 화면을 확대한다. 확대되면 레이아웃이
+     통째로 어긋나고 사용자가 직접 되돌려야 하므로, 좁은 화면에서는 16px 로 올린다. */
+  @media (max-width: 639px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 }
 
