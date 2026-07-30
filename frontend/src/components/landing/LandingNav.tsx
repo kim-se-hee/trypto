@@ -47,7 +47,7 @@ export function LandingNav() {
         </nav>
 
         <Link
-          to={isAuthenticated ? "/market" : "/login"}
+          to="/market"
           className={cn(
             "rounded-full bg-primary px-4 py-2 text-[13px] font-bold text-primary-foreground shadow-md transition-all duration-300 hover:brightness-110 active:scale-[0.98]",
             scrolled
