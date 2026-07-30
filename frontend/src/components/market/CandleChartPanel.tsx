@@ -10,6 +10,7 @@ import {
   type CandleItem,
 } from "@/lib/api/candle-api";
 import { connect, isConnected, subscribeTickers } from "@/lib/api/websocket";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { CoinData } from "@/lib/types/coins";
 
 interface CandleChartPanelProps {
@@ -41,6 +42,10 @@ const DEFAULT_VISIBLE_COUNT: Record<CandleInterval, number> = {
   "1M": 18,
 };
 
+function defaultVisibleCount(interval: CandleInterval, isMobile: boolean): number {
+  return isMobile ? MOBILE_VISIBLE_COUNT[interval] : DEFAULT_VISIBLE_COUNT[interval];
+}
+
 const MIN_VISIBLE_COUNT = 12;
 // 보이는 구간의 왼쪽 끝이 이 개수만큼 남았을 때 미리 과거 캔들을 당겨 온다. 벽에 닿기 전에
 // 채워 두어야 스와이프가 끊기지 않는다.
@@ -49,9 +54,35 @@ const PREFETCH_THRESHOLD = 8;
 // 시세로 만든 봉이 자리를 지켜야 하므로, 서버가 따라잡을 때까지 몇 개는 들고 있는다.
 const LIVE_CANDLE_LIMIT = 4;
 const RECONCILE_DELAY_MS = 15_000;
-const CHART_WIDTH = 960;
-const CHART_HEIGHT = 440;
-const PADDING = { top: 20, right: 124, bottom: 42, left: 20 };
+
+// SVG 는 viewBox 를 화면 폭에 맞춰 통째로 줄인다. 데스크톱 비율(960×440)을 좁은 화면에 그대로 쓰면
+// 높이가 납작해지고 글자도 같은 비율로 줄어 읽을 수 없다. 좁은 화면은 세로로 긴 좌표계를 따로 쓴다.
+const DESKTOP_CHART = {
+  width: 960,
+  height: 440,
+  padding: { top: 20, right: 124, bottom: 42, left: 20 },
+  axisFontSize: 13,
+  tickFontSize: 12,
+} as const;
+
+const MOBILE_CHART = {
+  width: 380,
+  height: 340,
+  padding: { top: 14, right: 70, bottom: 30, left: 10 },
+  axisFontSize: 9,
+  tickFontSize: 9,
+} as const;
+
+// 좁은 화면은 봉을 적게 띄워야 한 봉이 손끝으로 짚을 만큼 넓어진다.
+const MOBILE_VISIBLE_COUNT: Record<CandleInterval, number> = {
+  "1m": 24,
+  "1h": 20,
+  "4h": 18,
+  "1d": 20,
+  "1w": 16,
+  "1M": 12,
+};
+
 const TOOLTIP_WIDTH = 220;
 const TOOLTIP_HEIGHT = 138;
 const TOOLTIP_OFFSET_X = 10;
@@ -180,12 +211,15 @@ export function CandleChartPanel({
   coin,
 }: CandleChartPanelProps) {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobile();
+  // 두 상수 중 하나를 가리키므로 참조가 그대로다. 아래 합성 결과들이 매 렌더 다시 계산되지 않는다.
+  const metrics = isMobile ? MOBILE_CHART : DESKTOP_CHART;
   const [interval, setInterval] = useState<CandleInterval>("1d");
   // 어느 요청의 결과인지 함께 담아 둔다. 그래야 코인·거래소·주기를 막 바꾼 직후의 '아직 못 받은 상태'를
   // 이펙트에서 비우지 않고 렌더에서 그대로 판단할 수 있다.
   const [loaded, setLoaded] = useState<{ key: string; candles: CandleItem[] } | null>(null);
   const [live, setLive] = useState<{ key: string; candles: CandleItem[] } | null>(null);
-  const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE_COUNT["1d"]);
+  const [visibleCount, setVisibleCount] = useState(() => defaultVisibleCount("1d", isMobile));
   const [anchorEndIndex, setAnchorEndIndex] = useState(0);
   const [followingLatest, setFollowingLatest] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -237,7 +271,7 @@ export function CandleChartPanel({
       const candles = data ?? EMPTY_CANDLES;
       setLoaded({ key: requestKey, candles });
       // 받아온 개수로 줄이지 않는다. 서버 캔들이 아직 없어도 실시간 봉이 쌓이면 그려야 한다.
-      setVisibleCount(DEFAULT_VISIBLE_COUNT[interval]);
+      setVisibleCount(defaultVisibleCount(interval, isMobile));
       setAnchorEndIndex(candles.length);
       setFollowingLatest(true);
       setHoveredIndex(null);
@@ -250,7 +284,7 @@ export function CandleChartPanel({
     return () => {
       cancelled = true;
     };
-  }, [fetchCandles, interval, requestKey]);
+  }, [fetchCandles, interval, isMobile, requestKey]);
 
   // 실시간 체결가를 그 시각이 속한 봉에 접어 넣는다. 시세 목록과 달리 프레임 단위로 합치지 않고
   // 들어오는 체결을 모두 본다. 한 프레임 안의 체결을 버리면 그 봉의 고가·저가가 얕아진다.
@@ -335,28 +369,33 @@ export function CandleChartPanel({
     const range = maxPrice - minPrice || maxPrice * 0.02 || 1;
     const paddedMin = Math.max(0, minPrice - range * 0.08);
     const paddedMax = maxPrice + range * 0.08;
-    const plotWidth = CHART_WIDTH - PADDING.left - PADDING.right;
-    const plotHeight = CHART_HEIGHT - PADDING.top - PADDING.bottom;
+    const plotWidth = metrics.width - metrics.padding.left - metrics.padding.right;
+    const plotHeight = metrics.height - metrics.padding.top - metrics.padding.bottom;
     const slotWidth = plotWidth / visibleCandles.length;
-    const candleWidth = Math.max(6, Math.min(16, slotWidth * 0.62));
+    const candleWidth = Math.max(4, Math.min(16, slotWidth * 0.62));
 
-    const getX = (index: number) => PADDING.left + (index + 0.5) * slotWidth;
+    const getX = (index: number) => metrics.padding.left + (index + 0.5) * slotWidth;
     const getY = (price: number) =>
-      PADDING.top + (1 - (price - paddedMin) / (paddedMax - paddedMin || 1)) * plotHeight;
+      metrics.padding.top + (1 - (price - paddedMin) / (paddedMax - paddedMin || 1)) * plotHeight;
 
     const yTicks = Array.from({ length: 4 }, (_, index) => {
       const value = paddedMax - ((paddedMax - paddedMin) / 3) * index;
       return { value, y: getY(value) };
     });
 
-    const xTickStep = Math.max(1, Math.floor(visibleCandles.length / 4));
+    const xTickStep = Math.max(1, Math.floor(visibleCandles.length / (isMobile ? 3 : 4)));
+    const lastIndex = visibleCandles.length - 1;
     const xTicks = visibleCandles
       .map((candle, index) => ({
         index,
         x: getX(index),
         label: formatTickTime(candle.time, interval),
       }))
-      .filter((tick) => tick.index % xTickStep === 0 || tick.index === visibleCandles.length - 1);
+      .filter((tick) => {
+        if (tick.index % xTickStep === 0) return true;
+        // 마지막 봉의 시각은 따로 세운다. 다만 바로 앞 눈금과 붙으면 글자가 겹치므로 그때는 세우지 않는다.
+        return tick.index === lastIndex && lastIndex % xTickStep >= xTickStep / 2;
+      });
 
     const first = visibleCandles[0];
     const last = visibleCandles[visibleCandles.length - 1];
@@ -385,7 +424,7 @@ export function CandleChartPanel({
       latest: last,
       changeRate,
     };
-  }, [interval, visibleCandles]);
+  }, [interval, isMobile, metrics, visibleCandles]);
 
   const hoveredCandle =
     chartData && hoveredIndex !== null ? chartData.hoverPoints[hoveredIndex] : null;
@@ -508,8 +547,8 @@ export function CandleChartPanel({
 
     const svgRect = event.currentTarget.getBoundingClientRect();
     const containerRect = chartContainerRef.current?.getBoundingClientRect() ?? svgRect;
-    const x = ((event.clientX - svgRect.left) / svgRect.width) * CHART_WIDTH;
-    const y = ((event.clientY - svgRect.top) / svgRect.height) * CHART_HEIGHT;
+    const x = ((event.clientX - svgRect.left) / svgRect.width) * metrics.width;
+    const y = ((event.clientY - svgRect.top) / svgRect.height) * metrics.height;
     const localX = event.clientX - containerRect.left;
     const localY = event.clientY - containerRect.top;
 
@@ -521,10 +560,10 @@ export function CandleChartPanel({
     }
 
     const isOutsidePlot =
-      x < PADDING.left ||
-      x > CHART_WIDTH - PADDING.right ||
-      y < PADDING.top ||
-      y > CHART_HEIGHT - PADDING.bottom;
+      x < metrics.padding.left ||
+      x > metrics.width - metrics.padding.right ||
+      y < metrics.padding.top ||
+      y > metrics.height - metrics.padding.bottom;
     if (isOutsidePlot) {
       setHoveredIndex(null);
       setPointerPosition(null);
@@ -590,9 +629,9 @@ export function CandleChartPanel({
       event.stopPropagation();
 
       const rect = container.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * CHART_WIDTH;
+      const x = ((event.clientX - rect.left) / rect.width) * metrics.width;
       const hoveredVisibleIndex = clamp(
-        Math.floor((x - PADDING.left) / Math.max(chartData.slotWidth, 1)),
+        Math.floor((x - metrics.padding.left) / Math.max(chartData.slotWidth, 1)),
         0,
         Math.max(visibleCandles.length - 1, 0),
       );
@@ -626,6 +665,7 @@ export function CandleChartPanel({
     mergedCandles.length,
     chartData,
     endIndex,
+    metrics,
     moveViewport,
     zoomTo,
     visibleCandles.length,
@@ -635,29 +675,29 @@ export function CandleChartPanel({
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="border-b border-border/50 px-5 py-5 sm:px-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-end gap-2">
-              <h2 className="text-4xl font-bold tracking-tight">
+      <div className="border-b border-border/50 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">
                 {coin.symbol}
-                <span className="ml-2 text-2xl font-semibold text-muted-foreground">
+                <span className="ml-2 text-lg font-semibold text-muted-foreground sm:text-2xl">
                   / {baseCurrency}
                 </span>
               </h2>
-              <span className="pb-1 text-base font-medium text-muted-foreground">
+              <span className="pb-0.5 text-sm font-medium text-muted-foreground sm:pb-1 sm:text-base">
                 {coin.name}
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="font-mono text-4xl font-bold tabular-nums">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <p className="font-mono text-2xl font-bold tabular-nums sm:text-4xl">
                 {getCurrencySymbol(baseCurrency)}
                 {formatPrice(coin.currentPrice, baseCurrency)}
               </p>
               <span
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-bold",
+                  "rounded-full px-2.5 py-1 text-xs font-bold sm:px-3 sm:py-1.5 sm:text-sm",
                   coin.changeRate > 0 && "bg-positive/15 text-positive",
                   coin.changeRate < 0 && "bg-negative/15 text-negative",
                   coin.changeRate === 0 && "bg-secondary text-muted-foreground",
@@ -669,14 +709,14 @@ export function CandleChartPanel({
           </div>
 
           <div className="flex min-w-0 flex-col gap-2 xl:items-end">
-            <div className="overflow-x-auto">
-              <div className="flex min-w-max flex-nowrap gap-2 pb-1">
+            <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <div className="flex min-w-max flex-nowrap gap-1.5 pb-1 sm:gap-2">
               {INTERVAL_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setInterval(option.value)}
                   className={cn(
-                    "rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all sm:px-4 sm:py-2 sm:text-sm",
                     interval === option.value
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border/70 bg-white text-muted-foreground hover:border-primary/30 hover:text-foreground",
@@ -691,9 +731,9 @@ export function CandleChartPanel({
         </div>
       </div>
 
-      <div className="px-4 py-4 sm:px-6 sm:py-6">
+      <div className="px-3 py-3 sm:px-6 sm:py-6">
         {!chartData ? (
-          <div className="flex h-64 items-center justify-center rounded-[24px] border border-border/60 bg-white text-sm text-muted-foreground">
+          <div className="flex h-56 items-center justify-center rounded-[24px] border border-border/60 bg-white text-center text-sm text-muted-foreground sm:h-64">
             {loading ? "캔들 데이터를 불러오는 중..." : "캔들 데이터가 부족합니다"}
           </div>
         ) : (
@@ -703,7 +743,7 @@ export function CandleChartPanel({
           style={{ overscrollBehavior: "contain" }}
         >
           <svg
-            viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+            viewBox={`0 0 ${metrics.width} ${metrics.height}`}
             className="block w-full touch-none"
             style={{ touchAction: "none" }}
             onPointerDown={handlePointerDown}
@@ -718,20 +758,20 @@ export function CandleChartPanel({
             {chartData.yTicks.map((tick) => (
               <g key={tick.value}>
                 <line
-                  x1={PADDING.left}
+                  x1={metrics.padding.left}
                   y1={tick.y}
-                  x2={CHART_WIDTH - PADDING.right}
+                  x2={metrics.width - metrics.padding.right}
                   y2={tick.y}
                   stroke="var(--border)"
                   strokeWidth={1}
                   strokeDasharray="4 6"
                 />
                 <text
-                  x={CHART_WIDTH - 12}
+                  x={metrics.width - 6}
                   y={tick.y + 4}
                   textAnchor="end"
                   fill="var(--muted-foreground)"
-                  fontSize="13"
+                  fontSize={metrics.axisFontSize}
                 >
                   {formatAxisLabel(tick.value, baseCurrency)}
                 </text>
@@ -742,10 +782,10 @@ export function CandleChartPanel({
               <text
                 key={`${tick.index}-${tick.label}`}
                 x={tick.x}
-                y={CHART_HEIGHT - 12}
+                y={metrics.height - 10}
                 textAnchor="middle"
                 fill="var(--muted-foreground)"
-                fontSize="12"
+                fontSize={metrics.tickFontSize}
               >
                 {tick.label}
               </text>
@@ -789,18 +829,18 @@ export function CandleChartPanel({
               <>
                 <line
                   x1={hoveredCandle.x}
-                  y1={PADDING.top}
+                  y1={metrics.padding.top}
                   x2={hoveredCandle.x}
-                  y2={CHART_HEIGHT - PADDING.bottom}
+                  y2={metrics.height - metrics.padding.bottom}
                   stroke="var(--foreground)"
                   strokeOpacity="0.24"
                   strokeWidth={1}
                   strokeDasharray="4 4"
                 />
                 <line
-                  x1={PADDING.left}
+                  x1={metrics.padding.left}
                   y1={chartData.getY(hoveredCandle.close)}
-                  x2={CHART_WIDTH - PADDING.right}
+                  x2={metrics.width - metrics.padding.right}
                   y2={chartData.getY(hoveredCandle.close)}
                   stroke="var(--foreground)"
                   strokeOpacity="0.16"

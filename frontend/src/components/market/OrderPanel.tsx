@@ -412,8 +412,9 @@ export function OrderPanel({
   const mappedUnavailable = !orderTargetIds;
 
   return (
-    <div className="sticky top-24 space-y-4">
-      <div className="rounded-xl border border-border bg-card p-5">
+    // 좁은 화면에서는 주문 패널이 목록 아래에 이어 붙는다. 그 자리에서 붙잡아 두면 스크롤을 가로막는다.
+    <div className="space-y-4 lg:sticky lg:top-24">
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold text-muted-foreground">주문 패널</p>
