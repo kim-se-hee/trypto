@@ -131,8 +131,10 @@ create_ohlc_task "aggregate_candle_1h"   "1h"   "1m"   "-1h5m"      "candle_1m" 
 #   4시간 = 00·04·08·12·16·20시 KST = 15·19·23·03·07·11시 UTC
 #   일    = 00시 KST = 전날 15시 UTC
 #   주    = 월요일 00시 KST = 일요일 15시 UTC
-# 월봉은 경계가 매월 말일이라 cron 으로 표현되지 않는다. 대신 range 가 32일로 넉넉해
-# 항상 경계가 걸린 온전한 윈도우가 잡히므로 every 주기를 그대로 둔다.
+# 월봉 경계는 매월 말일 15시 UTC 라 cron 한 줄로 못 박는다. 대신 매일 KST 자정에 월중 누계를
+# 재계산한다. last() 는 마지막 윈도우 하나만 남기므로 평소에는 진행 중인 달의 누계가 갱신되고,
+# 말일 실행에서는 진행 중 윈도우 폭이 0 이라 완성된 한 달 윈도우가 확정 기록된다.
+# range 62일은 달 길이와 무관하게 직전 달 경계까지 항상 덮기 위한 값.
 #            task_name                    every  offset  range_start  source       measurement   window_offset  exchange_pred                tz            cron
 create_ohlc_task "aggregate_candle_4h"     "4h"   "2m"   "-4h5m"      "candle_1h"  "candle_4h"   ""     'r.exchange != "BITHUMB"'
 create_ohlc_task "aggregate_candle_4h_kst" "4h"   "2m"   "-4h5m"      "candle_1h"  "candle_4h"   ""     'r.exchange == "BITHUMB"'   "Asia/Seoul"  "0 3,7,11,15,19,23 * * *"
@@ -141,6 +143,6 @@ create_ohlc_task "aggregate_candle_1d_kst" "1d"   "2m"   "-1d5m"      "candle_1h
 create_ohlc_task "aggregate_candle_1w"     "1w"   "3m"   "-1w5m"      "candle_1d"  "candle_1w"   "4d"   'r.exchange != "BITHUMB"'
 create_ohlc_task "aggregate_candle_1w_kst" "1w"   "3m"   "-1w5m"      "candle_1d"  "candle_1w"   "4d"   'r.exchange == "BITHUMB"'   "Asia/Seoul"  "0 15 * * 0"
 create_ohlc_task "aggregate_candle_1M"     "1mo"  "3m"   "-32d"       "candle_1d"  "candle_1M"   ""     'r.exchange != "BITHUMB"'
-create_ohlc_task "aggregate_candle_1M_kst" "1mo"  "3m"   "-32d"       "candle_1d"  "candle_1M"   ""     'r.exchange == "BITHUMB"'   "Asia/Seoul"
+create_ohlc_task "aggregate_candle_1M_kst" "1mo"  "3m"   "-62d"       "candle_1d"  "candle_1M"   ""     'r.exchange == "BITHUMB"'   "Asia/Seoul"  "0 15 * * *"
 
 echo "All InfluxDB aggregation tasks created."
