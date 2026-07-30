@@ -102,11 +102,11 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
 
   return (
     <section className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
-      <div className="border-b border-border/30 px-6 py-5">
-        <h3 className="text-lg font-bold">입출금 내역</h3>
+      <div className="border-b border-border/30 px-4 py-4 sm:px-6 sm:py-5">
+        <h3 className="text-base font-bold sm:text-lg">입출금 내역</h3>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/30 px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/30 px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           {TYPE_TABS.map((tab) => (
             <button
@@ -156,7 +156,7 @@ export function TransferHistoryPanel({ exchangeId, exchanges, records, assetFilt
               <button
                 key={item.id}
                 onClick={() => setSelected(item)}
-                className="w-full px-6 py-4 text-left transition hover:bg-primary/[0.04]"
+                className="w-full px-4 py-4 sm:px-6 text-left transition hover:bg-primary/[0.04]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">{formatDate(item.requestedAt)}</span>

@@ -167,12 +167,12 @@ export function MarketPage() {
       <Header />
 
       {/* Page header */}
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-display text-3xl tracking-tight">코인 시세</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h1 className="font-display text-2xl tracking-tight sm:text-3xl">코인 시세</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
                 {exchange.name} 기준 · {exchange.baseCurrency} 마켓
               </p>
             </div>
@@ -180,20 +180,21 @@ export function MarketPage() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         {/* Market overview cards */}
         <div className="animate-enter-delay-1">
           <MarketOverviewCards coins={coins} baseCurrency={exchange.baseCurrency} />
         </div>
 
         {/* Controls */}
-        <div className="animate-enter-delay-2 mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="animate-enter-delay-2 mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
           <ExchangeTabs
             exchanges={exchangeTabItems}
             selected={selectedExchangeKey}
             onSelect={handleExchangeChange}
           />
-          {EXCHANGES.length > 1 && <div className="h-6 w-px bg-border/60" />}
+          {/* 줄이 나뉘면 구분선만 홀로 남아 어색하다. 한 줄에 들어가는 폭에서만 세운다. */}
+          {EXCHANGES.length > 1 && <div className="hidden h-6 w-px bg-border/60 sm:block" />}
           <FilterChips selected={filter} onSelect={setFilter} />
         </div>
 

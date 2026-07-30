@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { EstimateNotice } from "@/components/regret/EstimateNotice";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatCurrencyCompact, formatCurrencyShort } from "@/lib/formatters";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { RegretSummary, AssetSnapshot, ViolationMarker } from "@/lib/types/regret";
 import { getTickInterval } from "@/lib/types/regret";
 
@@ -15,9 +16,21 @@ interface RegretChartProps {
   totalDays: number;
 }
 
-const W = 700;
-const H = 280;
-const PAD = { top: 20, right: 20, bottom: 32, left: 60 };
+// SVG 는 viewBox 를 화면 폭에 맞춰 통째로 줄인다. 데스크톱 비율(700×280)을 좁은 화면에 그대로 쓰면
+// 높이가 납작해지고 축 글자도 같은 비율로 줄어 읽을 수 없다. 좁은 화면은 좌표계를 따로 쓴다.
+const DESKTOP_METRICS = {
+  w: 700,
+  h: 280,
+  pad: { top: 20, right: 20, bottom: 32, left: 60 },
+  fontSize: 10,
+} as const;
+
+const MOBILE_METRICS = {
+  w: 360,
+  h: 250,
+  pad: { top: 14, right: 10, bottom: 26, left: 42 },
+  fontSize: 8,
+} as const;
 
 /** 라운드 전체를 합친 그래프라 거래소 기축통화가 섞인다. 서버가 원화로 환산해 내려준다. */
 const CHART_CURRENCY = "KRW";
@@ -40,6 +53,9 @@ export function RegretChart({
   totalDays,
 }: RegretChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const isMobile = useIsMobile();
+  // 두 상수 중 하나를 가리키므로 참조가 그대로다. 아래 합성 결과가 매 렌더 다시 계산되지 않는다.
+  const { w: W, h: H, pad: PAD, fontSize: AXIS_FONT_SIZE } = isMobile ? MOBILE_METRICS : DESKTOP_METRICS;
 
   const chartData = useMemo(() => {
     if (snapshots.length < 2) return null;
@@ -76,8 +92,8 @@ export function RegretChart({
       return { value: val, y: getY(val) };
     });
 
-    // X축 라벨 — 시즌 기간에 따라 adaptive 간격
-    const tickInterval = getTickInterval(totalDays);
+    // X축 라벨 — 시즌 기간에 따라 adaptive 간격. 좁은 화면은 폭이 절반이라 라벨도 절반만 세운다.
+    const tickInterval = getTickInterval(totalDays) * (isMobile ? 2 : 1);
     const xLabels: { date: string; x: number }[] = [];
     for (let i = 0; i < n; i += tickInterval) {
       xLabels.push({ date: snapshots[i].date, x: getX(i) });
@@ -108,7 +124,7 @@ export function RegretChart({
     }));
 
     return { actualPath, simPath, btcPath, yTicks, xLabels, markerPoints, hoverPoints };
-  }, [snapshots, markers, simulationLine, btcHoldValues, totalDays]);
+  }, [snapshots, markers, simulationLine, btcHoldValues, totalDays, isMobile, W, H, PAD]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
@@ -123,11 +139,11 @@ export function RegretChart({
       });
       setHoveredIndex(closest);
     },
-    [chartData],
+    [chartData, W],
   );
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
       {/* 상단 요약 */}
       <div className="mb-5">
         <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -135,7 +151,7 @@ export function RegretChart({
           <EstimateNotice />
         </p>
         <p className={cn(
-          "mt-1 font-mono text-3xl font-bold tabular-nums",
+          "mt-1 font-mono text-2xl font-bold tabular-nums sm:text-3xl",
           summary.totalViolationLoss > 0 ? "text-negative" : "text-positive",
         )}>
           {summary.totalViolationLoss < 0 ? "-" : ""}
@@ -144,26 +160,28 @@ export function RegretChart({
         <p className="mt-1 text-xs text-muted-foreground">{describeViolationLoss(summary)}</p>
       </div>
 
-      {/* 3-stat 카드 */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-secondary/50 px-3 py-3">
+      {/* 3-stat 카드 — 좁은 화면에서는 자릿수를 다 세우면 칸을 넘친다. 억·만 단위로 줄여 적는다. */}
+      <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-xl bg-secondary/50 px-2.5 py-2.5 sm:px-3 sm:py-3">
           <p className="text-[11px] font-medium text-muted-foreground">실제 자산</p>
-          <p className="mt-1 font-mono text-base font-bold tabular-nums">
-            {formatCurrencyCompact(summary.actualAsset, CHART_CURRENCY)}
+          <p className="mt-1 font-mono text-sm font-bold tabular-nums sm:text-base">
+            <span className="sm:hidden">{formatCurrencyShort(summary.actualAsset, CHART_CURRENCY)}</span>
+            <span className="hidden sm:inline">{formatCurrencyCompact(summary.actualAsset, CHART_CURRENCY)}</span>
           </p>
         </div>
-        <div className="rounded-xl bg-secondary/50 px-3 py-3">
+        <div className="rounded-xl bg-secondary/50 px-2.5 py-2.5 sm:px-3 sm:py-3">
           <p className="text-[11px] font-medium text-muted-foreground">규칙 준수 시</p>
           <p className={cn(
-            "mt-1 font-mono text-base font-bold tabular-nums",
+            "mt-1 font-mono text-sm font-bold tabular-nums sm:text-base",
             summary.ruleFollowedAsset > summary.actualAsset ? "text-positive" : "",
           )}>
-            {formatCurrencyCompact(summary.ruleFollowedAsset, CHART_CURRENCY)}
+            <span className="sm:hidden">{formatCurrencyShort(summary.ruleFollowedAsset, CHART_CURRENCY)}</span>
+            <span className="hidden sm:inline">{formatCurrencyCompact(summary.ruleFollowedAsset, CHART_CURRENCY)}</span>
           </p>
         </div>
-        <div className="rounded-xl bg-secondary/50 px-3 py-3">
+        <div className="rounded-xl bg-secondary/50 px-2.5 py-2.5 sm:px-3 sm:py-3">
           <p className="text-[11px] font-medium text-muted-foreground">위반</p>
-          <p className="mt-1 font-mono text-lg font-bold tabular-nums">
+          <p className="mt-1 font-mono text-base font-bold tabular-nums sm:text-lg">
             {summary.totalViolations}<span className="text-sm font-bold">건</span>
           </p>
         </div>
@@ -186,7 +204,7 @@ export function RegretChart({
           <text
             x={W / 2} y={H / 2}
             textAnchor="middle" dominantBaseline="middle"
-            fill="var(--muted-foreground)" fontSize={12} fontFamily="inherit"
+            fill="var(--muted-foreground)" fontSize={AXIS_FONT_SIZE + 2} fontFamily="inherit"
           >
             아직 집계된 자산 추이가 없습니다
           </text>
@@ -212,7 +230,7 @@ export function RegretChart({
                 <text
                   x={PAD.left - 8} y={tick.y + 1}
                   textAnchor="end" dominantBaseline="middle"
-                  fill="var(--muted-foreground)" fontSize={10} fontFamily="inherit"
+                  fill="var(--muted-foreground)" fontSize={AXIS_FONT_SIZE} fontFamily="inherit"
                 >
                   {formatCurrencyShort(tick.value, CHART_CURRENCY)}
                 </text>
@@ -223,7 +241,7 @@ export function RegretChart({
             {chartData.xLabels.map((l) => (
               <text
                 key={l.date} x={l.x} y={H - 6}
-                textAnchor="middle" fill="var(--muted-foreground)" fontSize={10} fontFamily="inherit"
+                textAnchor="middle" fill="var(--muted-foreground)" fontSize={AXIS_FONT_SIZE} fontFamily="inherit"
               >
                 {l.date}
               </text>

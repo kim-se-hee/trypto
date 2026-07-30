@@ -14,7 +14,8 @@ interface ExchangeTabsProps {
 
 export function ExchangeTabs({ exchanges, selected, onSelect }: ExchangeTabsProps) {
   return (
-    <div className="flex gap-1 rounded-full bg-secondary/80 p-1">
+    // 거래소가 늘어나도 좁은 화면에서 줄이 깨지지 않도록, 넘치면 가로로 넘겨 보게 한다.
+    <div className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full bg-secondary/80 p-1">
       {exchanges.map((exchange) => {
         const isActive = exchange.id === selected;
         return (
@@ -22,7 +23,7 @@ export function ExchangeTabs({ exchanges, selected, onSelect }: ExchangeTabsProp
             key={exchange.id}
             onClick={() => onSelect(exchange.id)}
             className={cn(
-              "relative rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200",
+              "relative shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 sm:px-4",
               isActive
                 ? "bg-primary text-primary-foreground shadow-md"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/60",

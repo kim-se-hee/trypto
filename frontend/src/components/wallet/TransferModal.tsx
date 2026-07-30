@@ -117,9 +117,10 @@ export function TransferModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton className="max-w-md gap-0 p-0">
+      {/* p-0 은 기본 여백을 지우는 것이라 sm 이상에서도 같이 지워야 한다. 안쪽 구역이 여백을 직접 쥔다. */}
+      <DialogContent showCloseButton className="max-w-md gap-0 p-0 sm:p-0">
         {/* Header */}
-        <DialogHeader className="border-b border-border/30 px-6 py-5">
+        <DialogHeader className="border-b border-border/30 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center gap-3">
             <div>
               <DialogTitle>{coin.coinSymbol} 출금</DialogTitle>
@@ -130,7 +131,7 @@ export function TransferModal({
           </div>
         </DialogHeader>
 
-        <div className="space-y-5 px-6 py-5">
+        <div className="space-y-5 px-4 py-5 sm:px-6">
           {/* Destination Exchange */}
           <div className="space-y-2">
             <label className="text-sm font-medium">도착 거래소</label>

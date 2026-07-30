@@ -25,7 +25,7 @@ export function MeVsMe({
   benchmarks,
 }: MeVsMeProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
       {/* 헤더 */}
       <div className="mb-5">
         <h2 className="text-lg font-bold">나 vs 나</h2>
@@ -48,7 +48,7 @@ export function MeVsMe({
               key={rule.ruleType}
               onClick={() => onToggleRule(rule.ruleType)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all",
+                "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left transition-all sm:gap-3",
                 isEnabled ? "bg-secondary/60" : "bg-transparent opacity-40",
               )}
             >
@@ -63,8 +63,8 @@ export function MeVsMe({
                 {isEnabled && <Check className="h-3 w-3" strokeWidth={3} />}
               </div>
 
-              <div className="flex flex-1 flex-col gap-0.5">
-                <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <div className="flex flex-wrap items-center gap-x-2">
                   <span className="text-sm font-semibold">{rule.label}</span>
                   <span
                     className="font-mono text-sm font-bold tabular-nums"
@@ -82,7 +82,7 @@ export function MeVsMe({
                 </span>
               </div>
 
-              <span className="rounded-md bg-negative/12 px-2 py-0.5 text-xs font-bold text-negative">
+              <span className="shrink-0 whitespace-nowrap rounded-md bg-negative/12 px-2 py-0.5 text-xs font-bold text-negative">
                 위반 {rule.violationCount}
               </span>
             </button>
@@ -121,12 +121,12 @@ export function MeVsMe({
                   className="h-3 w-3 shrink-0 rounded-full"
                   style={{ backgroundColor: bm.color }}
                 />
-                <span className="flex-1 text-sm font-medium">{bm.label}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{bm.label}</span>
 
                 {bm.profitRate !== null && (
                   <span
                     className={cn(
-                      "font-mono text-sm font-bold tabular-nums",
+                      "shrink-0 font-mono text-sm font-bold tabular-nums",
                       isPositive ? "text-positive" : "text-negative",
                     )}
                   >

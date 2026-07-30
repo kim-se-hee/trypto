@@ -98,10 +98,10 @@ export function RegretPage() {
       <Header />
 
       {/* Page header */}
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-6xl px-4">
-          <h1 className="font-display text-3xl tracking-tight">투자 복기</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">투자 복기</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
             규칙만 지켰으면 얼마를 벌었을까? · 라운드 전체 원화 기준
           </p>
         </div>
