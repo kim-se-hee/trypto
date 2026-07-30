@@ -116,12 +116,6 @@ export function SeedMoneyCard({
               );
             })}
           </div>
-
-          <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-primary/8 px-3 py-2">
-            <p className="text-[11px] font-medium text-primary">
-              바이낸스 시드는 라운드 시작 시점 시세로 원화 환산되어 시드 총액에 합산됩니다
-            </p>
-          </div>
         </div>
       </div>
 
