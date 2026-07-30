@@ -89,13 +89,13 @@ export function PortfolioPage() {
       <Header />
 
       {/* Page header */}
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-display text-3xl tracking-tight">투자내역</h1>
+              <h1 className="font-display text-2xl tracking-tight sm:text-3xl">투자내역</h1>
               {selectedExchangeItem && (
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
                   {selectedExchangeItem.name} 기준 · {selectedExchangeItem.baseCurrency} 마켓
                 </p>
               )}

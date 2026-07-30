@@ -187,12 +187,12 @@ export function WalletPage() {
       <Header />
 
       {/* Page header */}
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-display text-3xl tracking-tight">입출금</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h1 className="font-display text-2xl tracking-tight sm:text-3xl">입출금</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
                 자산 관리 · 입금/출금 내역 확인
               </p>
             </div>
