@@ -137,10 +137,6 @@ public class Order extends AggregateRoot {
         return this.status == OrderStatus.PENDING;
     }
 
-    public boolean isMarketOrder() {
-        return mode.orderType() == OrderType.MARKET;
-    }
-
     public boolean isFilled() {
         return this.status == OrderStatus.FILLED;
     }
