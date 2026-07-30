@@ -3,6 +3,10 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+
+# plan 산출물. 바이너리이고 상태·자격증명 값이 그대로 들어간다.
+tfplan
+*.tfplan
 apply-retry.log
 crash.log
 crash.*.log
