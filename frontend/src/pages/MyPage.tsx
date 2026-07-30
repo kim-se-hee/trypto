@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRound } from "@/contexts/RoundContext";
 import { changeNickname, getUserProfile } from "@/lib/api/user-api";
 import { endRound } from "@/lib/api/round-api";
+import { formatKRW } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ const STATUS_LABEL: Record<string, string> = {
   ENDED: "종료",
 };
 
-function formatKRW(value: number): string {
+function formatExactKRW(value: number): string {
   return value.toLocaleString("ko-KR") + "원";
 }
 
@@ -116,10 +117,10 @@ export function MyPage() {
       <Header />
 
       {/* Page header */}
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-6xl px-4">
-          <h1 className="font-display text-3xl tracking-tight">마이페이지</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">마이페이지</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
             프로필 관리 및 투자 라운드 현황
           </p>
         </div>
@@ -193,16 +194,20 @@ export function MyPage() {
                     시작일: {formatDate(activeRound.startedAt)}
                   </p>
 
-                  {/* Stat grid */}
-                  <div className="grid grid-cols-3 gap-3">
+                  {/* Stat grid — 좁은 화면에서 원 단위를 다 적으면 칸을 넘겨 두 줄이 된다. 만·억으로 줄여 적는다. */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     <div className="rounded-xl bg-secondary/40 p-3 text-center">
                       <p className="text-[11px] text-muted-foreground">시드머니</p>
-                      <p className="mt-1 text-sm font-bold">{formatKRW(activeRound.initialSeed)}</p>
+                      <p className="mt-1 text-sm font-bold">
+                        <span className="sm:hidden">{formatKRW(activeRound.initialSeed)}</span>
+                        <span className="hidden sm:inline">{formatExactKRW(activeRound.initialSeed)}</span>
+                      </p>
                     </div>
                     <div className="rounded-xl bg-secondary/40 p-3 text-center">
                       <p className="text-[11px] text-muted-foreground">긴급자금 상한</p>
                       <p className="mt-1 text-sm font-bold">
-                        {formatKRW(activeRound.emergencyFundingLimit)}
+                        <span className="sm:hidden">{formatKRW(activeRound.emergencyFundingLimit)}</span>
+                        <span className="hidden sm:inline">{formatExactKRW(activeRound.emergencyFundingLimit)}</span>
                       </p>
                     </div>
                     <div className="rounded-xl bg-secondary/40 p-3 text-center">

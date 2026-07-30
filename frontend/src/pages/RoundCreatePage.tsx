@@ -81,10 +81,10 @@ export function RoundCreatePage() {
     <div className="min-h-dvh bg-background">
       <RoundCreateHeader />
 
-      <section className="animate-enter border-b border-border/40 pb-6 pt-8">
+      <section className="animate-enter border-b border-border/40 pb-5 pt-6 sm:pb-6 sm:pt-8">
         <div className="mx-auto max-w-2xl px-4">
-          <h1 className="font-display text-3xl tracking-tight">투자 라운드 시작</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">투자 라운드 시작</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2">
             시드머니와 투자 원칙을 설정하고 모의투자를 시작하세요.
           </p>
         </div>
