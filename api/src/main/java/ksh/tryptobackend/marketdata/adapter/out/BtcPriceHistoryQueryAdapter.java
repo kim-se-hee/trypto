@@ -94,7 +94,9 @@ public class BtcPriceHistoryQueryAdapter implements BtcPriceHistoryQueryPort {
 
     private List<DailyClosePrice> appendTodayTickerIfNeeded(
             List<DailyClosePrice> candles, LocalDate startDate, LocalDate endDate, BtcPriceSource source) {
-        LocalDate today = LocalDate.now(clock);
+        // 캔들 날짜는 UTC 일 경계로 잘리므로(:87) 비교 기준일도 UTC 여야 한다.
+        // JVM 기본 시간대에 기대면 KST 00~09시 구간에서 하루 앞선 날짜와 비교하게 된다.
+        LocalDate today = LocalDate.now(clock.withZone(ZoneOffset.UTC));
         if (today.isBefore(startDate) || today.isAfter(endDate)) {
             return candles;
         }
